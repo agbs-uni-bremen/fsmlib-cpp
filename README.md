@@ -1,4 +1,4 @@
-# fsmlib-c-
+# fsmlib-cpp
 A C++ library containing algorithms for processing finite state machines and deriving test cases from FSMs
 
  0. Contributers and licence
@@ -25,7 +25,7 @@ A C++ library containing algorithms for processing finite state machines and der
  We do hope that the algorithms presented here are useful to researchers and practitioners working with FSMs and who are interested in model-based testing and complete testing theories and their application is practise.
  
  2. Structure of this repository
- This repository consists of 
+ This repository consists of source code contained in sub-folders of directory src/; this folder contains
     - several classes programmed in C++, with the main classes contained in folder fsm/;
       there the main classes are Dfsm and Fsm
     - a Qt-based main program main.cpp in folder
@@ -41,6 +41,28 @@ The repository also contains a file 'doxyfile' which can be used to create a cla
    MSVC 2015 under windows 10 - 64 and 32 bit
    clang-703.0.31 under MAC OS - 64 bit
 
+ To compile under any of these platforms, follow these steps [some platform-specific parameters are specified below].
+   - create a build directory, this will contain the results of the build process (library and main program, object files).
+     Typically, this directory is called build and located in src
+   - change into this build directory
+   - call cmake like this: 
+        cmake <relative path from build directory to the src-directory> \
+               -DCMAKE_PREFIX_PATH=<path to Qt 5.7, compiler-specific sub-directory>
+   - this call creates the build files needed by your compiler (Makefiles, MSCV's files, etc.). Now compile the source code.
+   - When you want to run the main program, change into sub-directory main which has been created by the
+     the build process and run "fsm-main" (the files needed by the program should be in the same directory, if it's not, move them there) 
+
+
  3.1 Building the library and main program for Linux
+     For Linux platforms, the debug and release versions need to be built separately, using two different
+     build directories. Command
+        cmake <relative path from debug build directory to the src-directory> \ 
+                -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Debug
+     will create the makefiles for a debug version of the code.
+        cmake <relative path from debug build directory to the src-directory> \ 
+                -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Release
+     will create the makefiles for a release version of the code.
  3.2 Building the library and main program for Mac OSX
+     Proceed in analogy to 3.1 (linux)
  3.3 Building the library for Windows
+     If you are compiling on windows with MSVC, the tool should copy the needed Qt DLLs for the 64 bit version into the right directory. Please note that you will need to do that by hand if you are compiling for 32 bit.
