@@ -89,8 +89,11 @@ Documentation can be found in folder doc/. File 'doc/doxyfile' can be used to cr
 	 Click Add Entry.
 	 
 	 Write this line for the Name. Command
+	 
 		CMAKE_PREFIX_PATH
+		
 	 Select PATH for the Type. For the value, put the absolute path to. Command
+	 
 		Qt/5.7/msvc2015_64
 	 
 	 Click Generate and verify if cmake is using the right compiler.
