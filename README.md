@@ -80,4 +80,22 @@ Documentation can be found in folder doc/. File 'doc/doxyfile' can be used to cr
      
  3.3 Building the library for Windows
  
-     If you are compiling on windows with MSVC, the tool should copy the needed Qt DLLs for the 64 bit version into the right directory. Please note that you will need to do that by hand if you are compiling for 32 bit.
+     For Windows platforms, the debug and release versions will be built at the same time. Please note that you will have to add Qt's dll to your PATH in order to run the program.
+	 
+	 Launch Cmake GUI.
+	 
+	 Specify the source code directory and the binaries directory.
+	 
+	 Click Add Entry.
+	 
+	 Write this line for the Name.
+		CMAKE_PREFIX_PATH
+	 Select PATH for the Type. For the value, put the absolute path to Qt/5.7/msvc2015_64
+	 
+	 Click Generate and verify if cmake is using the right compiler.
+	 
+	 Click Finish.
+	 
+	 will create all the files needed by MSVC. You can now open the project with the .sln file.
+	 
+	 

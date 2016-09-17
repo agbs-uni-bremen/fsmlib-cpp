@@ -65,16 +65,3 @@ configure_file (../resources/fsmGillA7.fsm								main/fsmGillA7.fsm								COPY
 configure_file (../resources/fsmGillA7.in								main/fsmGillA7.in								COPYONLY)
 configure_file (../resources/fsmGillA7.out								main/fsmGillA7.out								COPYONLY)
 configure_file (../resources/fsmGillA7.state							main/fsmGillA7.state							COPYONLY)
-
-if (MSVC)
-	configure_file (../resources/dll/Qt5Core.dll						main/Qt5Core.dll								COPYONLY)
-	configure_file (../resources/dll/Qt5Cored.dll						main/Qt5Cored.dll								COPYONLY)
-	configure_file (../resources/dll/Qt5Gui.dll							main/Qt5Gui.dll									COPYONLY)
-	configure_file (../resources/dll/Qt5Guid.dll						main/Qt5Guid.dll								COPYONLY)
-	configure_file (../resources/dll/Qt5Widgets.dll						main/Qt5Widgets.dll								COPYONLY)
-	configure_file (../resources/dll/Qt5Widgetsd.dll					main/Qt5Widgetsd.dll							COPYONLY)
-	configure_file (../resources/dll/platforms/qwindows.dll				main/platforms/qwindows.dll						COPYONLY)
-	configure_file (../resources/dll/platforms/qwindowsd.dll			main/platforms/qwindowsd.dll					COPYONLY)
-endif()
-
-
