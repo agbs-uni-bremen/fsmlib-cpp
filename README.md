@@ -35,6 +35,7 @@ A C++ library containing algorithms for processing finite state machines and der
 The repository also contains a file 'doxyfile' which can be used to create a class documentation using the doxygen tool. This will be quite useful to explore the contents of the library.
  
  3. How to build the code for different platforms
+ 
  We have prepared the code to be compiled and linked using the Cmake toolkit. For creating and using the main program fsm-main, a Qt-installation of Qt 5.7 is required. The compiler needs to support C++11. We have tested the code with these compilers: 
    gcc 5.4.0 under linux (ubuntu) - 64 bit
    gcc 4.8.3 under Linux (centos 7) - 64 bit
@@ -54,22 +55,30 @@ The repository also contains a file 'doxyfile' which can be used to create a cla
 
 
  3.1 Building the library and main program for Linux
+ 
      For Linux platforms, the debug and release versions need to be built separately, using two different
      build directories. Command
-        cmake <relative path from debug build directory to the src-directory> \ 
-                -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Debug
-     will create the makefiles for a debug version of the code.
-        cmake <relative path from debug build directory to the src-directory> \ 
-                -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Release
+     
+        cmake <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Debug
+                
+     will create the makefiles for a debug version of the code. Command 
+        cmake <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Release
+        
      will create the makefiles for a release version of the code.
+     
  3.2 Building the library and main program for Mac OSX
+ 
      For Mac OSX platforms, the debug and release versions need to be built separately, using two different
      build directories (just as for Linux). Command
-        cmake <relative path from debug build directory to the src-directory> \ 
-                -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Debug
-     will create the makefiles for a debug version of the code.
-        cmake <relative path from debug build directory to the src-directory> \ 
-                -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Release
+     
+        cmake <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Debug
+        
+     will create the makefiles for a debug version of the code. Command
+     
+        cmake <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Release
+        
      will create the makefiles for a release version of the code.
+     
  3.3 Building the library for Windows
+ 
      If you are compiling on windows with MSVC, the tool should copy the needed Qt DLLs for the 64 bit version into the right directory. Please note that you will need to do that by hand if you are compiling for 32 bit.
