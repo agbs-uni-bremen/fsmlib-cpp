@@ -43,7 +43,7 @@ The repository also contains a file 'doxyfile' which can be used to create a cla
 
  To compile under any of these platforms, follow these steps [some platform-specific parameters are specified below].
    - create a build directory, this will contain the results of the build process (library and main program, object files).
-     Typically, this directory is called build and located in src
+     For example, this directory could be called 'build' and located in the root directory of the repository.
    - change into this build directory
    - call cmake like this: 
         cmake <relative path from build directory to the src-directory> \
@@ -63,6 +63,13 @@ The repository also contains a file 'doxyfile' which can be used to create a cla
                 -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Release
      will create the makefiles for a release version of the code.
  3.2 Building the library and main program for Mac OSX
-     Proceed in analogy to 3.1 (linux)
+     For Mac OSX platforms, the debug and release versions need to be built separately, using two different
+     build directories (just as for Linux). Command
+        cmake <relative path from debug build directory to the src-directory> \ 
+                -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Debug
+     will create the makefiles for a debug version of the code.
+        cmake <relative path from debug build directory to the src-directory> \ 
+                -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Release
+     will create the makefiles for a release version of the code.
  3.3 Building the library for Windows
      If you are compiling on windows with MSVC, the tool should copy the needed Qt DLLs for the 64 bit version into the right directory. Please note that you will need to do that by hand if you are compiling for 32 bit.
