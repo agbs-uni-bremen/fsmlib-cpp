@@ -46,10 +46,7 @@ The repository also contains a file 'doxyfile' which can be used to create a cla
    - create a build directory, this will contain the results of the build process (library and main program, object files).
      For example, this directory could be called 'build' and located in the root directory of the repository.
    - change into this build directory
-   - call cmake like this: 
-
-        cmake <relative path from build directory to the src-directory> -DCMAKE_PREFIX_PATH=<path to Qt 5.7, compiler-specific sub-directory>
-
+   - call cmake with the platform-sepcific commands described below 
    - this call creates the build files needed by your compiler (Makefiles, MSCV's files, etc.). Now compile the source code.
    - When you want to run the main program, change into sub-directory main which has been created by the
      the build process and run "fsm-main" (the files needed by the program should be in the same directory, if it's not, move them there) 
@@ -63,6 +60,7 @@ The repository also contains a file 'doxyfile' which can be used to create a cla
         cmake <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Debug
                 
      will create the makefiles for a debug version of the code. Command 
+     
         cmake <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Release
         
      will create the makefiles for a release version of the code.
