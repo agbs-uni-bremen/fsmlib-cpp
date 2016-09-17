@@ -32,7 +32,7 @@ A C++ library containing algorithms for processing finite state machines and der
     - a main window implementation MainWindow.h, .cpp in folder window
  Some of the algorithms can be executed directly from the main program (if you build this, it is called fsm-main), in order to exemplify what the library functions can do. The library, however, contains also methods that are not exercised by fsm-main program. Therefore it is useful to browse all classes for other functionality that might also be useful for your applications.
 
-The repository also contains a file 'doxyfile' which can be used to create a class documentation using the doxygen tool. This will be quite useful to explore the contents of the library.
+Documentation can be found in folder doc/. File 'doc/doxyfile' can be used to create a class documentation using the doxygen tool. This will be quite useful to explore the contents of the library. If you do not wish to create the documentation yourself, you can unpack the zip-archive doc/fsmlib-cpp-doc.zip and open file html/index.html in your browser.
  
  3. How to build the code for different platforms
  
