@@ -1,0 +1,37 @@
+set (FSM_FSM_SOURCES
+	Dfsm.cpp
+	Dfsm.h
+	DFSMTable.cpp
+	DFSMTable.h
+	DFSMTableRow.cpp
+	DFSMTableRow.h
+	Fsm.cpp
+	Fsm.h
+	FsmLabel.cpp
+	FsmLabel.h
+	FsmNode.cpp
+	FsmNode.h
+	FsmTransition.cpp
+	FsmTransition.h
+	InputTrace.cpp
+	InputTrace.h
+	Int2IntMap.cpp
+	Int2IntMap.h
+	IOTrace.cpp
+	IOTrace.h
+	OFSMTable.cpp
+	OFSMTable.h
+	OFSMTableRow.cpp
+	OFSMTableRow.h
+	OutputTrace.cpp
+	OutputTrace.h
+	PkTable.cpp
+	PkTable.h
+	PkTableRow.cpp
+	PkTableRow.h
+	Trace.cpp
+	Trace.h
+	typedef.inc
+)
+
+add_library (fsm-fsm ${FSM_FSM_SOURCES})
