@@ -1180,3 +1180,6 @@ doc/latex/hierarchy.tex
 doc/latex/Makefile
 doc/latex/refman.tex
 build/
+fsm_test_cases.txt
+fsm_test_suite.txt
+fsm_transitionCover.dot
