@@ -47,7 +47,7 @@ std::string FsmPresentationLayer::getInId(const unsigned int id) const
 {
 	if (id >= in2String.size())
 	{
-		return "in" + std::to_string(id);
+		return std::to_string(id);
 	}
 	return in2String.at(id);
 }
@@ -56,7 +56,7 @@ std::string FsmPresentationLayer::getOutId(const unsigned int id) const
 {
 	if (id >= out2String.size())
 	{
-		return "out" + std::to_string(id);
+		return std::to_string(id);
 	}
 	return out2String.at(id);
 }
@@ -67,7 +67,7 @@ std::string FsmPresentationLayer::getStateId(const unsigned int id, const std::s
 	{
 		if (prefix.empty())
 		{
-			return "s" + std::to_string(id);
+			return std::to_string(id);
 		}
 		return prefix + std::to_string(id);
 	}

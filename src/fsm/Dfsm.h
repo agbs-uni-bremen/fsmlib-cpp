@@ -53,6 +53,19 @@ public:
 	\param presentationLayer The presentation layer used by the DFSM
 	*/
 	Dfsm(const std::string & fname, const std::string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    
+    /**
+     Create a DFSM from a file description
+     \param fname The name of the file containing the FSM informations
+     \param presentationLayer The presentation layer used by the DFSM
+     \param fsmName The name of the DFSM
+     
+     The parameters maxNodes, maxInput, and maxOutput used in the constructor above
+     are determined from the input file specifying the FSM.
+     */
+    Dfsm(const std::string & fname,
+         const std::shared_ptr<FsmPresentationLayer> presentationLayer,
+         const std::string & fsmName);
 
 	/**
 	Random creation of a completely defined deterministic FSM
@@ -145,5 +158,18 @@ public:
 	\return A test suite
 	*/
 	IOListContainer wpMethod(const int m);
+    
+    /**
+     * Perform test generation by means of the T-Method. The algorithm 
+     * applies to deterministic FSMs which are completely defined.
+     * It produces test cases from the transition cover. The resulting 
+     * test suite is complete for I/O-equivalence in the fault domain
+     * of all completely defined DFSMs M' differing from the reference
+     * model M only by zero or more output faults. The number of in M and M'
+     * must be identical, and the transition arrows and input labels
+     * must be identical as well to ensure completeness.
+     */
+    IOListContainer tMethod();
+    
 };
 #endif //FSM_FSM_DFSM_H_

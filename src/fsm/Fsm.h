@@ -166,9 +166,26 @@ public:
 	\return a new FSM which equals the intersection of this and f
 	*/
 	Fsm intersect(const Fsm & f);
+    
+    /**
+     * Generate the state cover of an arbitrary FSM
+     */
 	std::shared_ptr<Tree> getStateCover();
+    
+    /**
+     * Generate the transition cover of an arbitrary FSM
+     */
 	std::shared_ptr<Tree> getTransitionCover();
+    
+    /**
+     *  Apply an input trace to an FSM and return its
+     *  resulting output tree.
+     */
 	OutputTree apply(const InputTrace & itrc);
+    
+    /**
+     *  Transform an FSM to its observable equivalent.
+     */
 	Fsm transformToObservableFSM() const;
 
 	/**

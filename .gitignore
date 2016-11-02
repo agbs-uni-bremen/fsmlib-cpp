@@ -1201,3 +1201,12 @@ build.MacOSX/main/CSM_state_cover.png
 build.MacOSX/main/CSM_transition_cover.dot
 build.MacOSX/main/CSM_transition_cover.png
 resources/csm.fsm
+build.MacOSX/main/fsm_MIN.dot
+build.MacOSX/main/fsm_MIN.png
+build.MacOSX/main/fsm_MIN_state_cover.dot
+build.MacOSX/main/fsm_MIN_state_cover.png
+build.MacOSX/main/fsm_MIN_test_cases.txt
+build.MacOSX/main/fsm_MIN_test_suite.txt
+build.MacOSX/main/fsm_MIN_transition_cover.dot
+build.MacOSX/main/fsm_MIN_transition_cover.png
+build.MacOSX/main/fsm_MIN_transitionCover.dot

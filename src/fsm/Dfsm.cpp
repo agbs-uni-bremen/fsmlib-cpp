@@ -67,6 +67,14 @@ Dfsm::Dfsm(const std::string & fname, const std::string & fsmName, const int max
 
 }
 
+Dfsm::Dfsm(const std::string& fname,
+           const std::shared_ptr<FsmPresentationLayer> presentationLayer,
+           const std::string & fsmName)
+: Fsm(fname,presentationLayer,fsmName)
+{
+    
+}
+
 Dfsm::Dfsm(const std::string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
 	: Fsm(presentationLayer)
 {
@@ -246,3 +254,27 @@ IOListContainer Dfsm::wpMethod(const int m)
 	return fMin.wpMethod(m);
 
 }
+
+
+IOListContainer Dfsm::tMethod()
+{
+    
+    std::shared_ptr<Tree> iTree = getTransitionCover();
+    
+    return iTree->getIOLists();
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
