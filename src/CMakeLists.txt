@@ -33,8 +33,12 @@ else ()
 endif ()
 
 #####################################################################
+OPTION( gui "Build with gui support" OFF)
 
-find_package (Qt5Widgets REQUIRED)
+
+if(gui)
+	find_package (Qt5Widgets REQUIRED)
+endif(gui)
 
 #set the root source diectory as include directory
 include_directories (${CMAKE_SOURCE_DIR})
@@ -46,7 +50,10 @@ add_subdirectory (interface)
 add_subdirectory (main)
 add_subdirectory (sets)
 add_subdirectory (trees)
-add_subdirectory (window)
+
+if(gui)
+	add_subdirectory (window)
+endif(gui)
 
 #copy every fsm file to the build directory
 configure_file (../resources/fsm.fsm									main/fsm.fsm									COPYONLY)

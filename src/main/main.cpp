@@ -1,38 +1,62 @@
+#include <iostream>
+#include <fstream>
+#include <memory>
+#include <stdlib.h>
+#include <interface/FsmPresentationLayer.h>
+#include <fsm/Dfsm.h>
+#include <fsm/Fsm.h>
+#include <trees/IOListContainer.h>
+#include <trees/OutputTree.h>
+
 /*
- * Copyright. Gaël Dottel, Christoph Hilken, and Jan Peleska 2016 - 2021
- * 
- * Licensed under the EUPL V.1.1
- */
-#include <qapplication.h>
-
-#include "window/MainWindow.h"
-
-// TODO Bonus
-//test the code (huge code and not so much testing done -> see test/test.cpp)
-//doxygen comment in Fsm.h and FsmNode.h
-//add button for action
-//add shortchut
-//system call without showing console
-//zoom focused
-//add zoom with wheel + ctrl
-//optimisation
-
-/**
-\author Gaël Dottel, Jan Peleska, Cristoph Hilken
-\version 1.0
-\date 2016-08-05
+\file main.c This file contain the main function
+\author Ga�l Dottel
+\version 0.1
+\date 06 June 2016
 */
 
-int main(int argc, char* argv [])
+int main(int argc, char* argv[])
 {
-	QCoreApplication::addLibraryPath("./");
-	QApplication app(argc, argv);
+	std::string fsmName = argv[2];
 
-	//TODO This line is a work-around for MAC. It doesn't use the native menu bar
-	app.setAttribute(Qt::AA_DontUseNativeMenuBar);
+	if (argc >= 6)
+	{
+		std::string inFile;
+		std::string outFile;
+		std::string stateFile;
+		if (argc > 6)
+		{
+			inFile = argv[6];
+		}
+		if (argc > 7)
+		{
+			outFile = argv[7];
+		}
+		if (argc > 8)
+		{
+			stateFile = argv[8];
+		}
 
-	MainWindow window;
-	window.show();
+		std::shared_ptr<FsmPresentationLayer> presentationLayer = std::make_shared<FsmPresentationLayer>(inFile, outFile, stateFile);
+		Fsm fsm = Fsm(argv[1], fsmName, atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), presentationLayer);
+		fsm.toDot(fsmName);
 
-	return app.exec();
+		Fsm fsmObs = fsm.transformToObservableFSM();
+		fsmObs.toDot(fsmObs.getName());
+
+		Fsm fsmMin = fsm.minimise();
+		fsmMin.toDot(fsmMin.getName());
+
+		IOListContainer w = fsmMin.wpMethod(6);
+		std::cout << "WP-Method Test Cases" << std::endl << "Number of Test Cases " << w.size() << std::endl << "Test Cases:" << std::endl << w << std::endl;
+
+		int i = 0;
+		for (std::vector<int> tc : *w.getIOLists())
+		{
+			OutputTree trOut = fsm.apply(InputTrace(tc, presentationLayer));
+			std::cout << ++i << ". " << trOut << std::endl;
+		}
+		getchar();//in order to pause the program on windows*/
+	}
+	return EXIT_SUCCESS;
 }
