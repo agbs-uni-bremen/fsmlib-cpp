@@ -25,11 +25,11 @@ A C++ library containing algorithms for processing finite state machines and der
  We do hope that the algorithms presented here are useful to researchers and practitioners working with FSMs and who are interested in model-based testing and complete testing theories and their application is practise.
  
  2. Structure of this repository
- This repository consists of source code contained in sub-folders of directory src/; this folder contains
-    - several classes programmed in C++, with the main classes contained in folder fsm/;
-      there the main classes are Dfsm and Fsm
-    - a Qt-based main program main.cpp in folder
-    - a main window implementation MainWindow.h, .cpp in folder window
+ This repository consists of source code contained in sub-folders of directory [src](src) this folder contains
+    - several classes programmed in C++, with the main classes contained in folder [fsm](src/fsm);
+      there the main classes are [Dfsm](src/fsm/Dfsm.h) and [Fsm](src/fsm/Fsm.h)
+	- utility libraries in [trees](src/trees) and [sets](src/sets) as well as an example program in [main](src/main);
+    - a Qt-based gui application in windows/;
  Some of the algorithms can be executed directly from the main program (if you build this, it is called fsm-main), in order to exemplify what the library functions can do. The library, however, contains also methods that are not exercised by fsm-main program. Therefore it is useful to browse all classes for other functionality that might also be useful for your applications.
 
 Documentation can be found in folder doc/. File 'doc/doxyfile' can be used to create a class documentation using the doxygen tool. This will be quite useful to explore the contents of the library. If you do not wish to create the documentation yourself, you can unpack the zip-archive doc/fsmlib-cpp-doc.zip and open file html/index.html in your browser.
@@ -52,49 +52,75 @@ Documentation can be found in folder doc/. File 'doc/doxyfile' can be used to cr
      the build process and run "fsm-main" (the files needed by the program should be in the same directory, if it's not, move them there) 
 
 
- 3.1 Building the library and main program for Linux
+ 3.1 Building the library for Linux
  
      For Linux platforms, the debug and release versions need to be built separately, using two different
      build directories. Command
+	 
+		'cmake <relative path from debug build directory to the src-directory> -DCMAKE_BUILD_TYPE=Debug'
      
-        cmake <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Debug
                 
      will create the makefiles for a debug version of the code. Command 
      
-        cmake <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Release
-        
+		'cmake <relative path from release build directory to the src-directory> -DCMAKE_BUILD_TYPE=Release'
+		
      will create the makefiles for a release version of the code.
-     
+	 
+	 
+	 For building the graphical user interface as well, the above mentioned commands have to be changed to:
+		
+		'cmake -Dgui=ON <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Debug'
+		
+	for debug mode, respectively
+		
+		'cmake -Dgui=ON <relative path from release build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Release'
+		
+	for release mode. 
+		
  3.2 Building the library and main program for Mac OSX
  
      For Mac OSX platforms, the debug and release versions need to be built separately, using two different
      build directories (just as for Linux). Command
      
-        cmake <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Debug
+        'cmake <relative path from debug build directory to the src-directory> -DCMAKE_BUILD_TYPE=Debug'
         
      will create the makefiles for a debug version of the code. Command
      
-        cmake <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Release
+        'cmake <relative path from release build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Release'
         
      will create the makefiles for a release version of the code.
+	 
+	 For building the graphical user interface use the following commands instead:
+	 
+		'cmake -Dgui=ON <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Debug'
+	 
+	 for debug mode, respectively
+	 
+		'cmake -Dgui=ON <relative path from release build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Release'
+	 
+	 for release mode.
      
  3.3 Building the library for Windows
  
-     For Windows platforms, the debug and release versions will be built at the same time. Please note that you will have to add Qt's dll to your PATH in order to run the program.
+     For Windows platforms, the debug and release versions will be built at the same time. Please note that you will have to add Qt's dll to your PATH in order to build the gui.
 	 
 	 Launch Cmake GUI.
 	 
 	 Specify the source code directory and the binaries directory.
 	 
+	 For building the graphical user interface the following steps are necessary:
+	 
+	 Enable the option 'gui'
+	 
 	 Click Add Entry.
 	 
 	 Write this line for the Name. Command
 	 
-		CMAKE_PREFIX_PATH
+		'CMAKE_PREFIX_PATH'
 		
 	 Select PATH for the Type. For the value, put the absolute path to. Command
 	 
-		Qt/5.7/msvc2015_64
+		'Qt/5.7/msvc2015_64'
 	 
 	 Click Generate and verify if cmake is using the right compiler.
 	 
