@@ -82,7 +82,7 @@ Documentation can be found in folder doc/. File 'doc/doxyfile' can be used to cr
      For Mac OSX platforms, the debug and release versions need to be built separately, using two different
      build directories (just as for Linux). Command
      
-    'cmake <relative path from debug build directory to the src-directory> -DCMAKE_BUILD_TYPE=Debug'
+    `cmake <relative path from debug build directory to the src-directory> -DCMAKE_BUILD_TYPE=Debug`
         
      will create the makefiles for a debug version of the code. Command
      
