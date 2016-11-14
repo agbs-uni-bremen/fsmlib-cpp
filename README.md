@@ -43,8 +43,7 @@ Documentation can be found in folder doc/. File 'doc/doxyfile' can be used to cr
    clang-703.0.31 under MAC OS - 64 bit
 
  To compile under any of these platforms, follow these steps [some platform-specific parameters are specified below].
-   - create a build directory, this will contain the results of the build process (library and main program, object files).
-     For example, this directory could be called 'build' and located in the root directory of the repository.
+   - create a build directory, this will contain the results of the build process (library and main program, object files). For example, this directory could be called 'build' and located in the root directory of the repository.
    - change into this build directory
    - call cmake with the platform-sepcific commands described below 
    - this call creates the build files needed by your compiler (Makefiles, MSCV's files, etc.). Now compile the source code.
@@ -57,23 +56,23 @@ Documentation can be found in folder doc/. File 'doc/doxyfile' can be used to cr
      For Linux platforms, the debug and release versions need to be built separately, using two different
      build directories. Command
 	 
-		'cmake <relative path from debug build directory to the src-directory> -DCMAKE_BUILD_TYPE=Debug'
+		cmake <relative path from debug build directory to the src-directory> -DCMAKE_BUILD_TYPE=Debug
      
                 
      will create the makefiles for a debug version of the code. Command 
      
-		'cmake <relative path from release build directory to the src-directory> -DCMAKE_BUILD_TYPE=Release'
+		cmake <relative path from release build directory to the src-directory> -DCMAKE_BUILD_TYPE=Release
 		
      will create the makefiles for a release version of the code.
 	 
 	 
 	 For building the graphical user interface as well, the above mentioned commands have to be changed to:
 		
-		'cmake -Dgui=ON <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Debug'
+		cmake -Dgui=ON <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Debug
 		
 	for debug mode, respectively
 		
-		'cmake -Dgui=ON <relative path from release build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Release'
+		cmake -Dgui=ON <relative path from release build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Release
 		
 	for release mode. 
 		
@@ -82,17 +81,17 @@ Documentation can be found in folder doc/. File 'doc/doxyfile' can be used to cr
      For Mac OSX platforms, the debug and release versions need to be built separately, using two different
      build directories (just as for Linux). Command
      
-    `cmake <relative path from debug build directory to the src-directory> -DCMAKE_BUILD_TYPE=Debug`
+	    cmake <relative path from debug build directory to the src-directory> -DCMAKE_BUILD_TYPE=Debug
         
      will create the makefiles for a debug version of the code. Command
      
-    'cmake <relative path from release build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Release'
+        cmake <relative path from release build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Release
         
      will create the makefiles for a release version of the code.
 	 
 	 For building the graphical user interface use the following commands instead:
 	 
-	'cmake -Dgui=ON <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Debug'
+	    cmake -Dgui=ON <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Debug
 	 
 	 for debug mode, respectively
 	 
@@ -110,17 +109,17 @@ Documentation can be found in folder doc/. File 'doc/doxyfile' can be used to cr
 	 
 	 For building the graphical user interface the following steps are necessary:
 	 
-	 Enable the option 'gui'
+	 Enable the option `gui`
 	 
 	 Click Add Entry.
 	 
 	 Write this line for the Name. Command
 	 
-		'CMAKE_PREFIX_PATH'
+		CMAKE_PREFIX_PATH
 		
 	 Select PATH for the Type. For the value, put the absolute path to. Command
 	 
-		'Qt/5.7/msvc2015_64'
+		Qt/5.7/msvc2015_64
 	 
 	 Click Generate and verify if cmake is using the right compiler.
 	 
