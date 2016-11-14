@@ -43,12 +43,11 @@ Documentation can be found in folder doc/. File 'doc/doxyfile' can be used to cr
    clang-703.0.31 under MAC OS - 64 bit
 
  To compile under any of these platforms, follow these steps [some platform-specific parameters are specified below].
-   - create a build directory, this will contain the results of the build process (library and main program, object files). For example, this directory could be called 'build' and located in the root directory of the repository.
-   - change into this build directory
-   - call cmake with the platform-sepcific commands described below 
-   - this call creates the build files needed by your compiler (Makefiles, MSCV's files, etc.). Now compile the source code.
-   - When you want to run the main program, change into sub-directory main which has been created by the
-     the build process and run "fsm-main" (the files needed by the program should be in the same directory, if it's not, move them there) 
+	- create a build directory, this will contain the results of the build process (library and main program, object files). For example, this directory could be called 'build' and located in the root directory of the repository.
+	- change into this build directory
+	- call cmake with the platform-sepcific commands described below 
+	- this call creates the build files needed by your compiler (Makefiles, MSCV's files, etc.). Now compile the source code.
+	- When you want to run the main program, change into sub-directory main which has been created by the the build process and run "fsm-main" (the files needed by the program should be in the same directory, if it's not, move them there) 
 
 
  3.1 Building the library for Linux
@@ -85,7 +84,7 @@ Documentation can be found in folder doc/. File 'doc/doxyfile' can be used to cr
         
      will create the makefiles for a debug version of the code. Command
      
-        cmake <relative path from release build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Release
+        cmake <relative path from release build directory to the src-directory> -DCMAKE_BUILD_TYPE=Release
         
      will create the makefiles for a release version of the code.
 	 
