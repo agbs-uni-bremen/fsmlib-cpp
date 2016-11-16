@@ -1491,3 +1491,5 @@ build.Debug/fsm/CMakeFiles/fsm-fsm.dir/Trace.cpp.o
 build.Debug/trees/CMakeFiles/fsm-trees.dir/Tree.cpp.o
 build.Debug/trees/CMakeFiles/fsm-trees.dir/TreeEdge.cpp.o
 build.Debug/trees/CMakeFiles/fsm-trees.dir/TreeNode.cpp.o
+build.Debug.MacOSX/main/m1.dot
+build.Debug.MacOSX/main/m1.fsm

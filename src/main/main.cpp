@@ -5,9 +5,56 @@
 #include <interface/FsmPresentationLayer.h>
 #include <fsm/Dfsm.h>
 #include <fsm/Fsm.h>
+#include <fsm/IOTrace.h>
 #include <trees/IOListContainer.h>
 #include <trees/OutputTree.h>
 
+
+void test1() {
+    
+    std::cout << "TC-DFSM-0001 Show that Dfsm.applyDet() deals correctly with incomplete DFSMs "
+    << std::endl;
+    
+    std::shared_ptr<FsmPresentationLayer> pl = std::make_shared<FsmPresentationLayer>();
+    Dfsm d("m1.fsm",pl,"m1");
+    d.toDot("m1");
+ 
+    std::vector<int> inp;
+    inp.push_back(1);
+    inp.push_back(2);
+    inp.push_back(1);
+    inp.push_back(2);
+    inp.push_back(2);
+
+
+    InputTrace i(inp,pl);
+    
+    std::cout << "InputTrace = " << i << std::endl;
+
+    
+    IOTrace t = d.applyDet(i);
+    
+    std::cout << "IOTrace t = " << t << std::endl;
+    
+    
+    inp.insert(inp.begin(),9);
+    InputTrace j(inp,pl);
+    IOTrace u = d.applyDet(j);
+    std::cout << "IOTrace u = " << u << std::endl;
+
+}
+
+int main(int argc, char* argv[])
+{
+    
+    test1();
+    
+    exit(0);
+    
+}
+
+
+#if 0
 /*
 \file main.c This file contain the main function
 \author Gaël Dottel
@@ -60,3 +107,4 @@ int main(int argc, char* argv[])
 	}
 	return EXIT_SUCCESS;
 }
+#endif

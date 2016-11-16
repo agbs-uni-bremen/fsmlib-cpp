@@ -193,29 +193,43 @@ IOTrace Dfsm::applyDet(const InputTrace & i)
 	OutputTrace o = OutputTrace(presentationLayer);
 
 	std::shared_ptr<FsmNode> currentNode = nodes.at(initStateIdx);
-	unsigned int k = 0;
-	for (int input : i.get())
-	{
-		currentNode = currentNode->apply(input, o);
-		++k;
-	}
+    
+	size_t k = 0;
+    for ( ; k < i.get().size() && currentNode != nullptr; k++ ) {
+        currentNode = currentNode->apply(i.get().at(k), o);
+    }
 
+    // Handle the case where the very first input is not accpeted
+    // by the incomplete DFSM: we return an empty IOTrace
 	if (currentNode == nullptr && k == 1)
 	{
 		return IOTrace(InputTrace(presentationLayer),
                        OutputTrace(presentationLayer));
 	}
 
+    // Handle the case where only a prefix of the input trace
+    // has been accepted by the incomplete DFSM: we return
+    // an IOTrace whose input consist of this prefix, together
+    // with the associated outputs already contained in o.
 	if (currentNode == nullptr)
 	{
-		auto ifirst = i.get().cbegin();
-		auto ilast = ifirst + k - 2;
-
-		auto ofirst = o.get().cbegin();
-		auto olast = ofirst + k - 2;
-		return IOTrace(InputTrace(std::vector<int>(ifirst, ilast), presentationLayer),
-                       OutputTrace(std::vector<int>(ofirst, olast), presentationLayer));
+        
+#if 0
+        std::vector<int> iShrunk(i.get().cbegin(),i.get().cbegin()+o.get().size());
+        std::cout << "iShrunk.size() = " << iShrunk.size() << std::endl;
+#endif
+        
+        std::vector<int> iShrunk;
+        for ( size_t k = 0; k < o.get().size(); k++ ) {
+            iShrunk.push_back(i.get().at(k));
+        }
+        
+        return IOTrace(InputTrace(iShrunk,presentationLayer),
+                       OutputTrace(o.get(),presentationLayer));
 	}
+    
+    // The full input trace has been processed by the DFSM.
+    // The associated outputs are contained in o.
 	return IOTrace(InputTrace(i.get(), presentationLayer),
                    OutputTrace(o.get(), presentationLayer));
 }
