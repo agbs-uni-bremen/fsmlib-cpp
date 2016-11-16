@@ -26,7 +26,8 @@ public:
 	\param trace The trace itself, represented by a list of int
 	\param presentationLayer The presentation layer used by the trace
 	*/
-	InputTrace(const std::vector<int>& trace, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+	InputTrace(const std::vector<int>& trace,
+               const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 
 	/**
 	Output the InputTrace to a standard output stream
@@ -34,6 +35,7 @@ public:
 	\param trace The InputTrace to print
 	\return The standard output stream used, to allow user to cascade <<
 	*/
-	friend std::ostream & operator<<(std::ostream & out, const InputTrace & trace);
+	friend std::ostream & operator<<(std::ostream & out,
+                                     const InputTrace & trace);
 };
 #endif //FSM_FSM_INPUTTRACE_H_

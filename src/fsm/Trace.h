@@ -35,7 +35,8 @@ public:
 	\param trace The trace itself, represented by a list of int
 	\param presentationLayer The presentation layer used by the trace
 	*/
-	Trace(const std::vector<int>& trace, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+	Trace(const std::vector<int>& trace,
+          const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 	
 	/**
 	Add an element, at the end of the trace

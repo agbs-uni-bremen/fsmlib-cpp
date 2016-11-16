@@ -40,6 +40,8 @@ private:
 	\return The DFSMTable created
 	*/
 	std::shared_ptr<DFSMTable> toDFSMTable() const;
+    
+    
 public:
 	/**
 	Create a DFSM from a file description
@@ -51,8 +53,15 @@ public:
 	\param maxOutput Maximal value of (integer) output alphabet - admissible
 	values are 0..maxOutput
 	\param presentationLayer The presentation layer used by the DFSM
+     
+     \note This constructor is deprecated and will be removed in a furture version
 	*/
-	Dfsm(const std::string & fname, const std::string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+	Dfsm(const std::string & fname,
+         const std::string & fsmName,
+         const int maxNodes,
+         const int maxInput,
+         const int maxOutput,
+         const std::shared_ptr<FsmPresentationLayer> presentationLayer);
     
     /**
      Create a DFSM from a file description
@@ -77,7 +86,11 @@ public:
 	values are 0..maxOutput
 	\param presentationLayer The presentation layer used by the DFSM
 	*/
-	Dfsm(const std::string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+	Dfsm(const std::string & fsmName,
+         const int maxNodes,
+         const int maxInput,
+         const int maxOutput,
+         const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 
 	/**
 	Create a DFSM from a list of nodes
@@ -89,7 +102,11 @@ public:
 	\param lst The list of nodes of the DFSM
 	\param presentationLayer The presentation layer used by the DFSM
 	*/
-	Dfsm(const std::string & fsmName, const int maxInput, const int maxOutput, const std::vector<std::shared_ptr<FsmNode>> lst, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+	Dfsm(const std::string & fsmName,
+         const int maxInput,
+         const int maxOutput,
+         const std::vector<std::shared_ptr<FsmNode>> lst,
+         const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 
 	/**
 	Create a DFSM from the equivalent deterministic FSM
