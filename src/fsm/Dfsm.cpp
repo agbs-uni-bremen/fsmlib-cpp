@@ -197,12 +197,13 @@ IOTrace Dfsm::applyDet(const InputTrace & i)
 	for (int input : i.get())
 	{
 		currentNode = currentNode->apply(input, o);
-		++ k;
+		++k;
 	}
 
 	if (currentNode == nullptr && k == 1)
 	{
-		return IOTrace(InputTrace(presentationLayer), OutputTrace(presentationLayer));
+		return IOTrace(InputTrace(presentationLayer),
+                       OutputTrace(presentationLayer));
 	}
 
 	if (currentNode == nullptr)
@@ -212,9 +213,11 @@ IOTrace Dfsm::applyDet(const InputTrace & i)
 
 		auto ofirst = o.get().cbegin();
 		auto olast = ofirst + k - 2;
-		return IOTrace(InputTrace(std::vector<int>(ifirst, ilast), presentationLayer), OutputTrace(std::vector<int>(ofirst, olast), presentationLayer));
+		return IOTrace(InputTrace(std::vector<int>(ifirst, ilast), presentationLayer),
+                       OutputTrace(std::vector<int>(ofirst, olast), presentationLayer));
 	}
-	return IOTrace(InputTrace(i.get(), presentationLayer), OutputTrace(o.get(), presentationLayer));
+	return IOTrace(InputTrace(i.get(), presentationLayer),
+                   OutputTrace(o.get(), presentationLayer));
 }
 
 bool Dfsm::pass(const IOTrace & io)
