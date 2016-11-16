@@ -115,7 +115,6 @@ public:
 	/**
 	Constructor for creating an FSM from a list of FsmNodes that have
      been created beforehand, together with the outgoing transitions of each FsmNode/.
-	\param fname	Filename where FSM specification resides in
 	\param fsmName  name of the FSM (appears in every node)
 	\param maxInput maximal value of the (integer) input alphabet - admissible
 	values are 0..maxInput
