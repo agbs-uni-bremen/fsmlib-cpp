@@ -24,7 +24,7 @@ void test1() {
     inp.push_back(2);
     inp.push_back(1);
     inp.push_back(2);
-    inp.push_back(2);
+    inp.push_back(1);
 
 
     InputTrace i(inp,pl);

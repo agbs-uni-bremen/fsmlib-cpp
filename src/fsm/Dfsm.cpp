@@ -194,14 +194,16 @@ IOTrace Dfsm::applyDet(const InputTrace & i)
 
 	std::shared_ptr<FsmNode> currentNode = nodes.at(initStateIdx);
     
-	size_t k = 0;
-    for ( ; k < i.get().size() && currentNode != nullptr; k++ ) {
-        currentNode = currentNode->apply(i.get().at(k), o);
+    // Apply input trace to FSM, as far as possible
+    for ( int input : i.get() ) {
+        if ( currentNode == nullptr ) break;
+        currentNode = currentNode->apply(input, o);
     }
 
     // Handle the case where the very first input is not accpeted
-    // by the incomplete DFSM: we return an empty IOTrace
-	if (currentNode == nullptr && k == 1)
+    // by the incomplete DFSM, or even the initial node does not exist:
+    // we return an empty IOTrace
+	if (currentNode == nullptr && o.get().empty())
 	{
 		return IOTrace(InputTrace(presentationLayer),
                        OutputTrace(presentationLayer));
@@ -214,24 +216,27 @@ IOTrace Dfsm::applyDet(const InputTrace & i)
 	if (currentNode == nullptr)
 	{
         
-#if 0
-        std::vector<int> iShrunk(i.get().cbegin(),i.get().cbegin()+o.get().size());
-        std::cout << "iShrunk.size() = " << iShrunk.size() << std::endl;
-#endif
+        // Constant iterator to start of input trace.
+        auto ifirst = i.cbegin();
+        // Iterator pointing BEHIND the last input applied
+        // @note The number of inputs processed so far equals o.size()
+        auto ilast = ifirst + o.get().size();
         
-        std::vector<int> iShrunk;
-        for ( size_t k = 0; k < o.get().size(); k++ ) {
-            iShrunk.push_back(i.get().at(k));
-        }
+        // Constant iterator to start of output trace.
+        auto ofirst = o.cbegin();
+        // Iterator pointing BEHIND last obtained output.
+        auto olast = ofirst + o.get().size();
         
-        return IOTrace(InputTrace(iShrunk,presentationLayer),
-                       OutputTrace(o.get(),presentationLayer));
+        return IOTrace(InputTrace(std::vector<int>(ifirst, ilast), presentationLayer),
+                       OutputTrace(std::vector<int>(ofirst, olast), presentationLayer));
+        
 	}
     
     // The full input trace has been processed by the DFSM.
     // The associated outputs are contained in o.
 	return IOTrace(InputTrace(i.get(), presentationLayer),
                    OutputTrace(o.get(), presentationLayer));
+    
 }
 
 bool Dfsm::pass(const IOTrace & io)
