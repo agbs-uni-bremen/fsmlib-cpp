@@ -223,7 +223,7 @@ public:
      \note As a side effect, the state identification sets W_i
      are stored in the list stateIdentificationSets.
      */
-    IOListContainer getCaracterisationSet();
+    IOListContainer getCharacterisationSet();
     
     /**
      * Calculate the state identification sets. The sets are stored

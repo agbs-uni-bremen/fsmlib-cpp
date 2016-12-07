@@ -662,7 +662,7 @@ void Fsm::minimiseCharSet(const std::shared_ptr<Tree> w)
 	}
 }
 
-IOListContainer Fsm::getCaracterisationSet()
+IOListContainer Fsm::getCharacterisationSet()
 {
 	if (!isObservable())
 	{
@@ -868,7 +868,7 @@ IOListContainer Fsm::wpMethod(const int m)
 	std::shared_ptr<Tree> r = tcov;
 	std::cout << "R: " << r->getTestCases() << std::endl;
 
-	IOListContainer w = getCaracterisationSet();
+	IOListContainer w = getCharacterisationSet();
 	std::cout << "Characterisation set: " << w << std::endl;
 
 	calcStateIdentificationSets();
