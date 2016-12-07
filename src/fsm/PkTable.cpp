@@ -39,7 +39,7 @@ int PkTable::getClass(const int n) const
 int PkTable::maxClassId() const
 {
 	int id = 0;
-	for (unsigned int i = 0; i < s2c.size(); ++ i)
+	for (unsigned int i = 0; i < s2c.size(); ++i)
 	{
 		if (s2c.at(i) > id)
 		{
@@ -62,7 +62,7 @@ std::shared_ptr<PkTable> PkTable::getPkPlusOneTable() const
 	do
 	{
 		refRow = nullptr;
-		for (unsigned int i = 0; i < rows.size(); ++ i)
+		for (unsigned int i = 0; i < rows.size(); ++i)
 		{
 			if (s2c.at(i) != thisClass)
 			{
@@ -115,7 +115,7 @@ Dfsm PkTable::toFsm(std::string name)
 	std::vector<std::shared_ptr<FsmNode>> nodeLst;
 
 	/*Create the FSM states, one for each class*/
-	for (int i = 0; i <= maxClassId(); ++ i)
+	for (int i = 0; i <= maxClassId(); ++i)
 	{
 		std::shared_ptr<FsmNode> newNode = std::make_shared<FsmNode>(i, minFsmName + "\n" + getMembers(i), presentationLayer);
 		nodeLst.push_back(newNode);
@@ -127,7 +127,7 @@ Dfsm PkTable::toFsm(std::string name)
 		int classId = srcNode->getId();
 		std::shared_ptr<PkTableRow> row = nullptr;
 
-		for (unsigned int i = 0; i < rows.size() && row == nullptr; ++ i)
+		for (unsigned int i = 0; i < rows.size() && row == nullptr; ++i)
 		{
 			if (classId == s2c.at(i))
 			{
@@ -162,7 +162,7 @@ std::string PkTable::getMembers(const int c) const
 {
 	std::string memSet = "{";
 	bool first = true;
-	for (unsigned int i = 0; i < rows.size(); ++ i)
+	for (unsigned int i = 0; i < rows.size(); ++i)
 	{
 		if (s2c.at(i) != c)
 		{
@@ -178,4 +178,54 @@ std::string PkTable::getMembers(const int c) const
 	}
 	memSet += "}";
 	return memSet;
+}
+
+
+
+std::ostream & operator<<(std::ostream & out, const PkTable & pkTable)
+{
+    
+    // Create the table header
+    out << std::endl << "\\begin{center}" << std::endl << "\\begin{tabular}{|c|c||";
+    for (int i = 0; i <= pkTable.maxInput; ++i)
+    {
+        out << "c|";
+    }
+    out << "|";
+    
+    for (int i = 0; i <= pkTable.maxInput; ++i)
+    {
+        out << "c|";
+    }
+    
+    out << "}\\hline\\hline" << std::endl;
+    out << " & & \\multicolumn{" << pkTable.maxInput + 1;
+    out << "}{|c||}{\\bf I2O} & \\multicolumn{" << pkTable.maxInput + 1;
+    out << "}{|c|}{\\bf I2P}" << std::endl << "\\\\\\hline" << std::endl;
+    out << "{\\bf [q]} & {\\bf q} ";
+    
+    for (int i = 0; i <= pkTable.maxInput; ++i)
+    {
+        out << " & " << i;
+    }
+    for (int i = 0; i <= pkTable.maxInput; ++i)
+    {
+        out << " & " << i;
+    }
+    out << "\\\\\\hline\\hline" << std::endl;
+    
+    
+    // Output each table row
+    for (unsigned int i = 0; i < pkTable.rows.size(); ++i)
+    {
+        if (pkTable.rows.at(i) == nullptr)
+        {
+            continue;
+        }
+        out << pkTable.s2c.at(i)  << " & " << i << " " << *pkTable.rows.at(i);
+    }
+    
+    // Create the table footer
+    out << "\\hline" << std::endl << "\\end{tabular}" << std::endl << "\\end {center}" << std::endl << std::endl;
+    return out;
 }

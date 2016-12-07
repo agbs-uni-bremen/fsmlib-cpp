@@ -116,12 +116,15 @@ Dfsm::Dfsm(const Fsm & fsm)
 Dfsm Dfsm::minimise()
 {
 	dfsmTable = toDFSMTable();
+ 
 	pktblLst.clear();
 	std::shared_ptr<PkTable> p1 = dfsmTable->getP1Table();
 	pktblLst.push_back(p1);
 	std::shared_ptr<PkTable> pMin = p1;
-
-	for (std::shared_ptr<PkTable> pk = p1->getPkPlusOneTable(); pk != nullptr; pk->getPkPlusOneTable())
+    
+	for (std::shared_ptr<PkTable> pk = p1->getPkPlusOneTable();
+         pk != nullptr;
+         pk = pk->getPkPlusOneTable())
 	{
 		pMin = pk;
 		pktblLst.push_back(pk);
@@ -190,7 +193,7 @@ IOListContainer Dfsm::getCharacterisationSet()
 		}
 	}
 
-	/*Wrap list of lists by an IOListContainer instance*/
+	/* Wrap list of lists by an IOListContainer instance */
 	IOListContainer tcl = w->getIOLists();
 	return tcl;
 }
@@ -252,8 +255,20 @@ bool Dfsm::pass(const IOTrace & io)
 	return myIO.getOutputTrace() == io.getOutputTrace();
 }
 
-IOListContainer Dfsm::wMethod(const unsigned int m)
+
+
+IOListContainer Dfsm::wMethod(const unsigned int m) {
+    
+    Dfsm dfsmMin = minimise();
+    return dfsmMin.wMethodOnMinimisedDfsm(m);
+    
+}
+
+
+IOListContainer Dfsm::wMethodOnMinimisedDfsm(const unsigned int m)
 {
+    
+    
 	if (m < nodes.size())
 	{
 		std::cout << "Illegal value " << m << " of m. Must be greater or equal " << nodes.size() << std::endl;

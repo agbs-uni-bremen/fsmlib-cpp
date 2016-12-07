@@ -29,7 +29,7 @@ int PkTableRow::get(const int x) const
 
 bool operator==(PkTableRow const & row, S2CMap const & s2c)
 {
-	for (unsigned int i = 0; i < row.i2p.size(); ++ i)
+	for (unsigned int i = 0; i < row.i2p.size(); ++i)
 	{
 		if (s2c.at(row.i2p.at(i)) != s2c.at(row.get(i)))
 		{
@@ -41,10 +41,17 @@ bool operator==(PkTableRow const & row, S2CMap const & s2c)
 
 std::ostream & operator<<(std::ostream & out, const PkTableRow & pkTableRow)
 {
-	for (unsigned int i = 0; i < pkTableRow.i2p.size(); ++ i)
+    
+    for (unsigned int i = 0; i < pkTableRow.io.size(); ++i)
+    {
+        out << " & " << pkTableRow.io.at(i);
+    }
+    
+	for (unsigned int i = 0; i < pkTableRow.i2p.size(); ++i)
 	{
 		out << " & " << pkTableRow.get(i);
 	}
 	out << "\\\\\\hline" << std::endl;
 	return out;
+    
 }

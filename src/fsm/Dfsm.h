@@ -41,6 +41,11 @@ private:
 	*/
 	std::shared_ptr<DFSMTable> toDFSMTable() const;
     
+    /** 
+     *  Apply the W-Method on a DFSM that is already minimised
+     */
+    IOListContainer wMethodOnMinimisedDfsm(const unsigned int m);
+    
     
 public:
 	/**
@@ -155,24 +160,26 @@ public:
 	*/
 	bool pass(const IOTrace & io);
 
-	/**
-	Perform test generation by means of the W Method.
-	\param m Maximum number of states
-	\return A test suite
+   /**
+	* Perform test generation by means of the W-Method.
+    * The DFSM will first be minimised, and then the
+    * proper W-Method is applied to the minimised DFSM.
+	* \param m Maximum number of states
+	* \return A test suite
 	*/
 	IOListContainer wMethod(const unsigned int m);
 
 
 	/**
-	Perform test generation by means of the Wp Method. The algorithm
-	we have implemented is applicable to both nondeterministic and
-	deterministic FSMs. It relies, however, on the existence of
-	OFSM tables which we only calculate for nondeterministic FSMs.
-	Therefore we need a wrapper method for DFSMs which first
-	calculates OFSM tables (by means of a call to minimiseObervableFSM())
-	and then calls the wpMethod() operation of the super class Fsm.
-	\param m Maximum number of states
-	\return A test suite
+	* Perform test generation by means of the Wp Method. The algorithm
+	* we have implemented is applicable to both nondeterministic and
+	* deterministic FSMs. It relies, however, on the existence of
+	* OFSM tables which we only calculate for nondeterministic FSMs.
+	* Therefore we need a wrapper method for DFSMs which first
+	* calculates OFSM tables (by means of a call to minimiseObervableFSM())
+	* and then calls the wpMethod() operation of the super class Fsm.
+	* \param m Maximum number of states
+	* \return A test suite
 	*/
 	IOListContainer wpMethod(const int m);
     
