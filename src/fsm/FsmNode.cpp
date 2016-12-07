@@ -197,8 +197,8 @@ std::shared_ptr<DFSMTableRow> FsmNode::getDFSMTableRow(const int maxInput)
 {
 	std::shared_ptr<DFSMTableRow> r = std::make_shared<DFSMTableRow>(id, maxInput);
 
-	IOMap io = r->getioSection();
-	I2PMap i2p = r->geti2postSection();
+	IOMap& io = r->getioSection();
+	I2PMap& i2p = r->geti2postSection();
 
 	for (FsmTransition tr : transitions)
 	{
@@ -213,8 +213,8 @@ std::shared_ptr<DFSMTableRow> FsmNode::getDFSMTableRow(const int maxInput)
 			return nullptr;
 		}
 
-		io [x] = tr.getLabel().getOutput();//insertion
-		i2p [x] = tr.getTarget()->getId();//insertion
+		io[x] = tr.getLabel().getOutput();
+		i2p[x] = tr.getTarget()->getId();
 	}
 	return r;
 }

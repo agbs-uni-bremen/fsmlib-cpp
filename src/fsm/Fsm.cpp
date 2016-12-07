@@ -834,6 +834,12 @@ void Fsm::appendStateIdentificationSets(const std::shared_ptr<Tree> Wp2) const
 	}
 }
 
+
+IOListContainer Fsm::wMethod(const unsigned int m) {
+    return IOListContainer(nullptr,nullptr);
+}
+
+
 IOListContainer Fsm::wpMethod(const int m)
 {
 	int mMinusN = static_cast<int> (m - nodes.size());

@@ -23,7 +23,7 @@ private:
 	/**
 	For each state, one DFSM table row is created
 	*/
-	std::vector<std::shared_ptr<DFSMTableRow>> rows;
+	std::vector< std::shared_ptr<DFSMTableRow> > rows;
 
 	/**
 	Maximal value of the input alphabet in range 0..maxInput

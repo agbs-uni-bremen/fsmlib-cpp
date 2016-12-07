@@ -8,7 +8,9 @@
 #include "fsm/PkTable.h"
 #include "fsm/PkTableRow.h"
 
-DFSMTable::DFSMTable(const int numStates, const int maxInput, std::shared_ptr<FsmPresentationLayer> presentationLayer)
+DFSMTable::DFSMTable(const int numStates,
+                     const int maxInput,
+                     std::shared_ptr<FsmPresentationLayer> presentationLayer)
 	: maxInput(maxInput), presentationLayer(presentationLayer)
 {
 	rows.insert(rows.end(), numStates, nullptr);
@@ -21,13 +23,16 @@ void DFSMTable::setRow(const int n, const std::shared_ptr<DFSMTableRow> r)
 
 std::shared_ptr<PkTable> DFSMTable::getP1Table() const
 {
-	std::shared_ptr<PkTable> p1 = std::make_shared<PkTable>(rows.size(), maxInput, presentationLayer);
+	std::shared_ptr<PkTable> p1 =
+         std::make_shared<PkTable>(rows.size(), maxInput, presentationLayer);
 
 	int thisClass = 0;
 
 	for (unsigned int i = 0; i < rows.size(); ++ i)
 	{
-		p1->setRow(i, std::make_shared<PkTableRow>(rows.at(i)->getioSection(), rows.at(i)->geti2postSection()));
+		p1->setRow(i,
+                   std::make_shared<PkTableRow>(rows.at(i)->getioSection(),
+                                                rows.at(i)->geti2postSection()));
 
 		if (p1->getClass(i) >= 0)
 		{
@@ -56,6 +61,8 @@ std::shared_ptr<PkTable> DFSMTable::getP1Table() const
 
 std::ostream & operator<<(std::ostream & out, const DFSMTable & dfsmTable)
 {
+    
+    // Create the table header
 	out << std::endl << "\\begin{center}" << std::endl << "\\begin{tabular}{|c||";
 	for (int i = 0; i <= dfsmTable.maxInput; ++ i)
 	{
@@ -63,7 +70,7 @@ std::ostream & operator<<(std::ostream & out, const DFSMTable & dfsmTable)
 	}
 	out << "|";
 
-	for (int i = 0; i << dfsmTable.maxInput; ++ i)
+	for (int i = 0; i <= dfsmTable.maxInput; ++ i)
 	{
 		out << "c|";
 	}
@@ -84,14 +91,18 @@ std::ostream & operator<<(std::ostream & out, const DFSMTable & dfsmTable)
 	}
 	out << "\\\\\\hline\\hline" << std::endl;
 
+    
+    // Output each table row
 	for (unsigned int i = 0; i < dfsmTable.rows.size(); ++ i)
 	{
 		if (dfsmTable.rows.at(i) == nullptr)
 		{
 			continue;
 		}
-		out << dfsmTable.rows.at(i);
+        out << *dfsmTable.rows.at(i);
 	}
+    
+    // Create the table footer
 	out << "\\hline" << std::endl << "\\end{tabular}" << std::endl << "\\end {center}" << std::endl << std::endl;
 	return out;
 }

@@ -5,24 +5,19 @@
  */
 #include "fsm/PkTableRow.h"
 
-PkTableRow::PkTableRow(const int maxInput)
-	: io(maxInput), i2p(maxInput)
-{
 
-}
-
-PkTableRow::PkTableRow(const IOMap & io, const I2PMap & i2p)
+PkTableRow::PkTableRow(IOMap& io,I2PMap& i2p)
 	: io(io), i2p(i2p)
 {
 
 }
 
-IOMap PkTableRow::getIOMap() const
+IOMap& PkTableRow::getIOMap()
 {
 	return io;
 }
 
-I2PMap PkTableRow::getI2PMap() const
+I2PMap& PkTableRow::getI2PMap()
 {
 	return i2p;
 }

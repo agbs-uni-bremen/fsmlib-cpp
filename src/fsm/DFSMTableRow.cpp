@@ -11,12 +11,12 @@ DFSMTableRow::DFSMTableRow(const int q, const int maxInput)
 
 }
 
-IOMap DFSMTableRow::getioSection() const
+IOMap& DFSMTableRow::getioSection()
 {
 	return ioSection;
 }
 
-I2PMap DFSMTableRow::geti2postSection() const
+I2PMap& DFSMTableRow::geti2postSection()
 {
 	return i2postSection;
 }

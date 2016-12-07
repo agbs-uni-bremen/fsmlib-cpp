@@ -41,7 +41,8 @@ void Dfsm::createAtRandom()
 
 std::shared_ptr<DFSMTable> Dfsm::toDFSMTable() const
 {
-	std::shared_ptr<DFSMTable> tbl = std::make_shared<DFSMTable>(nodes.size(), maxInput, presentationLayer);
+	std::shared_ptr<DFSMTable> tbl
+          = std::make_shared<DFSMTable>(nodes.size(), maxInput, presentationLayer);
 
 	for (unsigned int i = 0; i < nodes.size(); ++ i)
 	{
@@ -57,7 +58,11 @@ std::shared_ptr<DFSMTable> Dfsm::toDFSMTable() const
 			return nullptr;
 		}
 		tbl->setRow(i, r);
+        
+        
+        
 	}
+    
 	return tbl;
 }
 
@@ -148,7 +153,9 @@ IOListContainer Dfsm::getCharacterisationSet()
 	std::shared_ptr<PkTable> p1 = dfsmTable->getP1Table();
 	pktblLst.push_back(p1);
 
-	for (std::shared_ptr<PkTable> pk = p1->getPkPlusOneTable(); pk != nullptr; pk = pk->getPkPlusOneTable())
+	for (std::shared_ptr<PkTable> pk = p1->getPkPlusOneTable();
+         pk != nullptr;
+         pk = pk->getPkPlusOneTable())
 	{
 		pktblLst.push_back(pk);
 	}
@@ -260,7 +267,10 @@ IOListContainer Dfsm::wMethod(const unsigned int m)
 
 	if (m > nodes.size())
 	{
-		IOListContainer inputEnum = IOListContainer(maxInput, 1, m - static_cast<int> (nodes.size()), presentationLayer);
+		IOListContainer inputEnum = IOListContainer(maxInput,
+                                                    1,
+                                                    m - static_cast<int> (nodes.size()),
+                                                    presentationLayer);
 		iTree->add(inputEnum);
 	}
 

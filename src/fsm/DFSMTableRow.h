@@ -43,13 +43,13 @@ public:
 	Getter for the input/output section
 	\return The input/output section
 	*/
-	IOMap getioSection() const;
+    IOMap& getioSection();
 
 	/**
 	Getter for the input/post section
 	\return The input/post section
 	*/
-	I2PMap geti2postSection() const;
+	I2PMap& geti2postSection();
 
 	/**
 	Output the DFSMTableRow to a standard output stream

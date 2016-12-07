@@ -1596,3 +1596,5 @@ build.MacOSX/window/X2_state_cover.dot
 build.MacOSX/window/X2_state_cover.png
 build.MacOSX/window/X2_transition_cover.dot
 build.MacOSX/window/X2_transition_cover.png
+build.Debug.MacOSX/CMakeFiles/Progress/2
+build.Debug.MacOSX/CMakeFiles/Progress/count.txt

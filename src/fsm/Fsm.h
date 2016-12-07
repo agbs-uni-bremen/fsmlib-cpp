@@ -235,6 +235,15 @@ public:
 	void calcStateIdentificationSets();
 	void appendStateIdentificationSets(const std::shared_ptr<Tree> Wp2) const;
 
+    /**
+     Perform test generation by means of the W Method, as applicable
+     to nondeterministc FSMs that do not need to be completely specified.
+     \param m Maximum number of states in the observable, minimised FSM
+     reflecting the implementation behaviour.
+     \return A test suite
+     */
+    IOListContainer wMethod(const unsigned int m);
+    
 	/**
 	Perform test generation by means of the Wp Method. The algorithm
 	we have implemented is applicable to both nondeterministic and

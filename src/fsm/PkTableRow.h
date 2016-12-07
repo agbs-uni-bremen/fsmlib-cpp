@@ -13,26 +13,21 @@
 class PkTableRow
 {
 private:
-	//TODO
-	IOMap io;
+    // Pointer to I2O map (originating from the DFSM table)
+    IOMap& io;
 
-	//TODO
-	I2PMap i2p;
+	// Pointer to I2P map
+	I2PMap& i2p;
 public:
-	/**
-	Create a PkTableRow
-	\param maxInput Maximal value of the input alphabet
-	*/
-	PkTableRow(const int maxInput);
 
 	//TODO
-	PkTableRow(const IOMap & io, const I2PMap & i2p);
+	PkTableRow(IOMap& io, I2PMap& i2p);
 
 	//TODO
-	IOMap getIOMap() const;
+	IOMap& getIOMap();
 
 	//TODO
-	I2PMap getI2PMap() const;
+	I2PMap& getI2PMap();
 
 	//TODO
 	int get(const int x) const;
