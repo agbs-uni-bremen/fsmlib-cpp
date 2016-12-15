@@ -17,10 +17,20 @@ std::shared_ptr<FsmNode> FsmTransition::getSource() const
 	return source.lock();
 }
 
+void FsmTransition::setSource(std::shared_ptr<FsmNode> src) {
+    source = src;
+}
+
 std::shared_ptr<FsmNode> FsmTransition::getTarget() const
 {
 	return target.lock();
 }
+
+void FsmTransition::setTarget(std::shared_ptr<FsmNode> tgt) {
+    target = tgt;
+}
+
+
 
 FsmLabel FsmTransition::getLabel() const
 {

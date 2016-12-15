@@ -40,7 +40,14 @@ public:
 	const static int black = 2;
 	FsmNode(const int id, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 	FsmNode(const int id, const std::string & name, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    
+    /**
+     * Add a transition to the node. If another transition with the same label and
+     * the same target node already exists, the new transition is silently ignored.
+     */
 	void addTransition(const FsmTransition & transition);
+    
+    
 	std::vector<FsmTransition> getTransitions() const;
 	int getId() const;
 	std::string getName() const;
@@ -56,8 +63,8 @@ public:
 	/**
 	Return the set of FsmNode instances reachable from this node after
 	having applied the input trace itrc
-	\param itrc Input Trace to be applied to the FSM, starting with this FsmNode
-	\return Set of FsmNode instances reachable from this node via
+	@param itrc Input Trace to be applied to the FSM, starting with this FsmNode
+	@return Set of FsmNode instances reachable from this node via
 	input trace itrc.
 	*/
 	std::unordered_set<std::shared_ptr<FsmNode>> after(const InputTrace & itrc);
@@ -66,8 +73,8 @@ public:
 	Return list of nodes that can be reached from this node
 	when applying input x
 
-	\param x FSM input, to be applied in this node
-	\return empty list, if no transition is defined from this node
+	@param x FSM input, to be applied in this node
+	@return empty list, if no transition is defined from this node
 	with input x
 	list of target nodes reachable from this node under input x
 	otherwise.
@@ -83,30 +90,34 @@ public:
 	/**
 	Calculate a distinguishing input trace for a DFSM node. The algorithm is based
 	on Pk-tables
-	\param otherNode The other FSM state, to be distinguished from this FSM state
-	\param pktblLst  List of Pk-tables, pre-calculated for this DFSM
-	\param maxInput  Maximal value of the input alphabet with range 0..maxInput
-	\return Distinguishing trace as instance of InputTrace
+	@param otherNode The other FSM state, to be distinguished from this FSM state
+	@param pktblLst  List of Pk-tables, pre-calculated for this DFSM
+	@param maxInput  Maximal value of the input alphabet with range 0..maxInput
+	@return Distinguishing trace as instance of InputTrace
 	*/
 	InputTrace calcDistinguishingTrace(const std::shared_ptr<FsmNode> otherNode, const std::vector<std::shared_ptr<PkTable>>& pktblLst, const int maxInput);
 
 	/**
 	Calculate a distinguishing input trace for a (potentially nondeterministic)
 	FSM node. The algorithm is based on OFSM-tables
-	\param otherNode The other FSM state, to be distinguished from this FSM state
-	\param ofsmTblLst  List of OFSM-tables, pre-calculated for this FSM
-	\param maxInput  Maximal value of the input alphabet with range 0..maxInput
-	\param maxOutput Maximal value of the output alphabet in range 0..maxOutput
-	\return Distinguishing trace as instance of InputTrace
+	@param otherNode The other FSM state, to be distinguished from this FSM state
+	@param ofsmTblLst  List of OFSM-tables, pre-calculated for this FSM
+	@param maxInput  Maximal value of the input alphabet with range 0..maxInput
+	@param maxOutput Maximal value of the output alphabet in range 0..maxOutput
+	@return Distinguishing trace as instance of InputTrace
 	*/
 	InputTrace calcDistinguishingTrace(const std::shared_ptr<FsmNode> otherNode, const std::vector<std::shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput);
 	bool isObservable() const;
 
 	/**
-	Check if outgoing transitions of this node are deterministic
-	*/
+	 * Check if outgoing transitions of this node are deterministic
+	 */
 	bool isDeterministic() const;
+    
+    /** Put node information in dot format into the stream */
 	friend std::ostream & operator<<(std::ostream & out, const FsmNode & node);
+    
+    
 	friend bool operator==(FsmNode const & node1, FsmNode const & node2);
 };
 #endif //FSM_FSM_FSMNODE_H_

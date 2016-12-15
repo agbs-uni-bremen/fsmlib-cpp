@@ -5,10 +5,18 @@
  */
 #include "fsm/FsmLabel.h"
 
-FsmLabel::FsmLabel(const int input, const int output, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+FsmLabel::FsmLabel(const int input,
+                   const int output,
+                   const std::shared_ptr<FsmPresentationLayer> presentationLayer)
 	: input(input), output(output), presentationLayer(presentationLayer)
 {
 
+}
+
+FsmLabel::FsmLabel(const FsmLabel& other) :
+   input(other.input), output(other.output), presentationLayer(other.presentationLayer)
+{
+    
 }
 
 int FsmLabel::getInput() const

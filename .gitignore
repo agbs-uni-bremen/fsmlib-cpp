@@ -1598,3 +1598,11 @@ build.MacOSX/window/X2_transition_cover.dot
 build.MacOSX/window/X2_transition_cover.png
 build.Debug.MacOSX/CMakeFiles/Progress/2
 build.Debug.MacOSX/CMakeFiles/Progress/count.txt
+build.Debug.MacOSX/main/M1.dot.dot
+build.Debug.MacOSX/main/M2.dot
+build.Debug.MacOSX/main/M2.fsm
+main copy.cpp
+build.Debug.MacOSX/main/F.dot
+build.Debug.MacOSX/main/FM.dot
+build.Debug.MacOSX/main/FO.dot
+build.Debug.MacOSX/main/MUT.dot

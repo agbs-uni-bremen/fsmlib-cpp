@@ -39,21 +39,33 @@ protected:
      */
     Fsm(const std::shared_ptr<FsmPresentationLayer> presentationLayer);
     
-    
-    
-    
+    /** Name of the FSM -- appears in nodes when printing the FSM as a dot graph */
     std::string name;
+    
+    /** FSM states */
     std::vector<std::shared_ptr<FsmNode>> nodes;
+    
     std::shared_ptr<FsmNode> currentParsedNode;
+    
+    /** Maximal value of the input alphabet in range 0..maxInput */
     int maxInput;
+    
+    /** Maximal value of the output alphabet in range 0..maxOutput */
     int maxOutput;
+    
+    /** Maximal value of the state id in range 0..maxState */
     int maxState;
+    
+    /** Integer id of the initial state */
     int initStateIdx;
-    std::vector<std::shared_ptr<OFSMTable>> ofsmTableLst;
+    
     std::shared_ptr<Tree> characterisationSet;
+    Minimal minimal;
+
+    
+    std::vector<std::shared_ptr<OFSMTable>> ofsmTableLst;
     std::vector<std::shared_ptr<Tree>> stateIdentificationSets;
     std::shared_ptr<FsmPresentationLayer> presentationLayer;
-    Minimal minimal;
     std::shared_ptr<FsmNode> newNode(const int id, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p);
     bool contains(const std::vector<std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>>& lst, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p);
     bool contains(const std::vector<std::shared_ptr<FsmNode>>& lst, const std::shared_ptr<FsmNode> n);
@@ -68,6 +80,13 @@ protected:
     std::string labelString(std::unordered_set<std::shared_ptr<FsmNode>>& lbl) const;
 public:
     
+    
+    /** Copy constructor
+     *  A deep copy is created, so that the new Fsm does not
+     *  point to any nodes, transitions, or labels of the old FSM
+     */
+    Fsm(const Fsm& other);
+    
     /**
      *  Constructor creating an FSM from file - used only internally
      */
@@ -80,7 +99,7 @@ public:
     
     /**
      *  Constructor creating an FSM specified in a file.
-     *  \param fname Filename of a text file (typically with extension *.fsm),
+     *  @param fname Filename of a text file (typically with extension *.fsm),
      *  where each row is formatted as
      *       pre-state input output post-state
      * \item pre-state is a number in range 0..(number of states -1) specifying
@@ -94,13 +113,13 @@ public:
      * The parameters 'number of states', maxInput, and maxOutput are
      * determined when parsing the input file fname.
      *
-     * \param presentationLayer Pointer to instance of a presentation layer
+     * @param presentationLayer Pointer to instance of a presentation layer
      *        which associates each input number in range 0..maxInput with
      *        an input name, each output number in range 0..maxOutput with
      *        an output name, and each state number in range 0..(number of states -1)
      *        with a state name.
      *
-     * \param fsmName name of the FSM
+     * @param fsmName name of the FSM
      *
      */
     Fsm(const std::string& fname,
@@ -108,17 +127,13 @@ public:
         const std::string& fsmName);
     
     
-    
-    
-    
-    
     /**
      Constructor for creating an FSM from a list of FsmNodes that have
      been created beforehand, together with the outgoing transitions of each FsmNode/.
-     \param fsmName  name of the FSM (appears in every node)
-     \param maxInput maximal value of the (integer) input alphabet - admissible
+     @param fsmName  name of the FSM (appears in every node)
+     @param maxInput maximal value of the (integer) input alphabet - admissible
      values are 0..maxInput
-     \param maxOutput maximal value of (integer) output alphabet - admissible
+     @param maxOutput maximal value of (integer) output alphabet - admissible
      values are 0..maxOutput
      */
     Fsm(const std::string & fsmName,
@@ -128,6 +143,34 @@ public:
         const std::shared_ptr<FsmPresentationLayer> presentationLayer);
     
     
+    /**
+     *  Create a completely specified FSM at random
+     *   @param fsmName Name of the FSM to be created
+     *   @param maxInput Maximal value of the input alphabet, ranging from
+     *                   0 to maxInput
+     *   @param maxOutput Maximal value of the output alphabet in range 0..maxOutput
+     *   @param maxState  Maximal value of the states in range 0..maxState
+     *   @return an FSM created at random according to these specifications.
+     */
+    static std::shared_ptr<Fsm>
+    createRandomFsm(const std::string & fsmName,
+                    const int maxInput,
+                    const int maxOutput,
+                    const int maxState,
+                    const std::shared_ptr<FsmPresentationLayer>
+                    presentationLayer);
+    
+    
+    /**
+     *  Create a mutant of the FSM, producing output faults
+     *  and/or transition faults only.
+     *
+     *  The number of states remains the same. If FSM is completely
+     *  specified, the same will hold for the mutant.
+     */
+    std::shared_ptr<Fsm> createMutant(const std::string & fsmName,
+                                      const size_t numOutputFaults,
+                                      const size_t numTransitionFaults);
     
     
     /**
@@ -147,22 +190,22 @@ public:
     
     /**
      This is the getter for the name of the FSM
-     \return Name of the FSM
+     @return Name of the FSM
      */
     std::string getName() const;
-    virtual int getMaxNodes() const;//TODO NOT PRESENT IN JAVA
-    int getMaxInput() const;//TODO NOT PRESENT IN JAVA
-    int getMaxOutput() const;//TODO NOT PRESENT IN JAVA
-    std::vector<std::shared_ptr<FsmNode>> getNodes() const;//TODO NOT PRESENT IN JAVA
-    std::shared_ptr<FsmPresentationLayer> getPresentationLayer() const;//TODO NOT PRESENT IN JAVA
-    int getInitStateIdx() const;//TODO NOT PRESENT IN JAVA
+    virtual int getMaxNodes() const;
+    int getMaxInput() const;
+    int getMaxOutput() const;
+    std::vector<std::shared_ptr<FsmNode>> getNodes() const;
+    std::shared_ptr<FsmPresentationLayer> getPresentationLayer() const;
+    int getInitStateIdx() const;
     void resetColor();
     void toDot(const std::string & fname);
     
     /**
      Create a new FSM that represents the intersection of this and the other FSM
-     \param f the other FSM
-     \return a new FSM which equals the intersection of this and f
+     @param f the other FSM
+     @return a new FSM which equals the intersection of this and f
      */
     Fsm intersect(const Fsm & f);
     
@@ -189,7 +232,7 @@ public:
     
     /**
      Check this FSM with respect to observability
-     \return true if and only if the FSM is observable
+     @return true if and only if the FSM is observable
      */
     bool isObservable() const;
     Minimal isMinimal() const;
@@ -197,7 +240,7 @@ public:
     /**
      Create the minimal observable FSM which is equivalent to this FSM.
      \pre This method can only be applied to an observable OFSM
-     \return minimal observable FSM which is equivalent to this FSM
+     @return minimal observable FSM which is equivalent to this FSM
      */
     Fsm minimiseObservableFSM();
     
@@ -205,7 +248,7 @@ public:
      Create the minimal observable FSM which is equivalent to this FSM.
      If this FSM is not observable, an observable equivalent is created
      first. The observable FSM is then minimised.
-     \return minimal observable FSM which is equivalent to this FSM
+     @return minimal observable FSM which is equivalent to this FSM
      */
     Fsm minimise();
     bool isCharSet(const std::shared_ptr<Tree> w) const;
@@ -218,7 +261,7 @@ public:
      of W, such that W_i distinguishes FSM state number i from every other
      FSM state.
      \pre The FSM must be observable and minimised
-     \return The characterisation set W, represented by an instance of
+     @return The characterisation set W, represented by an instance of
      IOListContainer
      \note As a side effect, the state identification sets W_i
      are stored in the list stateIdentificationSets.
@@ -238,13 +281,29 @@ public:
     /**
      * Perform test generation by means of the W Method, as applicable
      * to nondeterministc FSMs that do not need to be completely specified.
-     * \param m Maximum number of states in the observable, minimised FSM
-     * reflecting the implementation behaviour.
-     * \return A test suite
+     * @param m Maximum number of states in the observable, minimised FSM
+     * reflecting the implementation behaviour. The reference machine is
+     * first transformed into an observable minimised one. Then the
+     * W-Method is applied on the minimised machine, using wMethodOnMinimisedFsm().
      *
-     * \note This method is still under construction
+     * @return A test suite
+     *
      */
     IOListContainer wMethod(const unsigned int m);
+    
+    
+    /**
+     * Perform test generation by means of the W Method, as applicable
+     * to nondeterministc FSMs that do not need to be completely specified.
+     * @param m Maximum number of states in the observable, minimised FSM
+     * reflecting the implementation behaviour. It is assumed that the
+     * method is called on an observable, minimised FSM
+     *
+     * @return A test suite
+     *
+     */
+    IOListContainer wMethodOnMinimisedFsm(const unsigned int m);
+    
     
     /**
      * Perform test generation by means of the Wp Method. The algorithm
@@ -254,19 +313,49 @@ public:
      * Therefore we need a wrapper method for DFSMs which first
      * calculates OFSM tables (by means of a call to minimiseObervableFSM())
      * and then calls the wpMethod() operation of the super class Fsm.
-     * \param m Maximum number of states
-     * \return A test suite
+     * @param m Maximum number of states
+     * @return A test suite
      */
-    IOListContainer wpMethod(const int m);
+    IOListContainer wpMethod(const unsigned int m);
+    
+    
+    /**
+     *  Return a test suite from a collection of input test cases.
+     *  Typically, the IOListContainer has been created by some test
+     *  generation method such as the W-Method or the Wp-Method.
+     *
+     *  Method createTestSuite() executes these input sequences
+     *  agains the FSM the method is called on. A TestSuite
+     *  instance consists of a vector of OutputTrees. Each OutputTree
+     *  instance in the TestSuite contains a single input trace
+     *  and a tree whose edges specify the possible outputs resulting
+     *  from the input trace, when applied to this FSM.
+     *
+     *  Recall that the OutputTree is reduced to just an output list for
+     *  the given input trace, if the FSM is deterministic.
+     *
+     *  Recall further that two TestSuite instances can be compared
+     *  with respect to I/O-equivalence, using TestSuite method isEquivalentTo().
+     *  They can also be checked with respect to a reduction relationship
+     *  by using the isReductionOf() method defined for TestSuite instances.
+     */
     TestSuite createTestSuite(const IOListContainer & testCases);
+    
+    
+    /**
+     *  Return true if the FSM is completely specified.
+     *  This means that in every state, for every value
+     *  of the input alphabet, at least one outgoing transition
+     *  labelled by this input is specified.
+     */
     bool isCompletelyDefined() const;
     
     /**
      * Check if FSM is deterministic
-     * \return true if FSM is deterministic
+     * @return true if FSM is deterministic
      */
     bool isDeterministic() const;
-    void setPresentationLayer(const std::shared_ptr<FsmPresentationLayer> ppresentationLayer);//TODO NOT PRESENT IN JAVA
+    void setPresentationLayer(const std::shared_ptr<FsmPresentationLayer> ppresentationLayer);
     friend std::ostream & operator<<(std::ostream & out, const Fsm & fsm);
 };
 #endif //FSM_FSM_FSM_H_

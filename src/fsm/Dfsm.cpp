@@ -268,30 +268,21 @@ IOListContainer Dfsm::wMethod(const unsigned int m) {
 IOListContainer Dfsm::wMethodOnMinimisedDfsm(const unsigned int m)
 {
     
-    
-	if (m < nodes.size())
-	{
-		std::cout << "Illegal value " << m << " of m. Must be greater or equal " << nodes.size() << std::endl;
-		exit(EXIT_FAILURE);
-	}
+    unsigned int mMinusN = ( m > nodes.size() ) ? (m - nodes.size()) : 0;
 
 	std::shared_ptr<Tree> iTree = getTransitionCover();
 
-	std::cout << "Transition Cover = " << iTree->getIOLists() << std::endl;
-
-
-	if (m > nodes.size())
+	if (mMinusN > 0)
 	{
 		IOListContainer inputEnum = IOListContainer(maxInput,
                                                     1,
-                                                    m - static_cast<int> (nodes.size()),
+                                                    mMinusN,
                                                     presentationLayer);
 		iTree->add(inputEnum);
 	}
 
-	IOListContainer iolc = getCharacterisationSet();
-	std::cout << "Charset = " << iolc << std::endl;
-	iTree->add(iolc);
+	IOListContainer w = getCharacterisationSet();
+	iTree->add(w);
 	return iTree->getIOLists();
 }
 

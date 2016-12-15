@@ -17,13 +17,16 @@
 #include "trees/IOListContainer.h"
 #include "interface/FsmPresentationLayer.h"
 
-FsmNode::FsmNode(const int id, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+using namespace std;
+
+FsmNode::FsmNode(const int id, const shared_ptr<FsmPresentationLayer> presentationLayer)
 	: id(id), visited(false), color(white), presentationLayer(presentationLayer), derivedFromPair(nullptr)
 {
 
 }
 
-FsmNode::FsmNode(const int id, const std::string & name, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+FsmNode::FsmNode(const int id, const string & name,
+                 const shared_ptr<FsmPresentationLayer> presentationLayer)
 	: FsmNode(id, presentationLayer)
 {
 	this->name = name;
@@ -31,10 +34,21 @@ FsmNode::FsmNode(const int id, const std::string & name, const std::shared_ptr<F
 
 void FsmNode::addTransition(const FsmTransition & transition)
 {
+    
+    // Do not accept another transition with the same label and the
+    // the same target node
+    for ( auto tr : transitions ) {
+        if ( tr.getTarget()->getId() == transition.getTarget()->getId()
+             and
+            tr.getLabel() == transition.getLabel() ) {
+            return;
+        }
+    }
+    
 	transitions.push_back(transition);
 }
 
-std::vector<FsmTransition> FsmNode::getTransitions() const
+vector<FsmTransition> FsmNode::getTransitions() const
 {
 	return transitions;
 }
@@ -44,7 +58,7 @@ int FsmNode::getId() const
 	return id;
 }
 
-std::string FsmNode::getName() const
+string FsmNode::getName() const
 {
 	return presentationLayer->getStateId(id, name);
 }
@@ -59,27 +73,27 @@ void FsmNode::setVisited()
 	visited = true;
 }
 
-void FsmNode::setPair(const std::shared_ptr<FsmNode> l, const std::shared_ptr<FsmNode> r)
+void FsmNode::setPair(const shared_ptr<FsmNode> l, const shared_ptr<FsmNode> r)
 {
-	derivedFromPair = std::make_shared<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>(l, r);
+	derivedFromPair = make_shared<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>(l, r);
 }
 
-void FsmNode::setPair(const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p)
+void FsmNode::setPair(const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> p)
 {
 	derivedFromPair = p;
 }
 
-bool FsmNode::isDerivedFrom(const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p) const
+bool FsmNode::isDerivedFrom(const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> p) const
 {
 	return derivedFromPair != nullptr && *derivedFromPair == *p;
 }
 
-std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> FsmNode::getPair() const
+shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> FsmNode::getPair() const
 {
 	return derivedFromPair;
 }
 
-std::shared_ptr<FsmNode> FsmNode::apply(const int e, OutputTrace & o)
+shared_ptr<FsmNode> FsmNode::apply(const int e, OutputTrace & o)
 {
 	for (FsmTransition & tr : transitions)
 	{
@@ -94,10 +108,10 @@ std::shared_ptr<FsmNode> FsmNode::apply(const int e, OutputTrace & o)
 
 OutputTree FsmNode::apply(const InputTrace & itrc)
 {
-	std::vector<std::shared_ptr<TreeNode>> tnl;
-	std::unordered_map<std::shared_ptr<TreeNode>, std::shared_ptr<FsmNode>> t2f;
+	vector<shared_ptr<TreeNode>> tnl;
+	unordered_map<shared_ptr<TreeNode>, shared_ptr<FsmNode>> t2f;
 
-	std::shared_ptr<TreeNode> root = std::make_shared<TreeNode>();
+	shared_ptr<TreeNode> root = make_shared<TreeNode>();
 	OutputTree ot = OutputTree(root, itrc, presentationLayer);
 
 	if (itrc.get().size() == 0)
@@ -114,19 +128,19 @@ OutputTree FsmNode::apply(const InputTrace & itrc)
 
 		while (!tnl.empty())
 		{
-			std::shared_ptr<TreeNode> thisTreeNode = tnl.front();
+			shared_ptr<TreeNode> thisTreeNode = tnl.front();
 			tnl.erase(tnl.begin());
 
-			std::shared_ptr<FsmNode> thisState = t2f.at(thisTreeNode);
+			shared_ptr<FsmNode> thisState = t2f.at(thisTreeNode);
 
 			for (FsmTransition & tr : thisState->getTransitions())
 			{
 				if (tr.getLabel().getInput() == x)
 				{
 					int y = tr.getLabel().getOutput();
-					std::shared_ptr<FsmNode> tgtState = tr.getTarget();
-					std::shared_ptr<TreeNode> tgtNode = std::make_shared<TreeNode>();
-					std::shared_ptr<TreeEdge> te = std::make_shared<TreeEdge>(y, tgtNode);
+					shared_ptr<FsmNode> tgtState = tr.getTarget();
+					shared_ptr<TreeNode> tgtNode = make_shared<TreeNode>();
+					shared_ptr<TreeEdge> te = make_shared<TreeEdge>(y, tgtNode);
 					thisTreeNode->add(te);
 					t2f [tgtNode] = tgtState;//insertion
 				}
@@ -136,19 +150,19 @@ OutputTree FsmNode::apply(const InputTrace & itrc)
 	return ot;
 }
 
-std::unordered_set<std::shared_ptr<FsmNode>> FsmNode::after(const InputTrace & itrc)
+unordered_set<shared_ptr<FsmNode>> FsmNode::after(const InputTrace & itrc)
 {
-	std::unordered_set<std::shared_ptr<FsmNode>> nodeSet;
+	unordered_set<shared_ptr<FsmNode>> nodeSet;
 	nodeSet.insert(shared_from_this());
 
 	for (auto it = itrc.cbegin(); it != itrc.cend(); ++ it)
 	{
 		int x = *it;
-		std::unordered_set<std::shared_ptr<FsmNode>> newNodeSet;
+		unordered_set<shared_ptr<FsmNode>> newNodeSet;
 
-		for (std::shared_ptr<FsmNode> n : nodeSet)
+		for (shared_ptr<FsmNode> n : nodeSet)
 		{
-			std::unordered_set<std::shared_ptr<FsmNode>> ns = n->afterAsSet(x);
+			unordered_set<shared_ptr<FsmNode>> ns = n->afterAsSet(x);
 			newNodeSet.insert(ns.begin(), ns.end());
 		}
 		nodeSet = newNodeSet;
@@ -156,9 +170,9 @@ std::unordered_set<std::shared_ptr<FsmNode>> FsmNode::after(const InputTrace & i
 	return nodeSet;
 }
 
-std::vector<std::shared_ptr<FsmNode>> FsmNode::after(const int x)
+vector<shared_ptr<FsmNode>> FsmNode::after(const int x)
 {
-	std::vector<std::shared_ptr<FsmNode>> lst;
+	vector<shared_ptr<FsmNode>> lst;
 	for (FsmTransition & tr : transitions)
 	{
 		if (tr.getLabel().getInput() == x)
@@ -169,9 +183,9 @@ std::vector<std::shared_ptr<FsmNode>> FsmNode::after(const int x)
 	return lst;
 }
 
-std::unordered_set<std::shared_ptr<FsmNode>> FsmNode::afterAsSet(const int x)
+unordered_set<shared_ptr<FsmNode>> FsmNode::afterAsSet(const int x)
 {
-	std::unordered_set<std::shared_ptr<FsmNode>> lst;
+	unordered_set<shared_ptr<FsmNode>> lst;
 
 	for (FsmTransition & tr : transitions)
 	{
@@ -193,9 +207,9 @@ int FsmNode::getColor()
 	return color;
 }
 
-std::shared_ptr<DFSMTableRow> FsmNode::getDFSMTableRow(const int maxInput)
+shared_ptr<DFSMTableRow> FsmNode::getDFSMTableRow(const int maxInput)
 {
-	std::shared_ptr<DFSMTableRow> r = std::make_shared<DFSMTableRow>(id, maxInput);
+	shared_ptr<DFSMTableRow> r = make_shared<DFSMTableRow>(id, maxInput);
 
 	IOMap& io = r->getioSection();
 	I2PMap& i2p = r->geti2postSection();
@@ -209,7 +223,7 @@ std::shared_ptr<DFSMTableRow> FsmNode::getDFSMTableRow(const int maxInput)
 		by the same input. In this case we cannot calculate a  DFSMTableRow.*/
 		if (io.at(x) >= 0)
 		{
-			std::cout << "Cannot calculated DFSM table for nondeterministic FSM." << std::endl;
+			cout << "Cannot calculated DFSM table for nondeterministic FSM." << endl;
 			return nullptr;
 		}
 
@@ -219,7 +233,7 @@ std::shared_ptr<DFSMTableRow> FsmNode::getDFSMTableRow(const int maxInput)
 	return r;
 }
 
-bool FsmNode::distinguished(const std::shared_ptr<FsmNode> otherNode, const std::vector<int>& iLst)
+bool FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, const vector<int>& iLst)
 {
 	InputTrace itr = InputTrace(iLst, presentationLayer);
 	OutputTree ot1 = apply(itr);
@@ -227,22 +241,22 @@ bool FsmNode::distinguished(const std::shared_ptr<FsmNode> otherNode, const std:
 	return !(ot1 == ot2);
 }
 
-std::shared_ptr<InputTrace> FsmNode::distinguished(const std::shared_ptr<FsmNode> otherNode, std::shared_ptr<Tree> w)
+shared_ptr<InputTrace> FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, shared_ptr<Tree> w)
 {
 	IOListContainer iolc = w->getIOLists();
-	std::shared_ptr<std::vector<std::vector<int>>> inputLists = iolc.getIOLists();
+	shared_ptr<vector<vector<int>>> inputLists = iolc.getIOLists();
 
-	for (std::vector<int>& iLst : *inputLists)
+	for (vector<int>& iLst : *inputLists)
 	{
 		if (distinguished(otherNode, iLst))
 		{
-			return std::make_shared<InputTrace>(iLst, presentationLayer);
+			return make_shared<InputTrace>(iLst, presentationLayer);
 		}
 	}
 	return nullptr;
 }
 
-InputTrace FsmNode::calcDistinguishingTrace(const std::shared_ptr<FsmNode> otherNode, const std::vector<std::shared_ptr<PkTable>>& pktblLst, const int maxInput)
+InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode, const vector<shared_ptr<PkTable>>& pktblLst, const int maxInput)
 {
 	/*Determine the smallest l >= 1, such that this and otherNode are
 	distinguished by P_l, but not by P_(l-1).
@@ -252,21 +266,21 @@ InputTrace FsmNode::calcDistinguishingTrace(const std::shared_ptr<FsmNode> other
 	{
 		/*Two nodes are distinguished by a Pk-table, if they
 		reside in different Pk-table classes.*/
-		std::shared_ptr<PkTable> pk = pktblLst.at(l - 1);
+		shared_ptr<PkTable> pk = pktblLst.at(l - 1);
 		if (pk->getClass(this->getId()) != pk->getClass(otherNode->getId()))
 		{
 			break;
 		}
 	}
 
-	std::shared_ptr<FsmNode> qi = shared_from_this();
-	std::shared_ptr<FsmNode> qj = otherNode;
+	shared_ptr<FsmNode> qi = shared_from_this();
+	shared_ptr<FsmNode> qj = otherNode;
 
 	InputTrace itrc = InputTrace(presentationLayer);
 
 	for (int k = 1; l - k > 0; ++ k)
 	{
-		std::shared_ptr<PkTable> plMinK = pktblLst.at(l - k - 1);
+		shared_ptr<PkTable> plMinK = pktblLst.at(l - k - 1);
 		/*Determine input x such that qi.after(x) is distinguished
 		from qj.after(x) in plMinK*/
 
@@ -275,8 +289,8 @@ InputTrace FsmNode::calcDistinguishingTrace(const std::shared_ptr<FsmNode> other
 			/*We are dealing with completely defined DFSMs,
 			so after() returns an ArrayList containing exactly
 			one element.*/
-			std::shared_ptr<FsmNode> qiNext = qi->after(x).front();
-			std::shared_ptr<FsmNode> qjNext = qj->after(x).front();
+			shared_ptr<FsmNode> qiNext = qi->after(x).front();
+			shared_ptr<FsmNode> qjNext = qj->after(x).front();
 
 			if (plMinK->getClass(qiNext->getId() != plMinK->getClass(qjNext->getId())))
 			{
@@ -305,7 +319,7 @@ InputTrace FsmNode::calcDistinguishingTrace(const std::shared_ptr<FsmNode> other
 	return itrc;
 }
 
-InputTrace FsmNode::calcDistinguishingTrace(const std::shared_ptr<FsmNode> otherNode, const std::vector<std::shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput)
+InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode, const vector<shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput)
 {
 	InputTrace itrc = InputTrace(presentationLayer);
 	int q1 = this->getId();
@@ -320,7 +334,7 @@ InputTrace FsmNode::calcDistinguishingTrace(const std::shared_ptr<FsmNode> other
 	{
 		/*Two nodes are distinguished by a OFSM-table, if they
 		reside in different OFSM-table classes.*/
-		std::shared_ptr<OFSMTable> ot = ofsmTblLst.at(l);
+		shared_ptr<OFSMTable> ot = ofsmTblLst.at(l);
 		if (ot->getS2C().at(q1) != ot->getS2C().at(q2))
 		{
 			break;
@@ -329,7 +343,7 @@ InputTrace FsmNode::calcDistinguishingTrace(const std::shared_ptr<FsmNode> other
 
 	for (int k = 1; l - k > 0; ++ k)
 	{
-		std::shared_ptr<OFSMTable> ot = ofsmTblLst.at(l - k);
+		shared_ptr<OFSMTable> ot = ofsmTblLst.at(l - k);
 
 		/*Determine IO x/y such that qi.after(x/y) is distinguished
 		from qj.after(x/y) in ot*/
@@ -360,7 +374,7 @@ InputTrace FsmNode::calcDistinguishingTrace(const std::shared_ptr<FsmNode> other
 
 	/*Now the case l == k. q1 and q2 must be distinguishable by at least
 	one IO in OFSM-Table-0*/
-	std::shared_ptr<OFSMTable> ot0 = ofsmTblLst.front();
+	shared_ptr<OFSMTable> ot0 = ofsmTblLst.front();
 	for (int x = 0; x <= maxInput; ++ x)
 	{
 		for (int y = 0; y <= maxOutput; ++ y)
@@ -380,7 +394,7 @@ bool FsmNode::isObservable() const
 	/*If a label already contained in lblSet is also
 	attached to at least one other transition, the
 	node violates the observability condition*/
-	std::unordered_set<FsmLabel> lblSet;
+	unordered_set<FsmLabel> lblSet;
 	for (FsmTransition tr : transitions)
 	{
 		FsmLabel lbl = tr.getLabel();
@@ -394,7 +408,7 @@ bool FsmNode::isObservable() const
 
 bool FsmNode::isDeterministic() const
 {
-	std::unordered_set<int> inputSet;
+	unordered_set<int> inputSet;
 
 	/*Check if more than one outgoing transition
 	is labelled with the same input value*/
@@ -409,11 +423,11 @@ bool FsmNode::isDeterministic() const
 	return true;
 }
 
-std::ostream & operator<<(std::ostream & out, const FsmNode & node)
+ostream & operator<<(ostream & out, const FsmNode & node)
 {
 	for (FsmTransition tr : node.transitions)
 	{
-		out << tr << std::endl;
+		out << tr << endl;
 	}
 	return out;
 }
