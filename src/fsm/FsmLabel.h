@@ -84,7 +84,7 @@ public:
 namespace std
 {
 	template <>
-	class hash<FsmLabel>
+	struct hash<FsmLabel>
 	{
 	public:
 		size_t operator()(const FsmLabel & x) const noexcept

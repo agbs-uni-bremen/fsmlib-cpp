@@ -9,9 +9,11 @@
 #include "fsm/FsmNode.h"
 #include "fsm/FsmTransition.h"
 
-std::shared_ptr<OFSMTable> OFSMTable::nextAfterZero()
+using namespace std;
+
+shared_ptr<OFSMTable> OFSMTable::nextAfterZero()
 {
-	std::shared_ptr<OFSMTable> next = std::make_shared<OFSMTable>(numStates, maxInput, maxOutput, rows, presentationLayer);
+	shared_ptr<OFSMTable> next = make_shared<OFSMTable>(numStates, maxInput, maxOutput, rows, presentationLayer);
 	next->tblId = 1;
 
 	int thisClass = 0;
@@ -52,7 +54,7 @@ std::shared_ptr<OFSMTable> OFSMTable::nextAfterZero()
 	return next;
 }
 
-OFSMTable::OFSMTable(const std::vector<std::shared_ptr<FsmNode>>& nodes, const int maxInput, const int maxOutput, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+OFSMTable::OFSMTable(const vector<shared_ptr<FsmNode>>& nodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer)
 	: numStates(static_cast<int> (nodes.size())), maxInput(maxInput), maxOutput(maxOutput), tblId(0), s2c(numStates), presentationLayer(presentationLayer)
 {
 	for (int n = 0; n < numStates; ++ n)
@@ -62,19 +64,19 @@ OFSMTable::OFSMTable(const std::vector<std::shared_ptr<FsmNode>>& nodes, const i
 
 	for (int i = 0; i < numStates; ++ i)
 	{
-		rows.push_back(std::make_shared<OFSMTableRow>(maxInput, maxOutput));
+		rows.push_back(make_shared<OFSMTableRow>(maxInput, maxOutput));
 
-		for (FsmTransition tr : nodes.at(i)->getTransitions())
+		for (auto tr : nodes.at(i)->getTransitions())
 		{
-			int x = tr.getLabel().getInput();
-			int y = tr.getLabel().getOutput();
-			std::shared_ptr<FsmNode> tgtNode = tr.getTarget();
+			int x = tr->getLabel()->getInput();
+			int y = tr->getLabel()->getOutput();
+			shared_ptr<FsmNode> tgtNode = tr->getTarget();
 			rows.at(i)->set(x, y, tgtNode->getId());
 		}
 	}
 }
 
-OFSMTable::OFSMTable(const int numStates, const int maxInput, const int maxOutput, const std::vector<std::shared_ptr<OFSMTableRow>>& rows, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+OFSMTable::OFSMTable(const int numStates, const int maxInput, const int maxOutput, const vector<shared_ptr<OFSMTableRow>>& rows, const shared_ptr<FsmPresentationLayer> presentationLayer)
 	: numStates(numStates), maxInput(maxInput), maxOutput(maxOutput), tblId(0), s2c(numStates), rows(rows), presentationLayer(presentationLayer)
 {
 
@@ -113,20 +115,20 @@ int OFSMTable::maxClassId() const
 	return id;
 }
 
-std::shared_ptr<OFSMTable> OFSMTable::next()
+shared_ptr<OFSMTable> OFSMTable::next()
 {
 	if (tblId == 0)
 	{
 		return nextAfterZero();
 	}
 
-	std::shared_ptr<OFSMTable> next = std::make_shared<OFSMTable>(numStates, maxInput, maxOutput, rows, presentationLayer);
+	shared_ptr<OFSMTable> next = make_shared<OFSMTable>(numStates, maxInput, maxOutput, rows, presentationLayer);
 	next->tblId = tblId + 1;
 
 	int thisClass = 0;
 	int thisNewClassId = maxClassId() + 1;
-	std::shared_ptr<OFSMTableRow> refRow;
-	std::shared_ptr<OFSMTableRow> newClassRefRow;
+	shared_ptr<OFSMTableRow> refRow;
+	shared_ptr<OFSMTableRow> newClassRefRow;
 	S2CMap newS2C = next->getS2C();
 	bool haveNewClasses = false;
 
@@ -208,9 +210,9 @@ std::shared_ptr<OFSMTable> OFSMTable::next()
 	return haveNewClasses ? next : nullptr;
 }
 
-std::string OFSMTable::getMembers(const int c) const
+string OFSMTable::getMembers(const int c) const
 {
-	std::string memSet = "{";
+	string memSet = "{";
 	bool first = true;
 	for (int i = 0; i < numStates; ++ i)
 	{
@@ -224,26 +226,26 @@ std::string OFSMTable::getMembers(const int c) const
 			memSet += ",";
 		}
 		first = false;
-		memSet += std::to_string(i);
+		memSet += to_string(i);
 	}
 	memSet += "}";
 	return memSet;
 }
 
-Fsm OFSMTable::toFsm(const std::string & name) const
+Fsm OFSMTable::toFsm(const string & name) const
 {
-	std::string minFsmName = name;
-	std::vector<std::shared_ptr<FsmNode>> nodeLst;
+	string minFsmName = name;
+	vector<shared_ptr<FsmNode>> nodeLst;
 
 	/*Create the FSM states, one for each class*/
 	for (int i = 0; i <= maxClassId(); ++ i)
 	{
-		std::shared_ptr<FsmNode> newNode = std::make_shared<FsmNode>(i, minFsmName + "\n" + getMembers(i), presentationLayer);
+		shared_ptr<FsmNode> newNode = make_shared<FsmNode>(i, minFsmName + "\n" + getMembers(i), presentationLayer);
 		nodeLst.push_back(newNode);
 	}
 
 	/*For each FSM state, add outgoing transitions*/
-	for (std::shared_ptr<FsmNode> srcNode : nodeLst)
+	for (shared_ptr<FsmNode> srcNode : nodeLst)
 	{
 		/*The node id of the new FsmState corresponds to the
 		class id we are currently processing.*/
@@ -253,7 +255,7 @@ Fsm OFSMTable::toFsm(const std::string & name) const
 		belongs to class classId. Since other rows associated with
 		the same class have equivalent post-states, we only need to
 		find one representative row.*/
-		std::shared_ptr<OFSMTableRow> row = nullptr;
+		shared_ptr<OFSMTableRow> row = nullptr;
 		for (int i = 0; i < numStates && row == nullptr; ++ i)
 		{
 			if (classId == s2c.at(i))
@@ -277,13 +279,15 @@ Fsm OFSMTable::toFsm(const std::string & name) const
 
 					/*Find the new FsmNode in the minimised FSM
 					which has tgtClassId as node id*/
-					for (std::shared_ptr<FsmNode> tgtNode : nodeLst)
+					for (shared_ptr<FsmNode> tgtNode : nodeLst)
 					{
 						if (tgtNode->getId() == tgtClassId)
 						{
 							/*Create the transition with label x/y
 							and target node tgtNode*/
-							FsmTransition tr = FsmTransition(srcNode, tgtNode, FsmLabel(x, y, presentationLayer));
+							shared_ptr<FsmTransition> tr = make_shared<FsmTransition>(srcNode,
+                                                                                      tgtNode,
+                                                                                      make_shared<FsmLabel>(x, y, presentationLayer));
 							srcNode->addTransition(tr);
 							break;
 						}
@@ -295,12 +299,12 @@ Fsm OFSMTable::toFsm(const std::string & name) const
 	return Fsm(minFsmName, maxInput, maxOutput, nodeLst, presentationLayer);
 }
 
-std::ostream & operator<<(std::ostream & out, const OFSMTable & ofsmTable)
+ostream & operator<<(ostream & out, const OFSMTable & ofsmTable)
 {
 	/*Tabular environment: first column for the class, second column
 	for the state*/
-	out << std::endl;
-	out << "\\begin{center}" << std::endl;
+	out << endl;
+	out << "\\begin{center}" << endl;
 	out << "\\begin{tabular}{|c||c||";
 
 	/*One additional column for each input/output combination x/y*/
@@ -311,7 +315,7 @@ std::ostream & operator<<(std::ostream & out, const OFSMTable & ofsmTable)
 			out << "c|";
 		}
 	}
-	out << "}\\hline\\hline" << std::endl;
+	out << "}\\hline\\hline" << endl;
 
 	/*Table headings: [q] || q || 0/0 | 0/1 | ... | maxInput/maxOutput*/
 	out << "{\\bf [q]} & {\\bf q}";
@@ -322,7 +326,7 @@ std::ostream & operator<<(std::ostream & out, const OFSMTable & ofsmTable)
 			out << " & " << x << "/" << y;
 		}
 	}
-	out << "\\\\\\hline\\hline" << std::endl;
+	out << "\\\\\\hline\\hline" << endl;
 
 	/*Print the table contents*/
 	for (int i = 0; i < ofsmTable.numStates; ++ i)
@@ -336,9 +340,9 @@ std::ostream & operator<<(std::ostream & out, const OFSMTable & ofsmTable)
 				out << " & " << ofsmTable.rows [i]->get(x, y);
 			}
 		}
-		out << "\\\\\\hline" << std::endl;
+		out << "\\\\\\hline" << endl;
 	}
 
-	out << "\\hline" << std::endl << "\\end{tabular}" << std::endl << "\\end{center}" << std::endl << std::endl;
+	out << "\\hline" << endl << "\\end{tabular}" << endl << "\\end{center}" << endl << endl;
 	return out;
 }

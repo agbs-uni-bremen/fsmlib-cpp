@@ -27,7 +27,7 @@ class DFSMTableRow;
 class FsmNode : public std::enable_shared_from_this<FsmNode>
 {
 private:
-	std::vector<FsmTransition> transitions;
+    std::vector<std::shared_ptr<FsmTransition> > transitions;
 	int id;
 	std::string name;
 	bool visited;
@@ -45,10 +45,10 @@ public:
      * Add a transition to the node. If another transition with the same label and
      * the same target node already exists, the new transition is silently ignored.
      */
-	void addTransition(const FsmTransition & transition);
+	void addTransition(std::shared_ptr<FsmTransition> transition);
     
     
-	std::vector<FsmTransition> getTransitions() const;
+    std::vector<std::shared_ptr<FsmTransition> >& getTransitions();
 	int getId() const;
 	std::string getName() const;
 	bool hasBeenVisited() const;

@@ -32,15 +32,15 @@ FsmNode::FsmNode(const int id, const string & name,
 	this->name = name;
 }
 
-void FsmNode::addTransition(const FsmTransition & transition)
+void FsmNode::addTransition(std::shared_ptr<FsmTransition> transition)
 {
     
     // Do not accept another transition with the same label and the
     // the same target node
     for ( auto tr : transitions ) {
-        if ( tr.getTarget()->getId() == transition.getTarget()->getId()
+        if ( tr->getTarget()->getId() == transition->getTarget()->getId()
              and
-            tr.getLabel() == transition.getLabel() ) {
+            tr->getLabel() == transition->getLabel() ) {
             return;
         }
     }
@@ -48,7 +48,7 @@ void FsmNode::addTransition(const FsmTransition & transition)
 	transitions.push_back(transition);
 }
 
-vector<FsmTransition> FsmNode::getTransitions() const
+vector<shared_ptr<FsmTransition> >& FsmNode::getTransitions()
 {
 	return transitions;
 }
@@ -95,12 +95,12 @@ shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> FsmNode::getPair() co
 
 shared_ptr<FsmNode> FsmNode::apply(const int e, OutputTrace & o)
 {
-	for (FsmTransition & tr : transitions)
+	for (shared_ptr<FsmTransition> tr : transitions)
 	{
-		if (tr.getLabel().getInput() == e)
+		if (tr->getLabel()->getInput() == e)
 		{
-			o.add(tr.getLabel().getOutput());
-			return tr.getTarget();
+			o.add(tr->getLabel()->getOutput());
+			return tr->getTarget();
 		}
 	}
 	return nullptr;
@@ -133,12 +133,12 @@ OutputTree FsmNode::apply(const InputTrace & itrc)
 
 			shared_ptr<FsmNode> thisState = t2f.at(thisTreeNode);
 
-			for (FsmTransition & tr : thisState->getTransitions())
+			for (shared_ptr<FsmTransition> tr : thisState->getTransitions())
 			{
-				if (tr.getLabel().getInput() == x)
+				if (tr->getLabel()->getInput() == x)
 				{
-					int y = tr.getLabel().getOutput();
-					shared_ptr<FsmNode> tgtState = tr.getTarget();
+					int y = tr->getLabel()->getOutput();
+					shared_ptr<FsmNode> tgtState = tr->getTarget();
 					shared_ptr<TreeNode> tgtNode = make_shared<TreeNode>();
 					shared_ptr<TreeEdge> te = make_shared<TreeEdge>(y, tgtNode);
 					thisTreeNode->add(te);
@@ -172,12 +172,12 @@ unordered_set<shared_ptr<FsmNode>> FsmNode::after(const InputTrace & itrc)
 
 vector<shared_ptr<FsmNode>> FsmNode::after(const int x)
 {
-	vector<shared_ptr<FsmNode>> lst;
-	for (FsmTransition & tr : transitions)
+	vector<shared_ptr<FsmNode> > lst;
+	for (auto tr : transitions)
 	{
-		if (tr.getLabel().getInput() == x)
+		if (tr->getLabel()->getInput() == x)
 		{
-			lst.push_back(tr.getTarget());
+			lst.push_back(tr->getTarget());
 		}
 	}
 	return lst;
@@ -187,11 +187,11 @@ unordered_set<shared_ptr<FsmNode>> FsmNode::afterAsSet(const int x)
 {
 	unordered_set<shared_ptr<FsmNode>> lst;
 
-	for (FsmTransition & tr : transitions)
+	for (auto tr : transitions)
 	{
-		if (tr.getLabel().getInput() == x)
+		if (tr->getLabel()->getInput() == x)
 		{
-			lst.insert(tr.getTarget());
+			lst.insert(tr->getTarget());
 		}
 	}
 	return lst;
@@ -214,9 +214,9 @@ shared_ptr<DFSMTableRow> FsmNode::getDFSMTableRow(const int maxInput)
 	IOMap& io = r->getioSection();
 	I2PMap& i2p = r->geti2postSection();
 
-	for (FsmTransition tr : transitions)
+	for (auto tr : transitions)
 	{
-		int x = tr.getLabel().getInput();
+		int x = tr->getLabel()->getInput();
 
 		/*Check whether transitions from this state are nondeterministic.
 		This is detected when detecting a second transition triggered
@@ -227,8 +227,8 @@ shared_ptr<DFSMTableRow> FsmNode::getDFSMTableRow(const int maxInput)
 			return nullptr;
 		}
 
-		io[x] = tr.getLabel().getOutput();
-		i2p[x] = tr.getTarget()->getId();
+		io[x] = tr->getLabel()->getOutput();
+		i2p[x] = tr->getTarget()->getId();
 	}
 	return r;
 }
@@ -394,10 +394,10 @@ bool FsmNode::isObservable() const
 	/*If a label already contained in lblSet is also
 	attached to at least one other transition, the
 	node violates the observability condition*/
-	unordered_set<FsmLabel> lblSet;
-	for (FsmTransition tr : transitions)
+	unordered_set<shared_ptr<FsmLabel> > lblSet;
+	for (auto tr : transitions)
 	{
-		FsmLabel lbl = tr.getLabel();
+		shared_ptr<FsmLabel> lbl = tr->getLabel();
 		if (!lblSet.insert(lbl).second)
 		{
 			return false;
@@ -412,9 +412,9 @@ bool FsmNode::isDeterministic() const
 
 	/*Check if more than one outgoing transition
 	is labelled with the same input value*/
-	for (FsmTransition tr : transitions)
+	for (auto tr : transitions)
 	{
-		int inp = tr.getLabel().getInput();
+		int inp = tr->getLabel()->getInput();
 		if (!inputSet.insert(inp).second)
 		{
 			return false;
@@ -425,9 +425,9 @@ bool FsmNode::isDeterministic() const
 
 ostream & operator<<(ostream & out, const FsmNode & node)
 {
-	for (FsmTransition tr : node.transitions)
+	for (auto tr : node.transitions)
 	{
-		out << tr << endl;
+		out << *tr << endl;
 	}
 	return out;
 }

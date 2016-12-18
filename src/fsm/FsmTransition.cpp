@@ -6,39 +6,47 @@
 #include "fsm/FsmTransition.h"
 #include "fsm/FsmNode.h"
 
-FsmTransition::FsmTransition(const std::shared_ptr<FsmNode> source, const std::shared_ptr<FsmNode> target, const FsmLabel & label)
+using namespace std;
+
+FsmTransition::FsmTransition(const shared_ptr<FsmNode>  source,
+                             const shared_ptr<FsmNode>  target,
+                             const shared_ptr<FsmLabel> label)
 	: source(source), target(target), label(label)
 {
 
 }
 
-std::shared_ptr<FsmNode> FsmTransition::getSource() const
+shared_ptr<FsmNode> FsmTransition::getSource()
 {
-	return source.lock();
+	return source;
 }
 
-void FsmTransition::setSource(std::shared_ptr<FsmNode> src) {
+void FsmTransition::setSource(shared_ptr<FsmNode> src) {
     source = src;
 }
 
-std::shared_ptr<FsmNode> FsmTransition::getTarget() const
+shared_ptr<FsmNode> FsmTransition::getTarget()
 {
-	return target.lock();
+	return target;
 }
 
-void FsmTransition::setTarget(std::shared_ptr<FsmNode> tgt) {
+void FsmTransition::setTarget(shared_ptr<FsmNode> tgt) {
     target = tgt;
 }
 
+void FsmTransition::setLabel(std::shared_ptr<FsmLabel> lbl) {
+    label = lbl;
+}
 
 
-FsmLabel FsmTransition::getLabel() const
+shared_ptr<FsmLabel> FsmTransition::getLabel()
 {
 	return label;
 }
 
-std::ostream & operator<<(std::ostream & out, const FsmTransition & transition)
+ostream & operator<<(ostream& out, FsmTransition& transition)
 {
-	out << transition.getSource()->getId() << " -> " << transition.getTarget()->getId() << "[label=\" " << transition.label << "   \"];";
+	out << transition.getSource()->getId() << " -> " << transition.getTarget()->getId() << "[label=\" " << *transition.label << "   \"];";
 	return out;
 }
+

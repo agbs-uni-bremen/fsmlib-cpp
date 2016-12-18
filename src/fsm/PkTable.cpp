@@ -9,19 +9,21 @@
 #include "fsm/FsmLabel.h"
 #include "fsm/FsmTransition.h"
 
-PkTable::PkTable(const int numStates, const int maxInput, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+using namespace std;
+
+PkTable::PkTable(const int numStates, const int maxInput, const shared_ptr<FsmPresentationLayer> presentationLayer)
 	: s2c(numStates), maxInput(maxInput), presentationLayer(presentationLayer)
 {
 	rows.insert(rows.end(), numStates, nullptr);
 }
 
-PkTable::PkTable(const int numStates, const int maxInput, const std::vector<std::shared_ptr<PkTableRow>> rows, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+PkTable::PkTable(const int numStates, const int maxInput, const vector<shared_ptr<PkTableRow>> rows, const shared_ptr<FsmPresentationLayer> presentationLayer)
 	: rows(rows), s2c(numStates), maxInput(maxInput), presentationLayer(presentationLayer)
 {
 
 }
 
-void PkTable::setRow(const int s, const std::shared_ptr<PkTableRow> row)
+void PkTable::setRow(const int s, const shared_ptr<PkTableRow> row)
 {
 	rows [s] = row;//insertion
 }
@@ -49,14 +51,14 @@ int PkTable::maxClassId() const
 	return id;
 }
 
-std::shared_ptr<PkTable> PkTable::getPkPlusOneTable() const
+shared_ptr<PkTable> PkTable::getPkPlusOneTable() const
 {
-	std::shared_ptr<PkTable> pkp1 = std::make_shared<PkTable>(rows.size(), maxInput, rows, presentationLayer);
+	shared_ptr<PkTable> pkp1 = make_shared<PkTable>(rows.size(), maxInput, rows, presentationLayer);
 
 	int thisClass = 0;
 	int thisNewClassId = maxClassId() + 1;
-	std::shared_ptr<PkTableRow> refRow;
-	std::shared_ptr<PkTableRow> newClassRefRow;
+	shared_ptr<PkTableRow> refRow;
+	shared_ptr<PkTableRow> newClassRefRow;
 	bool haveNewClasses = false;
 
 	do
@@ -109,23 +111,23 @@ std::shared_ptr<PkTable> PkTable::getPkPlusOneTable() const
 	return haveNewClasses ? pkp1 : nullptr;
 }
 
-Dfsm PkTable::toFsm(std::string name)
+Dfsm PkTable::toFsm(string name)
 {
-	std::string minFsmName = name + "_MIN";
-	std::vector<std::shared_ptr<FsmNode>> nodeLst;
+	string minFsmName = name + "_MIN";
+	vector<shared_ptr<FsmNode>> nodeLst;
 
 	/*Create the FSM states, one for each class*/
 	for (int i = 0; i <= maxClassId(); ++i)
 	{
-		std::shared_ptr<FsmNode> newNode = std::make_shared<FsmNode>(i, minFsmName + "\n" + getMembers(i), presentationLayer);
+		shared_ptr<FsmNode> newNode = make_shared<FsmNode>(i, minFsmName + "\n" + getMembers(i), presentationLayer);
 		nodeLst.push_back(newNode);
 	}
 
 	/*For each FSM state, add outgoing transitions*/
-	for (std::shared_ptr<FsmNode> srcNode : nodeLst)
+	for (shared_ptr<FsmNode> srcNode : nodeLst)
 	{
 		int classId = srcNode->getId();
-		std::shared_ptr<PkTableRow> row = nullptr;
+		shared_ptr<PkTableRow> row = nullptr;
 
 		for (unsigned int i = 0; i < rows.size() && row == nullptr; ++i)
 		{
@@ -141,8 +143,8 @@ Dfsm PkTable::toFsm(std::string name)
 			int cAux = row->getI2PMap().at(x);
 			int cTarget = s2c.at(cAux);
 
-			std::shared_ptr<FsmNode> tgtNode = nullptr;
-			for (std::shared_ptr<FsmNode> node : nodeLst)
+			shared_ptr<FsmNode> tgtNode = nullptr;
+			for (shared_ptr<FsmNode> node : nodeLst)
 			{
 				if (node->getId() == cTarget)
 				{
@@ -150,17 +152,17 @@ Dfsm PkTable::toFsm(std::string name)
 					break;
 				}
 			}
-			FsmLabel lbl = FsmLabel(x, y, presentationLayer);
-			srcNode->addTransition(FsmTransition(srcNode, tgtNode, lbl));
+			shared_ptr<FsmLabel> lbl = make_shared<FsmLabel>(x, y, presentationLayer);
+			srcNode->addTransition(make_shared<FsmTransition>(srcNode, tgtNode, lbl));
 		}
 	}
 
 	return Dfsm(minFsmName, maxInput, 0, nodeLst, presentationLayer);
 }
 
-std::string PkTable::getMembers(const int c) const
+string PkTable::getMembers(const int c) const
 {
-	std::string memSet = "{";
+	string memSet = "{";
 	bool first = true;
 	for (unsigned int i = 0; i < rows.size(); ++i)
 	{
@@ -174,7 +176,7 @@ std::string PkTable::getMembers(const int c) const
 			memSet += ",";
 		}
 		first = false;
-		memSet += std::to_string(i);
+		memSet += to_string(i);
 	}
 	memSet += "}";
 	return memSet;
@@ -182,11 +184,11 @@ std::string PkTable::getMembers(const int c) const
 
 
 
-std::ostream & operator<<(std::ostream & out, const PkTable & pkTable)
+ostream & operator<<(ostream & out, const PkTable & pkTable)
 {
     
     // Create the table header
-    out << std::endl << "\\begin{center}" << std::endl << "\\begin{tabular}{|c|c||";
+    out << endl << "\\begin{center}" << endl << "\\begin{tabular}{|c|c||";
     for (int i = 0; i <= pkTable.maxInput; ++i)
     {
         out << "c|";
@@ -198,10 +200,10 @@ std::ostream & operator<<(std::ostream & out, const PkTable & pkTable)
         out << "c|";
     }
     
-    out << "}\\hline\\hline" << std::endl;
+    out << "}\\hline\\hline" << endl;
     out << " & & \\multicolumn{" << pkTable.maxInput + 1;
     out << "}{|c||}{\\bf I2O} & \\multicolumn{" << pkTable.maxInput + 1;
-    out << "}{|c|}{\\bf I2P}" << std::endl << "\\\\\\hline" << std::endl;
+    out << "}{|c|}{\\bf I2P}" << endl << "\\\\\\hline" << endl;
     out << "{\\bf [q]} & {\\bf q} ";
     
     for (int i = 0; i <= pkTable.maxInput; ++i)
@@ -212,7 +214,7 @@ std::ostream & operator<<(std::ostream & out, const PkTable & pkTable)
     {
         out << " & " << i;
     }
-    out << "\\\\\\hline\\hline" << std::endl;
+    out << "\\\\\\hline\\hline" << endl;
     
     
     // Output each table row
@@ -226,6 +228,6 @@ std::ostream & operator<<(std::ostream & out, const PkTable & pkTable)
     }
     
     // Create the table footer
-    out << "\\hline" << std::endl << "\\end{tabular}" << std::endl << "\\end {center}" << std::endl << std::endl;
+    out << "\\hline" << endl << "\\end{tabular}" << endl << "\\end {center}" << endl << endl;
     return out;
 }

@@ -1,6 +1,6 @@
 /*
  * Copyright. Gaël Dottel, Christoph Hilken, and Jan Peleska 2016 - 2021
- * 
+ *
  * Licensed under the EUPL V.1.1
  */
 #include "fsm/Dfsm.h"
@@ -15,216 +15,223 @@
 #include "trees/Tree.h"
 #include "trees/IOListContainer.h"
 
+using namespace std;
+
 void Dfsm::createAtRandom()
 {
-	srand((unsigned int) time(0));
-
-	for (unsigned int i = 0; i < nodes.size(); ++ i)
-	{
-		nodes [i] = std::make_shared<FsmNode>(i, presentationLayer);//insertion
-	}
-
-	for (unsigned int i = 0; i < nodes.size(); ++ i)
-	{
-		std::shared_ptr<FsmNode> source = nodes.at(i);
-
-		for (int input = 0; input <= maxInput; ++ input)
-		{
-			int nTarget = std::rand() % nodes.size();
-			std::shared_ptr<FsmNode> target = nodes.at(nTarget);
-			int output = std::rand() % (maxOutput + 1);
-			FsmTransition transition = FsmTransition(source, target, FsmLabel(input, output, presentationLayer));
-			source->addTransition(transition);
-		}
-	}
-}
-
-std::shared_ptr<DFSMTable> Dfsm::toDFSMTable() const
-{
-	std::shared_ptr<DFSMTable> tbl
-          = std::make_shared<DFSMTable>(nodes.size(), maxInput, presentationLayer);
-
-	for (unsigned int i = 0; i < nodes.size(); ++ i)
-	{
-		if (nodes.at(i) == nullptr)
-		{
-			continue;
-		}
-
-		std::shared_ptr<DFSMTableRow> r = nodes.at(i)->getDFSMTableRow(maxInput);
-
-		if (r == nullptr)
-		{
-			return nullptr;
-		}
-		tbl->setRow(i, r);
-        
-        
-        
-	}
+    srand((unsigned int) time(0));
     
-	return tbl;
+    for (unsigned int i = 0; i < nodes.size(); ++ i)
+    {
+        nodes [i] = make_shared<FsmNode>(i, presentationLayer);//insertion
+    }
+    
+    for (unsigned int i = 0; i < nodes.size(); ++ i)
+    {
+        shared_ptr<FsmNode> source = nodes.at(i);
+        
+        for (int input = 0; input <= maxInput; ++ input)
+        {
+            int nTarget = rand() % nodes.size();
+            shared_ptr<FsmNode> target = nodes.at(nTarget);
+            int output = rand() % (maxOutput + 1);
+            shared_ptr<FsmTransition> transition =
+            make_shared<FsmTransition>(source,
+                                       target,
+                                       make_shared<FsmLabel>(input,
+                                                             output,
+                                                             presentationLayer));
+            source->addTransition(transition);
+        }
+    }
 }
 
-Dfsm::Dfsm(const std::string & fname, const std::string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
-	: Fsm(fname, fsmName, maxNodes, maxInput, maxOutput, presentationLayer)
+shared_ptr<DFSMTable> Dfsm::toDFSMTable() const
 {
-
+    shared_ptr<DFSMTable> tbl
+    = make_shared<DFSMTable>(nodes.size(), maxInput, presentationLayer);
+    
+    for (unsigned int i = 0; i < nodes.size(); ++ i)
+    {
+        if (nodes.at(i) == nullptr)
+        {
+            continue;
+        }
+        
+        shared_ptr<DFSMTableRow> r = nodes.at(i)->getDFSMTableRow(maxInput);
+        
+        if (r == nullptr)
+        {
+            return nullptr;
+        }
+        tbl->setRow(i, r);
+        
+        
+        
+    }
+    
+    return tbl;
 }
 
-Dfsm::Dfsm(const std::string& fname,
-           const std::shared_ptr<FsmPresentationLayer> presentationLayer,
-           const std::string & fsmName)
+Dfsm::Dfsm(const string & fname, const string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer)
+: Fsm(fname, fsmName, maxNodes, maxInput, maxOutput, presentationLayer)
+{
+    
+}
+
+Dfsm::Dfsm(const string& fname,
+           const shared_ptr<FsmPresentationLayer> presentationLayer,
+           const string & fsmName)
 : Fsm(fname,presentationLayer,fsmName)
 {
     
 }
 
-Dfsm::Dfsm(const std::string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
-	: Fsm(presentationLayer)
+Dfsm::Dfsm(const string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer)
+: Fsm(presentationLayer)
 {
-	name = fsmName;
-	nodes.insert(nodes.end(), maxNodes, nullptr);
-	initStateIdx = 0;
-	this->maxInput = maxInput;
-	this->maxOutput = maxOutput;
-	currentParsedNode = nullptr;
-	createAtRandom();
-	std::ofstream out(getName() + ".txt");
-	dumpFsm(out);
-	out.close();
+    name = fsmName;
+    nodes.insert(nodes.end(), maxNodes, nullptr);
+    initStateIdx = 0;
+    this->maxInput = maxInput;
+    this->maxOutput = maxOutput;
+    currentParsedNode = nullptr;
+    createAtRandom();
+    ofstream out(getName() + ".txt");
+    dumpFsm(out);
+    out.close();
 }
 
-Dfsm::Dfsm(const std::string & fsmName, const int maxInput, const int maxOutput, const std::vector<std::shared_ptr<FsmNode>> lst, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
-	: Fsm(fsmName, maxInput, maxOutput, lst, presentationLayer)
+Dfsm::Dfsm(const string & fsmName, const int maxInput, const int maxOutput, const vector<shared_ptr<FsmNode>> lst, const shared_ptr<FsmPresentationLayer> presentationLayer)
+: Fsm(fsmName, maxInput, maxOutput, lst, presentationLayer)
 {
-
+    
 }
 
 Dfsm::Dfsm(const Fsm & fsm)
-	: Fsm (fsm.getName(), fsm.getMaxInput(), fsm.getMaxOutput(), fsm.getNodes(), fsm.getPresentationLayer())
+: Fsm (fsm.getName(), fsm.getMaxInput(), fsm.getMaxOutput(), fsm.getNodes(), fsm.getPresentationLayer())
 {
-	initStateIdx = fsm.getInitStateIdx();;
-	minimal = isMinimal();
-	/*std::shared_ptr<FsmNode> currentParsedNode;
-	std::vector<std::shared_ptr<OFSMTable>> ofsmTableLst;
-	std::shared_ptr<Tree> characterisationSet;
-	std::vector<std::shared_ptr<Tree>> stateIdentificationSets;*/
-
+    initStateIdx = fsm.getInitStateIdx();;
+    minimal = isMinimal();
+    /*shared_ptr<FsmNode> currentParsedNode;
+     vector<shared_ptr<OFSMTable>> ofsmTableLst;
+     shared_ptr<Tree> characterisationSet;
+     vector<shared_ptr<Tree>> stateIdentificationSets;*/
+    
 }
 
 Dfsm Dfsm::minimise()
 {
-	dfsmTable = toDFSMTable();
- 
-	pktblLst.clear();
-	std::shared_ptr<PkTable> p1 = dfsmTable->getP1Table();
-	pktblLst.push_back(p1);
-	std::shared_ptr<PkTable> pMin = p1;
+    dfsmTable = toDFSMTable();
     
-	for (std::shared_ptr<PkTable> pk = p1->getPkPlusOneTable();
+    pktblLst.clear();
+    shared_ptr<PkTable> p1 = dfsmTable->getP1Table();
+    pktblLst.push_back(p1);
+    shared_ptr<PkTable> pMin = p1;
+    
+    for (shared_ptr<PkTable> pk = p1->getPkPlusOneTable();
          pk != nullptr;
          pk = pk->getPkPlusOneTable())
-	{
-		pMin = pk;
-		pktblLst.push_back(pk);
-	}
-
-	return pMin->toFsm(name);
+    {
+        pMin = pk;
+        pktblLst.push_back(pk);
+    }
+    
+    return pMin->toFsm(name);
 }
 
 void Dfsm::printTables() const
 {
-	std::ofstream file("tables.tex");
-	if (dfsmTable != nullptr)
-	{
-		file << dfsmTable;
-	}
-
-	for (unsigned int i = 0; i < pktblLst.size(); ++ i)
-	{
-		file << pktblLst.at(i) << std::endl << std::endl;
-	}
-	file.close();
+    ofstream file("tables.tex");
+    if (dfsmTable != nullptr)
+    {
+        file << dfsmTable;
+    }
+    
+    for (unsigned int i = 0; i < pktblLst.size(); ++ i)
+    {
+        file << pktblLst.at(i) << endl << endl;
+    }
+    file.close();
 }
 
 IOListContainer Dfsm::getCharacterisationSet()
 {
-	/*Create Pk-tables for the minimised FSM*/
-	dfsmTable = toDFSMTable();
-	pktblLst.clear();
-	std::shared_ptr<PkTable> p1 = dfsmTable->getP1Table();
-	pktblLst.push_back(p1);
-
-	for (std::shared_ptr<PkTable> pk = p1->getPkPlusOneTable();
+    /*Create Pk-tables for the minimised FSM*/
+    dfsmTable = toDFSMTable();
+    pktblLst.clear();
+    shared_ptr<PkTable> p1 = dfsmTable->getP1Table();
+    pktblLst.push_back(p1);
+    
+    for (shared_ptr<PkTable> pk = p1->getPkPlusOneTable();
          pk != nullptr;
          pk = pk->getPkPlusOneTable())
-	{
-		pktblLst.push_back(pk);
-	}
-
-	/*Create an empty characterisation set as an empty InputTree instance*/
-	std::shared_ptr<Tree> w = std::make_shared<Tree>(std::make_shared<TreeNode>(), presentationLayer);
-
-	/*Loop over all non-equal pairs of states. If they are not already distinguished by 
-	the input sequences contained in w, create a new input traces that distinguishes them
-	and add it to w.*/
-	for (unsigned int left = 0; left < nodes.size(); ++ left)
-	{
-		std::shared_ptr<FsmNode> leftNode = nodes.at(left);
-		for (unsigned int right = left + 1; right < nodes.size(); ++ right)
-		{
-			std::shared_ptr<FsmNode> rightNode = nodes.at(right);
-
-			if (leftNode->distinguished(rightNode, w) != nullptr)
-			{
-				continue;
-			}
-
-			/*We have to create a new input trace and add it to w, because
-			leftNode and rightNode are not distinguished by the current
-			input traces contained in w. This step is performed
-			according to Gill's algorithm.*/
-			InputTrace i = leftNode->calcDistinguishingTrace(rightNode, pktblLst, maxInput);
-			std::shared_ptr<std::vector<std::vector<int>>> lli = std::make_shared<std::vector<std::vector<int>>>();
-			lli->push_back(i.get());
-			IOListContainer tcli = IOListContainer(lli, presentationLayer);
-			w->addToRoot(tcli);
-		}
-	}
-
-	/* Wrap list of lists by an IOListContainer instance */
-	IOListContainer tcl = w->getIOLists();
-	return tcl;
+    {
+        pktblLst.push_back(pk);
+    }
+    
+    /*Create an empty characterisation set as an empty InputTree instance*/
+    shared_ptr<Tree> w = make_shared<Tree>(make_shared<TreeNode>(), presentationLayer);
+    
+    /*Loop over all non-equal pairs of states. If they are not already distinguished by
+     the input sequences contained in w, create a new input traces that distinguishes them
+     and add it to w.*/
+    for (unsigned int left = 0; left < nodes.size(); ++ left)
+    {
+        shared_ptr<FsmNode> leftNode = nodes.at(left);
+        for (unsigned int right = left + 1; right < nodes.size(); ++ right)
+        {
+            shared_ptr<FsmNode> rightNode = nodes.at(right);
+            
+            if (leftNode->distinguished(rightNode, w) != nullptr)
+            {
+                continue;
+            }
+            
+            /*We have to create a new input trace and add it to w, because
+             leftNode and rightNode are not distinguished by the current
+             input traces contained in w. This step is performed
+             according to Gill's algorithm.*/
+            InputTrace i = leftNode->calcDistinguishingTrace(rightNode, pktblLst, maxInput);
+            shared_ptr<vector<vector<int>>> lli = make_shared<vector<vector<int>>>();
+            lli->push_back(i.get());
+            IOListContainer tcli = IOListContainer(lli, presentationLayer);
+            w->addToRoot(tcli);
+        }
+    }
+    
+    /* Wrap list of lists by an IOListContainer instance */
+    IOListContainer tcl = w->getIOLists();
+    return tcl;
 }
 
 IOTrace Dfsm::applyDet(const InputTrace & i)
 {
-	OutputTrace o = OutputTrace(presentationLayer);
-
-	std::shared_ptr<FsmNode> currentNode = nodes.at(initStateIdx);
+    OutputTrace o = OutputTrace(presentationLayer);
+    
+    shared_ptr<FsmNode> currentNode = nodes.at(initStateIdx);
     
     // Apply input trace to FSM, as far as possible
     for ( int input : i.get() ) {
         if ( currentNode == nullptr ) break;
         currentNode = currentNode->apply(input, o);
     }
-
+    
     // Handle the case where the very first input is not accpeted
     // by the incomplete DFSM, or even the initial node does not exist:
     // we return an empty IOTrace
-	if (currentNode == nullptr && o.get().empty())
-	{
-		return IOTrace(InputTrace(presentationLayer),
+    if (currentNode == nullptr && o.get().empty())
+    {
+        return IOTrace(InputTrace(presentationLayer),
                        OutputTrace(presentationLayer));
-	}
-
+    }
+    
     // Handle the case where only a prefix of the input trace
     // has been accepted by the incomplete DFSM: we return
     // an IOTrace whose input consist of this prefix, together
     // with the associated outputs already contained in o.
-	if (currentNode == nullptr)
-	{
+    if (currentNode == nullptr)
+    {
         
         // Constant iterator to start of input trace.
         auto ifirst = i.cbegin();
@@ -237,22 +244,22 @@ IOTrace Dfsm::applyDet(const InputTrace & i)
         // Iterator pointing BEHIND last obtained output.
         auto olast = ofirst + o.get().size();
         
-        return IOTrace(InputTrace(std::vector<int>(ifirst, ilast), presentationLayer),
-                       OutputTrace(std::vector<int>(ofirst, olast), presentationLayer));
+        return IOTrace(InputTrace(vector<int>(ifirst, ilast), presentationLayer),
+                       OutputTrace(vector<int>(ofirst, olast), presentationLayer));
         
-	}
+    }
     
     // The full input trace has been processed by the DFSM.
     // The associated outputs are contained in o.
-	return IOTrace(InputTrace(i.get(), presentationLayer),
+    return IOTrace(InputTrace(i.get(), presentationLayer),
                    OutputTrace(o.get(), presentationLayer));
     
 }
 
 bool Dfsm::pass(const IOTrace & io)
 {
-	IOTrace myIO = applyDet(io.getInputTrace());
-	return myIO.getOutputTrace() == io.getOutputTrace();
+    IOTrace myIO = applyDet(io.getInputTrace());
+    return myIO.getOutputTrace() == io.getOutputTrace();
 }
 
 
@@ -268,36 +275,36 @@ IOListContainer Dfsm::wMethod(const unsigned int m) {
 IOListContainer Dfsm::wMethodOnMinimisedDfsm(const unsigned int m)
 {
     
-    unsigned int mMinusN = ( m > nodes.size() ) ? (m - nodes.size()) : 0;
-
-	std::shared_ptr<Tree> iTree = getTransitionCover();
-
-	if (mMinusN > 0)
-	{
-		IOListContainer inputEnum = IOListContainer(maxInput,
+    size_t mMinusN = ( m > nodes.size() ) ? (m - nodes.size()) : 0;
+    
+    shared_ptr<Tree> iTree = getTransitionCover();
+    
+    if (mMinusN > 0)
+    {
+        IOListContainer inputEnum = IOListContainer(maxInput,
                                                     1,
-                                                    mMinusN,
+                                                    (int)mMinusN,
                                                     presentationLayer);
-		iTree->add(inputEnum);
-	}
-
-	IOListContainer w = getCharacterisationSet();
-	iTree->add(w);
-	return iTree->getIOLists();
+        iTree->add(inputEnum);
+    }
+    
+    IOListContainer w = getCharacterisationSet();
+    iTree->add(w);
+    return iTree->getIOLists();
 }
 
 IOListContainer Dfsm::wpMethod(const int m)
 {
-	Fsm fMin = minimiseObservableFSM();
-	return fMin.wpMethod(m);
-
+    Fsm fMin = minimiseObservableFSM();
+    return fMin.wpMethod(m);
+    
 }
 
 
 IOListContainer Dfsm::tMethod()
 {
     
-    std::shared_ptr<Tree> iTree = getTransitionCover();
+    shared_ptr<Tree> iTree = getTransitionCover();
     
     return iTree->getIOLists();
     
