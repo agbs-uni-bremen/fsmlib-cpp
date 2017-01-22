@@ -78,6 +78,14 @@ protected:
     
     
     std::string labelString(std::unordered_set<std::shared_ptr<FsmNode>>& lbl) const;
+    
+    /**
+     *  Return a random seed to be used for random generation
+     * of FSMs by public methods createRandomFsm() and
+     * createMutant().
+     */
+    static unsigned int getRandomSeed();
+    
 public:
     
     
@@ -144,7 +152,9 @@ public:
     
     
     /**
-     *  Create a completely specified FSM at random
+     *  Create a completely specified FSM at random. Every state in the FSM 
+     *  will be reachable, but the FSM may be nondeterministic, non-observable,
+     *  and not minimal.
      *   @param fsmName Name of the FSM to be created
      *   @param maxInput Maximal value of the input alphabet, ranging from
      *                   0 to maxInput
@@ -222,8 +232,18 @@ public:
     /**
      *  Apply an input trace to an FSM and return its
      *  resulting output tree.
+     *
+     *  @param itrc Input trace to be process on the FSM, starting in
+     *              the FSM's initial state
+     *  @param  markAsVisited If true, every FSM node visited 
+     *              while executing the input trace is marked 
+     *              as visited by setting atrubute 'visited' to true
+     *
+     *  @return The set of outputs created by input trace itrc;
+     *          the set is encoded as an OutputTree.
+     *
      */
-    OutputTree apply(const InputTrace & itrc);
+    OutputTree apply(const InputTrace & itrc, bool markAsVisited = false);
     
     /**
      *  Transform an FSM to its observable equivalent.

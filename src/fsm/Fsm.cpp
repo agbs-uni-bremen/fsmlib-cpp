@@ -3,6 +3,10 @@
  *
  * Licensed under the EUPL V.1.1
  */
+
+#include <sys/time.h>
+#include <deque>
+
 #include "fsm/Dfsm.h"
 #include "fsm/Fsm.h"
 #include "fsm/FsmNode.h"
@@ -17,6 +21,7 @@
 #include "trees/TestSuite.h"
 
 using namespace std;
+using namespace std::chrono;
 
 shared_ptr<FsmNode> Fsm::newNode(const int id, const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> p)
 {
@@ -102,21 +107,21 @@ void Fsm::parseLine(const string & line)
     if (currentParsedNode == nullptr)
     {
         currentParsedNode = make_shared<FsmNode>(source, name, presentationLayer);
-        nodes [source] = currentParsedNode;
+        nodes[source] = currentParsedNode;
     }
-    else if (currentParsedNode->getId() != source && nodes [source] == nullptr)
+    else if (currentParsedNode->getId() != source && nodes[source] == nullptr)
     {
         currentParsedNode = make_shared<FsmNode>(source, name, presentationLayer);
-        nodes [source] = currentParsedNode;
+        nodes[source] = currentParsedNode;
     }
     else if (currentParsedNode->getId() != source)
     {
-        currentParsedNode = nodes [source];
+        currentParsedNode = nodes[source];
     }
     
-    if (nodes [target] == nullptr)
+    if (nodes[target] == nullptr)
     {
-        nodes [target] = make_shared<FsmNode>(target, name, presentationLayer);
+        nodes[target] = make_shared<FsmNode>(target, name, presentationLayer);
     }
     
     shared_ptr<FsmLabel> theLabel =
@@ -332,6 +337,13 @@ minimal(Maybe),
 presentationLayer(presentationLayer)
 {
     nodes.insert(nodes.end(), lst.begin(), lst.end());
+    // reset all nodes as 'white' and 'unvisited'
+    
+    for ( auto n : nodes ) {
+        n->setColor(FsmNode::white);
+        n->setUnvisited();
+    }
+    
 }
 
 
@@ -400,7 +412,7 @@ int Fsm::getInitStateIdx() const
 
 void Fsm::resetColor()
 {
-    for (shared_ptr<FsmNode> node : nodes)
+    for (auto node : nodes)
     {
         node->setColor(FsmNode::white);
     }
@@ -508,7 +520,7 @@ Fsm Fsm::intersect(const Fsm & f)
 shared_ptr<Tree> Fsm::getStateCover()
 {
     resetColor();
-    vector<shared_ptr<FsmNode>> bfsLst;
+    deque<shared_ptr<FsmNode>> bfsLst;
     unordered_map<shared_ptr<FsmNode>, shared_ptr<TreeNode>> f2t;
     
     shared_ptr<TreeNode> root = make_shared<TreeNode>();
@@ -517,29 +529,30 @@ shared_ptr<Tree> Fsm::getStateCover()
     shared_ptr<FsmNode> initState = getInitialState();
     initState->setColor(FsmNode::grey);
     bfsLst.push_back(initState);
-    f2t [initState] = root;//insertion
+    f2t[initState] = root;
     
     while (!bfsLst.empty())
     {
         shared_ptr<FsmNode> thisNode = bfsLst.front();
-        bfsLst.erase(bfsLst.begin());
-        shared_ptr<TreeNode> currentTreeNode = f2t.at(thisNode);
+        bfsLst.pop_front();
+        shared_ptr<TreeNode> currentTreeNode = f2t[thisNode];
         
-        for (int x = 0; x <= maxInput; ++ x)
+        for (int x = 0; x <= maxInput; ++x)
         {
             for (shared_ptr<FsmNode> tgt : thisNode->after(x))
             {
                 if (tgt->getColor() == FsmNode::white)
                 {
                     tgt->setColor(FsmNode::grey);
-                    bfsLst.push_back(tgt);
                     shared_ptr<TreeNode> itn = currentTreeNode->add(x);
-                    f2t [tgt] = itn;//insertion
+                    bfsLst.push_back(tgt);
+                    f2t[tgt] = itn;
                 }
             }
         }
         thisNode->setColor(FsmNode::black);
     }
+    resetColor();
     return scov;
 }
 
@@ -564,9 +577,9 @@ shared_ptr<Tree> Fsm::getTransitionCover()
     return scov;
 }
 
-OutputTree Fsm::apply(const InputTrace & itrc)
+OutputTree Fsm::apply(const InputTrace & itrc, bool markAsVisited)
 {
-    return getInitialState()->apply(itrc);
+    return getInitialState()->apply(itrc,markAsVisited);
 }
 
 Fsm Fsm::transformToObservableFSM() const
@@ -582,7 +595,7 @@ Fsm Fsm::transformToObservableFSM() const
     shared_ptr<FsmNode> q0 = make_shared<FsmNode>(id ++, labelString(theLabel), presentationLayer);
     nodeLst.push_back(q0);
     bfsLst.push_back(q0);
-    node2Label[q0] = theLabel;//insertion
+    node2Label[q0] = theLabel;
     
     while (!bfsLst.empty())
     {
@@ -596,7 +609,7 @@ Fsm Fsm::transformToObservableFSM() const
             for (int y = 0; y <= maxOutput; ++ y)
             {
                 shared_ptr<FsmLabel> lbl =
-                      make_shared<FsmLabel>(x, y, presentationLayer);
+                make_shared<FsmLabel>(x, y, presentationLayer);
                 theLabel.clear();
                 
                 for (shared_ptr<FsmNode> n : node2Label.at(q))
@@ -633,7 +646,7 @@ Fsm Fsm::transformToObservableFSM() const
                         tgtNode = make_shared<FsmNode>(id ++, labelString(theLabel), presentationLayer);
                         nodeLst.push_back(tgtNode);
                         bfsLst.push_back(tgtNode);
-                        node2Label [tgtNode] = theLabel;//insertion
+                        node2Label[tgtNode] = theLabel;
                     }
                     
                     /*Create the transition from q to tgtNode*/
@@ -1091,6 +1104,14 @@ ostream & operator<<(ostream & out, const Fsm & fsm)
 }
 
 
+unsigned int Fsm::getRandomSeed() {
+    
+    return static_cast<unsigned int>
+    (high_resolution_clock::now().time_since_epoch().count());
+    
+}
+
+
 shared_ptr<Fsm>
 Fsm::createRandomFsm(const string & fsmName,
                      const int maxInput,
@@ -1099,23 +1120,75 @@ Fsm::createRandomFsm(const string & fsmName,
                      const shared_ptr<FsmPresentationLayer> pl) {
     
     // Initialisation of random number generation
-    srand((unsigned int) time(0));
+    srand(getRandomSeed());
     
-    // Produce the nodes and put them into a vector
+    // Produce the nodes and put them into a vector.
+    // All nodes are marked 'white' by the costructor - this is now
+    // used to mark unreachable states which have to be made reachable
     vector<shared_ptr<FsmNode> > lst;
     for ( int n = 0; n <= maxState; n++ ) {
         lst.push_back(make_shared<FsmNode>(n,fsmName,pl));
     }
     
-    bool reachable[maxState+1];
-    for ( int n = 0; n <= maxState; n++ ) reachable[n] = false;
+    // At index 0 of the vector, the initial state is store, and
+    // this is reachable
+    lst[0]->setColor(FsmNode::black);
     
-    // For each node, for each input, create one or more transitions
-    // with this input and random outputs to random target nodes.
-    for ( int n = 0; n <= maxState; n++ ) {
-        auto srcNode = lst[n];
+    // We create transitions by starting from black (reachable) nodes
+    // and trying to reach at least one white node from there.
+    deque< shared_ptr<FsmNode> > bfsq;
+    bfsq.push_back(lst[0]);
+    
+    while ( not bfsq.empty() ) {
         
+        shared_ptr<FsmNode> srcNode = bfsq.front();
+        bfsq.pop_front();
+        
+        // Generation part 1.
+        // Select an uncovered node at random
+        int whiteNodeIndex = rand() % (maxState+1);
+        shared_ptr<FsmNode> whiteNode = nullptr;
+        shared_ptr<FsmNode> startNode = lst[whiteNodeIndex];
+        shared_ptr<FsmNode> thisNode = startNode;
+        
+        do {
+            
+            if ( thisNode->getColor() == FsmNode::white ) {
+                whiteNode = thisNode;
+            }
+            else {
+                whiteNodeIndex = (whiteNodeIndex + 1) % (maxState+1);
+                thisNode = lst[whiteNodeIndex];
+            }
+            
+        } while ( whiteNode == nullptr and thisNode != startNode );
+        
+        // Link srcNode by random transition to thisNode
+        // and mark thisNode as black. Also insert into BFS queue
+        int x0 = -1;
+        int y0 = -1;
+        
+        if ( whiteNode != nullptr ) {
+            x0 = rand() % (maxInput+1);
+            y0 = rand() % (maxOutput+1);
+            auto theTrans =
+            make_shared<FsmTransition>(srcNode,whiteNode,
+                                       make_shared<FsmLabel>(x0,y0,pl));
+            // Add transition to adjacency list of the source node
+            srcNode->addTransition(theTrans);
+            thisNode->setColor(FsmNode::black);
+            bfsq.push_back(thisNode);
+        }
+        
+        // Generation part 2.
+        // Random transition generation.
+        // At least one transition for every input, with
+        // arbitrary target nodes.
         for ( int x = 0; x <= maxInput; x++ ) {
+            // If x equals x0 produced already above,
+            // we may skip it at random
+            if ( x == x0 and rand() % 2 ) continue;
+            
             // How many transitions do we want for input x?
             // We construct at most 2 of these transitions
             int numTrans = rand() % 2;
@@ -1125,40 +1198,19 @@ Fsm::createRandomFsm(const string & fsmName,
                 // Which target node?
                 int tgtNodeId = rand() % (maxState+1);
                 auto tgtNode = lst[tgtNodeId];
+                if ( tgtNode->getColor() == FsmNode::white ) {
+                    tgtNode->setColor(FsmNode::black);
+                    bfsq.push_back(tgtNode);
+                }
                 auto theTrans =
-                make_shared<FsmTransition>(srcNode,tgtNode,make_shared<FsmLabel>(x,y,pl));
+                make_shared<FsmTransition>(srcNode,tgtNode,
+                                           make_shared<FsmLabel>(x,y,pl));
                 // Add transition to adjacency list of the source node
                 srcNode->addTransition(theTrans);
-                reachable[tgtNodeId] = true;
             }
+            
         }
-    }
-    
-    // We want all nodes to be reachable
-    for  ( int tgtNodeId = 0; tgtNodeId <= maxState; tgtNodeId++ ) {
-        if ( not reachable[tgtNodeId] ) {
-            // This is the node we wish to reach
-            auto tgtNode = lst[tgtNodeId];
-            
-            // Select random source node which is reachable
-            int n = rand() % (maxState+1);
-            while ( not reachable[n] ) {
-                n = (n+1) % (maxState+1);
-            }
-            auto srcNode = lst[n];
-            
-            // Create a random label
-            int x = rand() % (maxInput+1);
-            int y = rand() % (maxOutput+1);
-            shared_ptr<FsmLabel> lbl = make_shared<FsmLabel>(x,y,pl);
-            
-            // Transition from source to target node
-            shared_ptr<FsmTransition> theTrans =
-            make_shared<FsmTransition>(srcNode,tgtNode,lbl);
-            // Add transition to adjacency list of the source node
-            srcNode->addTransition(theTrans);
-            reachable[tgtNodeId] = true;
-        }
+        
     }
     
     return make_shared<Fsm>(fsmName,maxInput,maxOutput,lst,pl);
@@ -1173,7 +1225,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                                   const size_t numOutputFaults,
                                   const size_t numTransitionFaults){
     
-    srand((unsigned int) time(0));
+    srand(getRandomSeed());
     
     // Create new nodes for the mutant.
     vector<shared_ptr<FsmNode> > lst;
@@ -1228,7 +1280,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
             for ( auto trOther : lst[srcNodeId]->getTransitions() ) {
                 if ( tr == trOther ) continue;
                 if ( trOther->getTarget()->getId() != tr->getTarget()->getId() )
-                continue;
+                    continue;
                 if ( trOther->getLabel()->getInput() != theInput ) continue;
                 if ( trOther->getLabel()->getOutput() == newOutVal ) {
                     newOutValOk = false;

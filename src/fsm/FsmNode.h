@@ -53,12 +53,13 @@ public:
 	std::string getName() const;
 	bool hasBeenVisited() const;
 	void setVisited();
+    void setUnvisited();
 	void setPair(const std::shared_ptr<FsmNode> l, const std::shared_ptr<FsmNode> r);
 	void setPair(const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p);
 	bool isDerivedFrom(const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p) const;
 	std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> getPair() const;
 	std::shared_ptr<FsmNode> apply(const int e, OutputTrace & o);
-	OutputTree apply(const InputTrace & itrc);
+	OutputTree apply(const InputTrace & itrc, bool markAsVisited = false);
 
 	/**
 	Return the set of FsmNode instances reachable from this node after

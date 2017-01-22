@@ -1847,3 +1847,7 @@ xcode/trees/fsm.build/Debug/fsm-trees.build/Objects-normal/x86_64/TreeNode.d
 xcode/trees/fsm.build/Debug/fsm-trees.build/Objects-normal/x86_64/TreeNode.dia
 xcode/trees/fsm.build/Debug/fsm-trees.build/Objects-normal/x86_64/TreeNode.o
 xcode/trees/fsm.build/Release/fsm-trees.build/dgph
+xcode/main/Debug/FailedStateCover.dot
+xcode/main/Debug/FailedStateCover0.dot
+xcode/main/Debug/FailedStateCover1.dot
+xcode/main/Debug/FailedStateCoverFSM.dot

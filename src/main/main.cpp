@@ -5,6 +5,7 @@
 #include <interface/FsmPresentationLayer.h>
 #include <fsm/Dfsm.h>
 #include <fsm/Fsm.h>
+#include <fsm/FsmNode.h>
 #include <fsm/IOTrace.h>
 #include <trees/IOListContainer.h>
 #include <trees/OutputTree.h>
@@ -30,19 +31,19 @@ void test1() {
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
     Dfsm d("TC-DFSM-0001.fsm",pl,"m1");
     d.toDot("TC-DFSM-0001");
- 
+    
     vector<int> inp;
     inp.push_back(1);
     inp.push_back(0);
     inp.push_back(0);
     inp.push_back(0);
     inp.push_back(1);
-
-
+    
+    
     InputTrace i(inp,pl);
     
     cout << "InputTrace = " << i << endl;
-
+    
     
     IOTrace t = d.applyDet(i);
     
@@ -67,7 +68,7 @@ void test1() {
            u.getOutputTrace().get().size() == 0 and
            u.getInputTrace().get().size() == 0,
            "For input trace 9, the output trace is empty.");
-
+    
 }
 
 
@@ -99,7 +100,7 @@ void test2() {
     Fsm f2Min = f2Obs.minimise();
     
     int m = (f2Min.getMaxNodes() > f1Min.getMaxNodes() ) ?
-            (f2Min.getMaxNodes() - f1Min.getMaxNodes()) : 0;
+    (f2Min.getMaxNodes() - f1Min.getMaxNodes()) : 0;
     IOListContainer iolc = f1Min.wMethod(m);
     
     TestSuite t1 = f1Min.createTestSuite(iolc);
@@ -108,7 +109,7 @@ void test2() {
     assert("TC-FSM-0001",
            t2.isEquivalentTo(t1),
            "Original FSM and its deep copy pass the same W-Method test suite");
-
+    
     
     
 }
@@ -116,56 +117,133 @@ void test2() {
 void test3() {
     
     cout << "TC-FSM-0002 Show that createMutant() injects a fault into the original FSM" << endl;
-
-    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-    shared_ptr<Fsm> fsm = Fsm::createRandomFsm("F",3,3,5,pl);
-    fsm->toDot("F");
     
-    shared_ptr<Fsm> fsmMutant = fsm->createMutant("F_M",3,0);
-    fsmMutant->toDot("FMutant");
     
-    Fsm fsmMin = fsm->minimise();
-    fsmMin.toDot("FM");
-    
-    Fsm fsmMutantMin = fsmMutant->minimise();
-    
-    int m = 0;
-    if ( fsmMutantMin.getMaxNodes() > fsmMin.getMaxNodes() ) {
-        m = (int)fsmMutantMin.getMaxNodes() - fsmMin.getMaxNodes();
+    for ( size_t i = 0; i < 1000; i++ ) {
+        shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+        shared_ptr<Fsm> fsm = Fsm::createRandomFsm("F",3,3,8,pl);
+        fsm->toDot("F");
+        
+        shared_ptr<Fsm> fsmMutant = fsm->createMutant("F_M",1,0);
+        fsmMutant->toDot("FMutant");
+        
+        Fsm fsmMin = fsm->minimise();
+        fsmMin.toDot("FM");
+        
+        Fsm fsmMutantMin = fsmMutant->minimise();
+        
+        int m = 0;
+        if ( fsmMutantMin.getMaxNodes() > fsmMin.getMaxNodes() ) {
+            m = (int)fsmMutantMin.getMaxNodes() - fsmMin.getMaxNodes();
+        }
+        
+        IOListContainer iolc1 = fsmMin.wMethod(m);
+        
+        TestSuite t1 = fsmMin.createTestSuite(iolc1);
+        TestSuite t2 = fsmMutantMin.createTestSuite(iolc1);
+        
+        assert("TC-FSM-0002", not t2.isEquivalentTo(t1),
+               "Original FSM and mutant do not produce the same test suite results - tests are created by W-Method");
+        
+        IOListContainer iolc2 = fsmMin.wpMethod(m);
+        
+        TestSuite t1wp = fsmMin.createTestSuite(iolc2);
+        TestSuite t2wp = fsmMutantMin.createTestSuite(iolc2);
+        
+        assert("TC-FSM-0002",
+               not t2wp.isEquivalentTo(t1wp),
+               "Original FSM and mutant do not produce the same test suite results - tests are created by W-Method");
+        
+        assert("TC-FSM-0002",
+               t1wp.size() <= t1.size(),
+               "Wp-Method test suite size less or equal to W-Method size");
+        
+        
     }
     
-    IOListContainer iolc1 = fsmMin.wMethod(m);
     
-    TestSuite t1 = fsmMin.createTestSuite(iolc1);
-    TestSuite t2 = fsmMutantMin.createTestSuite(iolc1);
-    
-    assert("TC-FSM-0002", not t2.isEquivalentTo(t1),
-           "Original FSM and mutant do not produce the same test suite results - tests are created by W-Method");
-    
-    IOListContainer iolc2 = fsmMin.wpMethod(m);
-    
-    TestSuite t1wp = fsmMin.createTestSuite(iolc2);
-    TestSuite t2wp = fsmMutantMin.createTestSuite(iolc2);
-    
-    assert("TC-FSM-0002",
-           not t2wp.isEquivalentTo(t1wp),
-           "Original FSM and mutant do not produce the same test suite results - tests are created by W-Method");
-    
-    assert("TC-FSM-0002",
-           t1wp.size() < t1.size(),
-           "Wp-Method generates a smaller test suite than W-Method");
+}
 
-    
-    
 
+void test4() {
+    
+    cout << "TC-FSM-0004 Check correctness of state cover" << endl;
+    
+    const bool markAsVisited = true;
+    bool havePassed = true;
+    
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+    
+    for (size_t i = 0; i < 10000; i++) {
+        
+        // Create a random FSM
+        std::shared_ptr<Fsm> f = Fsm::createRandomFsm("F",5,5,10,pl);
+        std::shared_ptr<Tree> sc = f->getStateCover();
+        IOListContainer c = sc->getTestCases();
+        std::shared_ptr<std::vector<std::vector<int>>> iols = c.getIOLists();
+        
+        for ( auto inLst : *iols ) {
+            auto iTr = make_shared<InputTrace>(inLst,pl);
+            f->apply(*iTr,true);
+        }
+        
+        for ( std::shared_ptr<FsmNode> n : f->getNodes() ) {
+            if ( not n->hasBeenVisited() ) {
+                havePassed = false;
+                assert("TC-FSM-0004",
+                       n->hasBeenVisited(),
+                       "State cover failed to visit node " + n->getName());
+                
+                f->toDot("FailedStateCoverFSM");
+                
+                filebuf fb;
+                fb.open ("FailedStateCover.dot",std::ios::out);
+                ostream os(&fb);
+                sc->toDot(os);
+                fb.close();
+                
+                int i = 0;
+                for ( auto inLst : *iols ) {
+                    ostringstream oss;
+                    oss << i++;
+                    auto iTr = make_shared<InputTrace>(inLst,pl);
+                    filebuf fbot;
+                    OutputTree ot = f->apply(*iTr,markAsVisited);
+                    fbot.open ("FailedStateCover" + oss.str() + ".dot",
+                               std::ios::out);
+                    ostream os(&fbot);
+                    sc->toDot(os);
+                    fbot.close();
+                }
+                
+                exit(1);
+                
+            }
+        }
+        
+    }
+    
+    if ( havePassed ) {
+        assert("TC-FSM-0004",
+               true,
+               "State cover reaches all states");
+    }
+    else {
+        exit(0);
+    }
+    
+    
 }
 
 int main(int argc, char* argv[])
 {
     
-    test1();
-    test2();
+    //test1();
+    //test2();
     test3();
+    //test4();
+    
+    
     
     exit(0);
     

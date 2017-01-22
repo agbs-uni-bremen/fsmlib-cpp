@@ -50,7 +50,7 @@ shared_ptr<OFSMTable> OFSMTable::nextAfterZero()
 		++ thisClass;
 	}
 
-	next->setS2C(newS2C);//not sure if abut this way
+	next->setS2C(newS2C);
 	return next;
 }
 

@@ -20,7 +20,11 @@
 using namespace std;
 
 FsmNode::FsmNode(const int id, const shared_ptr<FsmPresentationLayer> presentationLayer)
-	: id(id), visited(false), color(white), presentationLayer(presentationLayer), derivedFromPair(nullptr)
+	: id(id),
+       visited(false),
+       color(white),
+       presentationLayer(presentationLayer),
+       derivedFromPair(nullptr)
 {
 
 }
@@ -40,8 +44,8 @@ void FsmNode::addTransition(std::shared_ptr<FsmTransition> transition)
     for ( auto tr : transitions ) {
         if ( tr->getTarget()->getId() == transition->getTarget()->getId()
              and
-            tr->getLabel() == transition->getLabel() ) {
-            return;
+             tr->getLabel() == transition->getLabel() ) {
+          return;
         }
     }
     
@@ -71,6 +75,10 @@ bool FsmNode::hasBeenVisited() const
 void FsmNode::setVisited()
 {
 	visited = true;
+}
+
+void FsmNode::setUnvisited() {
+    visited = false;
 }
 
 void FsmNode::setPair(const shared_ptr<FsmNode> l, const shared_ptr<FsmNode> r)
@@ -106,20 +114,20 @@ shared_ptr<FsmNode> FsmNode::apply(const int e, OutputTrace & o)
 	return nullptr;
 }
 
-OutputTree FsmNode::apply(const InputTrace & itrc)
+OutputTree FsmNode::apply(const InputTrace& itrc, bool markAsVisited)
 {
 	vector<shared_ptr<TreeNode>> tnl;
 	unordered_map<shared_ptr<TreeNode>, shared_ptr<FsmNode>> t2f;
 
 	shared_ptr<TreeNode> root = make_shared<TreeNode>();
 	OutputTree ot = OutputTree(root, itrc, presentationLayer);
-
+    
 	if (itrc.get().size() == 0)
 	{
 		return ot;
 	}
 
-	t2f [root] = shared_from_this();//insertion
+	t2f[root] = shared_from_this();
 
 	for (auto it = itrc.cbegin(); it != itrc.cend(); ++ it)
 	{
@@ -130,8 +138,9 @@ OutputTree FsmNode::apply(const InputTrace & itrc)
 		{
 			shared_ptr<TreeNode> thisTreeNode = tnl.front();
 			tnl.erase(tnl.begin());
-
+            
 			shared_ptr<FsmNode> thisState = t2f.at(thisTreeNode);
+            if ( markAsVisited ) thisState->setVisited();
 
 			for (shared_ptr<FsmTransition> tr : thisState->getTransitions())
 			{
@@ -142,7 +151,8 @@ OutputTree FsmNode::apply(const InputTrace & itrc)
 					shared_ptr<TreeNode> tgtNode = make_shared<TreeNode>();
 					shared_ptr<TreeEdge> te = make_shared<TreeEdge>(y, tgtNode);
 					thisTreeNode->add(te);
-					t2f [tgtNode] = tgtState;//insertion
+					t2f[tgtNode] = tgtState;
+                    if ( markAsVisited ) tgtState->setVisited();
 				}
 			}
 		}
