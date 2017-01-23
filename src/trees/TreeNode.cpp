@@ -313,3 +313,28 @@ std::shared_ptr<TreeNode> TreeNode::after(std::vector<int>::const_iterator lstIt
 	as the final node.*/
 	return shared_from_this();
 }
+
+void TreeNode::calcSize(size_t& theSize) {
+    
+    theSize++;
+    
+    for ( auto t : *children) {
+        t->getTarget()->calcSize(theSize);
+    }
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

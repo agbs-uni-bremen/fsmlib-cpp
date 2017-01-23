@@ -115,5 +115,7 @@ public:
 	//TODO
 	void addAfter(const InputTrace & tr, const IOListContainer & cnt);
     
+    size_t size();
+    
 };
 #endif //FSM_TREES_TREE_H_

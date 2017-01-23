@@ -113,3 +113,23 @@ void Tree::addAfter(const InputTrace & tr, const IOListContainer & cnt)
 	}
 	n->addToThisNode(cnt);
 }
+
+
+size_t Tree::size() {
+    
+    size_t theSize = 0;
+    
+    std::shared_ptr<TreeNode> r = getRoot();
+    r->calcSize(theSize);
+    
+    
+    return theSize;
+}
+
+
+
+
+
+
+
+

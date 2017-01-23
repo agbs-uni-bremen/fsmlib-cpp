@@ -170,5 +170,10 @@ public:
 	input trace against the tree.
 	*/
 	std::shared_ptr<TreeNode> after(std::vector<int>::const_iterator lstIte, const std::vector<int>::const_iterator end);
+    
+    
+    void calcSize(size_t& theSize);
+    
+    
 };
 #endif //FSM_TREES_TREENODE_H_
