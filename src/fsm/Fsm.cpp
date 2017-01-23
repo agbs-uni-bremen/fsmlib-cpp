@@ -995,6 +995,7 @@ IOListContainer Fsm::wpMethod(const unsigned int m)
     }
     Wp1->add(w);
     cout << "Wp1 = " << Wp1->getIOLists() << endl;
+
     
     shared_ptr<Tree> Wp2 = r;
     if (mMinusN > 0)
@@ -1007,8 +1008,9 @@ IOListContainer Fsm::wpMethod(const unsigned int m)
     }
     appendStateIdentificationSets(Wp2);
     cout << "Wp2 = " << Wp2->getIOLists() << endl;
-    
+
     Wp1->unionTree(Wp2);
+    cout << "Wp = " << Wp1->getIOLists() << endl;
     return Wp1->getIOLists();
 }
 

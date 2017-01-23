@@ -42,7 +42,7 @@ void FsmNode::addTransition(std::shared_ptr<FsmTransition> transition)
     // Do not accept another transition with the same label and the
     // the same target node
     for ( auto tr : transitions ) {
-        if ( tr->getTarget()->getId() == transition->getTarget()->getId()
+        if ( tr->getTarget() == transition->getTarget()
              and
              tr->getLabel() == transition->getLabel() ) {
           return;
@@ -401,19 +401,27 @@ InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
 
 bool FsmNode::isObservable() const
 {
-	/*If a label already contained in lblSet is also
-	attached to at least one other transition, the
-	node violates the observability condition*/
-	unordered_set<shared_ptr<FsmLabel> > lblSet;
-	for (auto tr : transitions)
-	{
-		shared_ptr<FsmLabel> lbl = tr->getLabel();
-		if (!lblSet.insert(lbl).second)
-		{
-			return false;
-		}
-	}
-	return true;
+    
+    for (auto tr : transitions) {
+        
+        auto lbl = tr->getLabel();
+        
+        for ( auto otherTr : transitions ) {
+            
+            if ( otherTr == tr ) continue;
+            
+            auto otherLbl = otherTr->getLabel();
+            
+            if ( *lbl == *otherLbl ) {
+                return false;
+            }
+            
+        }
+        
+    }
+    
+    return true;
+    
 }
 
 bool FsmNode::isDeterministic() const
