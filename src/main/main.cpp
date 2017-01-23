@@ -119,9 +119,10 @@ void test3() {
     cout << "TC-FSM-0002 Show that createMutant() injects a fault into the original FSM" << endl;
     
     
-    for ( size_t i = 0; i < 1000; i++ ) {
-        shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-        shared_ptr<Fsm> fsm = Fsm::createRandomFsm("F",3,3,8,pl);
+    for ( size_t i = 0; i < 100; i++ ) {
+        shared_ptr<FsmPresentationLayer> pl =
+            make_shared<FsmPresentationLayer>();
+        shared_ptr<Fsm> fsm = Fsm::createRandomFsm("F",5,5,8,pl);
         fsm->toDot("F");
         
         shared_ptr<Fsm> fsmMutant = fsm->createMutant("F_M",1,0);
@@ -137,7 +138,7 @@ void test3() {
             m = (int)fsmMutantMin.getMaxNodes() - fsmMin.getMaxNodes();
         }
         
-        IOListContainer iolc1 = fsmMin.wMethod(m);
+        IOListContainer iolc1 = fsmMin.wMethodOnMinimisedFsm(m);
         
         TestSuite t1 = fsmMin.createTestSuite(iolc1);
         TestSuite t2 = fsmMutantMin.createTestSuite(iolc1);
@@ -158,6 +159,11 @@ void test3() {
                t1wp.size() <= t1.size(),
                "Wp-Method test suite size less or equal to W-Method size");
         
+        if ( t1wp.size() > t1.size() ) {
+            cout << endl << "W-Method " << endl << iolc1 << endl;
+            exit(1);
+        }
+        
         
     }
     
@@ -174,11 +180,21 @@ void test4() {
     
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
     
-    for (size_t i = 0; i < 10000; i++) {
+    for (size_t i = 0; i < 20000; i++) {
         
         // Create a random FSM
         std::shared_ptr<Fsm> f = Fsm::createRandomFsm("F",5,5,10,pl);
         std::shared_ptr<Tree> sc = f->getStateCover();
+        
+        if ( sc->size() != f->getMaxNodes() + 1 ) {
+            cout << "Size of state cover: " << sc->size()
+            << " Number of states in FSM: " << f->getMaxNodes() + 1 << endl;
+            assert("TC-FSM-0004",
+                   sc->size() == f->getMaxNodes() + 1,
+                   "Size of state cover must be less or equal than number of FSM states");
+        }
+        
+        
         IOListContainer c = sc->getTestCases();
         std::shared_ptr<std::vector<std::vector<int>>> iols = c.getIOLists();
         
@@ -238,10 +254,10 @@ void test4() {
 int main(int argc, char* argv[])
 {
     
-    //test1();
-    //test2();
+    test1();
+    test2();
     test3();
-    //test4();
+    test4();
     
     
     
