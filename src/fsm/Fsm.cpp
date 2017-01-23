@@ -805,7 +805,6 @@ IOListContainer Fsm::getCharacterisationSet()
     /*Wrap list of lists by an IOListContainer instance*/
     IOListContainer tcl = characterisationSet->getIOLists();
     
-    cout << "W = " << tcl << endl;
     return tcl;
 }
 
@@ -892,11 +891,12 @@ void Fsm::calcStateIdentificationSets()
         }
         stateIdentificationSets.push_back(iTree);
         
-        /*@debug*/
+#if 0
         for (unsigned int n = 0; n < stateIdentificationSets.size(); ++ n)
         {
             cout << "W(" << n << ") = " << stateIdentificationSets.at(n)->getTestCases() << endl;
         }
+#endif
     }
 }
 
@@ -963,14 +963,12 @@ IOListContainer Fsm::wpMethod(const unsigned int m)
     size_t mMinusN = ( m > nodes.size() ) ? (m - nodes.size()) : 0;
     
     shared_ptr<Tree> scov = getStateCover();
-    cout << "State cover: " << scov->getTestCases() << endl;
     
     ofstream stateCover(this->getName() + "_state_cover.dot");
     scov->toDot(stateCover);
     stateCover.close();
     
     shared_ptr<Tree> tcov = getTransitionCover();
-    cout << "Transition cover: " << tcov->getTestCases() << endl;
     
     ofstream transitionCover(this->getName() + "_transitionCover.dot");
     tcov->toDot(transitionCover);
@@ -978,10 +976,8 @@ IOListContainer Fsm::wpMethod(const unsigned int m)
     
     tcov->remove(scov);
     shared_ptr<Tree> r = tcov;
-    cout << "R: " << r->getTestCases() << endl;
     
     IOListContainer w = getCharacterisationSet();
-    cout << "Characterisation set: " << w << endl;
     
     calcStateIdentificationSets();
     
@@ -994,8 +990,6 @@ IOListContainer Fsm::wpMethod(const unsigned int m)
         Wp1->add(inputEnum);
     }
     Wp1->add(w);
-    cout << "Wp1 = " << Wp1->getIOLists() << endl;
-
     
     shared_ptr<Tree> Wp2 = r;
     if (mMinusN > 0)
@@ -1007,10 +1001,8 @@ IOListContainer Fsm::wpMethod(const unsigned int m)
         Wp2->add(inputEnum);
     }
     appendStateIdentificationSets(Wp2);
-    cout << "Wp2 = " << Wp2->getIOLists() << endl;
 
     Wp1->unionTree(Wp2);
-    cout << "Wp = " << Wp1->getIOLists() << endl;
     return Wp1->getIOLists();
 }
 
