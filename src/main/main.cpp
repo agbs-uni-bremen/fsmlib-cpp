@@ -190,7 +190,7 @@ void test4() {
             cout << "Size of state cover: " << sc->size()
             << " Number of states in FSM: " << f->getMaxNodes() + 1 << endl;
             assert("TC-FSM-0004",
-                   sc->size() == f->getMaxNodes() + 1,
+                   sc->size() <= f->getMaxNodes() + 1,
                    "Size of state cover must be less or equal than number of FSM states");
         }
         
