@@ -34,28 +34,28 @@ private:
 public:
 	/**
 	Create a DFSMTableRow
-	\param q The number of states
-	\param maxInput The number of input
+	@param q The number of states
+	@param maxInput The number of input
 	*/
 	DFSMTableRow(const int q, const int maxInput);
 
 	/**
 	Getter for the input/output section
-	\return The input/output section
+	@return The input/output section
 	*/
     IOMap& getioSection();
 
 	/**
 	Getter for the input/post section
-	\return The input/post section
+	@return The input/post section
 	*/
 	I2PMap& geti2postSection();
 
 	/**
 	Output the DFSMTableRow to a standard output stream
-	\param out The standard output stream to use
-	\param dfsmTableRow The DFSMTableRow to print
-	\return The standard output stream used, to allow user to cascade <<
+	@param out The standard output stream to use
+	@param dfsmTableRow The DFSMTableRow to print
+	@return The standard output stream used, to allow user to cascade <<
 	*/
 	friend std::ostream & operator<<(std::ostream & out, const DFSMTableRow & dfsmTableRow);
 };

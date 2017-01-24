@@ -22,31 +22,31 @@ public:
 
 	/**
 	 * Check whether or not this test suite is equivalent to an other one
-	 * \param theOtherTs The test suite to compare with this one
-     * \param writeOutput if true, the method will write PASS/FAIL
+	 * @param theOtherTs The test suite to compare with this one
+     * @param writeOutput if true, the method will write PASS/FAIL
      *        information including discrepancies between expected
      *        and observed I/O-traces to cout.
-	 * \return true if they are the same, false otherwise
+	 * @return true if they are the same, false otherwise
 	 */
 	bool isEquivalentTo(TestSuite& theOtherTs,
                         bool writeOutput = false);
 
 	/**
 	 * Check whether or not this test suite is a reduction of an other one
-	 * \param theOtherTs The test suite to compare with this one
-     * \param writeOutput if true, the method will write PASS/FAIL
+	 * @param theOtherTs The test suite to compare with this one
+     * @param writeOutput if true, the method will write PASS/FAIL
      *        information including discrepancies between expected
      *        and observed I/O-traces to cout.
-	 * \return true if they are the other test suite contain this one, false otherwise
+	 * @return true if they are the other test suite contain this one, false otherwise
 	*/
     bool isReductionOf(TestSuite& theOtherTs,
                        bool writeOutput = false);
 
 	/**
 	Output the TestSuite to a standard output stream
-	\param out The standard output stream to use
-	\param testSuite The TestSuite to print
-	\return The standard output stream used, to allow user to cascade <<
+	@param out The standard output stream to use
+	@param testSuite The TestSuite to print
+	@return The standard output stream used, to allow user to cascade <<
 	*/
 	friend std::ostream & operator<<(std::ostream & out, const TestSuite & testSuite);
 };

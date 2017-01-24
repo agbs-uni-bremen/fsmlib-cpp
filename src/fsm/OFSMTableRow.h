@@ -35,25 +35,25 @@ private:
 public:
 	/**
 	Create a OFSMTableRow
-	\param maxInput The maximal input
-	\param maxOutput The maximal output
+	@param maxInput The maximal input
+	@param maxOutput The maximal output
 	*/
 	OFSMTableRow(const int maxInput, const int maxOutput);
 
 	/**
 	Set for the element at the position i / j as postState
-	\param i The line number
-	\param j The column number
-	\param postState The value
-	\return The element
+	@param i The line number
+	@param j The column number
+	@param postState The value
+	@return The element
 	*/
 	void set(const int i, const int j, const int postState);
 
 	/**
 	Getter for the element at the position i / j
-	\param i The line number
-	\param j The column number
-	\return The element
+	@param i The line number
+	@param j The column number
+	@return The element
 	*/
 	int get(const int i, const int j) const;
 

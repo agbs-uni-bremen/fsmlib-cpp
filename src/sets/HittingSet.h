@@ -25,13 +25,13 @@ private:
 public:
 	/**
 	Create a new Hitting set
-	\param s The union of sets to be inserted into the hitting set
+	@param s The union of sets to be inserted into the hitting set
 	*/
 	HittingSet(const std::vector<std::unordered_set<int>>& s);
 
 	/**
 	Calculate the the smallest set
-	\return The smallest set into the hitting set
+	@return The smallest set into the hitting set
 	*/
 	std::unordered_set<int> calcMinCardHittingSet() const;
 };

@@ -32,9 +32,9 @@ private:
 public:
 	/**
 	Create a FsmTransition
-	\param source The node from which the transition come
-	\param target The node where the transition go
-	\param label The label of this transition
+	@param source The node from which the transition come
+	@param target The node where the transition go
+	@param label The label of this transition
 	*/
 	FsmTransition(const std::shared_ptr<FsmNode>  source,
                   const std::shared_ptr<FsmNode>  target,
@@ -66,8 +66,8 @@ public:
 
 	/**
 	Output the FsmTransition to a standard output stream
-	\param out The standard output stream to use
-	\param transition The FsmTransition to print
+	@param out The standard output stream to use
+	@param transition The FsmTransition to print
 	@return The standard output stream used, to allow user to cascade <<
 	*/
 	friend std::ostream & operator<<(std::ostream & out, FsmTransition & transition);

@@ -36,19 +36,19 @@ public:
 
 	/**
 	Getter for the size of the hitting set
-	\return The size of the hitting set
+	@return The size of the hitting set
 	*/
 	size_t size() const;
 
 	/**
 	Check whether or not, it is a hitting set
-	\return true if is a hitting set, false otherwise
+	@return true if is a hitting set, false otherwise
 	*/
 	bool isHittingSet() const;
 
 	/**
 	Add a new hitting set tree node to this node's children
-	\param The node to add
+	@param The node to add
 	*/
 	void add(const HsTreeNode & node);
 	
@@ -57,7 +57,7 @@ public:
 
 	/**
 	Create a dot file representing the hitting set (by calling this method recursively on its children)
-	\return A string containing the representation
+	@return A string containing the representation
 	*/
 	std::string toDot();
 };

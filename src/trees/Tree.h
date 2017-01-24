@@ -44,28 +44,28 @@ protected:
 
 	/**
 	Print every childran of this tree to a dot format into a standard output stream
-	\param out The standard output stream to use
-	\param top The root of the tree
-	\param idNode The id of this node, used to differenciate node in dot format
+	@param out The standard output stream to use
+	@param top The root of the tree
+	@param idNode The id of this node, used to differenciate node in dot format
 	*/
 	void printChildren(std::ostream & out, const std::shared_ptr<TreeNode> top, const std::shared_ptr<int> idNode) const;
 public:
 	/**
 	Create a new tree, with a root and a presenation layer
-	\param root  root of the tree
-	\param presentationLayer The presentation layer to use
+	@param root  root of the tree
+	@param presentationLayer The presentation layer to use
 	*/
 	Tree(const std::shared_ptr<TreeNode> root, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 
 	/**
 	Calculate the leaves, then give the leaves back
-	\return The leaves of this tree
+	@return The leaves of this tree
 	*/
 	std::vector<std::shared_ptr<TreeNode>> getLeaves();
 
 	/**
 	Getter for the root of this tree
-	\return The root of this tree
+	@return The root of this tree
 	*/
 	std::shared_ptr<TreeNode> getRoot() const;
 
@@ -74,7 +74,7 @@ public:
 
 	/**
 	Special remove operation.
-	\param otherTree For all edges in otherTree that correspond to
+	@param otherTree For all edges in otherTree that correspond to
 	an edge in this tree, the corresponding source
 	node and target node in this tree are marked as deleted.
 	*/
@@ -82,13 +82,13 @@ public:
 
 	/**
 	Output this tree to a dot format, into a standard output stream
-	\param out The standard output stream to use
+	@param out The standard output stream to use
 	*/
 	void toDot(std::ostream & out);
 
 	/**
 	Get the test cases of this tree
-	\return the test cases
+	@return the test cases
 	*/
 	IOListContainer getTestCases();
 

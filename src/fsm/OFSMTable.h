@@ -68,7 +68,7 @@ private:
 
 	/**
 	Create new OFSMTable from the initial one.
-	\return OFSMTable where two FSM nodes are associated with the same
+	@return OFSMTable where two FSM nodes are associated with the same
 	class if and only if they have outgoing transitions for
 	exactly the same set of input/output labels
 	*/
@@ -77,10 +77,10 @@ public:
 	/**
 	This constructor creates the initial OFSMTable for an observable FSM.
 	All nodes are associated with equivalence class 0.
-	\param nodes    array of FSM states
-	\param maxInput input alphabet is in range 0..maxInput
-	\param maxOutput output alphabet is in range 0..maxOutput
-	\param presentationLayer The presentation layer used by the OFSMTable
+	@param nodes    array of FSM states
+	@param maxInput input alphabet is in range 0..maxInput
+	@param maxOutput output alphabet is in range 0..maxOutput
+	@param presentationLayer The presentation layer used by the OFSMTable
 	*/
 	OFSMTable(const std::vector<std::shared_ptr<FsmNode>>& nodes, const int maxInput, const int maxOutput, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 	
@@ -98,10 +98,10 @@ public:
 
 	/**
 	Get table entry for given state and I/O
-	\param id state id in range 0..(nodes.length-1)
-	\param x  input value in range 0..maxInput
-	\param y  output value in range 0..maxOutput
-	\return -1 if FSM state id does not have an outgoing transition labelled by x/y
+	@param id state id in range 0..(nodes.length-1)
+	@param x  input value in range 0..maxInput
+	@param y  output value in range 0..maxOutput
+	@return -1 if FSM state id does not have an outgoing transition labelled by x/y
 	n >= 0 if FSM state id has an outgoing transition labelled by x/y,
 	which ends at FSM state n
 	*/
@@ -112,7 +112,7 @@ public:
 
 	/**
 	Create the next OFSMTable on the basis of the current table.
-	\return The next OFSMTable if it exists,
+	@return The next OFSMTable if it exists,
 	null otherwise
 	*/
 	std::shared_ptr<OFSMTable> next();
@@ -124,8 +124,8 @@ public:
 
 	/**
 	Create minimised FSM from OFSM-Table
-	\param name the name for the FSM to be created
-	\return the FSM instance
+	@param name the name for the FSM to be created
+	@return the FSM instance
 	\note This operation expects that this OFSMTable is already the last
 	one in a sequence of OFSMTable transformations, so that it really represents
 	the minimised FSM.

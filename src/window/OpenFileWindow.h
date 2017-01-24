@@ -69,37 +69,37 @@ public:
 	
 	/**
 	Gettter for the submit button (needed to connect it into the main window)
-	\return The button
+	@return The button
 	*/
 	QPushButton * getButton();
 	
 	/**
 	Gettter for  the name of the file chosen by the user
-	\return The file name
+	@return The file name
 	*/
 	std::string getFileName();
 	
 	/**
 	Gettter for  the name of the fsm chosen by the user
-	\return The name
+	@return The name
 	*/
 	std::string getName();
 	
 	/**
 	Gettter for  the number of nodes chosen by the user
-	\return The number of nodes
+	@return The number of nodes
 	*/
 	//int getMaxNodes();
 	
 	/**
 	Gettter for  the number of input chosen by the user
-	\return The number of input
+	@return The number of input
 	*/
 	//int getMaxInput();
 	
 	/**
 	Gettter for  the number of output chosen by the user
-	\return The number of output
+	@return The number of output
 	*/
 	//int getMaxOutput();
 };

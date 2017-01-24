@@ -13,7 +13,7 @@ class Int2IntMap : public std::map<int, int>
 public:
     /**
      * Create a standard map and initialise every element to -1
-     * \param maxInput The size of the map
+     * @param maxInput The size of the map
      */
     Int2IntMap(const int maxInput);
 };

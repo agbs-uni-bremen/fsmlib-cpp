@@ -42,7 +42,7 @@ public:
 	/**
 	Create the main window for the graphical interface. Every element of the
 	UI (user Interface) is load from an UI file, editable with Qt designer
-	\param parent The parent widget
+	@param parent The parent widget
 	*/
 	explicit MainWindow(QWidget * parent = 0);
 
@@ -98,14 +98,14 @@ private:
 
 	/**
 	Add a new FSM into the list
-	\param newFsm The new FSM to be added into the list
+	@param newFsm The new FSM to be added into the list
 	*/
 	void addFsm(std::shared_ptr<Fsm> newFsm);
 
 	/**
 	Scale the image displayed into the qlabel, in the center of the screen. This method is used
 	to zoom in and out WITHOUT losing a quality because it is alway loaded for the file
-	\param factor The factor of zoom asked by the user (relative to the previous level of zoom)
+	@param factor The factor of zoom asked by the user (relative to the previous level of zoom)
 	*/
 	void scaleImage(const double & factor);
 
@@ -120,7 +120,7 @@ private:
 	if this system call had an issue. Please note that in order to use this
 	program, you need to install dot and to add this executable to your
 	PATH
-	\param name The name of the file to be created
+	@param name The name of the file to be created
 	*/
 	void dotCall(const std::string & name);
 
@@ -132,47 +132,47 @@ private:
 
 	/**
 	Store several test cases into a .txt file
-	\param fileName The name of the file in which you want to store the test cases
-	\param testCases The test cases to store
+	@param fileName The name of the file in which you want to store the test cases
+	@param testCases The test cases to store
 	*/
 	void storeTestCases(const std::string & fileName, const IOListContainer & testCases);
 
 	/**
 	Store ONE test case into a .txt file
-	\param fileName The name of the file in which you want to store the test case
-	\param testCase The test case to store
+	@param fileName The name of the file in which you want to store the test case
+	@param testCase The test case to store
 	*/
 	void storeTestCase(const std::string & fileName, const std::vector<int> & testCase);
 
 	/**
 	Read several test cases from a .txt file
-	\param fileName The name of the file from which you want to load the test cases
+	@param fileName The name of the file from which you want to load the test cases
 	*/
 	IOListContainer readTestCases(const std::string & fileName);
 
 	/**
 	Read one test case from
-	\param line The line containing the test case
+	@param line The line containing the test case
 	*/
 	std::vector<int> readTestCase(const std::string & line);
 
 	/**
 	Store a test suite (several output tree) into a .txt file
-	\param fileName The name of the file in which you want to store the test suite
-	\param testSuite The test suite to store
+	@param fileName The name of the file in which you want to store the test suite
+	@param testSuite The test suite to store
 	*/
 	void storeTestSuite(const std::string & fileName, const TestSuite & testSuite);
 
 	/**
 	Store an output tree into a .txt file
-	\param fileName The name of the file in which you want to store the output tree
-	\param outputTree The output tree to store
+	@param fileName The name of the file in which you want to store the output tree
+	@param outputTree The output tree to store
 	*/
 	void storeOutputTree(const std::string & fileName, OutputTree & outputTree);
 private slots:
 	/**
 	Change the current FSM displayed
-	\param currentSelection The current FSM selectioned into the list
+	@param currentSelection The current FSM selectioned into the list
 	*/
 	void changeFsm(const QModelIndex & currentSelection);
 

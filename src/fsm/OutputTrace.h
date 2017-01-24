@@ -17,22 +17,22 @@ class OutputTrace : public Trace
 public:
 	/**
 	Create an empty output trace, with only one presentation layer
-	\param presentationLayer The presentation layer used by the trace
+	@param presentationLayer The presentation layer used by the trace
 	*/
 	OutputTrace(const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 
 	/**
 	Create an output trace
-	\param trace The trace itself, represented by a list of int
-	\param presentationLayer The presentation layer used by the trace
+	@param trace The trace itself, represented by a list of int
+	@param presentationLayer The presentation layer used by the trace
 	*/
 	OutputTrace(const std::vector<int>& trace, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 
 	/**
 	Output the OutputTrace to a standard output stream
-	\param out The standard output stream to use
-	\param trace The OutputTrace to print
-	\return The standard output stream used, to allow user to cascade <<
+	@param out The standard output stream to use
+	@param trace The OutputTrace to print
+	@return The standard output stream used, to allow user to cascade <<
 	*/
 	friend std::ostream & operator<<(std::ostream & out, const OutputTrace & trace);
 };

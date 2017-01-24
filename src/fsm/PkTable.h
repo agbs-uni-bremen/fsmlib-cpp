@@ -46,58 +46,58 @@ private:
 public:
     /**
      * Create an empty Pktable, with each row set to nullptr
-     * \param numStates The number of rows (1 row = 1 state)
-     * \param maxInput The maximal input
-     * \param presentationLayer The presentation layer used by the PkTable
+     * @param numStates The number of rows (1 row = 1 state)
+     * @param maxInput The maximal input
+     * @param presentationLayer The presentation layer used by the PkTable
      */
     PkTable(const int numStates, const int maxInput, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
     
     /**
      * Create a Pktable
-     * \param numStates The number of rows (1 row = 1 state)
-     * \param maxInput The maximal input
-     * \param rows The rows used by the PkTable
-     * \param presentationLayer The presentation layer used by the PkTable
+     * @param numStates The number of rows (1 row = 1 state)
+     * @param maxInput The maximal input
+     * @param rows The rows used by the PkTable
+     * @param presentationLayer The presentation layer used by the PkTable
      */
     PkTable(const int numStates, const int maxInput, const std::vector<std::shared_ptr<PkTableRow>> rows, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
     
     /**
      * Set the row of the Pk-equivalence class at the position s
-     * \param s The position
-     * \param row The row
+     * @param s The position
+     * @param row The row
      */
     void setRow(const int s, const std::shared_ptr<PkTableRow> row);
     
     /**
      * Set the id of the Pk-equivalence class at the position n
-     * \param n The position
-     * \param c The id
+     * @param n The position
+     * @param c The id
      */
     void setClass(const int n, const int c);
     
     /**
      * Get the id of the Pk-equivalence class at the position n
-     * \param n The position
-     * \return The id
+     * @param n The position
+     * @return The id
      */
     int getClass(const int n) const;
     
     /**
      * Get the maximum id of the Pk-equivalence class
-     * \return The id
+     * @return The id
      */
     int maxClassId() const;
     
     /**
      * Generate the P(k+1) table from this Pk-Table
-     * \return null if no new equivalence classes can be generated from this Pk-Table
+     * @return null if no new equivalence classes can be generated from this Pk-Table
      * the P(k+1)-Table otherwise
      */
     std::shared_ptr<PkTable> getPkPlusOneTable() const;
     
     /**
      * Generate a DFSM form thus pktable
-     * \return The DFSM generated
+     * @return The DFSM generated
      */
     Dfsm toFsm(std::string name);
     
@@ -109,9 +109,9 @@ public:
     /**
      * Output the DFSMTable to a standard output stream in LaTeX
      *  tabular format.
-     * \param out The standard output stream to use
-     * \param dfsmTable The DFSMTable to print
-     * \return The standard output stream used, to allow user to cascade <<
+     * @param out The standard output stream to use
+     * @param dfsmTable The DFSMTable to print
+     * @return The standard output stream used, to allow user to cascade <<
      */
     friend std::ostream & operator<<(std::ostream & out, const PkTable & pkTable);
     

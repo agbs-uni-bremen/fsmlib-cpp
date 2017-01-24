@@ -40,18 +40,18 @@ public:
     
     /**
      * Check wheter or not, the 2 trace are the same
-     * \param trace1 The first trace
-     * \param trace2 The second trace
-     * \return True if they are the same, false otherwise
+     * @param trace1 The first trace
+     * @param trace2 The second trace
+     * @return True if they are the same, false otherwise
      */
     friend bool operator==(PkTableRow const & row, S2CMap const & s2c);
     
     /**
      * Output the PkTableRow to a standard output stream, using 
      * LaTeX tabular format.
-     * \param out The standard output stream to use
-     * \param pkTableRow The PkTableRow to print
-     * \return The standard output stream used, to allow user to cascade <<
+     * @param out The standard output stream to use
+     * @param pkTableRow The PkTableRow to print
+     * @return The standard output stream used, to allow user to cascade <<
      */
     friend std::ostream & operator<<(std::ostream & out, const PkTableRow & pkTableRow);
 };
