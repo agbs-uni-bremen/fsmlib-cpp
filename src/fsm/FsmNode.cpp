@@ -402,20 +402,13 @@ InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
 bool FsmNode::isObservable() const
 {
     
-    for (auto tr : transitions) {
+    for ( size_t t = 0; t < transitions.size(); t++ ) {
         
-        auto lbl = tr->getLabel();
+        auto lbl = transitions[t]->getLabel();
         
-        for ( auto otherTr : transitions ) {
-            
-            if ( otherTr == tr ) continue;
-            
-            auto otherLbl = otherTr->getLabel();
-            
-            if ( *lbl == *otherLbl ) {
-                return false;
-            }
-            
+        for ( size_t other = t + 1; other < transitions.size(); other++ ) {
+            auto otherLbl = transitions[other]->getLabel();
+            if ( *lbl == *otherLbl ) return false;
         }
         
     }
