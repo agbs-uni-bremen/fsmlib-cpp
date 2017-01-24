@@ -153,7 +153,7 @@ void test3() {
         
         assert("TC-FSM-0002",
                not t2wp.isEquivalentTo(t1wp),
-               "Original FSM and mutant do not produce the same test suite results - tests are created by W-Method");
+               "Original FSM and mutant do not produce the same test suite results - tests are created by Wp-Method");
         
         assert("TC-FSM-0002",
                t1wp.size() <= t1.size(),
