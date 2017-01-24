@@ -180,7 +180,7 @@ void test4() {
     
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
     
-    for (size_t i = 0; i < 20000; i++) {
+    for (size_t i = 0; i < 2000; i++) {
         
         // Create a random FSM
         std::shared_ptr<Fsm> f = Fsm::createRandomFsm("F",5,5,10,pl);
@@ -254,10 +254,10 @@ void test4() {
 int main(int argc, char* argv[])
 {
     
-    test1();
-    test2();
+    //test1();
+    //test2();
     test3();
-    test4();
+    //test4();
     
     
     
