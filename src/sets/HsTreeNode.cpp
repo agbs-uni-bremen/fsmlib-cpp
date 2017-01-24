@@ -24,26 +24,25 @@ bool HsTreeNode::isHittingSet() const
 {
 	for (std::unordered_set<int> z : s)
 	{
-		std::unordered_set<int> z1;
+        
+        bool emptyIntersection = true;
 
-		/*Not present in java, it is because the set in C++ doesn't have any retainAll method*/
+        // Check whether x has a non-empty intersection with z
 		for (int i : z)
 		{
-			if (std::find(x.cbegin(), x.cend(), i) != x.cend())
+			if ( x.find(i) != x.cend())
 			{
-				z1.insert(i);
+                emptyIntersection = false;
+                break;
 			}
 		}
 
-		if (z1.empty())
-		{
-			return false;
-		}
+        if ( emptyIntersection ) return false;
+		 
 	}
 
-	/*This node is a valid hitting set
-	Check whether x is smaller than hSmallest,
-	or whether hSmallest is undefined yet.*/
+    // If x is smaller than hSmallest, x becomes the new
+    // smallest hitting set candidate.
 	if (x.size() < hSmallest.size())
 	{
 		hSmallest = std::unordered_set<int>(x);

@@ -8,8 +8,8 @@
 HittingSet::HittingSet(const std::vector<std::unordered_set<int>>& s)
 	: s(s)
 {
-	/*Initially, the hitting set contains the union of
-	all sets in s*/
+    // The initial hitting set candidate h is the union of
+    // all sets in s
 	for (std::unordered_set<int> z : s)
 	{
 		h.insert(z.begin(), z.end());

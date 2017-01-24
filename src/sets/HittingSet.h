@@ -16,23 +16,30 @@ class HittingSet
 {
 private:
 	/**
-	The union of sets into this hitting set
-	*/
+	 * The collection of sets ("set system") for which
+     * the minimal hitting set should be calculated
+	 */
 	std::vector<std::unordered_set<int>> s;
 
-	//TODO
+	/** the current candidate for the minimal hitting set problem */
 	std::unordered_set<int> h;
 public:
-	/**
-	Create a new Hitting set
-	@param s The union of sets to be inserted into the hitting set
+   /**
+	* Create an object for solving the minimal hitting set problem.
+	* @param s The set system, i.e. the
+    *          collection of sets for which the minimal
+    *          hitting set shall be calculated.
 	*/
 	HittingSet(const std::vector<std::unordered_set<int>>& s);
 
 	/**
-	Calculate the the smallest set
-	@return The smallest set into the hitting set
-	*/
+	 * Calculate the smallest hitting set for the set system
+     * specified when instantiating the object.
+	 * @return The smallest set into the hitting set
+     *
+     * @note this algorithm has worst case complexity
+     * of O(2^(#(union s)))
+	 */
 	std::unordered_set<int> calcMinCardHittingSet() const;
 };
 #endif //FSM_SETS_HITTINGSET_H_
