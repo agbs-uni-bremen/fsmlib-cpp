@@ -5,44 +5,53 @@
  */
 #include "trees/TestSuite.h"
 
+
+using namespace std;
+
 TestSuite::TestSuite()
 {
 
 }
 
-bool TestSuite::isEquivalentTo(TestSuite & theOtherTs)
+bool TestSuite::isEquivalentTo(TestSuite& theOtherTs,
+                               bool writeOutput)
 {
 	bool pass = true;
 
 	if (size() != theOtherTs.size())
 	{
-		std::cout << "Test suites have different sizes" << std::endl;
+		if ( writeOutput )
+            cout << "Test suites have different sizes" << endl;
 		return false;
 	}
 
 	for (unsigned int i = 0; i < size(); ++ i)
 	{
-		std::cout << "Test Case No. " << i << ": ";
+		if ( writeOutput ) cout << "Test Case No. " << i << ": ";
 		if (!((*this) [i] == theOtherTs [i]))
 		{
-			std::cout << "FAIL" << std::endl << "Discrepancy found." << std::endl << "Mine = " << (*this) [i] << std::endl << "Other = " << theOtherTs [i] << std::endl;
+			if ( writeOutput )
+                cout << "FAIL" << endl << "Discrepancy found." <<
+                endl << "Mine = " << (*this) [i] << endl <<
+                "Other = " << theOtherTs [i] << endl;
 			pass = false;
 		}
 		else
 		{
-			std::cout << "PASS" << std::endl;
+			if ( writeOutput ) cout << "PASS" << endl;
 		}
 	}
 	return pass;
 }
 
-bool TestSuite::isReductionOf(TestSuite & theOtherTs)
+bool TestSuite::isReductionOf(TestSuite& theOtherTs,
+                              bool writeOutput)
 {
 	bool pass = true;
 
 	if (size() != theOtherTs.size())
 	{
-		std::cout << "Test suites have different sizes" << std::endl;
+		cout << "Test suites have different sizes" << endl;
 		return false;
 	}
 
@@ -50,18 +59,18 @@ bool TestSuite::isReductionOf(TestSuite & theOtherTs)
 	{
 		if (!theOtherTs [i].contains((*this) [i]))
 		{
-			std::cout << "Discrepancy found." << std::endl << "Mine = " << (*this) [i] << std::endl << "Other = " << theOtherTs [i] << std::endl;
+			cout << "Discrepancy found." << endl << "Mine = " << (*this) [i] << endl << "Other = " << theOtherTs [i] << endl;
 			pass = false;
 		}
 	}
 	return pass;
 }
 
-std::ostream & operator<<(std::ostream & out, const TestSuite & testSuite)
+ostream & operator<<(ostream & out, const TestSuite & testSuite)
 {
 	for (OutputTree ot : testSuite)
 	{
-		out << std::endl << ot;
+		out << endl << ot;
 	}
 	return out;
 }
