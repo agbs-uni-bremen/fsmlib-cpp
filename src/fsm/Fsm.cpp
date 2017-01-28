@@ -4,7 +4,7 @@
  * Licensed under the EUPL V.1.1
  */
 
-#include <sys/time.h>
+#include <chrono>
 #include <deque>
 
 #include "fsm/Dfsm.h"
