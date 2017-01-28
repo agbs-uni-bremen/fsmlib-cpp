@@ -52,13 +52,18 @@ private:
 	*/
 	int maxOutput;
 
-	//TODO
+    /** 
+     *  The number of this OFSM table: The first one to be created
+     *  gets tblId 0, the last one created during the mnimisation 
+     *  process gets the highest tblId and carries the final mapping
+     *  of states to equivalence classes in s2c.
+     */
 	int tblId;
 
-	//TODO
+	/** Mapping from a given state to its current class */
 	S2CMap s2c;
 
-	//TODO
+	/** Rows of the OFSM table */
 	std::vector<std::shared_ptr<OFSMTableRow>> rows;
 
 	/**
@@ -121,6 +126,20 @@ public:
 	Return members of an equivalence class c as set string
 	*/
 	std::string getMembers(const int c) const;
+    
+    
+    /** 
+     *  Compare two columns of the OFSM table. Recall that each
+     *  column of an OFSM table is uniquely identified by a pair
+     *  of input value x and output value y.
+     *
+     *  @param x1 Input value associated with the first column
+     *  @param y1 Output value associated with the first column
+     *  @param x2 Input value associated with the second column
+     *  @param y2 Output value associated with the second column
+     *  @return true iff the first column has the same entries as the second one
+     */
+    bool compareColumns(int x1, int y1, int x2, int y2);
 
 	/**
 	Create minimised FSM from OFSM-Table

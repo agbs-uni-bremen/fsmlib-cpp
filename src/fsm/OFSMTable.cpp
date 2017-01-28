@@ -232,6 +232,19 @@ string OFSMTable::getMembers(const int c) const
 	return memSet;
 }
 
+
+bool OFSMTable::compareColumns(int x1, int y1, int x2, int y2) {
+    
+    for ( size_t r = 0; r < rows.size(); r++ ) {
+        if ( rows[r]->get(x1,y1) != rows[r]->get(x2,y2) ) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+
 Fsm OFSMTable::toFsm(const string & name) const
 {
 	string minFsmName = name;

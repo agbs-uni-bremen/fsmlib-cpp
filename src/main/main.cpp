@@ -119,7 +119,7 @@ void test3() {
     cout << "TC-FSM-0002 Show that createMutant() injects a fault into the original FSM" << endl;
     
     
-    for ( size_t i = 0; i < 100; i++ ) {
+    for ( size_t i = 0; i < 10; i++ ) {
         shared_ptr<FsmPresentationLayer> pl =
             make_shared<FsmPresentationLayer>();
         shared_ptr<Fsm> fsm = Fsm::createRandomFsm("F",5,5,8,pl);
@@ -254,10 +254,10 @@ void test4() {
 int main(int argc, char* argv[])
 {
     
-    //test1();
-    //test2();
+    test1();
+    test2();
     test3();
-    //test4();
+    test4();
     
     
     

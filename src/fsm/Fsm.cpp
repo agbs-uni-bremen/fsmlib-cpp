@@ -1304,7 +1304,64 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
 
 
 
+std::vector< std::unordered_set<int>* >
+Fsm::getEquivalentInputsFromPrimeMachine() {
+    
+    vector< std::unordered_set<int>* > v;
+    
+    shared_ptr<OFSMTable> ot =
+        make_shared<OFSMTable>(nodes,
+                               maxInput,
+                               maxOutput,
+                               presentationLayer);
+    
+    // mark all inputs as non-equivalent
+    vector<bool> equivalentToSmallerInput;
+    for ( int x = 0; x <= maxInput; x++ )
+        equivalentToSmallerInput[x] = true;
+    
+    // Check inputs for equivalence
+    for ( int x1 = 0; x1 <= maxInput; x1++ ) {
+        
+        if ( equivalentToSmallerInput[x1] ) continue;
+        
+        unordered_set<int>* classOfX1 = new unordered_set<int>();
+        classOfX1->insert(x1);
+        v.push_back(classOfX1);
+        
+        for ( int x2 = x1 + 1; x2 <= maxInput; x2++ ) {
+            
+            bool x2EquivX1 = true;
+            
+            // Loop over all inputs and outputs
+            for ( int x = 0;  x <= maxInput; x++ ) {
+                for ( int y = 0; y <= maxOutput; y++ ) {
+                    
+                }
+            }
+            
+            if ( x2EquivX1 ) {
+                equivalentToSmallerInput[x2] = true;
+                classOfX1->insert(x2);
+            }
+            
+        }
+    }
+    
+    return v;
+    
+}
 
+std::vector< std::unordered_set<int>* > Fsm::getEquivalentInputs() {
+    
+    if ( minimal != True ) {
+        return minimise().getEquivalentInputsFromPrimeMachine();
+    }
+    else {
+        return getEquivalentInputsFromPrimeMachine();
+    }
+    
+}
 
 
 

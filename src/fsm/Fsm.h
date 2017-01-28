@@ -86,6 +86,13 @@ protected:
      */
     static unsigned int getRandomSeed();
     
+    /** 
+     * calculate eqivalent inputs for an FSM which already is a prime 
+     * machine 
+     */
+    std::vector< std::unordered_set<int>* > getEquivalentInputsFromPrimeMachine();
+
+    
 public:
     
     
@@ -361,6 +368,18 @@ public:
      */
     TestSuite createTestSuite(const IOListContainer & testCases);
     
+    /**
+     *  Identify equivalent inputs for completely specified FSMs.
+     *  Two members x1, x2 of the FSM input alphabet are equivalent,
+     *  if and only if from every state s in its prime machine
+     *  and for every output y, labels x1/y and x2/y lead to the same
+     *  target state or are both undefined in s.
+     *
+     *   @return A vector of length less or equal the alphabet size.
+     *           Each vector element is a set of equivalent inputs.
+     *           Of course, the sets are disjoint.
+     */
+    std::vector< std::unordered_set<int>* > getEquivalentInputs();
     
     /**
      *  Return true if the FSM is completely specified.
@@ -375,7 +394,12 @@ public:
      * @return true if FSM is deterministic
      */
     bool isDeterministic() const;
+    
+    
     void setPresentationLayer(const std::shared_ptr<FsmPresentationLayer> ppresentationLayer);
+    
+    
+    
     friend std::ostream & operator<<(std::ostream & out, const Fsm & fsm);
 };
 #endif //FSM_FSM_FSM_H_
