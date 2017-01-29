@@ -263,12 +263,12 @@ void test5() {
     shared_ptr<Fsm> fsm = make_shared<Fsm>("TC-FSM-0005.fsm",pl,"F");
     fsm->toDot("TC-FSM-0005");
     
-    vector< std::unordered_set<int>* > v = fsm->getEquivalentInputs();
+    vector< std::unordered_set<int> > v = fsm->getEquivalentInputs();
     
     for ( size_t s = 0; s < v.size(); s++ ) {
         cout << s << ": { ";
         bool isFirst = true;
-        for ( auto x : *v[s] ) {
+        for ( auto x : v[s] ) {
             if ( isFirst ) {
                 isFirst= false;
             }
@@ -285,17 +285,17 @@ void test5() {
            "For TC-FSM-0005.fsm, there are 3 classes of equivalent inputs.");
     
     assert("TC-FSM-0005",
-           v[0]->size() == 1 and v[0]->find(0) != v[0]->end(),
+           v[0].size() == 1 and v[0].find(0) != v[0].end(),
            "Class 0 only contains input 0.");
     
     assert("TC-FSM-0005",
-           v[1]->size() == 1 and v[1]->find(1) != v[1]->end(),
+           v[1].size() == 1 and v[1].find(1) != v[1].end(),
            "Class 1 only contains input 1.");
     
     assert("TC-FSM-0005",
-           v[2]->size() == 2 and
-           v[2]->find(2) != v[2]->end() and
-           v[2]->find(3) != v[2]->end(),
+           v[2].size() == 2 and
+           v[2].find(2) != v[2].end() and
+           v[2].find(3) != v[2].end(),
            "Class 2 contains inputs 2 and 3.");
 
     
@@ -310,8 +310,8 @@ void test5() {
     
     bool ok = true;
     for ( size_t s=0; s < v.size() and ok; s++ ) {
-        if ( v[s]->size() != 1 or
-            v[s]->find((int)s) == v[s]->end() ) {
+        if ( v[s].size() != 1 or
+            v[s].find((int)s) == v[s].end() ) {
             ok =false;
         }
     }

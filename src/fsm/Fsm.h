@@ -90,7 +90,7 @@ protected:
      * calculate eqivalent inputs for an FSM which already is a prime 
      * machine 
      */
-    std::vector< std::unordered_set<int>* > getEquivalentInputsFromPrimeMachine();
+    std::vector< std::unordered_set<int> > getEquivalentInputsFromPrimeMachine();
 
     
 public:
@@ -379,7 +379,7 @@ public:
      *           Each vector element is a set of equivalent inputs.
      *           Of course, the sets are disjoint.
      */
-    std::vector< std::unordered_set<int>* > getEquivalentInputs();
+    std::vector< std::unordered_set<int> > getEquivalentInputs();
     
     /**
      *  Return true if the FSM is completely specified.

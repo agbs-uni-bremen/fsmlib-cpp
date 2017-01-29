@@ -1304,10 +1304,10 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
 
 
 
-std::vector< std::unordered_set<int>* >
+std::vector< std::unordered_set<int> >
 Fsm::getEquivalentInputsFromPrimeMachine() {
     
-    vector< std::unordered_set<int>* > v;
+    vector< std::unordered_set<int> > v;
     
     shared_ptr<OFSMTable> ot =
         make_shared<OFSMTable>(nodes,
@@ -1325,9 +1325,8 @@ Fsm::getEquivalentInputsFromPrimeMachine() {
         
         if ( equivalentToSmallerInput[x1] ) continue;
         
-        unordered_set<int>* classOfX1 = new unordered_set<int>();
-        classOfX1->insert(x1);
-        v.push_back(classOfX1);
+        unordered_set<int> classOfX1;
+        classOfX1.insert(x1);
         
         for ( int x2 = x1 + 1; x2 <= maxInput; x2++ ) {
             
@@ -1345,17 +1344,20 @@ Fsm::getEquivalentInputsFromPrimeMachine() {
             
             if ( x2EquivX1 ) {
                 equivalentToSmallerInput[x2] = true;
-                classOfX1->insert(x2);
+                classOfX1.insert(x2);
             }
             
         }
+        
+        v.push_back(classOfX1);
+
     }
     
     return v;
     
 }
 
-std::vector< std::unordered_set<int>* > Fsm::getEquivalentInputs() {
+std::vector< std::unordered_set<int> > Fsm::getEquivalentInputs() {
     
     if ( minimal != True ) {
         return minimise().getEquivalentInputsFromPrimeMachine();
