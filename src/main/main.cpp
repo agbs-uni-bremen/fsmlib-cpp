@@ -251,14 +251,85 @@ void test4() {
     
 }
 
+void test5() {
+    
+    cout << "TC-FSM-0005 Check correctness of input " <<
+    "equivalence classes" << endl;
+    
+    shared_ptr<FsmPresentationLayer> pl =
+         make_shared<FsmPresentationLayer>();
+    
+    // Check FSM where outputs 2 and 3 are equivalent
+    shared_ptr<Fsm> fsm = make_shared<Fsm>("TC-FSM-0005.fsm",pl,"F");
+    fsm->toDot("TC-FSM-0005");
+    
+    vector< std::unordered_set<int>* > v = fsm->getEquivalentInputs();
+    
+    for ( size_t s = 0; s < v.size(); s++ ) {
+        cout << s << ": { ";
+        bool isFirst = true;
+        for ( auto x : *v[s] ) {
+            if ( isFirst ) {
+                isFirst= false;
+            }
+            else   {
+                cout << ", ";
+            }
+            cout << x;
+        }
+        cout << " }" << endl;
+    }
+    
+    assert("TC-FSM-0005",
+           v.size() == 3,
+           "For TC-FSM-0005.fsm, there are 3 classes of equivalent inputs.");
+    
+    assert("TC-FSM-0005",
+           v[0]->size() == 1 and v[0]->find(0) != v[0]->end(),
+           "Class 0 only contains input 0.");
+    
+    assert("TC-FSM-0005",
+           v[1]->size() == 1 and v[1]->find(1) != v[1]->end(),
+           "Class 1 only contains input 1.");
+    
+    assert("TC-FSM-0005",
+           v[2]->size() == 2 and
+           v[2]->find(2) != v[2]->end() and
+           v[2]->find(3) != v[2]->end(),
+           "Class 2 contains inputs 2 and 3.");
+
+    
+    // Check FSM without any equivalent inputs
+    fsm = make_shared<Fsm>("fsmGillA7.fsm",pl,"F");
+    fsm->toDot("fsmGillA7");
+    v = fsm->getEquivalentInputs();
+    
+    assert("TC-FSM-0005",
+           v.size() == 3,
+           "For fsmGillA7, there are 3 input classes.");
+    
+    bool ok = true;
+    for ( size_t s=0; s < v.size() and ok; s++ ) {
+        if ( v[s]->size() != 1 or
+            v[s]->find((int)s) == v[s]->end() ) {
+            ok =false;
+        }
+    }
+    
+    assert("TC-FSM-0005",
+           ok,
+           "For fsmGillA7, class x just contains input x.");
+    
+}
+
 int main(int argc, char* argv[])
 {
     
-    test1();
-    test2();
-    test3();
-    test4();
-    
+//    test1();
+//    test2();
+//    test3();
+//    test4();
+    test5();
     
     
     exit(0);

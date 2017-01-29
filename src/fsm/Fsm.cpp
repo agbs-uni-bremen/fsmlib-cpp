@@ -1318,7 +1318,7 @@ Fsm::getEquivalentInputsFromPrimeMachine() {
     // mark all inputs as non-equivalent
     vector<bool> equivalentToSmallerInput;
     for ( int x = 0; x <= maxInput; x++ )
-        equivalentToSmallerInput[x] = true;
+        equivalentToSmallerInput.push_back(false);
     
     // Check inputs for equivalence
     for ( int x1 = 0; x1 <= maxInput; x1++ ) {
@@ -1333,10 +1333,13 @@ Fsm::getEquivalentInputsFromPrimeMachine() {
             
             bool x2EquivX1 = true;
             
-            // Loop over all inputs and outputs
-            for ( int x = 0;  x <= maxInput; x++ ) {
-                for ( int y = 0; y <= maxOutput; y++ ) {
-                    
+            // To check whether x1 is equivalent to x2,
+            // loop over all outputs y and compare OFSM
+            // table columns x1/y and x2/y
+            for ( int y = 0; y <= maxOutput; y++ ) {
+                if ( not ot->compareColumns(x1,y,x2,y) ) {
+                    x2EquivX1 = false;
+                    break;
                 }
             }
             

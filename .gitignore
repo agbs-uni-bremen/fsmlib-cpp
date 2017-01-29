@@ -1996,3 +1996,6 @@ xcode/trees/fsm.build/Release/fsm-trees.build/Objects-normal/x86_64/TreeNode.d
 xcode/trees/fsm.build/Release/fsm-trees.build/Objects-normal/x86_64/TreeNode.dia
 xcode/trees/fsm.build/Release/fsm-trees.build/Objects-normal/x86_64/TreeNode.o
 xcode/trees/Release/libfsm-trees.a
+TC-FSM-0005.dot
+xcode/main/Debug/fsmGillA7.dot
+xcode/main/Debug/TC-FSM-0005.fsm
