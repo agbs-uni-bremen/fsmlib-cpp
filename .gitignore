@@ -1610,6 +1610,7 @@ build.sh
 build.Debug.MacOSX/main/f1.dot
 build.Debug.MacOSX/main/f1Copy.dot
 src/main/main7.cpp
+xcode
 xcode/cmake_install.cmake
 xcode/CMakeCache.txt
 xcode/Makefile
