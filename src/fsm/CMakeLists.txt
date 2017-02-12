@@ -13,6 +13,9 @@ set (FSM_FSM_SOURCES
 	FsmNode.h
 	FsmTransition.cpp
 	FsmTransition.h
+        FsmVisitor.h
+        FsmPrintVisitor.h
+        FsmPrintVisitor.cpp
 	InputTrace.cpp
 	InputTrace.h
 	Int2IntMap.cpp
