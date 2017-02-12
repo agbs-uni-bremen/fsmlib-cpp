@@ -15,6 +15,9 @@
 #include <unordered_set>
 #include <vector>
 
+#include "fsm/FsmVisitor.h"
+
+
 class Dfsm;
 class FsmNode;
 class Tree;
@@ -401,5 +404,15 @@ public:
     
     
     friend std::ostream & operator<<(std::ostream & out, const Fsm & fsm);
+    
+    
+    /**
+     *  Accept an FsmVisitor and initiate a BFS traversal of the Fsm.
+     *  All Fsm nodes will be set to "unvisited", before the traversal
+     *  starts. Nodes that already have been visited will ignore the 
+     *  the accept command.
+     */
+    void accept(FsmVisitor& v);
+
 };
 #endif //FSM_FSM_FSM_H_

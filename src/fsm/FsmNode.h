@@ -13,6 +13,9 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <deque>
+
+#include "fsm/FsmVisitor.h"
 
 class FsmTransition;
 class FsmPresentationLayer;
@@ -114,6 +117,17 @@ public:
 	 * Check if outgoing transitions of this node are deterministic
 	 */
 	bool isDeterministic() const;
+    
+    /**
+     * Accept an FsmVisitor, if this node has not been visited already.
+     * If the visitor is accepted, this node calls the accept methods of 
+     * all transitions.
+     */
+    void accept(FsmVisitor& v);
+    void accept(FsmVisitor& v,
+                std::deque< std::shared_ptr<FsmNode> >& bfsq);
+
+    
     
     /** Put node information in dot format into the stream */
 	friend std::ostream & operator<<(std::ostream & out, const FsmNode & node);

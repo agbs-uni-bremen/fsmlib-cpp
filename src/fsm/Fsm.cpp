@@ -20,6 +20,7 @@
 #include "trees/IOListContainer.h"
 #include "trees/TestSuite.h"
 
+
 using namespace std;
 using namespace std::chrono;
 
@@ -1369,8 +1370,25 @@ std::vector< std::unordered_set<int> > Fsm::getEquivalentInputs() {
 }
 
 
-
-
+void Fsm::accept(FsmVisitor& v) {
+    
+    deque< shared_ptr<FsmNode> > bfsq;
+    
+    resetColor();
+    
+    v.visit(*this);
+    
+    bfsq.push_back(nodes[initStateIdx]);
+    
+    while ( not bfsq.empty() ) {
+        shared_ptr<FsmNode> theNode = bfsq.front();
+        bfsq.pop_front();
+        v.setNew(true);
+        theNode->accept(v,bfsq);
+    }
+    
+    
+}
 
 
 

@@ -7,12 +7,20 @@
 #include <fsm/Fsm.h>
 #include <fsm/FsmNode.h>
 #include <fsm/IOTrace.h>
+#include <fsm/FsmPrintVisitor.h>
 #include <trees/IOListContainer.h>
 #include <trees/OutputTree.h>
 #include <trees/TestSuite.h>
 
 
 using namespace std;
+
+void assertInconclusive(string tc, string comment = "") {
+    
+    string sVerdict("INCONCLUSIVE");
+    cout << sVerdict << ": " << tc << " : " << comment <<  endl;
+    
+}
 
 void assert(string tc, bool verdict, string comment = "") {
     
@@ -29,7 +37,7 @@ void test1() {
     << endl;
     
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-    Dfsm d("TC-DFSM-0001.fsm",pl,"m1");
+    Dfsm d("../../../resources/TC-DFSM-0001.fsm",pl,"m1");
     d.toDot("TC-DFSM-0001");
     
     vector<int> inp;
@@ -121,7 +129,7 @@ void test3() {
     
     for ( size_t i = 0; i < 10; i++ ) {
         shared_ptr<FsmPresentationLayer> pl =
-            make_shared<FsmPresentationLayer>();
+        make_shared<FsmPresentationLayer>();
         shared_ptr<Fsm> fsm = Fsm::createRandomFsm("F",5,5,8,pl);
         fsm->toDot("F");
         
@@ -257,10 +265,11 @@ void test5() {
     "equivalence classes" << endl;
     
     shared_ptr<FsmPresentationLayer> pl =
-         make_shared<FsmPresentationLayer>();
+    make_shared<FsmPresentationLayer>();
     
     // Check FSM where outputs 2 and 3 are equivalent
-    shared_ptr<Fsm> fsm = make_shared<Fsm>("TC-FSM-0005.fsm",pl,"F");
+    shared_ptr<Fsm> fsm =
+          make_shared<Fsm>("../../../resources/TC-FSM-0005.fsm",pl,"F");
     fsm->toDot("TC-FSM-0005");
     
     vector< std::unordered_set<int> > v = fsm->getEquivalentInputs();
@@ -297,10 +306,10 @@ void test5() {
            v[2].find(2) != v[2].end() and
            v[2].find(3) != v[2].end(),
            "Class 2 contains inputs 2 and 3.");
-
+    
     
     // Check FSM without any equivalent inputs
-    fsm = make_shared<Fsm>("fsmGillA7.fsm",pl,"F");
+    fsm = make_shared<Fsm>("../../../resources/fsmGillA7.fsm",pl,"F");
     fsm->toDot("fsmGillA7");
     v = fsm->getEquivalentInputs();
     
@@ -322,15 +331,33 @@ void test5() {
     
 }
 
+void test6() {
+    
+    cout << "TC-FSM-0006 Check correctness of FSM Print Visitor " << endl;
+    
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+    Dfsm d("../../../resources/TC-DFSM-0001.fsm",pl,"m1");
+    
+    FsmPrintVisitor v;
+    
+    d.accept(v);
+    
+    cout << endl << endl;
+    assertInconclusive("TC-FSM-0006",
+                       "Output of print visitor has to be checked manually");
+    
+    
+}
+
 int main(int argc, char* argv[])
 {
     
-//    test1();
-//    test2();
-//    test3();
-//    test4();
+    test1();
+    test2();
+    test3();
+    test4();
     test5();
-    
+    test6();
     
     exit(0);
     

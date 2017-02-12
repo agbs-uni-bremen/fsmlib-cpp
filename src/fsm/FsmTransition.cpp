@@ -50,3 +50,11 @@ ostream & operator<<(ostream& out, FsmTransition& transition)
 	return out;
 }
 
+void FsmTransition::accept(FsmVisitor &v) {
+    
+    v.visit(*this);
+    label->accept(v);
+    //target->accept(v);
+    
+    
+}

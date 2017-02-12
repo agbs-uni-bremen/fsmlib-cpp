@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "fsm/FsmLabel.h"
+#include "fsm/FsmVisitor.h"
 
 class FsmNode;
 
@@ -57,6 +58,12 @@ public:
     void setTarget(std::shared_ptr<FsmNode> tgt);
     void setLabel(std::shared_ptr<FsmLabel> lbl);
 
+    
+    /** 
+     *   Accept an FsmVisitor and call accept method of the label.
+     *   Then call accept method of the target node
+     */
+    void accept(FsmVisitor& v);
     
 	/**
 	Getter for the label

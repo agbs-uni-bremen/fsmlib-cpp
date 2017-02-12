@@ -8,6 +8,7 @@
 
 #include <memory>
 
+#include "fsm/FsmVisitor.h"
 #include "interface/FsmPresentationLayer.h"
 
 class FsmLabel
@@ -64,6 +65,14 @@ public:
 	*/
 	friend bool operator==(FsmLabel const & label1, FsmLabel const & label2);
 
+    
+    
+    /**
+     *  Accept an FsmVisitor
+     */
+    void accept(FsmVisitor& v);
+    
+    
 	/**
 	Check wheter or not, label1 is "smaller" than label2. this operator is needed 
 	@param label1 The first label

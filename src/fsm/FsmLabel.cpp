@@ -52,3 +52,9 @@ std::ostream & operator<<(std::ostream & out, const FsmLabel & label)
 	out << label.presentationLayer->getInId(label.input) << "/" << label.presentationLayer->getOutId(label.output);
 	return out;
 }
+
+
+void FsmLabel::accept(FsmVisitor &v) {
+    
+    v.visit(*this);
+}
