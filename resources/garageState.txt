@@ -1,0 +1,6 @@
+Door Up
+Door Down
+Door stopped going down
+Door stopped going up
+Door closing
+Door opening
