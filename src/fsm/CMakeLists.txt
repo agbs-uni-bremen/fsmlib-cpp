@@ -16,6 +16,10 @@ set (FSM_FSM_SOURCES
         FsmVisitor.h
         FsmPrintVisitor.h
         FsmPrintVisitor.cpp
+        FsmSimVisitor.h
+        FsmSimVisitor.cpp
+        FsmOraVisitor.h
+        FsmOraVisitor.cpp
 	InputTrace.cpp
 	InputTrace.h
 	Int2IntMap.cpp

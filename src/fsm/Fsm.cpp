@@ -262,6 +262,9 @@ Fsm::Fsm(const Fsm& other) {
         }
     }
     
+    // Mark the initial node
+    nodes[initStateIdx]->markAsInitial();
+    
 }
 
 Fsm::Fsm(const shared_ptr<FsmPresentationLayer> presentationLayer)
@@ -293,6 +296,7 @@ minimal(Maybe),
 presentationLayer(presentationLayer)
 {
     readFsm(fname);
+    if ( initStateIdx >= 0 ) nodes[initStateIdx]->markAsInitial();
     
 }
 
@@ -318,7 +322,8 @@ presentationLayer(presentationLayer)
         nodes.push_back (nullptr);
     }
     readFsm (fname);
-    
+    if ( initStateIdx >= 0 ) nodes[initStateIdx]->markAsInitial();
+
 }
 
 Fsm::Fsm(const string & fsmName,
@@ -344,6 +349,8 @@ presentationLayer(presentationLayer)
         n->setColor(FsmNode::white);
         n->setUnvisited();
     }
+    
+    nodes[initStateIdx]->markAsInitial();
     
 }
 

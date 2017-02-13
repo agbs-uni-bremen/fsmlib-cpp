@@ -8,6 +8,8 @@
 #include <fsm/FsmNode.h>
 #include <fsm/IOTrace.h>
 #include <fsm/FsmPrintVisitor.h>
+#include <fsm/FsmSimVisitor.h>
+#include <fsm/FsmOraVisitor.h>
 #include <trees/IOListContainer.h>
 #include <trees/OutputTree.h>
 #include <trees/TestSuite.h>
@@ -349,15 +351,68 @@ void test6() {
     
 }
 
+void test7() {
+    
+//    cout << "TC-FSM-0007 Check correctness of FSM Simulation Visitor "
+//    << endl;
+    
+    shared_ptr<FsmPresentationLayer> pl =
+       make_shared<FsmPresentationLayer>("../../../resources/garageIn.txt",
+                                         "../../../resources/garageOut.txt",
+                                         "../../../resources/garageState.txt");
+    Dfsm d("../../../resources/garage.fsm",pl,"GC");
+    d.toDot("GC");
+    
+    FsmSimVisitor v;
+    
+    d.accept(v);
+    
+    v.setFinalRun(true);
+    d.accept(v);
+    
+    cout << endl << endl;
+//    assertInconclusive("TC-FSM-0007",
+//                       "Output of simulation visitor has to be checked manually");
+}
+
+
+void test8() {
+    
+    //    cout << "TC-FSM-0008 Check correctness of FSM Oracle Visitor "
+    //    << endl;
+    
+    shared_ptr<FsmPresentationLayer> pl =
+    make_shared<FsmPresentationLayer>("../../../resources/garageIn.txt",
+                                      "../../../resources/garageOut.txt",
+                                      "../../../resources/garageState.txt");
+    Dfsm d("../../../resources/garage.fsm",pl,"GC");
+    d.toDot("GC");
+    
+    FsmOraVisitor v;
+    
+    d.accept(v);
+    
+    v.setFinalRun(true);
+    d.accept(v);
+    
+    cout << endl << endl;
+    //    assertInconclusive("TC-FSM-0008",
+    //                       "Output of oracle visitor has to be checked manually");
+}
+
+
 int main(int argc, char* argv[])
 {
     
-    test1();
-    test2();
-    test3();
-    test4();
-    test5();
-    test6();
+//    test1();
+//    test2();
+//    test3();
+//    test4();
+//    test5();
+//    test6();
+//    test7();
+    
+    test8();
     
     exit(0);
     

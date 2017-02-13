@@ -51,7 +51,9 @@ public:
 	@param outputs A file name, in which each line stand for one output
 	@param states A file name, in which each line stand for one state
 	*/
-	FsmPresentationLayer(const std::string & inputs, const std::string & outputs, const std::string & states);
+	FsmPresentationLayer(const std::string & inputs,
+                         const std::string & outputs,
+                         const std::string & states);
 
 	/**
 	Getter for a particular input name

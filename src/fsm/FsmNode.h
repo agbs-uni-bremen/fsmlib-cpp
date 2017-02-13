@@ -37,6 +37,9 @@ private:
 	int color;
 	std::shared_ptr<FsmPresentationLayer> presentationLayer;
 	std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> derivedFromPair;
+    
+    bool isInitialNode;
+    
 public:
 	const static int white = 0;
 	const static int grey = 1;
@@ -117,6 +120,12 @@ public:
 	 * Check if outgoing transitions of this node are deterministic
 	 */
 	bool isDeterministic() const;
+    
+    /** 
+     *  Mark that this noe is the initial node
+     */
+    void markAsInitial() { isInitialNode = true; }
+    bool isInitial() const { return isInitialNode; }
     
     /**
      * Accept an FsmVisitor, if this node has not been visited already.

@@ -1,25 +1,25 @@
 //
-//  FsmSimVisitor.hpp
+//  FsmOraVisitor.hpp
 //  fsm
 //
 //  Created by Jan Peleska on 2017-02-12.
 //
 //
 
-#ifndef FsmSimVisitor_hpp
-#define FsmSimVisitor_hpp
+#ifndef FsmOraVisitor_hpp
+#define FsmOraVisitor_hpp
 
 #include <stdio.h>
 #include "fsm/FsmVisitor.h"
 
-class FsmSimVisitor : public FsmVisitor {
+class FsmOraVisitor : public FsmVisitor {
     
 private:
     bool finalRun;
     
 public:
     
-    FsmSimVisitor() { finalRun = false; }
+    FsmOraVisitor() { finalRun = false; }
     
     virtual void visit(Fsm& f);
     virtual void visit(FsmNode& f);
@@ -30,4 +30,4 @@ public:
     
 };
 
-#endif /* FsmSimVisitor_hpp */
+#endif /* FsmOraVisitor_hpp */

@@ -1,5 +1,5 @@
 //
-//  FsmSimVisitor.cpp
+//  FsmOraVisitor.cpp
 //  fsm
 //
 //  Created by Jan Peleska on 2017-02-12.
@@ -13,13 +13,13 @@
 #include "fsm/FsmNode.h"
 #include "fsm/FsmTransition.h"
 #include "fsm/FsmLabel.h"
-#include "fsm/FsmSimVisitor.h"
+#include "fsm/FsmOraVisitor.h"
 
 
 using namespace std;
 
 
-void FsmSimVisitor::visit(Fsm& f) {
+void FsmOraVisitor::visit(Fsm& f) {
     
     if ( finalRun ) {
         cout << endl
@@ -31,7 +31,7 @@ void FsmSimVisitor::visit(Fsm& f) {
         << "}" << endl << "}";
     }
     else {
-        cout << "@func void " << f.getName() << "() {" << endl << endl;
+        cout << "@func void ora_" << f.getName() << "() {" << endl << endl;
         cout << "int thisState = " << f.getInitStateIdx() << ";" << endl;
         cout << endl << "while ( @rttIsRunning ) {" << endl << endl;
         cout << "rttIOPost->fsmAction = -1;" << endl << endl;
@@ -40,7 +40,7 @@ void FsmSimVisitor::visit(Fsm& f) {
     
 }
 
-void FsmSimVisitor::visit(FsmNode& n) {
+void FsmOraVisitor::visit(FsmNode& n) {
     
     if ( finalRun ) return;
 
@@ -62,19 +62,23 @@ void FsmSimVisitor::visit(FsmNode& n) {
     
 }
 
-void FsmSimVisitor::visit(FsmTransition& t) {
+void FsmOraVisitor::visit(FsmTransition& t) {
     
     if ( finalRun ) return;
     
     cout << "case " << t.getLabel()->getInput() << ": " << endl;
     cout << "// Transition -> " << t.getTarget()->getName() << endl;
-    cout << "rttIOPost->fsmAction = " << t.getLabel()->getOutput() << ";" << endl;
+    
+    
+    cout << "@rttAssert(rttIOPost->fsmAction == " << t.getLabel()->getOutput()
+         << ");";
+    
     cout << "thisState = " << t.getTarget()->getId() << ";" << endl;
     cout << "break;";
     
 }
 
 
-void FsmSimVisitor::visit(FsmLabel& x) {
+void FsmOraVisitor::visit(FsmLabel& x) {
 
 }

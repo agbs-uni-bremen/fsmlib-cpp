@@ -24,7 +24,8 @@ FsmNode::FsmNode(const int id, const shared_ptr<FsmPresentationLayer> presentati
 visited(false),
 color(white),
 presentationLayer(presentationLayer),
-derivedFromPair(nullptr)
+derivedFromPair(nullptr),
+isInitialNode(false)
 {
     
 }
