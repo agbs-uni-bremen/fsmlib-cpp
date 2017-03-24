@@ -145,12 +145,12 @@ void Dfsm::printTables() const
     ofstream file("tables.tex");
     if (dfsmTable != nullptr)
     {
-        file << dfsmTable;
+        file << *dfsmTable;
     }
     
     for (unsigned int i = 0; i < pktblLst.size(); ++ i)
     {
-        file << pktblLst.at(i) << endl << endl;
+        file << *pktblLst.at(i) << endl << endl;
     }
     file.close();
 }
