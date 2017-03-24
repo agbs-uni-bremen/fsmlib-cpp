@@ -27,10 +27,10 @@ public:
     PkTableRow(IOMap& io, I2PMap& i2p);
     
     /** Return reference to I2O table */
-    IOMap& getIOMap();
+    IOMap& getIOMap() const;
     
     /** Return reference to I2P table */
-    I2PMap& getI2PMap();
+    I2PMap& getI2PMap() const;
     
     /**
      * Return the post state number registered in this PK table row
@@ -39,12 +39,11 @@ public:
     int get(const int x) const;
     
     /**
-     * Check wheter or not, the 2 trace are the same
-     * @param trace1 The first trace
-     * @param trace2 The second trace
-     * @return True if they are the same, false otherwise
+     * Check whether the I2P-part of this PkTableRow equals 
+     * the I2P-part of another row, modulo equivalence of states
+     * as defined according to the current s2c-map
      */
-    friend bool operator==(PkTableRow const & row, S2CMap const & s2c);
+    bool isEquivalent(const PkTableRow &row, const S2CMap &s2c);
     
     /**
      * Output the PkTableRow to a standard output stream, using 

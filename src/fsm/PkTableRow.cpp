@@ -12,12 +12,12 @@ PkTableRow::PkTableRow(IOMap& io,I2PMap& i2p)
 
 }
 
-IOMap& PkTableRow::getIOMap()
+IOMap& PkTableRow::getIOMap() const
 {
 	return io;
 }
 
-I2PMap& PkTableRow::getI2PMap()
+I2PMap& PkTableRow::getI2PMap() const
 {
 	return i2p;
 }
@@ -27,12 +27,12 @@ int PkTableRow::get(const int x) const
 	return i2p.at(x);
 }
 
-bool operator==(PkTableRow const & row, S2CMap const & s2c)
+bool PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c)
 {
-	for (unsigned int i = 0; i < row.i2p.size(); ++i)
+	for (unsigned int i = 0; i < i2p.size(); ++i)
 	{
-		if (s2c.at(row.i2p.at(i)) != s2c.at(row.get(i)))
-		{
+		if ( s2c.at(i2p.at(i)) != s2c.at(row.getI2PMap().at(i)) )
+        {
 			return false;
 		}
 	}

@@ -83,7 +83,7 @@ shared_ptr<PkTable> PkTable::getPkPlusOneTable() const
 				continue;
 			}
 
-			if (*rows.at (i) == s2c)
+			if ( refRow->isEquivalent(*rows.at(i), s2c) )
 			{
 				pkp1->setClass(i, thisClass);
 			}
@@ -95,7 +95,8 @@ shared_ptr<PkTable> PkTable::getPkPlusOneTable() const
 
 				for (unsigned int j = i + 1; j < rows.size(); ++ j)
 				{
-					if (s2c.at(j) == thisClass && *rows.at(j) == s2c)
+					if ( s2c.at(j) == thisClass and
+                         newClassRefRow->isEquivalent(*rows.at(j), s2c) )
 					{
 						pkp1->setClass(j, thisNewClassId);
 					}
