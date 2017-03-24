@@ -41,10 +41,6 @@ private:
 	*/
 	std::shared_ptr<DFSMTable> toDFSMTable() const;
     
-    /** 
-     *  Apply the W-Method on a DFSM that is already minimised
-     */
-    IOListContainer wMethodOnMinimisedDfsm(const unsigned int m);
     
     
 public:
@@ -168,6 +164,11 @@ public:
 	* @return A test suite
 	*/
 	IOListContainer wMethod(const unsigned int m);
+
+    /**
+     *  Apply the W-Method on a DFSM that is already minimised
+     */
+    IOListContainer wMethodOnMinimisedDfsm(const unsigned int m);
 
 
 	/**
