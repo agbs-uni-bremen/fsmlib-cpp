@@ -196,5 +196,16 @@ public:
      */
     IOListContainer tMethod();
     
+    /**
+     *  Output DFSM in tabular format as *.csv file
+     *  The table consists of one row per state and one column per input.
+     *  The table entry for state s and input x consists of the pair
+     *  s'/y, where s' is the post-state of the transition triggered
+     *  by x in state s, and y is the corresponding output.
+     *  @param fname Name of the output file without extension; 
+     *         extension .csv is added internally to the filename.
+     */
+    void toCsv(const std::string& fname);
+    
 };
 #endif //FSM_FSM_DFSM_H_

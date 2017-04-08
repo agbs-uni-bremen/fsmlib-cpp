@@ -311,6 +311,41 @@ IOListContainer Dfsm::tMethod()
 }
 
 
+void Dfsm::toCsv(const std::string& fname) {
+    ofstream out(fname + ".csv");
+    
+    // Table heading contains input identifiers
+    for ( int x = 0; x <= maxInput; x++ ) {
+        out << " ; ";
+        out << presentationLayer->getInId(x);
+    }
+    
+    for ( size_t n = 0; n < nodes.size(); n++ ) {
+        out << endl << "\"" << nodes[n]->getName() << "\"";
+        
+        for ( int x = 0; x <= maxInput; x++ ) {
+            
+            out << " ; ";
+            
+            for ( auto tr : nodes[n]->getTransitions() ) {
+                if ( tr->getLabel()->getInput() == x ) {
+                    out << "\"" << tr->getTarget()->getName()
+                    << " / "
+                    << presentationLayer->getOutId(tr->getLabel()->getOutput())
+                    << "\"";
+                    break;
+                }
+            }
+            
+        }
+        
+    }
+    
+    out << endl;
+    out.close();
+}
+
+
 
 
 
