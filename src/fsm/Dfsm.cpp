@@ -17,6 +17,262 @@
 
 using namespace std;
 
+
+
+shared_ptr<FsmPresentationLayer> Dfsm::createPresentationLayerFromCsvFormat(const std::string & fname) {
+    
+    // key comparator for usage in string sets
+    class setCmp
+    {
+    public:
+        bool operator()(const string& s1, const string& s2)
+        {
+            return (s1.compare(s2) < 0);
+        }
+    };
+    // Set containing all output events defined so far
+    set<string,setCmp> outStrSet;
+
+    
+    vector<std::string> in2String;
+    vector<std::string> out2String;
+    vector<std::string> state2String;
+    
+    ifstream inputFile(fname);
+    
+    if ( not inputFile.is_open() ) {
+        cout << "Unable to open input file" << endl;
+        exit(EXIT_FAILURE);
+    }
+    
+    // Insert a "no operation" output as first member of the
+    // output alphabet
+    out2String.push_back("_nop");
+    outStrSet.insert(out2String[0]);
+    
+    string line;
+    
+    // ------------------------------------------------------------
+    // Read input names from first line
+    // ------------------------------------------------------------
+    getline(inputFile,line);
+    
+    // Skip first field
+    size_t pos = line.find(";");
+    if ( pos == string::npos ) return nullptr;
+    pos++;
+    size_t posEnd;
+    do {
+        
+        posEnd = line.find(";", pos);
+        
+        string newInput;
+        if ( posEnd == string::npos ) {
+            newInput = line.substr(pos);
+        }
+        else {
+            newInput = line.substr(pos, posEnd - pos);
+        }
+        
+        // Trim
+        newInput.erase(0,newInput.find_first_not_of(" \n\r\t\""));
+        newInput.erase(newInput.find_last_not_of(" \n\r\t\"")+1);
+        
+        // Add to vector of strings denoting input names
+        in2String.push_back(newInput);
+        
+        pos = posEnd + 1;
+        
+    } while ( posEnd != string::npos );
+    
+    // ------------------------------------------------------------
+    // Read state names and outputs from consecutive lines
+    // ------------------------------------------------------------
+    while (getline(inputFile, line))
+    {
+        // Get the state name
+        posEnd = line.find(";");
+        if ( posEnd == string::npos ) continue;
+        string newState = line.substr(0,posEnd);
+        newState.erase(0,newState.find_first_not_of(" \n\r\t\""));
+        newState.erase(newState.find_last_not_of(" \n\r\t\"")+1);
+        state2String.push_back(newState);
+        
+        // Look for new output names
+        do {
+            
+            pos = posEnd + 1;
+            posEnd = line.find(";",pos);
+            
+            string newEntry;
+            if ( posEnd == string::npos ) {
+                newEntry = line.substr(pos);
+            }
+            else {
+                newEntry = line.substr(pos, posEnd - pos);
+            }
+            size_t outPos = newEntry.find("/");
+            if ( outPos != string::npos ) {
+                string outStr = newEntry.substr(outPos+1);
+                outStr.erase(0,outStr.find_first_not_of(" \n\r\t\""));
+                outStr.erase(outStr.find_last_not_of(" \n\r\t\"")+1);
+                outStrSet.insert(outStr);
+            }
+            
+        } while ( posEnd != string::npos );
+        
+    }
+    inputFile.close();
+    
+    for ( auto s : outStrSet ) {
+        out2String.push_back(s);
+    }
+    
+    maxInput = in2String.size() - 1;
+    maxOutput = out2String.size() - 1;
+    maxState = state2String.size() - 1;
+    initStateIdx = 0;
+    
+    return make_shared<FsmPresentationLayer>(in2String,out2String,state2String);
+    
+}
+
+
+void Dfsm::createDfsmTransitionGraph(const std::string& fname) {
+    
+    ifstream inputFile(fname);
+    size_t pos;
+    size_t posEnd;
+    string line;
+    shared_ptr<FsmNode> tgtNode;
+    
+    // skip first line
+    getline(inputFile,line);
+    
+    // Initialise nodes-vector with null pointers, so that states
+    // not yet defined can be identified.
+    for ( size_t n = 0; n <= maxState; n++ ) nodes.push_back(nullptr);
+    
+    
+    int nodeId = 0;
+    while (getline(inputFile, line)) {
+        
+        currentParsedNode = nodes[nodeId];
+        if ( currentParsedNode == nullptr ) {
+            currentParsedNode =
+            make_shared<FsmNode>(nodeId,
+                                 presentationLayer->getStateId(nodeId,""),
+                                 presentationLayer);
+            nodes[nodeId] = currentParsedNode;
+        }
+        
+        // Skip the first column
+        pos = line.find(";");
+        if ( pos++ == string::npos ) continue;
+        int x = 0;
+        // Create transitions emanating from currentParsedNode
+        do {
+            
+            string tableEntry;
+            
+            posEnd = line.find(";",pos);
+            if ( posEnd == string::npos ) {
+                tableEntry = line.substr(pos);
+            }
+            else {
+                tableEntry = line.substr(pos,posEnd-pos);
+            }
+            
+            // Empty table entries lead to an x/_nop self loop
+            // _nop has integer code 0
+            tableEntry.erase(0,tableEntry.find_first_not_of(" \n\r\t\""));
+            tableEntry.erase(tableEntry.find_last_not_of(" \n\r\t\"")+1);
+            if ( tableEntry.empty() ) {
+                tgtNode = currentParsedNode;
+                shared_ptr<FsmLabel> lbl =
+                make_shared<FsmLabel>(x,0,presentationLayer);
+                shared_ptr<FsmTransition> tr =
+                make_shared<FsmTransition>(currentParsedNode,tgtNode,lbl);
+                currentParsedNode->addTransition(tr);
+            }
+            else {
+                
+                // get the target state from the table entry
+                size_t i0;
+                string tgtStateName;
+                i0 = tableEntry.find("/");
+                if ( i0 == string::npos ) {
+                    tgtStateName = tableEntry;
+                }
+                else {
+                    tgtStateName = tableEntry.substr(0,i0);
+                }
+                tgtStateName.erase(0,tgtStateName.find_first_not_of(" \n\r\t\""));
+                tgtStateName.erase(tgtStateName.find_last_not_of(" \n\r\t\"")+1);
+                
+                int tgtStateId = presentationLayer->state2Num(tgtStateName);
+                if ( tgtStateId >= 0 ) {
+                    tgtNode = nodes[tgtStateId];
+                    if ( tgtNode == nullptr ) {
+                        tgtNode = make_shared<FsmNode>(tgtStateId,
+                                                       tgtStateName,
+                                                       presentationLayer);
+                        nodes[tgtStateId] = tgtNode;
+                    }
+                    // Get the output associated with the current state
+                    // and input
+                    string outStr =
+                        ( i0 == string::npos ) ? "" : tableEntry.substr(i0+1);
+                    outStr.erase(0,outStr.find_first_not_of(" \n\r\t\""));
+                    outStr.erase(outStr.find_last_not_of(" \n\r\t\"")+1);
+                    
+                    int y =
+                        ( outStr.empty() )
+                        ? 0
+                        : presentationLayer->out2Num(outStr);
+                    
+                    if ( y >= 0 ) {
+                        shared_ptr<FsmLabel> lbl =
+                        make_shared<FsmLabel>(x,y,presentationLayer);
+                        shared_ptr<FsmTransition> tr =
+                        make_shared<FsmTransition>(currentParsedNode,tgtNode,lbl);
+                        currentParsedNode->addTransition(tr);
+                    }
+                    
+                }
+                else {
+                    cout << endl << "ERROR: undefined target state "
+                    << tgtStateName << endl;
+                }
+            }
+            
+            x++;
+            pos = posEnd + 1;
+            
+        } while ( posEnd != string::npos );
+        
+        
+        
+        nodeId++;
+        
+    }
+    
+    
+    inputFile.close();
+    
+}
+
+
+
+Dfsm::Dfsm(const std::string & fname,
+           const std::string & fsmName) : Fsm(nullptr)   {
+    
+    name = fsmName;
+    presentationLayer = createPresentationLayerFromCsvFormat(fname);
+    createDfsmTransitionGraph(fname);
+    
+}
+
 void Dfsm::createAtRandom()
 {
     srand((unsigned int) time(0));

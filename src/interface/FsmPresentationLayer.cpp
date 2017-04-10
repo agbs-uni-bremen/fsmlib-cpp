@@ -139,3 +139,44 @@ bool FsmPresentationLayer::compare(std::shared_ptr<FsmPresentationLayer> otherPr
 	}
 	return true;
 }
+
+
+int FsmPresentationLayer::in2Num(const std::string& name) {
+    
+    for ( size_t i = 0; i < in2String.size(); i++ ) {
+        if ( in2String[i] == name ) return (int)i;
+    }
+    
+    return -1;
+    
+}
+
+int FsmPresentationLayer::out2Num(const std::string& name) {
+    
+    for ( size_t i = 0; i < out2String.size(); i++ ) {
+        if ( out2String[i] == name ) return (int)i;
+    }
+    
+    return -1;
+}
+
+int FsmPresentationLayer::state2Num(const std::string& name) {
+    
+    for ( size_t i = 0; i < state2String.size(); i++ ) {
+        if ( state2String[i] == name ) return (int)i;
+    }
+    
+    return -1;
+}
+
+
+
+
+
+
+
+
+
+
+
+

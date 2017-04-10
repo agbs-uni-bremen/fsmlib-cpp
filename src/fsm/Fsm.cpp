@@ -489,8 +489,10 @@ Fsm Fsm::intersect(const Fsm & f)
                  the label associated with the other transition, and target node
                  (tr.getTarget(),trOther.getTarget()), which is the pair of the target nodes
                  of each transition.*/
+                
                 if (*tr->getLabel() == *trOther->getLabel())
                 {
+                    
                     /*New target node represented as a pair (this-node,f-node)*/
                     auto pTarget = make_shared<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>(tr->getTarget(), trOther->getTarget());
                     

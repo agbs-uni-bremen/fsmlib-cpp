@@ -41,7 +41,9 @@ private:
 	*/
 	std::shared_ptr<DFSMTable> toDFSMTable() const;
     
+    std::shared_ptr<FsmPresentationLayer> createPresentationLayerFromCsvFormat(const std::string& fname);
     
+    void createDfsmTransitionGraph(const std::string& fname);
     
 public:
 	/**
@@ -55,7 +57,7 @@ public:
 	values are 0..maxOutput
 	@param presentationLayer The presentation layer used by the DFSM
      
-     \note This constructor is deprecated and will be removed in a furture version
+     \note This constructor is deprecated and will be removed in a future version
 	*/
 	Dfsm(const std::string & fname,
          const std::string & fsmName,
@@ -114,6 +116,28 @@ public:
 	@param fsm The deterministic FSM
 	*/
 	Dfsm(const Fsm & fsm);
+    
+    
+    /**
+     * Create a DFSM from a file written in csv format.
+     * @item fields are separated by ;
+     * @item First row starts with empty field, followed by
+     *       input event names to be used by presentation layer
+     * @item Consecutive rows are ordered by DFSM states,
+     *       starting with the initial state
+     * @item Each of these rows contain the state name in the first 
+     *       column, as it should be used by the presentation layer.
+     * @item In row indexed by state s, column indexed by input x
+     *       contains entry 
+     *                  s' / y
+     *       where s' is the post-state reached when applying x in state s,
+     *       and y is the associated output.
+     *
+     * @param fname Filename with DFSM specification in csv format.
+     * @param fsmName Name of the DFSM to be used in output files etc.
+     */
+    Dfsm(const std::string & fname,
+         const std::string & fsmName);
 
 	/**
 	Minimise this DFSM

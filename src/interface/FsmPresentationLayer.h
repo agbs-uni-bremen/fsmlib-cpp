@@ -43,7 +43,9 @@ public:
 	@param out2String A vector containing a string for each output
 	@param state2String A vector containing a string for each state
 	*/
-	FsmPresentationLayer(const std::vector<std::string>& in2String, const std::vector<std::string>& out2String, const std::vector<std::string>& state2String);
+	FsmPresentationLayer(const std::vector<std::string>& in2String,
+                         const std::vector<std::string>& out2String,
+                         const std::vector<std::string>& state2String);
 
 	/**
 	Create a new presentation layer
@@ -76,6 +78,21 @@ public:
 	@return The name if this state
 	*/
 	std::string getStateId(const unsigned int id, const std::string & prefix) const;
+    
+    /**
+     *  Convert input name to input number
+     */
+     int in2Num(const std::string& name);
+    
+    /**
+     *  Convert output name to output number
+     */
+     int out2Num(const std::string& name);
+    
+    /**
+     *  Convert state name to state number
+     */
+     int state2Num(const std::string& name);
 
 	/**
 	Dump the current inputs into a standard output stream
