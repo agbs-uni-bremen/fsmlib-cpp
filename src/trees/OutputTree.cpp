@@ -65,18 +65,10 @@ std::ostream & operator<<(std::ostream & out, OutputTree & ot)
 	std::vector<std::vector<int>> lli = *ot.getIOLists().getIOLists();
 	for (std::vector<int> lst : lli)
 	{
-		bool isFirst = true;
-
 		for (unsigned int i = 0; i < lst.size(); ++ i)
 		{
-			if (isFirst)
-			{
-				isFirst = false;
-			}
-			else
-			{
-				out << ".";
-			}
+            
+            if ( i > 0 ) out << ".";
 
 			out << "(" << ot.presentationLayer->getInId(ot.inputTrace.get().at(i)) << "/" << ot.presentationLayer->getOutId(lst.at(i)) << ")";
 		}
