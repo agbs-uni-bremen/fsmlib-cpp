@@ -61,7 +61,10 @@ public:
      * @param maxLength maximal length of a trace to be created.
      * @param presentationLayer The presentation layer to use
      */
-    IOListContainer(const int maxInput, const int minLength, const int maxLength, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    IOListContainer(const int maxInput,
+                    const int minLength,
+                    const int maxLength,
+                    const std::shared_ptr<FsmPresentationLayer> presentationLayer);
     
     /**
      * Getter for the input list

@@ -55,7 +55,8 @@ public:
 	@param root  root of the tree
 	@param presentationLayer The presentation layer to use
 	*/
-	Tree(const std::shared_ptr<TreeNode> root, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+	Tree(const std::shared_ptr<TreeNode> root,
+         const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 
 	/**
 	Calculate the leaves, then give the leaves back
