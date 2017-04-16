@@ -11,12 +11,12 @@
 
 #include "trees/OutputTree.h"
 
-/*This class is really smaller than in Java because it inherit from std::vector*/
+
 class TestSuite : public std::vector<OutputTree>
 {
 public:
-	/**
-	Create a new empty test suite
+   /**
+	* Create a new empty test suite
 	*/
 	TestSuite();
 
@@ -41,6 +41,8 @@ public:
 	*/
     bool isReductionOf(TestSuite& theOtherTs,
                        bool writeOutput = false);
+    
+    
 
 	/**
 	Output the TestSuite to a standard output stream
@@ -49,5 +51,10 @@ public:
 	@return The standard output stream used, to allow user to cascade <<
 	*/
 	friend std::ostream & operator<<(std::ostream & out, const TestSuite & testSuite);
+    
+    /**
+     *   Save test suite to file, using the forma of the << operator
+     */
+    void save(const std::string &name);
 };
 #endif //FSM_TREES_TESTSUITE_H_

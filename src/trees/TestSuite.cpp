@@ -70,7 +70,17 @@ ostream & operator<<(ostream & out, const TestSuite & testSuite)
 {
 	for (OutputTree ot : testSuite)
 	{
-		out << endl << ot;
+		out << ot;
 	}
 	return out;
+}
+
+void TestSuite::save(const std::string &name) {
+    
+    ofstream out(name);
+    
+    out << *this;
+    
+    out.close();
+    
 }
