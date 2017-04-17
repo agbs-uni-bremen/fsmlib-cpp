@@ -50,6 +50,8 @@ add_subdirectory (interface)
 add_subdirectory (main)
 add_subdirectory (sets)
 add_subdirectory (trees)
+add_subdirectory (hareness)
+add_subdirectory (example)
 
 if(gui)
 	add_subdirectory (window)
