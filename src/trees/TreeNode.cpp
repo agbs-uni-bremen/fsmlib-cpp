@@ -240,7 +240,7 @@ void TreeNode::add(std::vector<int>::const_iterator lstIte, const std::vector<in
 	}
 
 	/*Which input is represented by the list iterator?*/
-	int x = *lstIte ++;
+	int x = *lstIte++;
 
 	for (std::shared_ptr<TreeEdge> e : *getChildren())
 	{
@@ -279,7 +279,7 @@ void TreeNode::add(const IOListContainer & tcl)
 	}
 }
 
-void TreeNode::addToThisNode(const IOListContainer & tcl)
+void TreeNode::addToThisNode(const IOListContainer& tcl)
 {
 	/*Append each input sequence in tcl to this node,
 	using the special strategy of the add(lstIte) operation*/

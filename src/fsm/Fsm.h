@@ -169,6 +169,17 @@ public:
      *   @param maxInput Maximal value of the input alphabet, ranging from
      *                   0 to maxInput
      *   @param maxOutput Maximal value of the output alphabet in range 0..maxOutput
+     *   @param seed If 0, a "real" random seed will be internally calculated 
+     *               using getRandom(). Otherwise the seed value > 0 will
+     *               be taken to initialise the random number generation 
+     *               with srand(). The first variant is useful for
+     *               creating different FSMs every time the constructor
+     *               is used. The second variant is useful for producing
+     *               repeatable generation sequences of pseudo random FSMs.
+     *               Also note for the second variant,
+     *               that for every new random instance, another seed
+     *               value needs to be supplied by the user, because
+     *               otherwise the constructor will always produce the same FSM.
      *   @param maxState  Maximal value of the states in range 0..maxState
      *   @return an FSM created at random according to these specifications.
      */
@@ -178,7 +189,8 @@ public:
                     const int maxOutput,
                     const int maxState,
                     const std::shared_ptr<FsmPresentationLayer>
-                    presentationLayer);
+                    presentationLayer,
+                    const unsigned seed = 0);
     
     
     /**
@@ -311,15 +323,20 @@ public:
     /**
      * Perform test generation by means of the W Method, as applicable
      * to nondeterministc FSMs that do not need to be completely specified.
-     * @param m Maximum number of states in the observable, minimised FSM
-     * reflecting the implementation behaviour. The reference machine is
+     *
+     * @param numAddStates The maximal number of additional states,
+     *                     which the implementation DFSM in minimised
+     *                     for may have, when compared to the reference
+     *                     model in minimised form.
+     *
+     * The reference machine is
      * first transformed into an observable minimised one. Then the
      * W-Method is applied on the minimised machine, using wMethodOnMinimisedFsm().
      *
      * @return A test suite
      *
      */
-    IOListContainer wMethod(const unsigned int m);
+    IOListContainer wMethod(const unsigned int numAddStates);
     
     
     /**
@@ -343,10 +360,13 @@ public:
      * Therefore we need a wrapper method for DFSMs which first
      * calculates OFSM tables (by means of a call to minimiseObervableFSM())
      * and then calls the wpMethod() operation of the super class Fsm.
-     * @param m Maximum number of states
+     * @param numAddStates The maximal number of additional states,
+     *                     which the implementation DFSM in minimised
+     *                     for may have, when compared to the reference
+     *                     model in minimised form.
      * @return A test suite
      */
-    IOListContainer wpMethod(const unsigned int m);
+    IOListContainer wpMethod(const unsigned int numAddStates);
     
     
     /**

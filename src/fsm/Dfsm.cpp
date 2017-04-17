@@ -520,26 +520,24 @@ bool Dfsm::pass(const IOTrace & io)
 
 
 
-IOListContainer Dfsm::wMethod(const unsigned int m) {
+IOListContainer Dfsm::wMethod(const unsigned int numAddStates) {
     
     Dfsm dfsmMin = minimise();
-    return dfsmMin.wMethodOnMinimisedDfsm(m);
+    return dfsmMin.wMethodOnMinimisedDfsm(numAddStates);
     
 }
 
 
-IOListContainer Dfsm::wMethodOnMinimisedDfsm(const unsigned int m)
+IOListContainer Dfsm::wMethodOnMinimisedDfsm(const unsigned int numAddStates)
 {
-    
-    size_t mMinusN = ( m > nodes.size() ) ? (m - nodes.size()) : 0;
     
     shared_ptr<Tree> iTree = getTransitionCover();
     
-    if (mMinusN > 0)
+    if (numAddStates > 0)
     {
         IOListContainer inputEnum = IOListContainer(maxInput,
                                                     1,
-                                                    (int)mMinusN,
+                                                    (int)numAddStates,
                                                     presentationLayer);
         iTree->add(inputEnum);
     }
@@ -549,10 +547,10 @@ IOListContainer Dfsm::wMethodOnMinimisedDfsm(const unsigned int m)
     return iTree->getIOLists();
 }
 
-IOListContainer Dfsm::wpMethod(const int m)
+IOListContainer Dfsm::wpMethod(const unsigned int numAddStates)
 {
     Fsm fMin = minimiseObservableFSM();
-    return fMin.wpMethod(m);
+    return fMin.wpMethod(numAddStates);
     
 }
 

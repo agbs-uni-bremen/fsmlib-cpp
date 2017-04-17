@@ -182,17 +182,35 @@ public:
 
    /**
 	* Perform test generation by means of the W-Method.
-    * The DFSM will first be minimised, and then the
+    * The DFSM this method is applied to is regarded as the reference
+    * model. If an implementation DFSM passes this test suite, this proves
+    * language equivalence (I/O-equivalence) between reference DFSM and
+    * implementation DFSM, provided that the implementation DFSM in minimised
+    * form does not have more than numAddStates additional states, when compared
+    * to the minimised reference DFSM. If this assumption does not hold,
+    * the test suite may not uncover certain errors in the implementation DFSM.
+    *
+    * The reference DFSM will first be minimised, and then the
     * proper W-Method is applied to the minimised DFSM.
-	* @param m Maximum number of states
+	* @param numAddStates The maximal number of additional states,
+    *                     which the implementation DFSM in minimised 
+    *                     for may have, when compared to the reference
+    *                     model in minimised form.
 	* @return A test suite
+    *
+    * @note The size of the test suite to be produced grows exponentially
+    *        with numAddStates
+    *
+    * @note If it is already known that the reference DFSM is minimal,
+    *       then method wMethodOnMinimisedDfsm() should rather be used,
+    *       since it avoids unnecessary minisation steps.
 	*/
-	IOListContainer wMethod(const unsigned int m);
+	IOListContainer wMethod(const unsigned int numAddStates);
 
     /**
      *  Apply the W-Method on a DFSM that is already minimised
      */
-    IOListContainer wMethodOnMinimisedDfsm(const unsigned int m);
+    IOListContainer wMethodOnMinimisedDfsm(const unsigned int numAddStates);
 
 
 	/**
@@ -203,10 +221,13 @@ public:
 	* Therefore we need a wrapper method for DFSMs which first
 	* calculates OFSM tables (by means of a call to minimiseObervableFSM())
 	* and then calls the wpMethod() operation of the super class Fsm.
-	* @param m Maximum number of states
+     * @param numAddStates The maximal number of additional states,
+     *                     which the implementation DFSM in minimised
+     *                     for may have, when compared to the reference
+     *                     model in minimised form.
 	* @return A test suite
 	*/
-	IOListContainer wpMethod(const int m);
+	IOListContainer wpMethod(const unsigned int numAddStates);
     
     /**
      * Perform test generation by means of the T-Method. The algorithm 

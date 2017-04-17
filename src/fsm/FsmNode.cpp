@@ -3,6 +3,8 @@
  *
  * Licensed under the EUPL V.1.1
  */
+#include <deque>
+
 #include "fsm/FsmNode.h"
 #include "fsm/FsmTransition.h"
 #include "fsm/OutputTrace.h"
@@ -117,7 +119,7 @@ shared_ptr<FsmNode> FsmNode::apply(const int e, OutputTrace & o)
 
 OutputTree FsmNode::apply(const InputTrace& itrc, bool markAsVisited)
 {
-    vector<shared_ptr<TreeNode>> tnl;
+    deque<shared_ptr<TreeNode>> tnl;
     unordered_map<shared_ptr<TreeNode>, shared_ptr<FsmNode>> t2f;
     
     shared_ptr<TreeNode> root = make_shared<TreeNode>();
@@ -133,12 +135,17 @@ OutputTree FsmNode::apply(const InputTrace& itrc, bool markAsVisited)
     for (auto it = itrc.cbegin(); it != itrc.cend(); ++ it)
     {
         int x = *it;
-        tnl = ot.getLeaves();
+        
+        vector< shared_ptr<TreeNode> > vaux = ot.getLeaves();
+        
+        for ( auto n : vaux ) {
+            tnl.push_back(n);
+        }
         
         while (!tnl.empty())
         {
             shared_ptr<TreeNode> thisTreeNode = tnl.front();
-            tnl.erase(tnl.begin());
+            tnl.pop_front();
             
             shared_ptr<FsmNode> thisState = t2f.at(thisTreeNode);
             if ( markAsVisited ) thisState->setVisited();

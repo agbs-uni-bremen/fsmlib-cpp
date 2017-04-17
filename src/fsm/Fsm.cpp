@@ -901,13 +901,15 @@ void Fsm::calcStateIdentificationSets()
         }
         stateIdentificationSets.push_back(iTree);
         
-#if 0
-        for (unsigned int n = 0; n < stateIdentificationSets.size(); ++ n)
-        {
-            cout << "W(" << n << ") = " << stateIdentificationSets.at(n)->getTestCases() << endl;
-        }
-#endif
     }
+    
+#if 0
+    for (unsigned int n = 0; n < stateIdentificationSets.size(); ++ n)
+    {
+        cout << "W(" << n << ") = " << stateIdentificationSets.at(n)->getTestCases() << endl;
+    }
+#endif
+    
 }
 
 void Fsm::appendStateIdentificationSets(const shared_ptr<Tree> Wp2) const
@@ -937,25 +939,23 @@ void Fsm::appendStateIdentificationSets(const shared_ptr<Tree> Wp2) const
 }
 
 
-IOListContainer Fsm::wMethod(const unsigned int m) {
+IOListContainer Fsm::wMethod(const unsigned int numAddStates) {
     
     Fsm fo = transformToObservableFSM();
     Fsm fom = fo.minimise();
     
-    return fom.wMethodOnMinimisedFsm(m);
+    return fom.wMethodOnMinimisedFsm(numAddStates);
 }
 
 
-IOListContainer Fsm::wMethodOnMinimisedFsm(const unsigned int m) {
-    
-    size_t mMinusN = ( m > nodes.size() ) ? (m - nodes.size()) : 0;
+IOListContainer Fsm::wMethodOnMinimisedFsm(const unsigned int numAddStates) {
     
     shared_ptr<Tree> iTree = getTransitionCover();
     
-    if ( mMinusN > 0 ) {
+    if ( numAddStates > 0 ) {
         IOListContainer inputEnum = IOListContainer(maxInput,
                                                     1,
-                                                    (int)mMinusN,
+                                                    (int)numAddStates,
                                                     presentationLayer);
         iTree->add(inputEnum);
     }
@@ -968,9 +968,8 @@ IOListContainer Fsm::wMethodOnMinimisedFsm(const unsigned int m) {
     
 }
 
-IOListContainer Fsm::wpMethod(const unsigned int m)
+IOListContainer Fsm::wpMethod(const unsigned int numAddStates)
 {
-    size_t mMinusN = ( m > nodes.size() ) ? (m - nodes.size()) : 0;
     
     shared_ptr<Tree> scov = getStateCover();
     
@@ -992,22 +991,24 @@ IOListContainer Fsm::wpMethod(const unsigned int m)
     calcStateIdentificationSets();
     
     shared_ptr<Tree> Wp1 = scov;
-    if (mMinusN > 0)
+    if (numAddStates > 0)
     {
         IOListContainer inputEnum = IOListContainer(maxInput, 1,
-                                                    (int)mMinusN,
+                                                    (int)numAddStates,
                                                     presentationLayer);
+        
         Wp1->add(inputEnum);
     }
     Wp1->add(w);
     
     shared_ptr<Tree> Wp2 = r;
-    if (mMinusN > 0)
+    if (numAddStates > 0)
     {
         IOListContainer inputEnum = IOListContainer(maxInput,
-                                                    (int)mMinusN,
-                                                    (int)mMinusN,
+                                                    (int)numAddStates,
+                                                    (int)numAddStates,
                                                     presentationLayer);
+        
         Wp2->add(inputEnum);
     }
     appendStateIdentificationSets(Wp2);
@@ -1121,10 +1122,16 @@ Fsm::createRandomFsm(const string & fsmName,
                      const int maxInput,
                      const int maxOutput,
                      const int maxState,
-                     const shared_ptr<FsmPresentationLayer> pl) {
+                     const shared_ptr<FsmPresentationLayer> pl,
+                     const unsigned seed) {
     
     // Initialisation of random number generation
-    srand(getRandomSeed());
+    if ( seed == 0 ) {
+        srand(getRandomSeed());
+    }
+    else {
+        srand(seed);
+    }
     
     // Produce the nodes and put them into a vector.
     // All nodes are marked 'white' by the costructor - this is now
