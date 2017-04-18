@@ -52,6 +52,7 @@ add_subdirectory (sets)
 add_subdirectory (trees)
 add_subdirectory (hareness)
 add_subdirectory (example)
+add_subdirectory (generator)
 
 if(gui)
 	add_subdirectory (window)
