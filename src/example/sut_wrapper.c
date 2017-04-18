@@ -12,7 +12,9 @@ static const char* inputs[4];
 
 static gdc_inputs_t inStr2Enum(const char* input) {
     
-    for ( int i = 0; i < 4; i++ ) {
+    int i;
+
+    for ( i = 0; i < 4; i++ ) {
         if ( strcmp(inputs[i],input) == 0 ) {
             return (gdc_inputs_t)i;
         }
