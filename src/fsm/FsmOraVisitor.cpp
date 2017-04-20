@@ -79,6 +79,6 @@ void FsmOraVisitor::visit(FsmTransition& t) {
 }
 
 
-void FsmOraVisitor::visit(FsmLabel& x) {
+void FsmOraVisitor::visit(FsmLabel& /* x */) {
 
 }

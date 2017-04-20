@@ -151,7 +151,7 @@ void Dfsm::createDfsmTransitionGraph(const std::string& fname) {
     
     // Initialise nodes-vector with null pointers, so that states
     // not yet defined can be identified.
-    for ( size_t n = 0; n <= maxState; n++ ) nodes.push_back(nullptr);
+    for ( size_t n = 0; n <= (size_t)maxState; n++ ) nodes.push_back(nullptr);
     
     
     int nodeId = 0;

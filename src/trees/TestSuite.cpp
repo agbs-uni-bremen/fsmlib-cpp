@@ -30,10 +30,11 @@ bool TestSuite::isEquivalentTo(TestSuite& theOtherTs,
 		if ( writeOutput ) cout << "Test Case No. " << i << ": ";
 		if (!((*this) [i] == theOtherTs [i]))
 		{
-			if ( writeOutput )
-                cout << "FAIL" << endl << "Discrepancy found." <<
-                endl << "Mine = " << (*this) [i] << endl <<
-                "Other = " << theOtherTs [i] << endl;
+			if (writeOutput) {
+				cout << "FAIL" << endl << "Discrepancy found." <<
+					endl << "Mine = " << (*this)[i] << endl <<
+					"Other = " << theOtherTs[i] << endl;
+			}
 			pass = false;
 		}
 		else
@@ -59,7 +60,9 @@ bool TestSuite::isReductionOf(TestSuite& theOtherTs,
 	{
 		if (!theOtherTs [i].contains((*this) [i]))
 		{
-			cout << "Discrepancy found." << endl << "Mine = " << (*this) [i] << endl << "Other = " << theOtherTs [i] << endl;
+			if (writeOutput) {
+				cout << "Discrepancy found." << endl << "Mine = " << (*this)[i] << endl << "Other = " << theOtherTs[i] << endl;
+			}
 			pass = false;
 		}
 	}

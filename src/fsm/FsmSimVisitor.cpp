@@ -75,6 +75,6 @@ void FsmSimVisitor::visit(FsmTransition& t) {
 }
 
 
-void FsmSimVisitor::visit(FsmLabel& x) {
+void FsmSimVisitor::visit(FsmLabel& /* x */) {
 
 }
