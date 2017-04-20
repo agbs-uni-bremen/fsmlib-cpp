@@ -175,10 +175,19 @@ static void readModel() {
             }
             fsm = make_shared<Fsm>(modelFile,pl,fsmName);
             if ( fsm->isDeterministic() ) {
+                isDeterministic = true;
                 dfsm = make_shared<Dfsm>(modelFile,pl,fsmName);
                 fsm = nullptr;
             }
             break;
+    }
+    
+    if ( fsm != nullptr ) {
+        fsm->toDot(fsmName);
+    }
+    else if ( dfsm != nullptr ) {
+        dfsm->toDot(fsmName);
+        dfsm->toCsv(fsmName);
     }
     
 }

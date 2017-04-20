@@ -2833,3 +2833,7 @@ doc/latex/dir_c084d5a9e40a90ac8ed90ac61d38ad64.tex
 doc/latex/dir_c084d5a9e40a90ac8ed90ac61d38ad64_dep.md5
 doc/latex/dir_c084d5a9e40a90ac8ed90ac61d38ad64_dep.pdf
 doc/latex/structstd_1_1hash_3_01_fsm_label_01_4.tex
+Debug.OSX/example/testproc
+Debug.OSX/generator/FSM_MIN_state_cover.dot
+Debug.OSX/generator/FSM_MIN_transitionCover.dot
+Debug.OSX/generator/testsuite.txt

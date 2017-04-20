@@ -973,15 +973,7 @@ IOListContainer Fsm::wpMethod(const unsigned int numAddStates)
     
     shared_ptr<Tree> scov = getStateCover();
     
-    ofstream stateCover(this->getName() + "_state_cover.dot");
-    scov->toDot(stateCover);
-    stateCover.close();
-    
     shared_ptr<Tree> tcov = getTransitionCover();
-    
-    ofstream transitionCover(this->getName() + "_transitionCover.dot");
-    tcov->toDot(transitionCover);
-    transitionCover.close();
     
     tcov->remove(scov);
     shared_ptr<Tree> r = tcov;
