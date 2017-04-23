@@ -40,6 +40,11 @@ private:
     
     bool isInitialNode;
     
+    /**
+     *  List of requirements satisfied by the node
+     */
+    std::vector<std::string> satisfies;
+    
 public:
 	const static int white = 0;
 	const static int grey = 1;
@@ -138,6 +143,12 @@ public:
     void accept(FsmVisitor& v);
     void accept(FsmVisitor& v,
                 std::deque< std::shared_ptr<FsmNode> >& bfsq);
+    
+    /**
+     *  Get list of requirements satisified by the node
+     */
+    std::vector<std::string>& getSatisfied() { return satisfies; }
+    void addSatisfies(std::string req) { satisfies.push_back(req); }
 
     
     

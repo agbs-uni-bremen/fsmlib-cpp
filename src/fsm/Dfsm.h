@@ -17,6 +17,8 @@
 
 #include "fsm/DFSMTable.h"
 #include "fsm/Fsm.h"
+#include "json/json.h"
+
 
 class PkTable;
 class IOTrace;
@@ -138,6 +140,17 @@ public:
      */
     Dfsm(const std::string & fname,
          const std::string & fsmName);
+    
+    
+    /**
+     *  Construct an DFSM from a json model file. The DFSM is completely
+     *  specified: in every state of the json model, inputs x that do
+     *  not occur in any outgoing transition, are associated with
+     *  self-loop transitions that have an additional NO OPERATION
+     *  action as output. The NOP action is added as last action
+     *  to the output alphabet.
+     */
+    Dfsm(const Json::Value& jsonModel);
 
 	/**
 	Minimise this DFSM

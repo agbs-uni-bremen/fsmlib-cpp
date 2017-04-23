@@ -42,9 +42,11 @@ endif(gui)
 
 #set the root source diectory as include directory
 include_directories (${CMAKE_SOURCE_DIR})
+include_directories (${CMAKE_SOURCE_DIR}/externals/jsoncpp-0.10.0/include)
 include_directories (${CMAKE_BINARY_DIR})
 
 #add every subdirectory to cmake
+add_subdirectory (externals)
 add_subdirectory (fsm)
 add_subdirectory (interface)
 add_subdirectory (main)

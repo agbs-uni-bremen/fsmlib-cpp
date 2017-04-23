@@ -10,20 +10,22 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <interface/FsmPresentationLayer.h>
-#include <fsm/Dfsm.h>
-#include <fsm/Fsm.h>
-#include <fsm/FsmNode.h>
-#include <fsm/IOTrace.h>
-#include <fsm/FsmPrintVisitor.h>
-#include <fsm/FsmSimVisitor.h>
-#include <fsm/FsmOraVisitor.h>
-#include <trees/IOListContainer.h>
-#include <trees/OutputTree.h>
-#include <trees/TestSuite.h>
+#include "interface/FsmPresentationLayer.h"
+#include "fsm/Dfsm.h"
+#include "fsm/Fsm.h"
+#include "fsm/FsmNode.h"
+#include "fsm/IOTrace.h"
+#include "fsm/FsmPrintVisitor.h"
+#include "fsm/FsmSimVisitor.h"
+#include "fsm/FsmOraVisitor.h"
+#include "trees/IOListContainer.h"
+#include "trees/OutputTree.h"
+#include "trees/TestSuite.h"
+#include "json/json.h"
 
 
 using namespace std;
+using namespace Json;
 
 
 /**
@@ -31,7 +33,7 @@ using namespace std;
  */
 typedef enum {
     FSM_CSV,
-    FSM_JASON,
+    FSM_JSON,
     FSM_BASIC
 } model_type_t;
 
@@ -63,6 +65,35 @@ static bool isDeterministic = false;
  */
 static void printUsage(char* name) {
     cerr << "usage: " << name << " [-w] [-n fsmname] [-p infile outfile statefile] [-a additionalstates] [-t testsuitename] modelfile" << endl;
+}
+
+/**
+ *  Determine the model type of a model specified in an *.fsm file.
+ *
+ *  @param modelFile Name of the *.fsm file containing the model
+ *
+ *  @return FSM_BASIC, if the model file contains the low-level
+ *                     encoding.
+ *
+ *  @return FSM_JSON, if the model contains the JSON encoding.
+ */
+static model_type_t getModelType(const string& modelFile) {
+    
+    model_type_t t = FSM_BASIC;
+    
+    ifstream inputFile(modelFile);
+    string line;
+    getline(inputFile,line);
+    // Basic encoding does not contain any { or [
+    if ( line.find("{") != string::npos or
+        line.find("[") != string::npos) {
+        t = FSM_JSON;
+    }
+    
+    inputFile.close();
+    
+    return t;
+    
 }
 
 /**
@@ -123,7 +154,7 @@ static void parseParameters(int argc, char* argv[]) {
                 plInputFile = string(argv[++p]);
                 plOutputFile = string(argv[++p]);
                 plStateFile = string(argv[++p]);
-           }
+            }
         }
         else if ( strstr(argv[p],".csv")  ) {
             modelFile = string(argv[p]);
@@ -131,11 +162,11 @@ static void parseParameters(int argc, char* argv[]) {
         }
         else if ( strstr(argv[p],".fsm")  ) {
             modelFile = string(argv[p]);
-            modelType = FSM_BASIC;
+            modelType = getModelType(modelFile);
         }
         else if ( strstr(argv[p],".@todo")  ) {
             modelFile = string(argv[p]);
-            modelType = FSM_JASON;
+            modelType = FSM_JSON;
         }
         else {
             cerr << argv[0] << ": illegal parameter `" << argv[p] << "'" << endl;
@@ -153,6 +184,10 @@ static void parseParameters(int argc, char* argv[]) {
 }
 
 
+/**
+ *   Instantiate DFSM or FSM from input file according to
+ *   the different input formats which are supported.
+ */
 static void readModel() {
     
     switch ( modelType ) {
@@ -162,8 +197,22 @@ static void readModel() {
             pl = dfsm->getPresentationLayer();
             break;
             
-        case FSM_JASON:
-            // @todo
+        case FSM_JSON:
+        {
+            Reader jReader;
+            Value root;
+            stringstream document;
+            ifstream inputFile(modelFile);
+            document << inputFile.rdbuf();
+            
+            if ( jReader.parse(document.str(),root) ) {
+                dfsm = make_shared<Dfsm>(root);
+            }
+            else {
+                cerr << "Could not parse JSON model - exit." << endl;
+                exit(1);
+            }
+        }
             break;
             
         case FSM_BASIC:

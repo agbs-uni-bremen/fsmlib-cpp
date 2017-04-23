@@ -30,6 +30,12 @@ private:
 	 * The label of this transition
 	 */
 	std::shared_ptr<FsmLabel> label;
+    
+    /**
+     *  List of requirements satisfied by the transition
+     */
+    std::vector<std::string> satisfies;
+    
 public:
 	/**
 	Create a FsmTransition
@@ -70,6 +76,12 @@ public:
 	@return The label of this transition
 	*/
     std::shared_ptr<FsmLabel> getLabel();
+    
+    /**
+     *  Get list of requirements satisified by the transition
+     */
+    std::vector<std::string>& getSatisfied() { return satisfies; }
+    void addSatisfies(std::string req) { satisfies.push_back(req); }
 
 	/**
 	Output the FsmTransition to a standard output stream

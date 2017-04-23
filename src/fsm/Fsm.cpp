@@ -231,6 +231,7 @@ string Fsm::labelString(unordered_set<shared_ptr<FsmNode>>& lbl) const
     return s;
 }
 
+Fsm::Fsm() { }
 
 Fsm::Fsm(const Fsm& other) {
     

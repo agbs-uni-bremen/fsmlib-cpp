@@ -38,9 +38,10 @@ class Fsm
 protected:
     
     /**
-     *  default constructor without effect - needed by sub-classes
+     *  Default constructors without effect - needed by sub-classes
      */
     Fsm(const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    Fsm();
     
     /** Name of the FSM -- appears in nodes when printing the FSM as a dot graph */
     std::string name;
