@@ -77,11 +77,11 @@ static void printUsage(char* name) {
  *
  *  @return FSM_JSON, if the model contains the JSON encoding.
  */
-static model_type_t getModelType(const string& modelFile) {
+static model_type_t getModelType(const string& mf) {
     
     model_type_t t = FSM_BASIC;
     
-    ifstream inputFile(modelFile);
+    ifstream inputFile(mf);
     string line;
     getline(inputFile,line);
     // Basic encoding does not contain any { or [

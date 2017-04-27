@@ -1191,7 +1191,7 @@ Fsm::createRandomFsm(const string & fsmName,
         for ( int x = 0; x <= maxInput; x++ ) {
             // If x equals x0 produced already above,
             // we may skip it at random
-            if ( x == x0 and rand() % 2 ) continue;
+            if ( x == x0 and (rand() % 2) ) continue;
             
             // How many transitions do we want for input x?
             // We construct at most 2 of these transitions
