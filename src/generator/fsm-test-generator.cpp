@@ -164,10 +164,6 @@ static void parseParameters(int argc, char* argv[]) {
             modelFile = string(argv[p]);
             modelType = getModelType(modelFile);
         }
-        else if ( strstr(argv[p],".@todo")  ) {
-            modelFile = string(argv[p]);
-            modelType = FSM_JSON;
-        }
         else {
             cerr << argv[0] << ": illegal parameter `" << argv[p] << "'" << endl;
             printUsage(argv[0]);
@@ -204,6 +200,7 @@ static void readModel() {
             stringstream document;
             ifstream inputFile(modelFile);
             document << inputFile.rdbuf();
+            inputFile.close();
             
             if ( jReader.parse(document.str(),root) ) {
                 dfsm = make_shared<Dfsm>(root);

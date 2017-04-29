@@ -504,13 +504,41 @@ Fsm()
         }
         
         // Get the output
-        int y = presentationLayer->out2Num(transition["output"].asString());
+        string yString(transition["output"].asString());
+        
+        // Trim
+        yString.erase(0,yString.find_first_not_of(" \n\r\t\""));
+        yString.erase(yString.find_last_not_of(" \n\r\t\"")+1);
+        
+        int y = presentationLayer->out2Num(yString);
+        
+        if ( y < 0 ) {
+            cerr << "Unidentified output symbol `"
+            <<  yString
+            << "' in transition "
+            << srcName << " --> " << tgtName
+            << endl;
+            exit(1);
+        }
         
         // For each input, create a separate transition
         // and add it to the source node
         Json::Value inputlist = transition["input"];
         for (unsigned int inidx = 0; inidx < inputlist.size(); ++inidx ) {
-            int x = presentationLayer->in2Num(inputlist[inidx].asString());
+            
+            string xString(inputlist[inidx].asString());
+            // Trim
+            xString.erase(0,xString.find_first_not_of(" \n\r\t\""));
+            xString.erase(xString.find_last_not_of(" \n\r\t\"")+1);
+            int x = presentationLayer->in2Num(xString);
+            if ( x < 0 ) {
+                cerr << "Unidentified input symbol `"
+                <<  xString
+                << "' in transition "
+                << srcName << " --> " << tgtName
+                << endl;
+                exit(1);
+            }
             shared_ptr<FsmLabel> theLabel =
                 make_shared<FsmLabel>(x,y,presentationLayer);
             shared_ptr<FsmTransition> tr =
