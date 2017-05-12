@@ -621,7 +621,7 @@ Dfsm Dfsm::minimise()
         pktblLst.push_back(pk);
     }
     
-    return pMin->toFsm(name);
+    return pMin->toFsm(name, maxOutput);
 }
 
 void Dfsm::printTables() const

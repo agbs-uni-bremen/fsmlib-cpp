@@ -112,7 +112,7 @@ shared_ptr<PkTable> PkTable::getPkPlusOneTable() const
 	return haveNewClasses ? pkp1 : nullptr;
 }
 
-Dfsm PkTable::toFsm(string name)
+Dfsm PkTable::toFsm(string name, const int maxOutput)
 {
 	string minFsmName = name + "_MIN";
 	vector<shared_ptr<FsmNode>> nodeLst;
@@ -158,7 +158,7 @@ Dfsm PkTable::toFsm(string name)
 		}
 	}
 
-	return Dfsm(minFsmName, maxInput, 0, nodeLst, presentationLayer);
+	return Dfsm(minFsmName, maxInput, maxOutput, nodeLst, presentationLayer);
 }
 
 string PkTable::getMembers(const int c) const
