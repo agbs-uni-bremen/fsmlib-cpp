@@ -655,7 +655,7 @@ IOListContainer Dfsm::getCharacterisationSet()
     }
     
     /*Create an empty characterisation set as an empty InputTree instance*/
-    shared_ptr<Tree> w = make_shared<Tree>(make_shared<TreeNode>(), presentationLayer);
+    characterisationSet = make_shared<Tree>(make_shared<TreeNode>(), presentationLayer);
     
     /*Loop over all non-equal pairs of states. If they are not already distinguished by
      the input sequences contained in w, create a new input traces that distinguishes them
@@ -667,7 +667,7 @@ IOListContainer Dfsm::getCharacterisationSet()
         {
             shared_ptr<FsmNode> rightNode = nodes.at(right);
             
-            if (leftNode->distinguished(rightNode, w) != nullptr)
+            if (leftNode->distinguished(rightNode, characterisationSet) != nullptr)
             {
                 continue;
             }
@@ -680,12 +680,12 @@ IOListContainer Dfsm::getCharacterisationSet()
             shared_ptr<vector<vector<int>>> lli = make_shared<vector<vector<int>>>();
             lli->push_back(i.get());
             IOListContainer tcli = IOListContainer(lli, presentationLayer);
-            w->addToRoot(tcli);
+            characterisationSet->addToRoot(tcli);
         }
     }
     
     /* Wrap list of lists by an IOListContainer instance */
-    IOListContainer tcl = w->getIOLists();
+    IOListContainer tcl = characterisationSet->getIOLists();
     return tcl;
 }
 
