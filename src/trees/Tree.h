@@ -116,6 +116,7 @@ public:
 	//TODO
 	void addAfter(const InputTrace & tr, const IOListContainer & cnt);
     
+    /** Return number of nodes in the tree */
     size_t size();
     
 };
