@@ -545,7 +545,7 @@ Fsm()
                 make_shared<FsmTransition>(srcNode,tgtNode,theLabel);
             
             
-            // Record the requirements satisified by the transition
+            // Record the requirements satisfied by the transition
             Json::Value satisfies = transition["requirements"];
             for (unsigned int ridx = 0; ridx < satisfies.size(); ++ridx ) {
                 tr->addSatisfies(satisfies[ridx].asString());
@@ -600,6 +600,246 @@ Fsm()
     
 }
 
+
+
+Dfsm::Dfsm(const Json::Value& fsmExport,
+           const std::shared_ptr<FsmPresentationLayer> pl) :
+Fsm()
+{
+    
+    if (!fsmExport.isObject()) {
+        cerr << endl << "File format is JSON but NOT FSM-lib file structure.";
+        return;
+    }
+    
+    if ( pl == nullptr ) {
+        cerr << endl << "Undefined presentation layer.";
+        return;
+    }
+    
+    bool valid = true;
+    Json::Value inputs = fsmExport["inputs"];
+    Json::Value outputs = fsmExport["outputs"];
+    Json::Value states = fsmExport["states"];
+    Json::Value transitions = fsmExport["transitions"];
+    Json::Value requirements = fsmExport["requirements"];
+    
+    map< string,shared_ptr<FsmNode> > name2node;
+    
+    // check JSON value for a valid FSM export
+    if (inputs.isNull() || (!inputs.isArray())) {
+        valid = false;
+        cout << endl << "Unable to extract expected array of FSM inputs from JSON export file structure.";
+    }
+    if (outputs.isNull() || (!outputs.isArray())) {
+        valid = false;
+        cout << endl << "Unable to extract expected array of FSM outputs from JSON export file structure.";
+    }
+    if (states.isNull() || (!states.isArray())) {
+        valid = false;
+        cout << endl << "Unable to extract expected array of FSM states from JSON export file structure.";
+    }
+    if (transitions.isNull() || (!transitions.isArray())) {
+        valid = false;
+        cout << endl << "Unable to extract expected array of FSM transitions from JSON export file structure.";
+    }
+    if (requirements.isNull() || (!requirements.isArray())) {
+        valid = false;
+        cout << endl << "Unable to extract expected array of requirements from JSON export file structure.";
+    }
+    if (!valid) {
+        return;
+    }
+    
+    
+    
+    // iterate over all inputs; add all inputs not already contained
+    // in pl to in2String.
+    vector<string> in2String(pl->getIn2String());
+    for (unsigned int index = 0; index < inputs.size(); ++index ) {
+        string theInput(inputs[index].asString());
+        if ( pl->in2Num(theInput) < 0 ) {
+            in2String.push_back(theInput);
+        }
+    }
+    
+    // iterate over all outputs
+    vector<string> out2String(pl->getOut2String());
+    for (unsigned int index = 0; index < outputs.size(); ++index ) {
+        string theOutput(outputs[index].asString());
+        if ( pl->out2Num(theOutput) < 0 ) {
+            out2String.push_back(theOutput);
+        }
+    }
+    // Check whether the _nop output is already contained in pl,
+    // otherwise add it to out2String
+    int theNopNo = pl->out2Num("_nop");
+    if ( theNopNo < 0 ) {
+        out2String.push_back("_nop");
+    }
+    
+    
+    // iterate over all states, insert initial state at index 0
+    // of the state2String vector.
+    vector<string> state2String;
+    for (unsigned int index = 0; index < states.size(); ++index ) {
+        Json::Value state = states[index];
+        if (state["initial"].asBool()) {
+            state2String.push_back(state["name"].asString());
+            break;
+        }
+    }
+    for (unsigned int index = 0; index < states.size(); ++index ) {
+        Json::Value state = states[index];
+        if (state["initial"].asBool()) {
+            continue; // Initial state has already been inserted
+        }
+        state2String.push_back(state["name"].asString());
+    }
+    
+    // Create the presentation layer
+    presentationLayer =
+    make_shared<FsmPresentationLayer>(in2String,out2String,state2String);
+    
+    // Define basic attributes
+    name = "FSM";
+    currentParsedNode = nullptr;
+    maxInput = in2String.size() - 1;
+    maxOutput = out2String.size() - 1;
+    maxState = state2String.size() - 1;
+    initStateIdx = 0;
+    minimal = Maybe;
+    
+    
+    // Create all FSM states
+    for ( size_t s = 0; s < state2String.size(); s++ ) {
+        shared_ptr<FsmNode> theNode =
+        make_shared<FsmNode>((int)s,state2String[s],presentationLayer);
+        nodes.push_back(theNode);
+        name2node[state2String[s]] = theNode;
+    }
+    
+    
+    // Create all transitions
+    for (unsigned int index = 0; index < transitions.size(); ++index ) {
+        Json::Value transition = transitions[index];
+        
+        
+        // Handle source and target nodes
+        string srcName(transition["source"].asString());
+        string tgtName(transition["target"].asString());
+        
+        shared_ptr<FsmNode> srcNode = name2node[srcName];
+        shared_ptr<FsmNode> tgtNode = name2node[tgtName];
+        
+        if ( srcNode == nullptr ) {
+            cerr << "Cannot associated valid FSM node with source node name"
+            << srcName << endl;
+            exit(1);
+        }
+        
+        if ( tgtNode == nullptr ) {
+            cerr << "Cannot associated valid FSM node with target node name"
+            << tgtName << endl;
+            exit(1);
+        }
+        
+        // Get the output
+        string yString(transition["output"].asString());
+        
+        // Trim
+        yString.erase(0,yString.find_first_not_of(" \n\r\t\""));
+        yString.erase(yString.find_last_not_of(" \n\r\t\"")+1);
+        
+        int y = presentationLayer->out2Num(yString);
+        
+        if ( y < 0 ) {
+            cerr << "Unidentified output symbol `"
+            <<  yString
+            << "' in transition "
+            << srcName << " --> " << tgtName
+            << endl;
+            exit(1);
+        }
+        
+        // For each input, create a separate transition
+        // and add it to the source node
+        Json::Value inputlist = transition["input"];
+        for (unsigned int inidx = 0; inidx < inputlist.size(); ++inidx ) {
+            
+            string xString(inputlist[inidx].asString());
+            // Trim
+            xString.erase(0,xString.find_first_not_of(" \n\r\t\""));
+            xString.erase(xString.find_last_not_of(" \n\r\t\"")+1);
+            int x = presentationLayer->in2Num(xString);
+            if ( x < 0 ) {
+                cerr << "Unidentified input symbol `"
+                <<  xString
+                << "' in transition "
+                << srcName << " --> " << tgtName
+                << endl;
+                exit(1);
+            }
+            shared_ptr<FsmLabel> theLabel =
+            make_shared<FsmLabel>(x,y,presentationLayer);
+            shared_ptr<FsmTransition> tr =
+            make_shared<FsmTransition>(srcNode,tgtNode,theLabel);
+            
+            
+            // Record the requirements satisfied by the transition
+            Json::Value satisfies = transition["requirements"];
+            for (unsigned int ridx = 0; ridx < satisfies.size(); ++ridx ) {
+                tr->addSatisfies(satisfies[ridx].asString());
+            }
+            
+            srcNode->addTransition(tr);
+        }
+        
+    }
+    
+    // Add requirements to nodes
+    for (unsigned int index = 0; index < states.size(); ++index ) {
+        Json::Value state = states[index];
+        string nodeName(state["name"].asString());
+        
+        for ( auto n : nodes ) {
+            if ( n->getName() == nodeName ) {
+                Json::Value satisfies = state["requirements"];
+                for (unsigned int ridx = 0; ridx < satisfies.size(); ++ridx ) {
+                    n->addSatisfies(satisfies[ridx].asString());
+                }
+            }
+        }
+        
+    }
+    
+    
+    // Force DFSM to be completely defined:
+    // For each node and each input event x that has not been used
+    // in any outgoing transition of this node,
+    // create a self-loop transition with label x/NOP
+    for ( auto n : nodes ) {
+        
+        vector<bool> inputs;
+        for ( int x = 0; x <= maxInput; x++ ) {
+            inputs.push_back(false);
+        }
+        for ( auto tr : n->getTransitions() ) {
+            inputs[tr->getLabel()->getInput()] = true;
+        }
+        for ( int x = 0; x <= maxInput; x++ ) {
+            if ( not inputs[x] ) {
+                shared_ptr<FsmLabel> theLabel =
+                make_shared<FsmLabel>(x,theNopNo,presentationLayer);
+                shared_ptr<FsmTransition> tr =
+                make_shared<FsmTransition>(n,n,theLabel);
+                n->addTransition(tr);
+            }
+        }
+        
+    }
+    
+}
 
 
 

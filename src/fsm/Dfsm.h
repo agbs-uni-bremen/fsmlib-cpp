@@ -151,6 +151,25 @@ public:
      *  to the output alphabet.
      */
     Dfsm(const Json::Value& jsonModel);
+    
+    /**
+     *  This constructor acts like the previous, but uses a 
+     *  a given presentation layer. Typically, this is required
+     *  if an implementation DFSM is read from a file where
+     *  inputs and outputs occur in a different order, and 
+     *  where some inputs/outputs occurring in the reference model
+     *  do not occur in the implementation. Also, the implementation
+     *  might use additional inputs and/or outputs that do not
+     *  occur in the reference model. These are appended to the respective 
+     *  lists of the given presentation layer.
+     *
+     *  The constructor ensures that both implementation model and
+     *  reference model use the same internal numbers for the
+     *  same inputs and outputs.
+     */
+    Dfsm(const Json::Value& jsonModel,
+         const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+
 
 	/**
 	Minimise this DFSM
