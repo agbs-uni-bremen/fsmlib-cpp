@@ -138,6 +138,138 @@ shared_ptr<FsmPresentationLayer> Dfsm::createPresentationLayerFromCsvFormat(cons
 }
 
 
+
+shared_ptr<FsmPresentationLayer>
+Dfsm::createPresentationLayerFromCsvFormat(const std::string & fname,
+                                           const std::shared_ptr<FsmPresentationLayer> pl) {
+    
+    // key comparator for usage in string sets
+    class setCmp
+    {
+    public:
+        bool operator()(const string& s1, const string& s2)
+        {
+            return (s1.compare(s2) < 0);
+        }
+    };
+    // Set containing all output events defined so far
+    set<string,setCmp> outStrSet;
+    
+    
+    vector<std::string> in2String(pl->getIn2String());
+    vector<std::string> out2String(pl->getOut2String());
+    vector<std::string> state2String;
+    
+    ifstream inputFile(fname);
+    
+    if ( not inputFile.is_open() ) {
+        cout << "Unable to open input file" << endl;
+        exit(EXIT_FAILURE);
+    }
+    
+    // Insert a "no operation" output as first member of the
+    // output alphabet, if it's not already contained in pl
+    if ( pl->out2Num("_nop") < 0 ) {
+        out2String.push_back("_nop");
+        outStrSet.insert(out2String[0]);
+    }
+    
+    string line;
+    
+    // ------------------------------------------------------------
+    // Read input names from first line
+    // ------------------------------------------------------------
+    getline(inputFile,line);
+    
+    // Skip first field
+    size_t pos = line.find(";");
+    if ( pos == string::npos ) return nullptr;
+    pos++;
+    size_t posEnd;
+    do {
+        
+        posEnd = line.find(";", pos);
+        
+        string newInput;
+        if ( posEnd == string::npos ) {
+            newInput = line.substr(pos);
+        }
+        else {
+            newInput = line.substr(pos, posEnd - pos);
+        }
+        
+        // Trim
+        newInput.erase(0,newInput.find_first_not_of(" \n\r\t\""));
+        newInput.erase(newInput.find_last_not_of(" \n\r\t\"")+1);
+        
+        // Add to vector of strings denoting input names,
+        // if this string is not already containe in pl
+        if ( pl->in2Num(newInput) < 0 ) {
+            in2String.push_back(newInput);
+        }
+        
+        pos = posEnd + 1;
+        
+    } while ( posEnd != string::npos );
+    
+    // ------------------------------------------------------------
+    // Read state names and outputs from consecutive lines
+    // ------------------------------------------------------------
+    while (getline(inputFile, line))
+    {
+        // Get the state name
+        posEnd = line.find(";");
+        if ( posEnd == string::npos ) continue;
+        string newState = line.substr(0,posEnd);
+        newState.erase(0,newState.find_first_not_of(" \n\r\t\""));
+        newState.erase(newState.find_last_not_of(" \n\r\t\"")+1);
+        state2String.push_back(newState);
+        
+        // Look for new output names
+        do {
+            
+            pos = posEnd + 1;
+            posEnd = line.find(";",pos);
+            
+            string newEntry;
+            if ( posEnd == string::npos ) {
+                newEntry = line.substr(pos);
+            }
+            else {
+                newEntry = line.substr(pos, posEnd - pos);
+            }
+            size_t outPos = newEntry.find("/");
+            if ( outPos != string::npos ) {
+                string outStr = newEntry.substr(outPos+1);
+                outStr.erase(0,outStr.find_first_not_of(" \n\r\t\""));
+                outStr.erase(outStr.find_last_not_of(" \n\r\t\"")+1);
+                
+                // Insert to set only if not already contained in pl
+                if ( pl->out2Num(outStr) < 0 ) {
+                    outStrSet.insert(outStr);
+                }
+            }
+            
+        } while ( posEnd != string::npos );
+        
+    }
+    inputFile.close();
+    
+    for ( auto s : outStrSet ) {
+        out2String.push_back(s);
+    }
+    
+    maxInput = in2String.size() - 1;
+    maxOutput = out2String.size() - 1;
+    maxState = state2String.size() - 1;
+    initStateIdx = 0;
+    
+    return make_shared<FsmPresentationLayer>(in2String,out2String,state2String);
+    
+}
+
+
+
 void Dfsm::createDfsmTransitionGraph(const std::string& fname) {
     
     ifstream inputFile(fname);
@@ -269,6 +401,16 @@ Dfsm::Dfsm(const std::string & fname,
     
     name = fsmName;
     presentationLayer = createPresentationLayerFromCsvFormat(fname);
+    createDfsmTransitionGraph(fname);
+    
+}
+
+Dfsm::Dfsm(const std::string & fname,
+           const std::string & fsmName,
+           const std::shared_ptr<FsmPresentationLayer> pl) : Fsm(nullptr)   {
+    
+    name = fsmName;
+    presentationLayer = createPresentationLayerFromCsvFormat(fname,pl);
     createDfsmTransitionGraph(fname);
     
 }
