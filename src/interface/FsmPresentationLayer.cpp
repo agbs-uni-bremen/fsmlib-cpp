@@ -10,6 +10,15 @@ FsmPresentationLayer::FsmPresentationLayer()
 
 }
 
+FsmPresentationLayer::FsmPresentationLayer(const FsmPresentationLayer& pl)
+{
+    
+    in2String = pl.in2String;
+    out2String = pl.out2String;
+    state2String = pl.state2String;
+    
+}
+
 FsmPresentationLayer::FsmPresentationLayer(const std::vector<std::string>& in2String, const std::vector<std::string>& out2String, const std::vector<std::string>& state2String)
 	: in2String(in2String), out2String(out2String), state2String(state2String)
 {
@@ -18,7 +27,6 @@ FsmPresentationLayer::FsmPresentationLayer(const std::vector<std::string>& in2St
 
 FsmPresentationLayer::FsmPresentationLayer(const std::string& inputs, const std::string& outputs, const std::string& states)
 {
-	/*Quite different from the Java version. It is because the way of reading file is very different*/
 	std::string line;
 
 	std::ifstream inputsFile(inputs);
