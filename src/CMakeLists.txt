@@ -55,6 +55,7 @@ add_subdirectory (trees)
 add_subdirectory (harness)
 add_subdirectory (example)
 add_subdirectory (generator)
+add_subdirectory (checker)
 
 if(gui)
 	add_subdirectory (window)
