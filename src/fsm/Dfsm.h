@@ -33,11 +33,6 @@ private:
 	std::vector<std::shared_ptr<PkTable>> pktblLst;
 
 	/**
-	Create a random DFSM
-	*/
-	void createAtRandom();
-
-	/**
 	Create a DFSMTable from the DFSM
 	@return The DFSMTable created
 	*/
@@ -83,6 +78,12 @@ public:
          const std::shared_ptr<FsmPresentationLayer> presentationLayer,
          const std::string & fsmName);
 
+    
+    /**
+     Create a random mutant of this DFSM
+     */
+    void createAtRandom();
+    
 	/**
 	Random creation of a completely defined deterministic FSM
 	@param fsmName The name of the DFSM

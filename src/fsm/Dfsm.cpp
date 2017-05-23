@@ -417,11 +417,11 @@ Dfsm::Dfsm(const std::string & fname,
 
 void Dfsm::createAtRandom()
 {
-    srand((unsigned int) time(0));
+    srand(getRandomSeed());
     
     for (unsigned int i = 0; i < nodes.size(); ++ i)
     {
-        nodes [i] = make_shared<FsmNode>(i, presentationLayer);//insertion
+        nodes [i] = make_shared<FsmNode>(i, presentationLayer);
     }
     
     for (unsigned int i = 0; i < nodes.size(); ++ i)
