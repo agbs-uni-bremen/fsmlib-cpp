@@ -60,6 +60,8 @@ public:
 	@return The iterator
 	*/
 	std::vector<int>::const_iterator cend() const;
+    
+    const std::shared_ptr<FsmPresentationLayer> getPresentationLayer() const { return presentationLayer; }
 
 	/**
 	Check wheter or not, the 2 trace are the same

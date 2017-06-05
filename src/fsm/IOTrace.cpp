@@ -5,6 +5,8 @@
  */
 #include "fsm/IOTrace.h"
 
+using namespace std;
+
 IOTrace::IOTrace(const InputTrace & i, const OutputTrace & o)
 	: inputTrace(i), outputTrace(o)
 {
@@ -21,8 +23,38 @@ OutputTrace IOTrace::getOutputTrace() const
 	return outputTrace;
 }
 
-std::ostream & operator<<(std::ostream & out, const IOTrace & trace)
+ostream & operator<<(ostream & out, const IOTrace & trace)
 {
 	out << trace.inputTrace << "/" << trace.outputTrace;
 	return out;
 }
+
+string IOTrace::toRttString() const {
+    
+    string s;
+    float ts = 0.0;
+    
+    vector<int> inputs = inputTrace.get();
+    vector<int> outputs = outputTrace.get();
+    const std::shared_ptr<FsmPresentationLayer> pl = inputTrace.getPresentationLayer();
+    
+    for ( size_t i = 0; i < inputs.size(); i++ ) {
+        ostringstream ossIn;
+        ostringstream ossOut;
+
+        string xStr = pl->getInId(inputs[i]);
+        string yStr = pl->getOutId(outputs[i]);
+        
+        ossIn << ts << ";" << xStr << ";0" << endl;
+        s += ossIn.str();
+        
+        ts += 0.100;
+        ossOut << ts << ";" << yStr  << ";0" << endl;
+        s += ossOut.str();
+        
+    }
+    
+    return s;
+}
+
+

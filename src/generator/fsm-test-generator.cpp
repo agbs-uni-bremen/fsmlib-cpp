@@ -39,11 +39,18 @@ typedef enum {
 
 typedef enum {
     WMETHOD,
-    WPMETHOD
+    WPMETHOD,
+    SAFE_WPMETHOD
 } generation_method_t;
 
+
+/** File containing the reference model */
 static model_type_t modelType;
 static string modelFile;
+
+/** only for generation method SAFE_WPMETHOD */
+static model_type_t modelAbstractionType;
+static string modelAbstractionFile;
 static string plStateFile;
 static string plInputFile;
 static string plOutputFile;
@@ -54,7 +61,9 @@ static unsigned int numAddStates;
 
 static shared_ptr<FsmPresentationLayer> pl = nullptr;
 static shared_ptr<Dfsm> dfsm = nullptr;
+static shared_ptr<Dfsm> dfsmAbstraction = nullptr;
 static shared_ptr<Fsm> fsm = nullptr;
+static shared_ptr<Fsm> fsmAbstraction = nullptr;
 
 static bool isDeterministic = false;
 
@@ -64,7 +73,7 @@ static bool isDeterministic = false;
  * @param name program name as specified in argv[0]
  */
 static void printUsage(char* name) {
-    cerr << "usage: " << name << " [-w] [-n fsmname] [-p infile outfile statefile] [-a additionalstates] [-t testsuitename] modelfile" << endl;
+    cerr << "usage: " << name << " [-w|-s] [-n fsmname] [-p infile outfile statefile] [-a additionalstates] [-t testsuitename] modelfile [model abstraction file]" << endl;
 }
 
 /**
@@ -110,9 +119,15 @@ static void parseParameters(int argc, char* argv[]) {
     testSuiteFileName = string("testsuite.txt");
     numAddStates = 0;
     
+    bool haveModelFileName = false;
+    
     for ( int p = 1; p < argc; p++ ) {
+        
         if ( strcmp(argv[p],"-w") == 0 ) {
             genMethod = WMETHOD;
+        }
+        else if ( strcmp(argv[p],"-s") == 0 ) {
+            genMethod = SAFE_WPMETHOD;
         }
         else if ( strcmp(argv[p],"-n") == 0 ) {
             if ( argc < p+2 ) {
@@ -157,10 +172,12 @@ static void parseParameters(int argc, char* argv[]) {
             }
         }
         else if ( strstr(argv[p],".csv")  ) {
+            haveModelFileName = true;
             modelFile = string(argv[p]);
             modelType = FSM_CSV;
         }
         else if ( strstr(argv[p],".fsm")  ) {
+            haveModelFileName = true;
             modelFile = string(argv[p]);
             modelType = getModelType(modelFile);
         }
@@ -169,6 +186,18 @@ static void parseParameters(int argc, char* argv[]) {
             printUsage(argv[0]);
             exit(1);
         }
+        
+        if ( haveModelFileName and genMethod == SAFE_WPMETHOD ) {
+            p++;
+            if ( p >= argc ) {
+                cerr << argv[0] << ": missing model abstraction file" << endl;
+                printUsage(argv[0]);
+                exit(1);
+            }
+            modelAbstractionFile = string(argv[p]);
+            
+        }
+        
     }
     
     if ( modelFile.empty() ) {
@@ -184,13 +213,21 @@ static void parseParameters(int argc, char* argv[]) {
  *   Instantiate DFSM or FSM from input file according to
  *   the different input formats which are supported.
  */
-static void readModel() {
+static void readModel(model_type_t mtp,
+                      string thisFileName,
+                      string thisFsmName,
+                      shared_ptr<Fsm>& myFsm,
+                      shared_ptr<Dfsm>& myDfsm) {
     
-    switch ( modelType ) {
+    myDfsm = nullptr;
+    myFsm = nullptr;
+    
+    
+    switch ( mtp ) {
         case FSM_CSV:
             isDeterministic = true;
-            dfsm = make_shared<Dfsm>(modelFile,fsmName);
-            pl = dfsm->getPresentationLayer();
+            myDfsm = make_shared<Dfsm>(thisFileName,thisFsmName);
+            pl = myDfsm->getPresentationLayer();
             break;
             
         case FSM_JSON:
@@ -203,7 +240,8 @@ static void readModel() {
             inputFile.close();
             
             if ( jReader.parse(document.str(),root) ) {
-                dfsm = make_shared<Dfsm>(root);
+                myDfsm = make_shared<Dfsm>(root);
+                pl = myDfsm->getPresentationLayer();
             }
             else {
                 cerr << "Could not parse JSON model - exit." << endl;
@@ -219,22 +257,127 @@ static void readModel() {
             else {
                 pl = make_shared<FsmPresentationLayer>(plInputFile,plOutputFile,plStateFile);
             }
-            fsm = make_shared<Fsm>(modelFile,pl,fsmName);
-            if ( fsm->isDeterministic() ) {
+            myFsm = make_shared<Fsm>(modelFile,pl,fsmName);
+            if ( myFsm->isDeterministic() ) {
                 isDeterministic = true;
-                dfsm = make_shared<Dfsm>(modelFile,pl,fsmName);
-                fsm = nullptr;
+                myDfsm = make_shared<Dfsm>(modelFile,pl,fsmName);
+                myFsm = nullptr;
             }
             break;
     }
     
-    if ( fsm != nullptr ) {
-        fsm->toDot(fsmName);
+    if ( myFsm != nullptr ) {
+        myFsm->toDot(fsmName);
     }
-    else if ( dfsm != nullptr ) {
-        dfsm->toDot(fsmName);
-        dfsm->toCsv(fsmName);
+    else if ( myDfsm != nullptr ) {
+        myDfsm->toDot(fsmName);
+        myDfsm->toCsv(fsmName);
     }
+    
+}
+
+
+static void readModelAbstraction(model_type_t mtp,
+                                 string thisFileName,
+                                 string thisFsmName,
+                                 shared_ptr<Dfsm>& myDfsm,
+                                 shared_ptr<FsmPresentationLayer> plRef) {
+    
+    myDfsm = nullptr;
+    
+    
+    switch ( mtp ) {
+        case FSM_CSV:
+            isDeterministic = true;
+            myDfsm = make_shared<Dfsm>(thisFileName,thisFsmName,plRef);
+            break;
+            
+        case FSM_JSON:
+        {
+            Reader jReader;
+            Value root;
+            stringstream document;
+            ifstream inputFile(modelFile);
+            document << inputFile.rdbuf();
+            inputFile.close();
+            
+            if ( jReader.parse(document.str(),root) ) {
+                myDfsm = make_shared<Dfsm>(root,plRef);
+            }
+            else {
+                cerr << "Could not parse JSON model - exit." << endl;
+                exit(1);
+            }
+        }
+            break;
+            
+        case FSM_BASIC:
+            cerr << "ERROR. Model abstraction for SAFE WP METHOD may only be specified in CSV or JSON format - exit." << endl;
+            exit(1);
+            break;
+    }
+    
+    if ( myDfsm != nullptr ) {
+        myDfsm->toDot(fsmName);
+        myDfsm->toCsv(fsmName);
+    }
+    
+}
+
+
+static void safeWpMethod(shared_ptr<TestSuite> testSuite) {
+    
+    // Minimise original reference DFSM
+    Dfsm dfsmRefMin = dfsm->minimise();
+    
+    // Get state cover of original model
+    shared_ptr<Tree> scov = dfsmRefMin.getStateCover();
+    
+    // Get characterisation set of original model
+    IOListContainer w = dfsmRefMin.getCharacterisationSet();
+    
+    // Minimise the abstracted reference model
+    Dfsm dfsmAbstractionMin = dfsmAbstraction->minimise();
+    
+    // Get W_s, the characterisation set of dfsmAbstractionMin
+    IOListContainer wSafe = dfsmAbstractionMin.getCharacterisationSet();
+    
+    // Get W_sq, the state identification sets of dfsmAbstractionMin
+    dfsmAbstractionMin.calcStateIdentificationSets();
+    
+    // Calc W1 = V.W, W from original model
+    shared_ptr<Tree> W1 = dfsmRefMin.getStateCover();
+    W1->add(w);
+    
+    // Calc W2 = V.(union_(i=1)^(m-n) Sigma_I).wSafe)
+    shared_ptr<Tree> W2 = dfsmRefMin.getStateCover();
+    if ( numAddStates > 0 ) {
+        IOListContainer inputEnum = IOListContainer(dfsm->getMaxInput(),
+                                                    1,
+                                                    numAddStates,
+                                                    pl);
+        W2->add(inputEnum);
+    }
+    W2->add(wSafe);
+    
+    // Calc W3 = V.Sigma_I^(m - n + 1) oplus
+    //           {Wis | Wis is state identification set of csmAbsMin}
+    shared_ptr<Tree> W3 = dfsmRefMin.getStateCover();
+    
+    IOListContainer inputEnum2 = IOListContainer(dfsm->getMaxInput(),
+                                                 1,
+                                                 numAddStates+1,
+                                                 pl);
+    W3->add(inputEnum2);
+    dfsmAbstractionMin.appendStateIdentificationSets(W3);
+    
+    // Union of all test cases: W1 union W2 union W3
+    // Collected again in W1
+    W1->unionTree(W2);
+    W1->unionTree(W3);
+    
+    IOListContainer iolc = W1->getTestCases();
+    *testSuite = dfsm->createTestSuite(iolc);
     
 }
 
@@ -276,6 +419,10 @@ static void generateTestSuite() {
                 }
             }
             break;
+            
+        case SAFE_WPMETHOD:
+            safeWpMethod(testSuite);
+            break;
     }
     
     testSuite->save(testSuiteFileName);
@@ -286,7 +433,25 @@ int main(int argc, char* argv[])
 {
     
     parseParameters(argc,argv);
-    readModel();
+    readModel(modelType,modelFile,fsmName,fsm,dfsm);
+    
+    if ( genMethod == SAFE_WPMETHOD ) {
+        
+        if ( dfsm == nullptr ) {
+            cerr << "SAFE WP METHOD only operates on deterministic FSMs - exit."
+            << endl;
+            exit(1);
+        }
+        
+        shared_ptr<FsmPresentationLayer> plRef = dfsm->getPresentationLayer();
+        
+        readModelAbstraction(modelAbstractionType,
+                             modelAbstractionFile,
+                             "ABS_"+fsmName,
+                             dfsmAbstraction,
+                             plRef);
+    }
+    
     generateTestSuite();
     
     exit(0);
