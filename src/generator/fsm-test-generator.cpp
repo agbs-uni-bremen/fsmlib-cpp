@@ -40,6 +40,7 @@ typedef enum {
 typedef enum {
     WMETHOD,
     WPMETHOD,
+    SAFE_WMETHOD,
     SAFE_WPMETHOD
 } generation_method_t;
 
@@ -124,10 +125,24 @@ static void parseParameters(int argc, char* argv[]) {
     for ( int p = 1; p < argc; p++ ) {
         
         if ( strcmp(argv[p],"-w") == 0 ) {
-            genMethod = WMETHOD;
+            switch (genMethod) {
+                case WPMETHOD: genMethod = WMETHOD;
+                    break;
+                case SAFE_WPMETHOD: genMethod = SAFE_WMETHOD;
+                    break;
+                default:
+                    break;
+            }
         }
         else if ( strcmp(argv[p],"-s") == 0 ) {
-            genMethod = SAFE_WPMETHOD;
+            switch (genMethod) {
+                case WPMETHOD: genMethod = SAFE_WPMETHOD;
+                    break;
+                case WMETHOD: genMethod = SAFE_WMETHOD;
+                    break;
+                default:
+                    break;
+            }
         }
         else if ( strcmp(argv[p],"-n") == 0 ) {
             if ( argc < p+2 ) {
@@ -187,7 +202,8 @@ static void parseParameters(int argc, char* argv[]) {
             exit(1);
         }
         
-        if ( haveModelFileName and genMethod == SAFE_WPMETHOD ) {
+        if ( haveModelFileName and
+            (genMethod == SAFE_WPMETHOD or genMethod == SAFE_WMETHOD) ) {
             p++;
             if ( p >= argc ) {
                 cerr << argv[0] << ": missing model abstraction file" << endl;
@@ -330,35 +346,55 @@ static void safeWpMethod(shared_ptr<TestSuite> testSuite) {
     // Minimise original reference DFSM
     Dfsm dfsmRefMin = dfsm->minimise();
     
+    dfsmRefMin.toDot("REFMIN");
+    cout << "REF    size = " << dfsm->size() << endl;
+    cout << "REFMIN size = " << dfsmRefMin.size() << endl;
+    
     // Get state cover of original model
     shared_ptr<Tree> scov = dfsmRefMin.getStateCover();
     
     // Get characterisation set of original model
     IOListContainer w = dfsmRefMin.getCharacterisationSet();
     
+    cout << "W = " << w << endl;
+    
     // Minimise the abstracted reference model
     Dfsm dfsmAbstractionMin = dfsmAbstraction->minimise();
+    
+    dfsmAbstractionMin.toDot("ABSMIN");
+    cout << "ABSMIN size = " << dfsmAbstractionMin.size() << endl;
+    
     
     // Get W_s, the characterisation set of dfsmAbstractionMin
     IOListContainer wSafe = dfsmAbstractionMin.getCharacterisationSet();
     
+    cout << "wSafe = " << wSafe << endl;
+    
+    
     // Get W_sq, the state identification sets of dfsmAbstractionMin
     dfsmAbstractionMin.calcStateIdentificationSets();
     
+    cout << "state identification sets calculated" << endl;fflush(0);
+    
     // Calc W1 = V.W, W from original model
     shared_ptr<Tree> W1 = dfsmRefMin.getStateCover();
+    
     W1->add(w);
     
-    // Calc W2 = V.(union_(i=1)^(m-n) Sigma_I).wSafe)
-    shared_ptr<Tree> W2 = dfsmRefMin.getStateCover();
+    // Calc W21 = V.W_s
+    shared_ptr<Tree> W21 = dfsmRefMin.getStateCover();
+    W21->add(wSafe);
+    
+    // Calc W22 = V.(union_(i=1)^(m-n) Sigma_I).wSafe)
+    shared_ptr<Tree> W22 = dfsmRefMin.getStateCover();
     if ( numAddStates > 0 ) {
         IOListContainer inputEnum = IOListContainer(dfsm->getMaxInput(),
                                                     1,
                                                     numAddStates,
                                                     pl);
-        W2->add(inputEnum);
+        W22->add(inputEnum);
     }
-    W2->add(wSafe);
+    W22->add(wSafe);
     
     // Calc W3 = V.Sigma_I^(m - n + 1) oplus
     //           {Wis | Wis is state identification set of csmAbsMin}
@@ -373,13 +409,73 @@ static void safeWpMethod(shared_ptr<TestSuite> testSuite) {
     
     // Union of all test cases: W1 union W2 union W3
     // Collected again in W1
-    W1->unionTree(W2);
+    W1->unionTree(W21);
+    W1->unionTree(W22);
     W1->unionTree(W3);
     
     IOListContainer iolc = W1->getTestCases();
     *testSuite = dfsm->createTestSuite(iolc);
     
 }
+
+static void safeWMethod(shared_ptr<TestSuite> testSuite) {
+    
+    // Minimise original reference DFSM
+    Dfsm dfsmRefMin = dfsm->minimise();
+    
+    cout << "REF    size = " << dfsm->size() << endl;
+    cout << "REFMIN size = " << dfsmRefMin.size() << endl;
+    
+    // Get state cover of original model
+    shared_ptr<Tree> scov = dfsmRefMin.getStateCover();
+    
+    // Get characterisation set of original model
+    IOListContainer w = dfsmRefMin.getCharacterisationSet();
+    
+    cout << "W = " << w << endl;
+    
+    // Minimise the abstracted reference model
+    Dfsm dfsmAbstractionMin = dfsmAbstraction->minimise();
+    
+    cout << "ABSMIN size = " << dfsmAbstractionMin.size() << endl;
+    
+    
+    // Get W_s, the characterisation set of dfsmAbstractionMin
+    IOListContainer wSafe = dfsmAbstractionMin.getCharacterisationSet();
+    
+    cout << "wSafe = " << wSafe << endl;
+    
+    // Calc W1 = V.W, W from original model
+    shared_ptr<Tree> W1 = dfsmRefMin.getStateCover();
+    
+    W1->add(w);
+    
+    // Calc W21 = V.W_s
+    shared_ptr<Tree> W21 = dfsmRefMin.getStateCover();
+    W21->add(wSafe);
+    
+    // Calc W22 = V.(union_(i=1)^(m-n+1) Sigma_I).wSafe)
+    shared_ptr<Tree> W22 = dfsmRefMin.getStateCover();
+    
+    IOListContainer inputEnum = IOListContainer(dfsm->getMaxInput(),
+                                                1,
+                                                numAddStates+1,
+                                                pl);
+    W22->add(inputEnum);
+    
+    W22->add(wSafe);
+    
+    // Union of all test cases: W1 union W2 union W3
+    // Collected again in W1
+    W1->unionTree(W21);
+    W1->unionTree(W22);
+    
+    IOListContainer iolc = W1->getTestCases();
+    *testSuite = dfsm->createTestSuite(iolc);
+    
+}
+
+
 
 static void generateTestSuite() {
     
@@ -423,6 +519,10 @@ static void generateTestSuite() {
         case SAFE_WPMETHOD:
             safeWpMethod(testSuite);
             break;
+            
+        case SAFE_WMETHOD:
+            safeWMethod(testSuite);
+            break;
     }
     
     testSuite->save(testSuiteFileName);
@@ -435,10 +535,11 @@ int main(int argc, char* argv[])
     parseParameters(argc,argv);
     readModel(modelType,modelFile,fsmName,fsm,dfsm);
     
-    if ( genMethod == SAFE_WPMETHOD ) {
+    if ( genMethod == SAFE_WPMETHOD or
+        genMethod == SAFE_WMETHOD ) {
         
         if ( dfsm == nullptr ) {
-            cerr << "SAFE WP METHOD only operates on deterministic FSMs - exit."
+            cerr << "SAFE W/WP METHOD only operates on deterministic FSMs - exit."
             << endl;
             exit(1);
         }
