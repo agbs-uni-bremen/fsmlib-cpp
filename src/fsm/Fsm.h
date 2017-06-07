@@ -423,6 +423,10 @@ public:
     void setPresentationLayer(const std::shared_ptr<FsmPresentationLayer> ppresentationLayer);
     
     
+    /** Return the number of states in this FSM */
+    size_t size() const { return nodes.size(); }
+    
+    
     
     friend std::ostream & operator<<(std::ostream & out, const Fsm & fsm);
     
