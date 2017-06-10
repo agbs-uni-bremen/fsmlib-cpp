@@ -319,6 +319,8 @@ public:
      * getCharacterisationSet().
      */
     void calcStateIdentificationSets();
+    void calcStateIdentificationSetsFast();
+
     void appendStateIdentificationSets(const std::shared_ptr<Tree> Wp2) const;
     
     /**

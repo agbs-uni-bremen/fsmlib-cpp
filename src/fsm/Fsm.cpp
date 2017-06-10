@@ -811,7 +811,7 @@ IOListContainer Fsm::getCharacterisationSet()
     
     /*Minimise and store characterisation set*/
     characterisationSet = w;
-    minimiseCharSet(w);
+    //    minimiseCharSet(w);
     
     /*Wrap list of lists by an IOListContainer instance*/
     IOListContainer tcl = characterisationSet->getIOLists();
@@ -913,6 +913,92 @@ void Fsm::calcStateIdentificationSets()
     
 }
 
+
+
+void Fsm::calcStateIdentificationSetsFast()
+{
+    if (!isObservable())
+    {
+        cout << "This FSM is not observable - cannot calculate the charactersiation set." << endl;
+        exit(EXIT_FAILURE);
+    }
+    
+    if (characterisationSet == nullptr)
+    {
+        cout << "Missing characterisation set - exit." << endl;
+        exit(EXIT_FAILURE);
+    }
+    
+    /*Create empty state identification sets for every FSM state*/
+    stateIdentificationSets.clear();
+    
+    /*Identify W by integers 0..m*/
+    IOListContainer wIC = characterisationSet->getIOLists();
+    shared_ptr<vector<vector<int>>> wLst = wIC.getIOLists();
+    
+    // Matrix indexed over nodes
+    vector< vector<int> > distinguish;
+    
+    // Every node is associated with an IOListContainer
+    // containing its distinguishing traces
+    vector< shared_ptr<IOListContainer> > node2iolc;
+    
+    for (size_t i = 0; i < size(); ++ i) {
+        node2iolc.push_back(make_shared<IOListContainer>(presentationLayer));
+        vector<int> v;
+        distinguish.push_back(v);
+        for (size_t j = 0; j < size(); j++ ) {
+            distinguish.at(i).push_back(-1);
+        }
+    }
+    
+    for (size_t i = 0; i < size(); ++ i) {
+        
+        int traceIdx = 0;
+        for (auto trc : *wLst) {
+            
+            bool complete = true;
+            for ( size_t j = i+1; j < size(); j++ ) {
+                if ( distinguish.at(i).at(j) == -1 ) {
+                    
+                    if (nodes[i]->distinguished(nodes[j], trc))
+                    {
+                        distinguish.at(i).at(j) = traceIdx;
+                        distinguish.at(j).at(i) = traceIdx;
+                        Trace tr(trc,presentationLayer);
+                        node2iolc.at(i)->add(tr);
+                        node2iolc.at(j)->add(tr);
+                    }
+                    else {
+                        complete = false;
+                    }
+                    
+                }
+            }
+            
+            if ( complete ) break;
+            traceIdx++;
+        
+        }
+    }
+    
+    
+    for (size_t i = 0; i < size(); ++ i) {
+        shared_ptr<Tree> iTree = make_shared<Tree>(make_shared<TreeNode>(), presentationLayer);
+        iTree->addToRoot(*node2iolc.at(i));
+        stateIdentificationSets.push_back(iTree);
+    }
+    
+#if 0
+    for (unsigned int n = 0; n < stateIdentificationSets.size(); ++ n)
+    {
+        cout << "W(" << n << ") = " << stateIdentificationSets.at(n)->getTestCases() << endl;
+    }
+#endif
+    
+}
+
+
 void Fsm::appendStateIdentificationSets(const shared_ptr<Tree> Wp2) const
 {
     IOListContainer cnt = Wp2->getIOLists();
@@ -980,8 +1066,8 @@ IOListContainer Fsm::wpMethod(const unsigned int numAddStates)
     shared_ptr<Tree> r = tcov;
     
     IOListContainer w = getCharacterisationSet();
-    
-    calcStateIdentificationSets();
+        
+    calcStateIdentificationSetsFast();
     
     shared_ptr<Tree> Wp1 = scov;
     if (numAddStates > 0)
