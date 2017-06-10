@@ -75,6 +75,13 @@ IOListContainer::IOListContainer(const int maxInput, const int minLength, const 
 	}
 }
 
+IOListContainer::IOListContainer(const std::shared_ptr<FsmPresentationLayer>
+                                 pl)
+: iolLst(std::make_shared<std::vector<std::vector<int>>>()),
+    presentationLayer(pl) {
+    
+}
+
 std::shared_ptr<std::vector<std::vector<int>>> IOListContainer::getIOLists() const
 {
 	return iolLst;

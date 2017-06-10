@@ -46,7 +46,7 @@ private:
 public:
     /**
      * Create a new IOListContainer (test cases)
-     * @param iolLst The list of input
+     * @param iolLst The list of input traces
      * @param presentationLayer The presentation layer to use
      */
     IOListContainer(const std::shared_ptr<std::vector<std::vector<int>>> iolLst, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
@@ -65,6 +65,9 @@ public:
                     const int minLength,
                     const int maxLength,
                     const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    
+    IOListContainer(const std::shared_ptr<FsmPresentationLayer>
+                        presentationLayer);
     
     /**
      * Getter for the input list
