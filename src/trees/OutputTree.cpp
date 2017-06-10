@@ -5,17 +5,19 @@
  */
 #include "trees/OutputTree.h"
 
-void OutputTree::printChildrenOutput(std::ostream & out, const std::shared_ptr<TreeNode> top, const std::shared_ptr<int> idNode, const int idInput) const
+using namespace std;
+
+void OutputTree::printChildrenOutput(ostream & out, const shared_ptr<TreeNode> top, const shared_ptr<int> idNode, const int idInput) const
 {
 	int idNodeBase = *idNode;
-	for (std::shared_ptr<TreeEdge> edge : *top->getChildren())
+	for (shared_ptr<TreeEdge> edge : *top->getChildren())
 	{
-		out << idNodeBase << " -> " << ++ *idNode << "[label = \"" << inputTrace.get().at(idInput) << "/" << edge->getIO() << "\" ];" << std::endl;
+		out << idNodeBase << " -> " << ++ *idNode << "[label = \"" << inputTrace.get().at(idInput) << "/" << edge->getIO() << "\" ];" << endl;
 		printChildrenOutput(out, edge->getTarget(), idNode, idInput + 1);
 	}
 }
 
-OutputTree::OutputTree(const std::shared_ptr<TreeNode> root, const InputTrace & inputTrace, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+OutputTree::OutputTree(const shared_ptr<TreeNode> root, const InputTrace & inputTrace, const shared_ptr<FsmPresentationLayer> presentationLayer)
 	: Tree(root, presentationLayer), inputTrace(inputTrace)
 {
 
@@ -33,20 +35,20 @@ bool OutputTree::contains(const OutputTree & ot) const
 	return getRoot()->superTreeOf(ot.getRoot());
 }
 
-void OutputTree::toDot(std::ostream & out) const
+void OutputTree::toDot(ostream & out) const
 {
-	out << "digraph OutputTree {" << std::endl;
-	out << "\trankdir=TB;" << std::endl;//Top -> Bottom, to create a vertical graph
-	out << "\tnode [shape = circle];" << std::endl;
-	std::shared_ptr<int> id = std::make_shared<int>(0);
+	out << "digraph OutputTree {" << endl;
+	out << "\trankdir=TB;" << endl;//Top -> Bottom, to create a vertical graph
+	out << "\tnode [shape = circle];" << endl;
+	shared_ptr<int> id = make_shared<int>(0);
 	printChildrenOutput(out, root, id, 0);
 	out << "}";
 }
 
-void OutputTree::store(std::ofstream & file)
+void OutputTree::store(ofstream & file)
 {
-	std::vector<std::vector<int>> lli = *getIOLists().getIOLists();
-	for (std::vector<int> lst : lli)
+	vector<vector<int>> lli = *getIOLists().getIOLists();
+	for (vector<int> lst : lli)
 	{
 		for (unsigned int i = 0; i < lst.size(); ++ i)
 		{
@@ -60,10 +62,25 @@ void OutputTree::store(std::ofstream & file)
 	}
 }
 
-std::ostream & operator<<(std::ostream & out, OutputTree & ot)
+void OutputTree::toIOTrace(vector<IOTrace> &iotrVec) {
+    
+    
+    vector<vector<int>> lli = *getIOLists().getIOLists();
+    for (vector<int> lst : lli)
+    {
+        
+        OutputTrace otrc(lst,presentationLayer);
+        IOTrace iotrc(inputTrace,otrc);
+        iotrVec.push_back(iotrc);
+        
+    }
+    
+}
+
+ostream & operator<<(ostream & out, OutputTree & ot)
 {
-	std::vector<std::vector<int>> lli = *ot.getIOLists().getIOLists();
-	for (std::vector<int> lst : lli)
+	vector<vector<int>> lli = *ot.getIOLists().getIOLists();
+	for (vector<int> lst : lli)
 	{
 		for (unsigned int i = 0; i < lst.size(); ++ i)
 		{
@@ -72,7 +89,7 @@ std::ostream & operator<<(std::ostream & out, OutputTree & ot)
 
 			out << "(" << ot.presentationLayer->getInId(ot.inputTrace.get().at(i)) << "/" << ot.presentationLayer->getOutId(lst.at(i)) << ")";
 		}
-		out << std::endl;
+		out << endl;
 	}
 	return out;
 }

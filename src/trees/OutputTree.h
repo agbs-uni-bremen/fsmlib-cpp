@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "fsm/InputTrace.h"
+#include "fsm/IOTrace.h"
 #include "interface/FsmPresentationLayer.h"
 #include "trees/Tree.h"
 
@@ -61,6 +62,8 @@ public:
 	*/
 	void store(std::ofstream & file);//TODO NOT PRESENT IN JAVA
 
+    
+    void toIOTrace(std::vector<IOTrace>& iotrVec);
 
 	/**
 	Output the OutputTree to a standard output stream
