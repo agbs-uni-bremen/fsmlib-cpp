@@ -238,12 +238,13 @@ static void readModel(model_type_t mtp,
     myDfsm = nullptr;
     myFsm = nullptr;
     
-    
+
     switch ( mtp ) {
         case FSM_CSV:
             isDeterministic = true;
             myDfsm = make_shared<Dfsm>(thisFileName,thisFsmName);
             pl = myDfsm->getPresentationLayer();
+            
             break;
             
         case FSM_JSON:
@@ -344,7 +345,8 @@ static void readModelAbstraction(model_type_t mtp,
 static void safeWpMethod(shared_ptr<TestSuite> testSuite) {
     
     // Minimise original reference DFSM
-    Dfsm dfsmRefMin = dfsm->minimise();
+    //Dfsm dfsmRefMin = dfsm->minimise();
+    Fsm dfsmRefMin = dfsm->minimiseObservableFSM();
     
     dfsmRefMin.toDot("REFMIN");
     cout << "REF    size = " << dfsm->size() << endl;
@@ -353,13 +355,22 @@ static void safeWpMethod(shared_ptr<TestSuite> testSuite) {
     // Get state cover of original model
     shared_ptr<Tree> scov = dfsmRefMin.getStateCover();
     
+    // Get transition cover of the original model
+    shared_ptr<Tree> tcov = dfsmRefMin.getTransitionCover();
+    
+    // Calculate R = TCOV \ SCOV
+    tcov->remove(scov);
+    shared_ptr<Tree> r = tcov;
+    
     // Get characterisation set of original model
     IOListContainer w = dfsmRefMin.getCharacterisationSet();
     
     cout << "W = " << w << endl;
     
     // Minimise the abstracted reference model
-    Dfsm dfsmAbstractionMin = dfsmAbstraction->minimise();
+    //Dfsm dfsmAbstractionMin = dfsmAbstraction->minimise();
+    Fsm dfsmAbstractionMin = dfsmAbstraction->minimiseObservableFSM();
+    
     
     dfsmAbstractionMin.toDot("ABSMIN");
     cout << "ABSMIN size = " << dfsmAbstractionMin.size() << endl;
@@ -372,9 +383,7 @@ static void safeWpMethod(shared_ptr<TestSuite> testSuite) {
     
     
     // Get W_sq, the state identification sets of dfsmAbstractionMin
-    dfsmAbstractionMin.calcStateIdentificationSets();
-    
-    cout << "state identification sets calculated" << endl;fflush(0);
+    dfsmAbstractionMin.calcStateIdentificationSetsFast();
     
     // Calc W1 = V.W, W from original model
     shared_ptr<Tree> W1 = dfsmRefMin.getStateCover();
@@ -396,15 +405,17 @@ static void safeWpMethod(shared_ptr<TestSuite> testSuite) {
     }
     W22->add(wSafe);
     
-    // Calc W3 = V.Sigma_I^(m - n + 1) oplus
+    // Calc W3 = R.Sigma_I^(m - n) oplus
     //           {Wis | Wis is state identification set of csmAbsMin}
-    shared_ptr<Tree> W3 = dfsmRefMin.getStateCover();
+    shared_ptr<Tree> W3 = r;
     
-    IOListContainer inputEnum2 = IOListContainer(dfsm->getMaxInput(),
-                                                 1,
-                                                 numAddStates+1,
-                                                 pl);
-    W3->add(inputEnum2);
+    if ( numAddStates > 0) {
+        IOListContainer inputEnum2 = IOListContainer(dfsm->getMaxInput(),
+                                                     1,
+                                                     numAddStates,
+                                                     pl);
+        W3->add(inputEnum2);
+    }
     dfsmAbstractionMin.appendStateIdentificationSets(W3);
     
     // Union of all test cases: W1 union W2 union W3
@@ -526,6 +537,28 @@ static void generateTestSuite() {
     }
     
     testSuite->save(testSuiteFileName);
+    
+    
+    int numTc = 0;
+    for ( size_t tIdx = 0; tIdx < testSuite->size(); tIdx++ ) {
+        
+        OutputTree ot = testSuite->at(tIdx);
+        vector<IOTrace> iotrcVec;
+        ot.toIOTrace(iotrcVec);
+        
+        for ( size_t iIdx = 0; iIdx < iotrcVec.size(); iIdx++ ) {
+            ostringstream tcFileName;
+            tcFileName << "tc_" << tIdx << "_" << iIdx << ".log";
+            ofstream outFile(tcFileName.str());
+            outFile << iotrcVec[iIdx].toRttString();
+            outFile.close();
+            numTc++;
+        }
+        
+        
+    }
+    
+    cout << "Number of test cases: " << numTc << endl;
     
 }
 
