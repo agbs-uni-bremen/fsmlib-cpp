@@ -25,12 +25,12 @@ PkTable::PkTable(const int numStates, const int maxInput, const vector<shared_pt
 
 void PkTable::setRow(const int s, const shared_ptr<PkTableRow> row)
 {
-	rows [s] = row;//insertion
+	rows[s] = row;
 }
 
 void PkTable::setClass(const int n, const int c)
 {
-	s2c [n] = c;//insertion
+	s2c[n] = c;
 }
 
 int PkTable::getClass(const int n) const
@@ -93,7 +93,7 @@ shared_ptr<PkTable> PkTable::getPkPlusOneTable() const
 				newClassRefRow = rows.at(i);
 				pkp1->setClass(i, thisNewClassId);
 
-				for (unsigned int j = i + 1; j < rows.size(); ++ j)
+				for (unsigned int j = i + 1; j < rows.size(); ++j)
 				{
 					if ( s2c.at(j) == thisClass and
                          newClassRefRow->isEquivalent(*rows.at(j), s2c) )
@@ -103,10 +103,10 @@ shared_ptr<PkTable> PkTable::getPkPlusOneTable() const
 				}
 
 				newClassRefRow = nullptr;
-				++ thisNewClassId;
+				++thisNewClassId;
 			}
 		}
-		++ thisClass;
+		++thisClass;
 	} while (refRow != nullptr);
 
 	return haveNewClasses ? pkp1 : nullptr;
@@ -114,13 +114,30 @@ shared_ptr<PkTable> PkTable::getPkPlusOneTable() const
 
 Dfsm PkTable::toFsm(string name, const int maxOutput)
 {
-	string minFsmName = name + "_MIN";
+    string minFsmName("");
 	vector<shared_ptr<FsmNode>> nodeLst;
+    
+    /* We need a new presentation layer.
+     * Input and output names are the same as for the original FSM,
+     * but states should have new names including the set of 
+     *  original nodes that are equivalent.
+     */
+    vector<string> minState2String;
+    for (int i = 0; i <= maxClassId(); ++i) {
+        string newName(minFsmName + getMembers(i));
+        minState2String.push_back(newName);
+    }
+    
+    shared_ptr<FsmPresentationLayer> minPl =
+    make_shared<FsmPresentationLayer>(presentationLayer->getIn2String(),
+                                      presentationLayer->getOut2String(),
+                                      minState2String);
+    
 
 	/*Create the FSM states, one for each class*/
 	for (int i = 0; i <= maxClassId(); ++i)
 	{
-		shared_ptr<FsmNode> newNode = make_shared<FsmNode>(i, minFsmName + "\n" + getMembers(i), presentationLayer);
+		shared_ptr<FsmNode> newNode = make_shared<FsmNode>(i, "", minPl);
 		nodeLst.push_back(newNode);
 	}
 
@@ -153,12 +170,12 @@ Dfsm PkTable::toFsm(string name, const int maxOutput)
 					break;
 				}
 			}
-			shared_ptr<FsmLabel> lbl = make_shared<FsmLabel>(x, y, presentationLayer);
+			shared_ptr<FsmLabel> lbl = make_shared<FsmLabel>(x, y, minPl);
 			srcNode->addTransition(make_shared<FsmTransition>(srcNode, tgtNode, lbl));
 		}
 	}
 
-	return Dfsm(minFsmName, maxInput, maxOutput, nodeLst, presentationLayer);
+	return Dfsm(minFsmName, maxInput, maxOutput, nodeLst, minPl);
 }
 
 string PkTable::getMembers(const int c) const
@@ -177,7 +194,7 @@ string PkTable::getMembers(const int c) const
 			memSet += ",";
 		}
 		first = false;
-		memSet += to_string(i);
+        memSet += presentationLayer->getStateId(i,""); // to_string(i);
 	}
 	memSet += "}";
 	return memSet;
