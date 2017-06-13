@@ -799,7 +799,10 @@ IOListContainer Fsm::getCharacterisationSet()
             /*We have to create a new input trace and add it to w, because
              leftNode and rightNode are not distinguished by the current
              input traces contained in w. */
-            InputTrace i = leftNode->calcDistinguishingTrace(rightNode, ofsmTableLst, maxInput, maxOutput);
+            InputTrace i = leftNode->calcDistinguishingTrace(rightNode,
+                                                             ofsmTableLst,
+                                                             maxInput,
+                                                             maxOutput);
             shared_ptr<vector<vector<int>>> lli = make_shared<vector<vector<int>>>();
             lli->push_back(i.get());
             IOListContainer tcli = IOListContainer(lli, presentationLayer);
@@ -1172,7 +1175,7 @@ ostream & operator<<(ostream & out, const Fsm & fsm)
         
         if (i == fsm.initStateIdx)
         {
-            out << endl << "node [shape = circle]" << endl;
+            out << endl << "node [shape = ellipse]" << endl;
         }
     }
     
