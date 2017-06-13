@@ -274,13 +274,15 @@ shared_ptr<InputTrace> FsmNode::distinguished(const shared_ptr<FsmNode> otherNod
     return nullptr;
 }
 
-InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode, const vector<shared_ptr<PkTable>>& pktblLst, const int maxInput)
+InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
+                                            const vector<shared_ptr<PkTable>>& pktblLst,
+                                            const int maxInput)
 {
     /*Determine the smallest l >= 1, such that this and otherNode are
      distinguished by P_l, but not by P_(l-1).
      Note that table P_n is found at pktblLst.get(n-1)*/
     unsigned int l;
-    for (l = 1; l < pktblLst.size(); ++ l)
+    for (l = 1; l <= pktblLst.size(); ++ l)
     {
         /*Two nodes are distinguished by a Pk-table, if they
          reside in different Pk-table classes.*/
@@ -298,6 +300,7 @@ InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
     
     for (int k = 1; l - k > 0; ++ k)
     {
+        bool foundNext = false;
         shared_ptr<PkTable> plMinK = pktblLst.at(l - k - 1);
         /*Determine input x such that qi.after(x) is distinguished
          from qj.after(x) in plMinK*/
@@ -310,20 +313,27 @@ InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
             shared_ptr<FsmNode> qiNext = qi->after(x).front();
             shared_ptr<FsmNode> qjNext = qj->after(x).front();
             
-            if (plMinK->getClass(qiNext->getId() != plMinK->getClass(qjNext->getId())))
+            if ( plMinK->getClass(qiNext->getId()) != plMinK->getClass(qjNext->getId()) )
             {
                 qi = qiNext;
                 qj = qjNext;
                 itrc.add(x);
+                foundNext = true;
                 break;
             }
         }
+        
+        if ( not foundNext ) {
+            cerr << "ERROR: inconsistency 1 detected when deriving distinguishing trace from Pk-Tables" << endl;
+        }
+        
     }
     
     /*Now the case l == k. qi and qj must be distinguishable by at least
      one input*/
-    for (int x = 0; x <= maxInput; ++ x)
-    {
+    bool foundLast = false;
+    for (int x = 0; x <= maxInput; ++ x) {
+        
         OutputTrace oti = OutputTrace(presentationLayer);
         OutputTrace otj = OutputTrace(presentationLayer);
         qi->apply(x, oti);
@@ -331,13 +341,22 @@ InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
         if (oti.get().front() != otj.get().front())
         {
             itrc.add(x);
+            foundLast = true;
             break;
         }
     }
+    
+    if ( not foundLast ) {
+        cerr << "ERROR: inconsistency 2 detected when deriving distinguishing trace from Pk-Tables" << endl;
+    }
+    
     return itrc;
 }
 
-InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode, const vector<shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput)
+InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
+                                            const vector<shared_ptr<OFSMTable>>& ofsmTblLst,
+                                            const int maxInput,
+                                            const int maxOutput)
 {
     InputTrace itrc = InputTrace(presentationLayer);
     int q1 = this->getId();
@@ -397,7 +416,8 @@ InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
     {
         for (int y = 0; y <= maxOutput; ++ y)
         {
-            if ((ot0->get(q1, x, y) < 0 && ot0->get(q2, x, y) >= 0) || (ot0->get(q1, x, y) >= 0 && ot0->get(q2, x, y) < 0))
+            if ( (ot0->get(q1, x, y) < 0 && ot0->get(q2, x, y) >= 0) or
+                 (ot0->get(q1, x, y) >= 0 && ot0->get(q2, x, y) < 0))
             {
                 itrc.add(x);
                 return itrc;
