@@ -115,19 +115,19 @@ public:
      int state2Num(const std::string& name);
 
 	/**
-	 * Dump the current inputs into a standard output stream
+	 * Dump the current inputs into an output stream
 	 * @param out The standard output to use
 	 */
 	void dumpIn(std::ostream & out) const;
 
 	/**
-	 * Dump the current outputs into a standard output stream
+	 * Dump the current outputs into an output stream
 	 * @param out The standard output to use
 	 */
 	void dumpOut(std::ostream & out) const;
 
 	/**
-	 * Dump the current states into a standard output stream
+	 * Dump the current states into an output stream
 	 * @param out The standard output to use
 	 */
 	void dumpState(std::ostream & out) const;
