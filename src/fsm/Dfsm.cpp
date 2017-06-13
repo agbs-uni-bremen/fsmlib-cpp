@@ -46,9 +46,8 @@ shared_ptr<FsmPresentationLayer> Dfsm::createPresentationLayerFromCsvFormat(cons
     }
     
     // Insert a "no operation" output as first member of the
-    // output alphabet
-    out2String.push_back("_nop");
-    outStrSet.insert(out2String[0]);
+    // set to be filled with the output alphabet members
+    outStrSet.insert(string("_nop"));
     
     string line;
     
@@ -170,8 +169,7 @@ Dfsm::createPresentationLayerFromCsvFormat(const std::string & fname,
     // Insert a "no operation" output as first member of the
     // output alphabet, if it's not already contained in pl
     if ( pl->out2Num("_nop") < 0 ) {
-        out2String.push_back("_nop");
-        outStrSet.insert(out2String[0]);
+        outStrSet.insert(string("_nop"));
     }
     
     string line;
@@ -571,14 +569,22 @@ Fsm()
     
     // iterate over all outputs
     vector<string> out2String;
+    int theNopNo;
+    bool haveNop = false;
     for (unsigned int index = 0; index < outputs.size(); ++index ) {
-        out2String.push_back(outputs[index].asString());
+        string outStr(outputs[index].asString());
+        if ( outStr == "_nop" ) {
+            haveNop = true;
+            theNopNo = index;
+        }
+        out2String.push_back(outStr);
     }
+    
     // Add a NOP output for the case where the FSM is incomplete
-    out2String.push_back("_nop");
-    int theNopNo = out2String.size() - 1;
-    
-    
+    if ( not haveNop ) {
+        out2String.push_back("_nop");
+        theNopNo = out2String.size() - 1;
+    }
     
     // iterate over all states, insert initial state at index 0
     // of the state2String vector.
@@ -1003,6 +1009,17 @@ Dfsm Dfsm::minimise()
         pktblLst.push_back(pk);
     }
     
+#if 0
+    
+    cout << "MINIMISE" << endl;
+    cout << *p1 << endl;
+    for (auto p : pktblLst) {
+        
+        cout << *p << endl;
+    }
+    
+#endif
+    
     return pMin->toFsm(name, maxOutput);
 }
 
@@ -1036,6 +1053,18 @@ IOListContainer Dfsm::getCharacterisationSet()
         pktblLst.push_back(pk);
     }
     
+    
+#if 0
+    
+    cout << "Dfsm::getCharacterisationSet()" << endl;
+    cout << *p1 << endl;
+    for (auto p : pktblLst) {
+        
+        cout << *p << endl;
+    }
+    
+#endif
+    
     /*Create an empty characterisation set as an empty InputTree instance*/
     characterisationSet = make_shared<Tree>(make_shared<TreeNode>(), presentationLayer);
     
@@ -1063,8 +1092,33 @@ IOListContainer Dfsm::getCharacterisationSet()
             lli->push_back(i.get());
             IOListContainer tcli = IOListContainer(lli, presentationLayer);
             characterisationSet->addToRoot(tcli);
+
+#if 0
+            cout << "Distinguishing trace for " << nodes[left]->getName()
+            << " and " << nodes[right]->getName() << ": " << endl;
+            cout << i << endl;
+#endif
+            
         }
     }
+    
+#if 0
+    /* CHECK */
+    for (unsigned int left = 0; left < nodes.size(); ++ left)
+    {
+        shared_ptr<FsmNode> leftNode = nodes.at(left);
+        for (unsigned int right = left + 1; right < nodes.size(); ++ right)
+        {
+            shared_ptr<FsmNode> rightNode = nodes.at(right);
+            
+            if (leftNode->distinguished(rightNode, characterisationSet) == nullptr)
+            {
+                cerr << "ERROR: nodes " << leftNode->getName() << " and " << rightNode->getName() << " cannot be distinguished by W" << endl;
+            }
+            
+        }
+    }
+#endif
     
     /* Wrap list of lists by an IOListContainer instance */
     IOListContainer tcl = characterisationSet->getIOLists();
