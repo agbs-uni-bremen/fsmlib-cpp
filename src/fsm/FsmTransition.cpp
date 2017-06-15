@@ -13,6 +13,18 @@ FsmTransition::FsmTransition(const shared_ptr<FsmNode>  source,
                              const shared_ptr<FsmLabel> label)
 	: source(source), target(target), label(label)
 {
+    
+    if ( source == nullptr ) {
+        cerr << "ERROR: Constructor FsmTransition() called with null pointer as source node" << endl;
+    }
+    
+    if ( target == nullptr ) {
+        cerr << "ERROR: Constructor FsmTransition() called with null pointer as target node" << endl;
+    }
+    
+    if ( label == nullptr ) {
+        cerr << "ERROR: Constructor FsmTransition() called with null pointer as label" << endl;
+    }
 
 }
 
