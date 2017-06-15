@@ -29,15 +29,31 @@ int PkTableRow::get(const int x) const
 
 bool PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c)
 {
-	for (unsigned int i = 0; i < i2p.size(); ++i)
-	{
-		if ( s2c.at(i2p.at(i)) != s2c.at(row.getI2PMap().at(i)) )
+    for (unsigned int i = 0; i < i2p.size(); ++i)
+    {
+        // The first two if-cases handle the situation where
+        // the DFSM is not completely specified, so that in
+        // a certain state and for a certain input, the output
+        // is set to -1, because there is no transition handling
+        // this input
+        if(i2p.at(i) == -1) {
+            if (row.getI2PMap().at(i) != -1) {
+                return false;
+            }
+        }
+        else if ( row.getI2PMap().at(i) == -1 ) {
+            // We know already that i2p.at(i) >= 0
+            return false;
+        }
+        else if( s2c.at(i2p.at(i)) != s2c.at(row.getI2PMap().at(i)) )
         {
-			return false;
-		}
-	}
-	return true;
+            return false;
+        }
+    }
+    return true;
 }
+
+
 
 std::ostream & operator<<(std::ostream & out, const PkTableRow & pkTableRow)
 {
