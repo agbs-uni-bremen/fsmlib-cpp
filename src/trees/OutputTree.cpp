@@ -110,3 +110,9 @@ bool operator==(OutputTree const & outputTree1, OutputTree const & outputTree2)
 	(output values).*/
 	return *outputTree1.getRoot() == *outputTree2.getRoot();
 }
+
+bool operator!=(OutputTree const & outputTree1, OutputTree const & outputTree2)
+{
+    return not (outputTree1 == outputTree2);
+}
+
