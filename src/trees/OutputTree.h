@@ -84,5 +84,8 @@ public:
 	true otherwise.
 	*/
 	friend bool operator==(OutputTree const & outputTree1, OutputTree const & outputTree2);
+    
+    /** complementary operator to == */
+    friend bool operator!=(OutputTree const & outputTree1, OutputTree const & outputTree2);
 };
 #endif //FSM_TREES_OUTPUTTREE_H_
