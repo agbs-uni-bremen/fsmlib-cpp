@@ -17,18 +17,25 @@ class FsmVisitor {
     
 protected:
     
-    FsmVisitor() { };
     bool isNew;
 
     
 public:
     
+    FsmVisitor() { };
     ~FsmVisitor() { } ;
     
-    virtual void visit(Fsm& f) = 0;
-    virtual void visit(FsmNode& n) = 0;
-    virtual void visit(FsmTransition& t) = 0;
-    virtual void visit(FsmLabel& t) = 0;
+    
+    /**
+     *  @note These visitor methods are not declared
+     *        abstract, because the empty methods can 
+     *        already be used to mark reachable nodes
+     *        (this is done by the accept() methods).
+     */
+    virtual void visit(Fsm& f) { }
+    virtual void visit(FsmNode& n) { }
+    virtual void visit(FsmTransition& t) { }
+    virtual void visit(FsmLabel& t) { }
     
     
     void setNew(bool b) { isNew = b; }
