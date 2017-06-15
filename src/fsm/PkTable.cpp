@@ -159,9 +159,17 @@ Dfsm PkTable::toFsm(string name, const int maxOutput)
 		{
 			int y = row->getIOMap().at(x);
 			int cAux = row->getI2PMap().at(x);
+            
+            // If the Fsm is not completely specified,
+            // it may be the case that no transition for this
+            // input exists.
+            if ( cAux < 0 ) continue;
+            
 			int cTarget = s2c.at(cAux);
-
 			shared_ptr<FsmNode> tgtNode = nullptr;
+            
+            // Find the new FsmNode in the minimised FSM
+            // which has cTarget as node id
 			for (shared_ptr<FsmNode> node : nodeLst)
 			{
 				if (node->getId() == cTarget)
@@ -171,7 +179,9 @@ Dfsm PkTable::toFsm(string name, const int maxOutput)
 				}
 			}
 			shared_ptr<FsmLabel> lbl = make_shared<FsmLabel>(x, y, minPl);
-			srcNode->addTransition(make_shared<FsmTransition>(srcNode, tgtNode, lbl));
+			srcNode->addTransition(make_shared<FsmTransition>(srcNode,
+                                                              tgtNode,
+                                                              lbl));
 		}
 	}
 
