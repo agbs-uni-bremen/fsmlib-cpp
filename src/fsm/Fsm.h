@@ -281,6 +281,19 @@ public:
     Minimal isMinimal() const;
     
     /**
+     *   Check for unreachable states and remove them from the 
+     *   FSM
+     *
+     *   @param unreachableNodes On termination, this vector
+     *          contains pointers to the FSM
+     *          nodes that have been removed, due to unreachability.
+     *
+     *   @return true if and only if at least one unreachable node
+     *                has been found and removed.
+     */
+    bool removeUnreachableNodes(std::vector<std::shared_ptr<FsmNode>>& unreachableNodes);
+    
+    /**
      Create the minimal observable FSM which is equivalent to this FSM.
      \pre This method can only be applied to an observable OFSM
      @return minimal observable FSM which is equivalent to this FSM

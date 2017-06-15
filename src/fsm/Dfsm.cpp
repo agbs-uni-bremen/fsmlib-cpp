@@ -994,6 +994,10 @@ Fsm()
 
 Dfsm Dfsm::minimise()
 {
+    
+    vector<shared_ptr<FsmNode>> uNodes;
+    removeUnreachableNodes(uNodes);
+    
     dfsmTable = toDFSMTable();
     
     pktblLst.clear();

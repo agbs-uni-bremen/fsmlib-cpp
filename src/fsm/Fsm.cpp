@@ -716,6 +716,10 @@ Fsm Fsm::minimiseObservableFSM()
 
 Fsm Fsm::minimise()
 {
+    
+    vector<shared_ptr<FsmNode>> uNodes;
+    removeUnreachableNodes(uNodes);
+    
     if (!isObservable())
     {
         return transformToObservableFSM().minimiseObservableFSM();
@@ -1490,6 +1494,26 @@ void Fsm::accept(FsmVisitor& v) {
 
 
 
-
+bool Fsm::removeUnreachableNodes(std::vector<shared_ptr<FsmNode>>& unreachableNodes) {
+    
+    vector<shared_ptr<FsmNode>> newNodes;
+    FsmVisitor v;
+    
+    // Mark all reachable nodes as 'visited'
+    accept(v);
+    
+    for ( auto n : nodes ) {
+        if ( not n->hasBeenVisited() ) {
+            unreachableNodes.push_back(n);
+        }
+        else {
+            newNodes.push_back(n);
+        }
+    }
+    
+    nodes = newNodes;
+    
+    return (unreachableNodes.size() > 0);
+}
 
 
