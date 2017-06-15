@@ -345,8 +345,8 @@ static void readModelAbstraction(model_type_t mtp,
 static void safeWpMethod(shared_ptr<TestSuite> testSuite) {
     
     // Minimise original reference DFSM
-    //Dfsm dfsmRefMin = dfsm->minimise();
-    Fsm dfsmRefMin = dfsm->minimiseObservableFSM();
+    Dfsm dfsmRefMin = dfsm->minimise();
+    //Fsm dfsmRefMin = dfsm->minimiseObservableFSM();
     
     dfsmRefMin.toDot("REFMIN");
     cout << "REF    size = " << dfsm->size() << endl;
@@ -368,8 +368,8 @@ static void safeWpMethod(shared_ptr<TestSuite> testSuite) {
     cout << "W = " << w << endl;
     
     // Minimise the abstracted reference model
-    //Dfsm dfsmAbstractionMin = dfsmAbstraction->minimise();
-    Fsm dfsmAbstractionMin = dfsmAbstraction->minimiseObservableFSM();
+    Dfsm dfsmAbstractionMin = dfsmAbstraction->minimise();
+    //Fsm dfsmAbstractionMin = dfsmAbstraction->minimiseObservableFSM();
     
     
     dfsmAbstractionMin.toDot("ABSMIN");
