@@ -19,9 +19,11 @@
 #include <trees/IOListContainer.h>
 #include <trees/OutputTree.h>
 #include <trees/TestSuite.h>
+#include "json/json.h"
 
 
 using namespace std;
+using namespace Json;
 
 void assertInconclusive(string tc, string comment = "") {
     
@@ -429,624 +431,132 @@ void test8() {
     //                       "Output of oracle visitor has to be checked manually");
 }
 
-
-void fsbrts() {
+void test9() {
     
-    shared_ptr<FsmPresentationLayer> pl =
-    make_shared<FsmPresentationLayer>("../../../resources/fsbrts.in",
-                                      "../../../resources/fsbrts.out",
-                                      "../../../resources/fsbrts.state");
+    cout << "TC-FSM-0009 Check correctness of method removeUnreachableNodes() "
+         << endl;
     
+    shared_ptr<Dfsm> d = nullptr;
+    Reader jReader;
+    Value root;
+    stringstream document;
+    ifstream inputFile("../../../resources/unreachable_gdc.fsm");
+    document << inputFile.rdbuf();
+    inputFile.close();
     
-    shared_ptr<Dfsm> fsmFsb =
-    make_shared<Dfsm>("../../../resources/fsbrts.fsm",pl,"FSB");
-    fsmFsb->toDot("FSBRTS");
-    fsmFsb->toCsv("FSBRTS");
-    
-    cout << "FSBRTS is deterministic: " << fsmFsb->isDeterministic() << endl;
-    
-    Dfsm fsbMin = fsmFsb->minimise();
-    fsbMin.toDot("FSBRTS_MIN");
-    
-    shared_ptr<Tree> scov = fsbMin.getStateCover();
-    ofstream fscov("SCOV.dot");
-    scov->toDot(fscov);
-    fscov.close();
-    
-    
-    shared_ptr<Tree> tcov = fsbMin.getTransitionCover();
-    ofstream ftcov("TCOV.dot");
-    tcov->toDot(ftcov);
-    ftcov.close();
-    
-    
-    IOListContainer w = fsbMin.getCharacterisationSet();
-    cout << "W = " << endl << w << endl<<endl;
-    
-    
-    
-    IOListContainer ts =
-    fsbMin.wMethodOnMinimisedDfsm(1);
-    
-    cout << "Test Suite Size = " << ts.size() << endl;
-    
-#if 1
-    int n = 0;
-    for ( auto lst : *ts.getIOLists()) {
-        
-        cout << " TC " << ++n << ": ";
-        
-        shared_ptr<InputTrace> itr = make_shared<InputTrace>(lst,pl);
-        
-        OutputTree otree = fsmFsb->apply(*itr);
-        
-        cout << otree << endl << endl;
-        
+    if ( jReader.parse(document.str(),root) ) {
+        d = make_shared<Dfsm>(root);
     }
-#endif
-    
-}
-
-
-
-void fsbrtssafe() {
-    
-    shared_ptr<FsmPresentationLayer> pl0 =
-    make_shared<FsmPresentationLayer>("../../../resources/fsbrts.in",
-                                      "../../../resources/fsbrts.out",
-                                      "../../../resources/fsbrts.state");
-    
-    
-    shared_ptr<Dfsm> fsmFsbOrig =
-    make_shared<Dfsm>("../../../resources/fsbrts.fsm",pl0,"FSB");
-    fsmFsbOrig->toDot("FSBRTS");
-    
-    cout << "FSBRTS is deterministic: " << fsmFsbOrig->isDeterministic() << endl;
-    
-    Dfsm fsbMinOrig = fsmFsbOrig->minimise();
-    fsbMinOrig.toDot("FSBRTS_MIN");
-    
-    
-    shared_ptr<Tree> tcovOrig = fsbMinOrig.getTransitionCover();
-    ofstream ftcovOrig("TCOV.dot");
-    tcovOrig->toDot(ftcovOrig);
-    ftcovOrig.close();
-    
-    
-    shared_ptr<FsmPresentationLayer> pl =
-    make_shared<FsmPresentationLayer>("../../../resources/fsbrtssafe.in",
-                                      "../../../resources/fsbrtssafe.out",
-                                      "../../../resources/fsbrtssafe.state");
-    
-    
-    shared_ptr<Dfsm> fsmFsb =
-    make_shared<Dfsm>("../../../resources/fsbrtssafe.fsm",pl,"FSBSAFE");
-    fsmFsb->toDot("FSBRTSSAFE");
-    
-    cout << "FSBRTSSAFE is deterministic: "
-    << fsmFsb->isDeterministic() << endl;
-    
-    Dfsm fsbMin = fsmFsb->minimise();
-    fsbMin.toDot("FSBRTSSAFE_MIN");
-    
-    shared_ptr<Tree> scov = fsbMin.getStateCover();
-    ofstream fscov("SCOVSAFE.dot");
-    scov->toDot(fscov);
-    fscov.close();
-    
-    
-    shared_ptr<Tree> tcov = fsbMin.getTransitionCover();
-    ofstream ftcov("TCOVSAFE.dot");
-    tcov->toDot(ftcov);
-    ftcov.close();
-    
-    IOListContainer w = fsbMin.getCharacterisationSet();
-    cout << "W_SAFE = " << endl << w << endl<<endl;
-    
-    IOListContainer ts =
-    fsbMin.wMethodOnMinimisedDfsm(0);
-    cout << "Test Suite Size = " << ts.size() << endl;
-    
-    int n = 0;
-    for ( auto lst : *ts.getIOLists()) {
-        
-        cout << " TC " << ++n << endl;
-        
-        shared_ptr<InputTrace> itr = make_shared<InputTrace>(lst,pl);
-        
-        OutputTree otree = fsbMin.apply(*itr);
-        
-        cout << otree << endl << endl;
-        
-        
+    else {
+        cerr << "Could not parse JSON model - exit." << endl;
+        exit(1);
     }
     
     
-    cout << "NEW --------------------------" << endl;
-    shared_ptr<Tree> iTree = tcovOrig;
+    d->toDot("GU");
     
-    IOListContainer inputEnum = IOListContainer(6,
-                                                1,
-                                                1,
-                                                pl0);
-    iTree->add(inputEnum);
-    iTree->add(w);
+    size_t oldSize = d->size();
     
-    cout << "iTree size = " << iTree->size() << endl;
-    
-    IOListContainer finalCont = iTree->getIOLists();
-    
-    vector<IOTrace> iotrLst;
-    
-    n = 0;
-    for ( auto lst : *finalCont.getIOLists() ) {
+    vector<shared_ptr<FsmNode>> uNodes;
+    if ( d->removeUnreachableNodes(uNodes) ) {
         
-        cout << "TCNEW " << ++n << ": ";
+        d->toDot("G_all_reachable");
         
-        shared_ptr<InputTrace> itr = make_shared<InputTrace>(lst,pl);
-        
-        IOTrace iotr = fsbMinOrig.applyDet(*itr);
-        cout << iotr << endl;
-        iotrLst.push_back(iotr);
-        
-    }
-    
-    // Now run the test suite against an SUT FSM (mutant of the original
-    // FSBRTS machine)
-    shared_ptr<Dfsm> fsmFsbMutant =
-    make_shared<Dfsm>("../../../resources/fsbrts_mutant.fsm",pl0,"FSB");
-    fsmFsbMutant->toDot("FSBRTS_MUTANT");
-    
-    Dfsm fsmFsbMutantMin = fsmFsbMutant->minimise();
-    cout << "Mutant state number = " << fsmFsbMutantMin.getNodes().size() <<endl;
-    
-    n = 0;
-    for ( auto iot : iotrLst ) {
-        
-        ++n;
-        if ( not fsmFsbMutant->pass(iot) ) {
-            IOTrace passTrace = fsbMinOrig.applyDet(iot.getInputTrace());
-            IOTrace failTrace = fsmFsbMutant->applyDet(iot.getInputTrace());
-
-            
-            cout << "FAIL TC " << n << endl << "Expected: " << passTrace
-            << endl << "Observed: " << failTrace << endl<<endl;
-            
-            
-        }
-        else {
-            cout << "PASS TC " << n << endl;
+        for ( auto n : uNodes ) {
+            cout << "Removed unreachable node: " << n->getName() << endl;
         }
         
+        assert("TC-FSM-0009",
+               uNodes.size() == 2 and (oldSize - d->size()) == 2,
+               "All unreachable states have been removed");
     }
-    
-    
-    
-    
-}
-
-void check() {
-    
-    
-    shared_ptr<FsmPresentationLayer> pl0 =
-            make_shared<FsmPresentationLayer>();
-    
-    
-    shared_ptr<Dfsm> fsmFsbOrig =
-    make_shared<Dfsm>("../../../resources/fsbrts.fsm",pl0,"FSB");
-    fsmFsbOrig->toDot("FSBRTS");
-    
-    cout << "FSBRTS is deterministic: " << fsmFsbOrig->isDeterministic() << endl;
-    
-    Dfsm fsbMinOrig = fsmFsbOrig->minimise();
-    fsbMinOrig.toDot("FSBRTS_MIN");
-    fsmFsbOrig->printTables();
-    
-    Fsm fsmIntersection = fsmFsbOrig->intersect(fsbMinOrig);
-    fsmIntersection.toDot("INTER");
-    
-    cout << "intersection is completely specified: "
-    << fsmIntersection.isCompletelyDefined() << endl;
-    
-}
-
-void readCsv() {
-    shared_ptr<Dfsm> fsmFsbOrig =
-    make_shared<Dfsm>("plsautocnd.csv","FSB_AUTO_CND");
-    
-    fsmFsbOrig->toCsv("plsautocndOut");
-    fsmFsbOrig->toDot("plsautocnd");
-
-    shared_ptr<Dfsm> fsm2 =
-    make_shared<Dfsm>("plsautocndOut.csv","FSB2");
-    fsm2->toDot("plsautocndOut");
-    
-    Fsm inter = fsmFsbOrig->intersect(*fsm2);
-    
-    inter.toDot("inter");
-    
-    cout << endl << "Is fsmFsbOrig completely specified: "
-    << fsmFsbOrig->isCompletelyDefined() << endl;
-    
-    cout << endl << "Is fsm2 completely specified: "
-    << fsm2->isCompletelyDefined() << endl;
-
-    
-    cout << endl << "Is inter completely specified: "
-    << inter.isCompletelyDefined() << endl;
-    
-}
-
-void checkPlsAuto1() {
-    
-    shared_ptr<Dfsm> fsmFsbOrig =
-    make_shared<Dfsm>("plsautocnd_I.csv","FSB_AUTO_CND");
-    
-    shared_ptr<Dfsm> fsm2 =
-    make_shared<Dfsm>("plsautocnd_I_MUT.csv","FSB_AUTO_MUT");
-    
-    Fsm inter = fsmFsbOrig->intersect(*fsm2);
-    
-    cout << endl << "Is fsmFsbOrig completely specified: "
-    << fsmFsbOrig->isCompletelyDefined() << endl;
-    
-    cout << endl << "Is fsm2 completely specified: "
-    << fsm2->isCompletelyDefined() << endl;
-    
-    
-    cout << endl << "Is inter completely specified: "
-    << inter.isCompletelyDefined() << endl;
-    
-    Dfsm f1Min = fsmFsbOrig->minimise();
-    Dfsm f2Min = fsm2->minimise();
-    
-    cout << "f1Min states: " << f1Min.getNodes().size() << endl
-    << "f2Min states: " << f2Min.getNodes().size() << endl;
-    
-    unsigned int mMinusN =
-    (f2Min.getNodes().size() > f1Min.getNodes().size()) ?
-    (f2Min.getNodes().size() - f1Min.getNodes().size()) :
-    0;
-
-    IOListContainer ts = f1Min.wMethodOnMinimisedDfsm(mMinusN);
-    
-    std::shared_ptr<std::vector<std::vector<int>>> tcList = ts.getIOLists();
-    
-    int tcNo = 1;
-    for ( auto tc : *tcList ) {
-        
-        // Get input trace from test case and calculate
-        // associated IOTrace containing inputs plus
-        // expected results
-        cout << "TC " << tcNo++ << ": ";
-        shared_ptr<InputTrace> inTrc = make_shared<InputTrace>(tc,
-                                                               fsmFsbOrig->getPresentationLayer());
-        IOTrace ioTrc = fsmFsbOrig->applyDet(*inTrc);
-        if ( fsm2->pass(ioTrc) ) {
-            cout << "PASS: " << ioTrc << endl;
-        }
-        else {
-            IOTrace ioTrcMUT = fsm2->applyDet(*inTrc);
-            cout << "FAIL" << endl
-            << "Expected: " << ioTrc << endl
-            << "Observed: " << ioTrcMUT << endl << endl;
-        }
-        
-        
+    else {
+        assert("TC-FSM-0009",
+               false,
+               "Expected removeUnreachableNodes() to return FALSE");
     }
-    
     
     
 }
 
 
-void fsbrtsTestComplete() {
+void test10() {
     
-    shared_ptr<Dfsm> fsbrtsRef =
-    make_shared<Dfsm>("FSBRTSX.csv","FSBRTS");
-    Dfsm fsbrtsRefMin = fsbrtsRef->minimise();
-    cout << "Reference model (minimised) state number = "
-    << fsbrtsRefMin.getNodes().size() <<endl;
+    cout << "TC-FSM-0010 Check correctness of Dfsm::minimise() "
+    << endl;
     
-    shared_ptr<FsmPresentationLayer> pl = fsbrtsRef->getPresentationLayer();
-
+    shared_ptr<Dfsm> d = nullptr;
+    shared_ptr<FsmPresentationLayer> pl;
+    Reader jReader;
+    Value root;
+    stringstream document;
+    ifstream inputFile("../../../resources/unreachable_gdc.fsm");
+    document << inputFile.rdbuf();
+    inputFile.close();
     
-    // Test mutant against reference model
-    shared_ptr<Dfsm> fsbrts_m1 =
-    make_shared<Dfsm>("FSBRTSX_M3.csv","FSBRTS_M3");
-    Dfsm fsbrts_m1_min = fsbrts_m1->minimise();
-    cout << "Mutant state number = " << fsbrts_m1_min.getNodes().size() <<endl;
-
-    unsigned int mMinusN =
-    (fsbrts_m1_min.getNodes().size() > fsbrtsRefMin.getNodes().size()) ?
-    (fsbrts_m1_min.getNodes().size() - fsbrtsRefMin.getNodes().size()) : 0;
+    if ( jReader.parse(document.str(),root) ) {
+        d = make_shared<Dfsm>(root);
+        pl = d->getPresentationLayer();
+    }
+    else {
+        cerr << "Could not parse JSON model - exit." << endl;
+        exit(1);
+    }
     
-    IOListContainer tcInputs1
-    = fsbrtsRefMin.wMethodOnMinimisedDfsm(mMinusN);
-    cout << "Test Suite Size = " << tcInputs1.size() << endl;
     
-    int n = 0;
-    vector<IOTrace> iotrLst;
-    for ( auto lst : *tcInputs1.getIOLists() ) {
+    Dfsm dMin = d->minimise();
+    
+    IOListContainer w = dMin.getCharacterisationSet();
+    
+    shared_ptr<std::vector<std::vector<int>>> inLst = w.getIOLists();
+    
+    bool allNodesDistinguished = true;
+    for ( size_t n = 0; n < dMin.size(); n++ ) {
         
-        cout << "TCNEW " << ++n << ": ";
+        shared_ptr<FsmNode> node1 = dMin.getNodes().at(n);
         
-        shared_ptr<InputTrace> itr = make_shared<InputTrace>(lst,pl);
-        
-        IOTrace iotr = fsbrtsRefMin.applyDet(*itr);
-        cout << iotr << endl;
-        iotrLst.push_back(iotr);
+        for ( size_t m = n+1; m < dMin.size(); m++ ) {
+            shared_ptr<FsmNode> node2 = dMin.getNodes().at(m);
+            
+            bool areDistinguished = false;
+            
+            for ( auto inputs : *inLst ) {
+                
+                shared_ptr<InputTrace> itr = make_shared<InputTrace>(inputs,pl);
+                
+                OutputTree o1 = node1->apply(*itr);
+                OutputTree o2 = node2->apply(*itr);
+                
+                if ( o1 != o2 ) {
+                    areDistinguished = true;
+                    break;
+                }
+                
+            }
+            
+            if ( not areDistinguished ) {
+                
+                assert("TC-FSM-0010",
+                       false,
+                       "All nodes of minimised DFSM must be distinguishable");
+                cout << "Could not distinguish nodes "
+                << node1->getName() << " and " << node2->getName() << endl;
+                
+                allNodesDistinguished = false;
+            }
+            
+        }
         
     }
     
-    n = 0;
-    for ( auto iot : iotrLst ) {
-        
-        ++n;
-        if ( not fsbrts_m1->pass(iot) ) {
-            IOTrace passTrace = fsbrtsRef->applyDet(iot.getInputTrace());
-            IOTrace failTrace = fsbrts_m1->applyDet(iot.getInputTrace());
-            
-            cout << "FAIL TC " << n << endl << "Expected: " << passTrace
-            << endl << "Observed: " << failTrace << endl<<endl;
-            
-        }
-        else {
-            cout << "PASS TC " << n << endl;
-        }
-        
-    }
-    
-    // Test second mutant against reference model
-    shared_ptr<Dfsm> fsbrts_m2 =
-    make_shared<Dfsm>("FSBRTSX_M2.csv","FSBRTS_M2");
-    Dfsm fsbrts_m2_min = fsbrts_m2->minimise();
-    cout << "Mutant state number = " << fsbrts_m2_min.getNodes().size() <<endl;
-    
-    mMinusN =
-    (fsbrts_m2_min.getNodes().size() > fsbrtsRefMin.getNodes().size()) ?
-    (fsbrts_m2_min.getNodes().size() - fsbrtsRefMin.getNodes().size()) : 0;
-    
-    IOListContainer tcInputs2
-    = fsbrtsRefMin.wMethodOnMinimisedDfsm(mMinusN);
-    cout << "Test Suite Size = " << tcInputs2.size() << endl;
-    
-    n = 0;
-    vector<IOTrace> iotrLst2;
-    for ( auto lst : *tcInputs2.getIOLists() ) {
-        
-        cout << "TCNEW " << ++n << ": ";
-        
-        shared_ptr<InputTrace> itr = make_shared<InputTrace>(lst,pl);
-        
-        IOTrace iotr = fsbrtsRefMin.applyDet(*itr);
-        cout << iotr << endl;
-        iotrLst2.push_back(iotr);
-        
-    }
-    
-    n = 0;
-    for ( auto iot : iotrLst2 ) {
-        
-        ++n;
-        if ( not fsbrts_m2->pass(iot) ) {
-            IOTrace passTrace = fsbrtsRef->applyDet(iot.getInputTrace());
-            IOTrace failTrace = fsbrts_m2->applyDet(iot.getInputTrace());
-            
-            cout << "FAIL TC " << n << endl << "Expected: " << passTrace
-            << endl << "Observed: " << failTrace << endl<<endl;
-            
-        }
-        else {
-            cout << "PASS TC " << n << endl;
-        }
-        
+    if ( allNodesDistinguished ) {
+        assert("TC-FSM-0010",
+               true,
+               "All nodes of minimised DFSM must be distinguishable");
     }
     
 }
 
-
-void fsbrtsTestCompleteSafe() {
-    
-    shared_ptr<Dfsm> fsbrtsRef =
-    make_shared<Dfsm>("FSBRTSX.csv","FSBRTS");
-    Dfsm fsbrtsRefMin = fsbrtsRef->minimise();
-    cout << "Reference model (minimised) state number = "
-    << fsbrtsRefMin.getNodes().size() <<endl;
-    
-    shared_ptr<FsmPresentationLayer> pl = fsbrtsRef->getPresentationLayer();
-    
-    // Get state cover of original model
-    shared_ptr<Tree> scov = fsbrtsRefMin.getStateCover();
-    
-    // Get transition cover of original model
-    shared_ptr<Tree> tcov = fsbrtsRefMin.getTransitionCover();
-
-    // Get characterisation set of original model
-    IOListContainer w = fsbrtsRefMin.getCharacterisationSet();
-    cout << "W size = " << w.size() << endl;
-    
-    // Get characterisation set of reference model's safety abstraction
-    shared_ptr<Dfsm> fsbrtsRefSafe =
-    make_shared<Dfsm>("FSBRTSX_SAFE.csv","FSBRTS_SAFE");
-    Dfsm fsbrtsRefSafeMin = fsbrtsRefSafe->minimise();
-    cout << "Safety abstraction of reference model (minimised) state number = "
-    << fsbrtsRefSafeMin.getNodes().size() <<endl;
-    IOListContainer wSafe = fsbrtsRefSafeMin.getCharacterisationSet();
-    cout << "WSafe size = " << wSafe.size() << endl;
-
-    // Read mutant
-    shared_ptr<Dfsm> fsbrts_m1 =
-    make_shared<Dfsm>("FSBRTSX_M3.csv","FSBRTS_M3");
-    Dfsm fsbrts_m1_min = fsbrts_m1->minimise();
-    cout << "Mutant state number = " << fsbrts_m1_min.getNodes().size() <<endl;
-    
-    // Calculate W-Test Suite with safety reduction for first mutant
-    int mMinusN =
-    ( fsbrts_m1_min.getNodes().size() > fsbrtsRefMin.getNodes().size() )
-    ? 0 : (fsbrts_m1_min.getNodes().size() - fsbrtsRefMin.getNodes().size());
-    
-    shared_ptr<Tree> tsTree = fsbrtsRefMin.getStateCover();
-    tsTree->add(w);
-
-    shared_ptr<Tree> vswsTree = fsbrtsRefMin.getTransitionCover();
-    vswsTree->add(wSafe);
-    tsTree->addToRoot(vswsTree->getIOLists());
-    
-    if ( mMinusN > 0 ) {
-        shared_ptr<Tree> xTree = fsbrtsRefMin.getTransitionCover();
-        IOListContainer inputEnum = IOListContainer(fsbrtsRef->getMaxInput(),
-                                                    1,
-                                                    mMinusN,
-                                                    pl);
-        xTree->add(inputEnum);
-        xTree->add(wSafe);
-        tsTree->addToRoot(xTree->getIOLists());
-    }
-    
-    cout << "Total safety-reduced test suite size: " << tsTree->size() << endl;
-    
-    // Execute reduced test suite against mutant
-    int n = 0;
-    vector<IOTrace> iotrLst;
-    IOListContainer tsCont = tsTree->getIOLists();
-    cout << "x " << tsCont.size() << endl;
-    auto iolCnt = tsCont.getIOLists();
-    cout << "y " << iolCnt->size() << endl;
-
-    for ( auto lst : *iolCnt ) {
-        
-        cout << "TCNEW " << ++n << ": ";
-        
-        shared_ptr<InputTrace> itr = make_shared<InputTrace>(lst,pl);
-        
-        IOTrace iotr = fsbrtsRefMin.applyDet(*itr);
-        cout << iotr << endl;
-        iotrLst.push_back(iotr);
-        
-    }
-    
-    n = 0;
-    for ( auto iot : iotrLst ) {
-        
-        ++n;
-        if ( not fsbrts_m1->pass(iot) ) {
-            IOTrace passTrace = fsbrtsRef->applyDet(iot.getInputTrace());
-            IOTrace failTrace = fsbrts_m1->applyDet(iot.getInputTrace());
-            
-            cout << "FAIL TC " << n << endl << "Expected: " << passTrace
-            << endl << "Observed: " << failTrace << endl<<endl;
-            
-        }
-        else {
-            cout << "PASS TC " << n << endl;
-        }
-        
-    }
-
-    
-}
-
-
-void fsbrtsTestCompleteSafe2() {
-    
-    shared_ptr<Dfsm> fsbrtsRef =
-    make_shared<Dfsm>("FSBRTSX.csv","FSBRTS");
-    Dfsm fsbrtsRefMin = fsbrtsRef->minimise();
-    cout << "Reference model (minimised) state number = "
-    << fsbrtsRefMin.getNodes().size() <<endl;
-    
-    shared_ptr<FsmPresentationLayer> pl = fsbrtsRef->getPresentationLayer();
-    
-    // Get state cover of original model
-    shared_ptr<Tree> scov = fsbrtsRefMin.getStateCover();
-    
-    // Get transition cover of original model
-    shared_ptr<Tree> tcov = fsbrtsRefMin.getTransitionCover();
-    
-    // Get characterisation set of original model
-    IOListContainer w = fsbrtsRefMin.getCharacterisationSet();
-    cout << "W size = " << w.size() << endl;
-    
-    // Get characterisation set of reference model's safety abstraction
-    shared_ptr<Dfsm> fsbrtsRefSafe =
-    make_shared<Dfsm>("FSBRTSX_SAFE.csv","FSBRTS_SAFE");
-    Dfsm fsbrtsRefSafeMin = fsbrtsRefSafe->minimise();
-    cout << "Safety abstraction of reference model (minimised) state number = "
-    << fsbrtsRefSafeMin.getNodes().size() <<endl;
-    IOListContainer wSafe = fsbrtsRefSafeMin.getCharacterisationSet();
-    cout << "WSafe size = " << wSafe.size() << endl;
-    
-    // Read the first mutant
-    shared_ptr<Dfsm> fsbrts_m2 =
-    make_shared<Dfsm>("FSBRTSX_M2.csv","FSBRTS_M2");
-    Dfsm fsbrts_m2_min = fsbrts_m2->minimise();
-    cout << "Mutant state number = " << fsbrts_m2_min.getNodes().size() <<endl;
-    
-    // Calculate W-Test Suite with safety reduction for first mutant
-    int mMinusN =
-    ( fsbrts_m2_min.getNodes().size() > fsbrtsRefMin.getNodes().size() )
-    ? 0 : (fsbrts_m2_min.getNodes().size() - fsbrtsRefMin.getNodes().size());
-    
-    shared_ptr<Tree> tsTree = fsbrtsRefMin.getStateCover();
-    tsTree->add(w);
-    
-    shared_ptr<Tree> vswsTree = fsbrtsRefMin.getTransitionCover();
-    vswsTree->add(wSafe);
-    tsTree->addToRoot(vswsTree->getIOLists());
-    
-    if ( mMinusN > 0 ) {
-        shared_ptr<Tree> xTree = fsbrtsRefMin.getTransitionCover();
-        IOListContainer inputEnum = IOListContainer(fsbrtsRef->getMaxInput(),
-                                                    1,
-                                                    mMinusN,
-                                                    pl);
-        xTree->add(inputEnum);
-        xTree->add(wSafe);
-        tsTree->addToRoot(xTree->getIOLists());
-    }
-    
-    cout << "Total safety-reduced test suite size: " << tsTree->size() << endl;
-    
-    // Execute reduced test suite against mutant
-    int n = 0;
-    vector<IOTrace> iotrLst;
-    IOListContainer tsCont = tsTree->getIOLists();
-    cout << "x " << tsCont.size() << endl;
-    auto iolCnt = tsCont.getIOLists();
-    cout << "y " << iolCnt->size() << endl;
-    
-    for ( auto lst : *iolCnt ) {
-        
-        cout << "TCNEW " << ++n << ": ";
-        
-        shared_ptr<InputTrace> itr = make_shared<InputTrace>(lst,pl);
-        
-        IOTrace iotr = fsbrtsRefMin.applyDet(*itr);
-        cout << iotr << endl;
-        iotrLst.push_back(iotr);
-        
-    }
-    
-    n = 0;
-    for ( auto iot : iotrLst ) {
-        
-        ++n;
-        if ( not fsbrts_m2->pass(iot) ) {
-            IOTrace passTrace = fsbrtsRef->applyDet(iot.getInputTrace());
-            IOTrace failTrace = fsbrts_m2->applyDet(iot.getInputTrace());
-            
-            cout << "FAIL TC " << n << endl << "Expected: " << passTrace
-            << endl << "Observed: " << failTrace << endl<<endl;
-            
-        }
-        else {
-            cout << "PASS TC " << n << endl;
-        }
-        
-    }
-
-}
 
 void gdc_test1() {
     
@@ -1087,6 +597,105 @@ void gdc_test1() {
 }
 
 
+
+
+vector<IOTrace> runAgainstRefModel(shared_ptr<Dfsm> refModel,
+                                   IOListContainer& c) {
+    
+    shared_ptr<FsmPresentationLayer> pl = refModel->getPresentationLayer();
+    
+    auto iolCnt = c.getIOLists();
+    
+    // Register test cases in IO Traces
+    vector<IOTrace> iotrLst;
+
+    for ( auto lst : *iolCnt ) {
+        
+        shared_ptr<InputTrace> itr = make_shared<InputTrace>(lst,pl);
+        IOTrace iotr = refModel->applyDet(*itr);
+        iotrLst.push_back(iotr);
+        
+    }
+    
+    return iotrLst;
+    
+}
+
+void runAgainstMutant(shared_ptr<Dfsm> mutant, vector<IOTrace>& expected) {
+    
+    for ( auto io : expected ) {
+        
+        InputTrace i = io.getInputTrace();
+        
+        if ( not mutant->pass(io) ) {
+            cout << "FAIL: expected " << io << endl
+            << "     : observed " << mutant->applyDet(i) << endl;
+        }
+        else {
+            cout << "PASS: " << i << endl;
+        }
+        
+    }
+    
+}
+
+void wVersusT() {
+    
+    shared_ptr<Dfsm> refModel = make_shared<Dfsm>("FSBRTSX.csv","FSBRTS");
+
+//    IOListContainer wTestSuite0 = refModel->wMethod(0);
+//    IOListContainer wTestSuite1 = refModel->wMethod(1);
+//    IOListContainer wTestSuite2 = refModel->wMethod(2);
+//    IOListContainer wTestSuite3 = refModel->wMethod(3);
+//    
+  IOListContainer wpTestSuite0 = refModel->wpMethod(0);
+//    IOListContainer wpTestSuite1 = refModel->wpMethod(1);
+//    IOListContainer wpTestSuite2 = refModel->wpMethod(2);
+//    IOListContainer wpTestSuite3 = refModel->wpMethod(3);
+    
+    //    IOListContainer tTestSuite = refModel->tMethod();
+    
+//    vector<IOTrace> expectedResultsW0 = runAgainstRefModel(refModel, wTestSuite0);
+//    vector<IOTrace> expectedResultsW1 = runAgainstRefModel(refModel, wTestSuite1);
+//    vector<IOTrace> expectedResultsW2 = runAgainstRefModel(refModel, wTestSuite2);
+//    vector<IOTrace> expectedResultsW3 = runAgainstRefModel(refModel, wTestSuite3);
+    vector<IOTrace> expectedResultsWp0 = runAgainstRefModel(refModel, wpTestSuite0);
+//    vector<IOTrace> expectedResultsWp1 = runAgainstRefModel(refModel, wpTestSuite1);
+//    vector<IOTrace> expectedResultsWp2  = runAgainstRefModel(refModel, wpTestSuite2);
+//    vector<IOTrace> expectedResultsWp3 = runAgainstRefModel(refModel, wpTestSuite3);
+//    vector<IOTrace> expectedResultsT = runAgainstRefModel(refModel, tTestSuite);
+
+
+    
+    for ( int i = 0; i < 10; i++ ) {
+        
+        cout << "Mutant No. " << (i+1) << ": " << endl;
+        
+        shared_ptr<Dfsm> mutant =
+            make_shared<Dfsm>("FSBRTSX.csv","FSBRTS");
+        mutant->createAtRandom();
+        
+//        runAgainstMutant(mutant,expectedResultsW0);
+//        runAgainstMutant(mutant,expectedResultsW1);
+//        runAgainstMutant(mutant,expectedResultsW2);
+//        runAgainstMutant(mutant,expectedResultsW3);
+        runAgainstMutant(mutant,expectedResultsWp0);
+//        runAgainstMutant(mutant,expectedResultsWp1);
+//        runAgainstMutant(mutant,expectedResultsWp2);
+//        runAgainstMutant(mutant,expectedResultsWp3);
+//        runAgainstMutant(mutant,expectedResultsT);
+
+        
+    }
+    
+    
+    
+    
+    
+    
+}
+
+
 int main()
 {
     
@@ -1102,14 +711,8 @@ int main()
     test6();
     test7();
     test8();
-    fsbrts();
-    fsbrtssafe();
-    check();
-    readCsv();
-    checkPlsAuto1();
-    fsbrtsTestComplete();
-    fsbrtsTestCompleteSafe();
-    fsbrtsTestCompleteSafe2();
+    test9();
+    test10();
     
     gdc_test1();
     
@@ -1129,20 +732,15 @@ int main()
         default:
             break;
     }
-    
-    
+
+    wVersusT();
+
 
 #endif
     
-    test1();
-    test2();
-    test3();
-    test4();
-    test5();
-    test6();
-    test7();
-    test8();
-    gdc_test1();
+    test9();
+    test10();
+    
 
     exit(0);
     
