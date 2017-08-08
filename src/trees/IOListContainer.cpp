@@ -92,6 +92,17 @@ void IOListContainer::add(const Trace & trc)
 	iolLst->push_back(trc.get());
 }
 
+void IOListContainer::addUnique(const Trace & trc)
+{
+    for(auto inLst : *iolLst)
+    {
+        if (trc == inLst){
+            return;
+        }
+    }
+    iolLst->push_back(trc.get());
+}
+
 int IOListContainer::size() const
 {
 	return static_cast<int> (iolLst->size());

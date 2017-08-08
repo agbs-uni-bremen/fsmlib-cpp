@@ -82,6 +82,12 @@ public:
     void add(const Trace & trc);
     
     /**
+     * Add a new trace to the IOListContainer if it doesn't exist already
+     * @param trc
+     */
+    void addUnique(const Trace & trc);
+
+    /**
      * Getter for the size of the IOListContainer
      * @return The size of the IOListContainer
      */
