@@ -54,6 +54,23 @@ bool operator==(Trace const & trace1, Trace const & trace2)
 	return true;
 }
 
+bool operator==(Trace const & trace1, std::vector<int> const & trace2)
+{
+    if (trace1.get().size() != trace2.size())
+    {
+        return false;
+    }
+
+    for (unsigned int i = 0; i < trace1.get().size(); ++ i)
+    {
+        if (trace1.get()[i] != trace2[i])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 std::ostream & operator<<(std::ostream & out, const Trace & trace)
 {
 	for (auto it = trace.cbegin(); it != trace.cend(); ++ it)
