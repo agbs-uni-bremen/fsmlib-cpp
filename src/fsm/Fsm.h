@@ -378,12 +378,24 @@ public:
      * and then calls the wpMethod() operation of the super class Fsm.
      * @param numAddStates The maximal number of additional states,
      *                     which the implementation DFSM in minimised
-     *                     for may have, when compared to the reference
+     *                     form may have, when compared to the reference
      *                     model in minimised form.
      * @return A test suite
      */
     IOListContainer wpMethod(const unsigned int numAddStates);
-    
+
+    /**
+     * Perform test generation by means of the HSI-Method. The algorithm
+     * we have implemented is applicable to both nondeterministic and
+     * deterministic FSMs.
+     * @param numAddStates The maximal number of additional states,
+     *                     which the implementation DFSM in minimised
+     *                     form may have, when compared to the reference
+     *                     model in minimised form.
+     * @return A test suite
+     */
+    IOListContainer hsiMethod(const unsigned int numAddStates);
+
     
     /**
      *  Return a test suite from a collection of input test cases.
