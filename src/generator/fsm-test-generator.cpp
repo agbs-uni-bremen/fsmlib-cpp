@@ -57,6 +57,7 @@ static string plInputFile;
 static string plOutputFile;
 static string fsmName;
 static string testSuiteFileName;
+static string tcFilePrefix;
 static generation_method_t genMethod;
 static unsigned int numAddStates;
 
@@ -67,6 +68,7 @@ static shared_ptr<Fsm> fsm = nullptr;
 static shared_ptr<Fsm> fsmAbstraction = nullptr;
 
 static bool isDeterministic = false;
+static bool rttMbtStyle = false;
 
 
 /**
@@ -74,7 +76,7 @@ static bool isDeterministic = false;
  * @param name program name as specified in argv[0]
  */
 static void printUsage(char* name) {
-    cerr << "usage: " << name << " [-w|-s] [-n fsmname] [-p infile outfile statefile] [-a additionalstates] [-t testsuitename] modelfile [model abstraction file]" << endl;
+    cerr << "usage: " << name << " [-w] [-s] [-n fsmname] [-p infile outfile statefile] [-a additionalstates] [-t testsuitename] [-rtt <prefix>] modelfile [model abstraction file]" << endl;
 }
 
 /**
@@ -174,6 +176,17 @@ static void parseParameters(int argc, char* argv[]) {
                 numAddStates = atoi(argv[++p]);
             }
         }
+        else if ( strcmp(argv[p],"-rtt") == 0 ) {
+            if ( argc < p+2 ) {
+                cerr << argv[0] << ": missing prefix for RTT-MBT test suite files" << endl;
+                printUsage(argv[0]);
+                exit(1);
+            }
+            else {
+                rttMbtStyle = true;
+                tcFilePrefix = string(argv[++p]);
+            }
+        }
         else if ( strcmp(argv[p],"-p") == 0 ) {
             if ( argc < p+4 ) {
                 cerr << argv[0] << ": missing presentation layer files" << endl;
@@ -238,7 +251,7 @@ static void readModel(model_type_t mtp,
     myDfsm = nullptr;
     myFsm = nullptr;
     
-
+    
     switch ( mtp ) {
         case FSM_CSV:
             isDeterministic = true;
@@ -345,8 +358,8 @@ static void readModelAbstraction(model_type_t mtp,
 static void safeWpMethod(shared_ptr<TestSuite> testSuite) {
     
     // Minimise original reference DFSM
-    Dfsm dfsmRefMin = dfsm->minimise();
-    //Fsm dfsmRefMin = dfsm->minimiseObservableFSM();
+    // Dfsm dfsmRefMin = dfsm->minimise();
+    Fsm dfsmRefMin = dfsm->minimiseObservableFSM();
     
     dfsmRefMin.toDot("REFMIN");
     cout << "REF    size = " << dfsm->size() << endl;
@@ -357,10 +370,6 @@ static void safeWpMethod(shared_ptr<TestSuite> testSuite) {
     
     // Get transition cover of the original model
     shared_ptr<Tree> tcov = dfsmRefMin.getTransitionCover();
-    
-    // Calculate R = TCOV \ SCOV
-    tcov->remove(scov);
-    shared_ptr<Tree> r = tcov;
     
     // Get characterisation set of original model
     IOListContainer w = dfsmRefMin.getCharacterisationSet();
@@ -383,45 +392,44 @@ static void safeWpMethod(shared_ptr<TestSuite> testSuite) {
     
     
     // Get W_sq, the state identification sets of dfsmAbstractionMin
-    dfsmAbstractionMin.calcStateIdentificationSetsFast();
+    dfsmAbstractionMin.calcStateIdentificationSets();
     
     // Calc W1 = V.W, W from original model
     shared_ptr<Tree> W1 = dfsmRefMin.getStateCover();
     
     W1->add(w);
     
-    // Calc W21 = V.W_s
-    shared_ptr<Tree> W21 = dfsmRefMin.getStateCover();
-    W21->add(wSafe);
+    // Calc W21 = V.wSafe
+    shared_ptr<Tree> W2 = dfsmRefMin.getStateCover();
+    W2->add(wSafe);
     
     // Calc W22 = V.(union_(i=1)^(m-n) Sigma_I).wSafe)
-    shared_ptr<Tree> W22 = dfsmRefMin.getStateCover();
+    shared_ptr<Tree> W22;
     if ( numAddStates > 0 ) {
+        W22 = dfsmRefMin.getStateCover();
         IOListContainer inputEnum = IOListContainer(dfsm->getMaxInput(),
                                                     1,
                                                     numAddStates,
                                                     pl);
         W22->add(inputEnum);
+        W22->add(wSafe);
+        W2->unionTree(W22);
     }
-    W22->add(wSafe);
     
-    // Calc W3 = R.Sigma_I^(m - n) oplus
+    // Calc W3 = V.Sigma_I^(m - n + 1) oplus
     //           {Wis | Wis is state identification set of csmAbsMin}
-    shared_ptr<Tree> W3 = r;
+    shared_ptr<Tree> W3 = dfsmRefMin.getStateCover();
+    IOListContainer inputEnum2 = IOListContainer(dfsm->getMaxInput(),
+                                                 (numAddStates+1),
+                                                 (numAddStates+1),
+                                                 pl);
+    W3->add(inputEnum2);
     
-    if ( numAddStates > 0) {
-        IOListContainer inputEnum2 = IOListContainer(dfsm->getMaxInput(),
-                                                     1,
-                                                     numAddStates,
-                                                     pl);
-        W3->add(inputEnum2);
-    }
     dfsmAbstractionMin.appendStateIdentificationSets(W3);
     
     // Union of all test cases: W1 union W2 union W3
     // Collected again in W1
-    W1->unionTree(W21);
-    W1->unionTree(W22);
+    W1->unionTree(W2);
     W1->unionTree(W3);
     
     IOListContainer iolc = W1->getTestCases();
@@ -538,28 +546,29 @@ static void generateTestSuite() {
     
     testSuite->save(testSuiteFileName);
     
-    
-    int numTc = 0;
-    for ( size_t tIdx = 0; tIdx < testSuite->size(); tIdx++ ) {
-        
-        OutputTree ot = testSuite->at(tIdx);
-        vector<IOTrace> iotrcVec;
-        ot.toIOTrace(iotrcVec);
-        
-        for ( size_t iIdx = 0; iIdx < iotrcVec.size(); iIdx++ ) {
-            ostringstream tcFileName;
-            tcFileName << "tc_" << tIdx << "_" << iIdx << ".log";
-            ofstream outFile(tcFileName.str());
-            outFile << iotrcVec[iIdx].toRttString();
-            outFile.close();
-            numTc++;
+    if ( rttMbtStyle ) {
+        int numTc = 0;
+        for ( size_t tIdx = 0; tIdx < testSuite->size(); tIdx++ ) {
+            
+            OutputTree ot = testSuite->at(tIdx);
+            vector<IOTrace> iotrcVec;
+            ot.toIOTrace(iotrcVec);
+            
+            for ( size_t iIdx = 0; iIdx < iotrcVec.size(); iIdx++ ) {
+                ostringstream tcFileName;
+                tcFileName << tcFilePrefix << tIdx << "_" << iIdx << ".log";
+                ofstream outFile(tcFileName.str());
+                outFile << iotrcVec[iIdx].toRttString();
+                outFile.close();
+                numTc++;
+            }
+            
         }
-        
         
     }
     
-    cout << "Number of test cases: " << numTc << endl;
-    
+    cout << "Number of test cases: " << testSuite->size() << endl;
+
 }
 
 int main(int argc, char* argv[])

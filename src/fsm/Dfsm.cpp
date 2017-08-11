@@ -1124,6 +1124,9 @@ IOListContainer Dfsm::getCharacterisationSet()
     }
 #endif
     
+    // Minimise characterisation set
+    // minimiseCharSet(characterisationSet);
+    
     /* Wrap list of lists by an IOListContainer instance */
     IOListContainer tcl = characterisationSet->getIOLists();
     return tcl;
