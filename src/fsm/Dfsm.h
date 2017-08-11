@@ -284,6 +284,7 @@ public:
 	IOListContainer wpMethod(const unsigned int numAddStates);
 
     /**
+     * WORK IN PROGRESS
      * Perform test generation by means of the HSI-Method. The algorithm
      * we have implemented is applicable to both nondeterministic and
      * deterministic FSMs.
