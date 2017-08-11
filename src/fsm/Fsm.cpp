@@ -1103,6 +1103,90 @@ IOListContainer Fsm::wpMethod(const unsigned int numAddStates)
     return Wp1->getIOLists();
 }
 
+
+IOListContainer Fsm::hsiMethod(const unsigned int numAddStates)
+{
+    IOListContainer wSet = getCharacterisationSet();
+    if (!isObservable())
+    {
+        cout << "This FSM is not observable - cannot calculate the harmonized state identification set." << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    if (characterisationSet == nullptr)
+    {
+        cout << "Missing characterisation set - exit." << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    /* create harmonized state identification set for every FSM state.
+     * For each pair of nodes get all elements of the characterisation set
+     * that distinguish the two nodes.
+     * The harmonized state identification sets are stored in hsiSets.
+     */
+    std::vector<shared_ptr<IOListContainer>> hsiSets;
+    hsiSets.clear();
+    for (unsigned i = 0; i < nodes.size(); i++)
+    {
+        shared_ptr<FsmNode> node1 = nodes[i];
+        shared_ptr<IOListContainer> hWi = make_shared<IOListContainer>(presentationLayer);
+        for (unsigned j = 0; j < nodes.size(); j++)
+        {
+            if (j == i) {continue;}
+            shared_ptr<FsmNode>node2 = nodes[j];
+            bool distinguished = false;
+            for (auto iolst : *wSet.getIOLists())
+            {
+                if (node1->distinguished(node2, iolst)){
+                    distinguished = true;
+                    hWi->addUnique(Trace(iolst, presentationLayer));
+                    break;
+                }
+            }
+            if (!distinguished) {
+                cout << "[ERR] Found inconsistency when applying HSI method: FSM not minimal." << endl;
+            }
+        }
+        hsiSets.push_back(hWi);
+    }
+
+    shared_ptr<Tree> scov = getStateCover();
+    shared_ptr<Tree> hsi = getTransitionCover();
+    hsi->remove(scov);
+    /* V.(Inputs from length 1 to m-n) */
+    if (numAddStates > 0)
+    {
+        IOListContainer inputEnum = IOListContainer(maxInput,
+                                                    1,
+                                                    (int)numAddStates,
+                                                    presentationLayer);
+        hsi->add(inputEnum);
+    }
+
+    /* append harmonized state identification sets */
+    IOListContainer cnt = hsi->getIOLists();
+    for (auto lli : *cnt.getIOLists())
+    {
+        InputTrace itrc = InputTrace(lli, presentationLayer);
+
+        /* Which are the target nodes reachable via input trace lli? */
+        unordered_set<shared_ptr<FsmNode>> tgtNodes = getInitialState()->after(itrc);
+
+        for (auto n : tgtNodes)
+        {
+            int nodeId = n->getId();
+
+            /* Get harmonized state identification set for this node */
+            auto hsiNodeId = *hsiSets[nodeId];
+            /* Append harmonized state identification set to node
+               reached after applying itrc */
+            hsi->addAfter(itrc,hsiNodeId);
+        }
+    }
+
+    return hsi->getIOLists();
+}
+
 TestSuite Fsm::createTestSuite(const IOListContainer & testCases)
 {
     shared_ptr<vector<vector<int>>> tcLst = testCases.getIOLists();

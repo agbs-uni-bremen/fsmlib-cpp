@@ -1225,6 +1225,11 @@ IOListContainer Dfsm::wpMethod(const unsigned int numAddStates)
     
 }
 
+IOListContainer Dfsm::hsiMethod(const unsigned int numAddStates)
+{
+    Fsm fMin = minimiseObservableFSM();
+    return fMin.hsiMethod(numAddStates);
+}
 
 IOListContainer Dfsm::tMethod()
 {

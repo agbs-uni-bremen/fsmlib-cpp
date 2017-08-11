@@ -71,6 +71,15 @@ public:
 	*/
 	friend bool operator==(Trace const & trace1, Trace const & trace2);
 
+    /**
+     * Check whether or not the list of integers in trace1
+     * is the same as the list of integers specified by trace2
+     * @param trace1 The trace
+     * @param trace2 A vector of integers, representing a trace
+     * @return True if they are the same, false otherwise
+     */
+    friend bool operator==(Trace const & trace1, std::vector<int> const & trace2);
+
 	/**
 	Output the Trace to a standard output stream
 	@param out The standard output stream to use
