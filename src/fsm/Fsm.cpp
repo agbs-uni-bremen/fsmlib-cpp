@@ -771,6 +771,15 @@ void Fsm::minimiseCharSet(const shared_ptr<Tree> w)
 
 IOListContainer Fsm::getCharacterisationSet()
 {
+    
+    // Do we already have a characterisation set ?
+    if ( characterisationSet != nullptr ) {
+        IOListContainer tcl = characterisationSet->getIOLists();
+        return tcl;
+    }
+    
+    
+    // We have to calculate teh chracterisation set from scratch
     if (!isObservable())
     {
         cout << "This FSM is not observable - cannot calculate the charactersiation set." << endl;
