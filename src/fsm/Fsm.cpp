@@ -1115,19 +1115,14 @@ IOListContainer Fsm::wpMethod(const unsigned int numAddStates)
 
 IOListContainer Fsm::hsiMethod(const unsigned int numAddStates)
 {
-    IOListContainer wSet = getCharacterisationSet();
+
     if (!isObservable())
     {
         cout << "This FSM is not observable - cannot calculate the harmonized state identification set." << endl;
         exit(EXIT_FAILURE);
     }
-
-    if (characterisationSet == nullptr)
-    {
-        cout << "Missing characterisation set - exit." << endl;
-        exit(EXIT_FAILURE);
-    }
-
+    
+    IOListContainer wSet = getCharacterisationSet();
 
     shared_ptr<Tree> scov = getStateCover();
 
