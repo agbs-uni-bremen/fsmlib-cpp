@@ -289,6 +289,11 @@ void TreeNode::addToThisNode(const IOListContainer& tcl)
 	}
 }
 
+void TreeNode::addToThisNode(const std::vector<int> &lst)
+{
+    add(lst.cbegin(), lst.cend());
+}
+
 std::shared_ptr<TreeNode> TreeNode::after(std::vector<int>::const_iterator lstIte, const std::vector<int>::const_iterator end)
 {
 	if (lstIte != end)

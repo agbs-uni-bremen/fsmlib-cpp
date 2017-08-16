@@ -97,6 +97,12 @@ void Tree::addToRoot(const IOListContainer & tcl)
 	r->addToThisNode(tcl);
 }
 
+void Tree::addToRoot(const std::vector<int> &lst)
+{
+    std::shared_ptr<TreeNode> r = getRoot();
+    r->addToThisNode(lst);
+}
+
 void Tree::unionTree(const std::shared_ptr<Tree> otherTree)
 {
 	addToRoot(otherTree->getIOLists());

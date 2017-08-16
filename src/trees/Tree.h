@@ -106,6 +106,7 @@ public:
 	(possibly as a prefix) in the existing tree.
 	*/
 	void addToRoot(const IOListContainer & tcl);
+    void addToRoot(const std::vector<int> & lst);
 
 	/**
 	Construct the union of this Tree and otherTree by adding

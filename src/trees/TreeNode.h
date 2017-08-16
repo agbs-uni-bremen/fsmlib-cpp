@@ -158,6 +158,7 @@ public:
 	@param tcl The IOListContainer to be added
 	*/
 	void addToThisNode(const IOListContainer & tcl);
+    void addToThisNode(const std::vector<int> &lst);
 
 	/**
 	Return target TreeNode reached after following the inputs
