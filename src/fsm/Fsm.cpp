@@ -1119,68 +1119,73 @@ IOListContainer Fsm::hsiMethod(const unsigned int numAddStates)
         exit(EXIT_FAILURE);
     }
 
-    /* create harmonized state identification set for every FSM state.
-     * For each pair of nodes get all elements of the characterisation set
-     * that distinguish the two nodes.
-     * The harmonized state identification sets are stored in hsiSets.
-     */
-    std::vector<shared_ptr<IOListContainer>> hsiSets;
-    hsiSets.clear();
+
+    shared_ptr<Tree> scov = getStateCover();
+
+    /* V.(Inputs from length 1 to m-n+1) */
+    shared_ptr<Tree> hsi = scov;
+    IOListContainer inputEnum = IOListContainer(maxInput,
+                                                    1,
+                                                    (int)numAddStates + 1,
+                                                    presentationLayer);
+    hsi->add(inputEnum);
+
+    /* initialize HWi trees */
+    std::vector<shared_ptr<Tree>> hwiTrees;
     for (unsigned i = 0; i < nodes.size(); i++)
     {
+        shared_ptr<TreeNode> root = make_shared<TreeNode>();
+        shared_ptr<Tree> emptyTree = make_shared<Tree>(root, presentationLayer);
+        hwiTrees.push_back(emptyTree);
+    }
+
+    /* Ceate harmonised state identification set for every FSM state.
+     * For each pair of nodes i and j get one element
+     * of the characterisation set that distinguishes the two nodes.
+     * Add the distinguishing sequence to both HWi and HWj.
+     */
+    for (unsigned i = 0; i < nodes.size()-1; i++)
+    {
         shared_ptr<FsmNode> node1 = nodes[i];
-        shared_ptr<IOListContainer> hWi = make_shared<IOListContainer>(presentationLayer);
-        for (unsigned j = 0; j < nodes.size(); j++)
+        for (unsigned j = i+1; j < nodes.size(); j++)
         {
-            if (j == i) {continue;}
             shared_ptr<FsmNode>node2 = nodes[j];
             bool distinguished = false;
             for (auto iolst : *wSet.getIOLists())
             {
                 if (node1->distinguished(node2, iolst)){
                     distinguished = true;
-                    hWi->addUnique(Trace(iolst, presentationLayer));
+                    hwiTrees[i]->addToRoot(iolst);
+                    hwiTrees[j]->addToRoot(iolst);
                     break;
                 }
             }
             if (!distinguished) {
-                cout << "[ERR] Found inconsistency when applying HSI method: FSM not minimal." << endl;
+                cout << "[ERR] Found inconsistency when applying HSI-Method: FSM not minimal." << endl;
             }
         }
-        hsiSets.push_back(hWi);
     }
 
-    shared_ptr<Tree> scov = getStateCover();
-    shared_ptr<Tree> hsi = getTransitionCover();
-    hsi->remove(scov);
-    /* V.(Inputs from length 1 to m-n) */
-    if (numAddStates > 0)
-    {
-        IOListContainer inputEnum = IOListContainer(maxInput,
-                                                    1,
-                                                    (int)numAddStates,
-                                                    presentationLayer);
-        hsi->add(inputEnum);
-    }
-
-    /* append harmonized state identification sets */
+    /* Append harmonised state identification sets */
     IOListContainer cnt = hsi->getIOLists();
     for (auto lli : *cnt.getIOLists())
     {
         InputTrace itrc = InputTrace(lli, presentationLayer);
 
-        /* Which are the target nodes reachable via input trace lli? */
+        /*Which are the target nodes reachable via input trace lli
+         in this FSM?*/
         unordered_set<shared_ptr<FsmNode>> tgtNodes = getInitialState()->after(itrc);
 
         for (auto n : tgtNodes)
         {
             int nodeId = n->getId();
 
-            /* Get harmonized state identification set for this node */
-            auto hsiNodeId = *hsiSets[nodeId];
-            /* Append harmonized state identification set to node
+            /* harmonised state identification set associated with n*/
+            shared_ptr<Tree> hwNodeId = hwiTrees[nodeId];
+
+            /* Append harmonised state identification set to hsi tree node
                reached after applying itrc */
-            hsi->addAfter(itrc,hsiNodeId);
+            hsi->addAfter(itrc,hwNodeId->getIOLists());
         }
     }
 
