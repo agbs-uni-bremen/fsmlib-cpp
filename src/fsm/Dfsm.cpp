@@ -396,7 +396,7 @@ void Dfsm::createDfsmTransitionGraph(const std::string& fname) {
 
 Dfsm::Dfsm(const std::string & fname,
            const std::string & fsmName) : Fsm(nullptr)   {
-    
+    dfsmTable = nullptr;
     name = fsmName;
     presentationLayer = createPresentationLayerFromCsvFormat(fname);
     createDfsmTransitionGraph(fname);
@@ -407,6 +407,7 @@ Dfsm::Dfsm(const std::string & fname,
            const std::string & fsmName,
            const std::shared_ptr<FsmPresentationLayer> pl) : Fsm(nullptr)   {
     
+    dfsmTable = nullptr;
     name = fsmName;
     presentationLayer = createPresentationLayerFromCsvFormat(fname,pl);
     createDfsmTransitionGraph(fname);
@@ -472,7 +473,7 @@ shared_ptr<DFSMTable> Dfsm::toDFSMTable() const
 Dfsm::Dfsm(const string & fname, const string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer)
 : Fsm(fname, fsmName, maxNodes, maxInput, maxOutput, presentationLayer)
 {
-    
+    dfsmTable = nullptr;
 }
 
 Dfsm::Dfsm(const string& fname,
@@ -480,12 +481,13 @@ Dfsm::Dfsm(const string& fname,
            const string & fsmName)
 : Fsm(fname,presentationLayer,fsmName)
 {
-    
+    dfsmTable = nullptr;
 }
 
 Dfsm::Dfsm(const string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer)
 : Fsm(presentationLayer)
 {
+    dfsmTable = nullptr;
     name = fsmName;
     nodes.insert(nodes.end(), maxNodes, nullptr);
     initStateIdx = 0;
@@ -501,12 +503,13 @@ Dfsm::Dfsm(const string & fsmName, const int maxNodes, const int maxInput, const
 Dfsm::Dfsm(const string & fsmName, const int maxInput, const int maxOutput, const vector<shared_ptr<FsmNode>> lst, const shared_ptr<FsmPresentationLayer> presentationLayer)
 : Fsm(fsmName, maxInput, maxOutput, lst, presentationLayer)
 {
-    
+    dfsmTable = nullptr;
 }
 
 Dfsm::Dfsm(const Fsm & fsm)
 : Fsm (fsm.getName(), fsm.getMaxInput(), fsm.getMaxOutput(), fsm.getNodes(), fsm.getPresentationLayer())
 {
+    dfsmTable = nullptr;
     initStateIdx = fsm.getInitStateIdx();;
     minimal = isMinimal();
     /*shared_ptr<FsmNode> currentParsedNode;
@@ -522,6 +525,7 @@ Dfsm::Dfsm(const Json::Value& fsmExport) :
 Fsm()
 {
     
+    dfsmTable = nullptr;
     if (!fsmExport.isObject()) {
         cerr << endl << "File format is JSON but NOT FSM-lib file structure.";
         return;
@@ -755,6 +759,7 @@ Dfsm::Dfsm(const Json::Value& fsmExport,
 Fsm()
 {
     
+    dfsmTable = nullptr;
     if (!fsmExport.isObject()) {
         cerr << endl << "File format is JSON but NOT FSM-lib file structure.";
         return;
@@ -1022,7 +1027,7 @@ Dfsm Dfsm::minimise()
     
     vector<shared_ptr<FsmNode>> uNodes;
     removeUnreachableNodes(uNodes);
-        
+    
     calcPkTables();
     shared_ptr<PkTable> pMin = pktblLst[pktblLst.size()-1];
     
@@ -1279,6 +1284,11 @@ void Dfsm::toCsv(const std::string& fname) {
 
 
 IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
+    
+    // We need a valid set of DFSM table and Pk-Tables for this method
+    if ( dfsmTable == nullptr ) {
+        calcPkTables();
+    }
     
     // Auxiliary state cover set needed for further computations
     shared_ptr<Tree> V = getStateCover();
