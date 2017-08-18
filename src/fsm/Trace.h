@@ -39,9 +39,14 @@ public:
           const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 	
 	/**
-	Add an element, at the end of the trace
-	*/
+	 * Add an element, at the end of the trace
+	 */
 	void add(const int e);
+    
+    /** 
+     * Append a vector of int to the trace
+     */
+    void append(const std::vector<int>& traceToAppend);
 
 	/**
 	Getter for the trace itself

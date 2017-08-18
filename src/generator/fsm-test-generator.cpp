@@ -41,7 +41,8 @@ typedef enum {
     WMETHOD,
     WPMETHOD,
     SAFE_WMETHOD,
-    SAFE_WPMETHOD
+    SAFE_WPMETHOD,
+    HMETHOD
 } generation_method_t;
 
 
@@ -76,7 +77,7 @@ static bool rttMbtStyle = false;
  * @param name program name as specified in argv[0]
  */
 static void printUsage(char* name) {
-    cerr << "usage: " << name << " [-w] [-s] [-n fsmname] [-p infile outfile statefile] [-a additionalstates] [-t testsuitename] [-rtt <prefix>] modelfile [model abstraction file]" << endl;
+    cerr << "usage: " << name << " [-w|-h] [-s] [-n fsmname] [-p infile outfile statefile] [-a additionalstates] [-t testsuitename] [-rtt <prefix>] modelfile [model abstraction file]" << endl;
 }
 
 /**
@@ -135,6 +136,9 @@ static void parseParameters(int argc, char* argv[]) {
                 default:
                     break;
             }
+        }
+        else if ( strcmp(argv[p],"-h") == 0 ) {
+            genMethod = HMETHOD;
         }
         else if ( strcmp(argv[p],"-s") == 0 ) {
             switch (genMethod) {
@@ -518,6 +522,7 @@ static void generateTestSuite() {
                 }
             }
             break;
+            
         case WPMETHOD:
             if ( dfsm != nullptr ) {
                 IOListContainer iolc = dfsm->wpMethod(numAddStates);
@@ -531,6 +536,18 @@ static void generateTestSuite() {
                 for ( auto inVec : *iolc.getIOLists() ) {
                     shared_ptr<InputTrace> itrc = make_shared<InputTrace>(inVec,pl);
                     testSuite->push_back(fsm->apply(*itrc));
+                }
+            }
+            break;
+            
+        case HMETHOD:
+            if ( dfsm != nullptr ) {
+                Dfsm dfsmMin = dfsm->minimise();
+                IOListContainer iolc =
+                   dfsmMin.hMethodOnMinimisedDfsm(numAddStates);
+                for ( auto inVec : *iolc.getIOLists() ) {
+                    shared_ptr<InputTrace> itrc = make_shared<InputTrace>(inVec,pl);
+                    testSuite->push_back(dfsm->apply(*itrc));
                 }
             }
             break;

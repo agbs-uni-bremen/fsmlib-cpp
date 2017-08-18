@@ -101,11 +101,16 @@ public:
 	void add(const IOListContainer & tcl);
 
 	/**
-	Insert a list of input traces at the root of the input tree.
-	Do not create redundant input sequences that are already contained
-	(possibly as a prefix) in the existing tree.
-	*/
+	 * Insert a list of input traces at the root of the input tree.
+	 * Do not create redundant input sequences that are already contained
+	 * (possibly as a prefix) in the existing tree.
+	 */
 	void addToRoot(const IOListContainer & tcl);
+    
+    /**
+     * Add a single input trace represented as 
+     * vector of int to the root of the tree
+     */
     void addToRoot(const std::vector<int> & lst);
 
 	/**

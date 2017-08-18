@@ -22,6 +22,14 @@ void Trace::add(const int e)
 	trace.push_back(e);
 }
 
+void Trace::append(const std::vector<int>& traceToAppend) {
+    
+    for ( size_t i = 0; i < traceToAppend.size(); i++ ) {
+        trace.push_back(traceToAppend.at(i));
+    }
+    
+}
+
 std::vector<int> Trace::get() const
 {
 	return trace;

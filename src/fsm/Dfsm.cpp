@@ -32,7 +32,7 @@ shared_ptr<FsmPresentationLayer> Dfsm::createPresentationLayerFromCsvFormat(cons
     };
     // Set containing all output events defined so far
     set<string,setCmp> outStrSet;
-
+    
     
     vector<std::string> in2String;
     vector<std::string> out2String;
@@ -352,14 +352,14 @@ void Dfsm::createDfsmTransitionGraph(const std::string& fname) {
                     // Get the output associated with the current state
                     // and input
                     string outStr =
-                        ( i0 == string::npos ) ? "" : tableEntry.substr(i0+1);
+                    ( i0 == string::npos ) ? "" : tableEntry.substr(i0+1);
                     outStr.erase(0,outStr.find_first_not_of(" \n\r\t\""));
                     outStr.erase(outStr.find_last_not_of(" \n\r\t\"")+1);
                     
                     int y =
-                        ( outStr.empty() )
-                        ? 0
-                        : presentationLayer->out2Num(outStr);
+                    ( outStr.empty() )
+                    ? 0
+                    : presentationLayer->out2Num(outStr);
                     
                     if ( y >= 0 ) {
                         shared_ptr<FsmLabel> lbl =
@@ -611,7 +611,7 @@ Fsm()
     // Create the presentation layer
     presentationLayer =
     make_shared<FsmPresentationLayer>(in2String,out2String,state2String);
-   
+    
     // Define basic attributes
     name = "FSM";
     currentParsedNode = nullptr;
@@ -692,9 +692,9 @@ Fsm()
                 exit(1);
             }
             shared_ptr<FsmLabel> theLabel =
-                make_shared<FsmLabel>(x,y,presentationLayer);
+            make_shared<FsmLabel>(x,y,presentationLayer);
             shared_ptr<FsmTransition> tr =
-                make_shared<FsmTransition>(srcNode,tgtNode,theLabel);
+            make_shared<FsmTransition>(srcNode,tgtNode,theLabel);
             
             
             // Record the requirements satisfied by the transition
@@ -1103,7 +1103,7 @@ IOListContainer Dfsm::getCharacterisationSet()
             lli->push_back(i.get());
             IOListContainer tcli = IOListContainer(lli, presentationLayer);
             characterisationSet->addToRoot(tcli);
-
+            
 #if 0
             cout << "Distinguishing trace for " << nodes[left]->getName()
             << " and " << nodes[right]->getName() << ": " << endl;
@@ -1285,6 +1285,9 @@ void Dfsm::toCsv(const std::string& fname) {
 
 IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
     
+    // Our initial state
+    shared_ptr<FsmNode> s0 = getInitialState();
+    
     // We need a valid set of DFSM table and Pk-Tables for this method
     if ( dfsmTable == nullptr ) {
         calcPkTables();
@@ -1292,7 +1295,7 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
     
     // Auxiliary state cover set needed for further computations
     shared_ptr<Tree> V = getStateCover();
-
+    
     // Test suite is initialised with the state cover
     shared_ptr<Tree> iTree = getStateCover();
     
@@ -1311,6 +1314,163 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
     IOListContainer iolcV = V->getIOLists();
     shared_ptr<std::vector<std::vector<int>>> iolV = iolcV.getIOLists();
     
+    for ( size_t i = 0; i < iolV->size(); i++ ) {
+        
+        shared_ptr<InputTrace> alpha =
+        make_shared<InputTrace>(iolV->at(i),presentationLayer);
+        unordered_set<shared_ptr<FsmNode>> s_iSet = s0->after(*alpha);
+        // Only one element in the set, since FSM is deterministic
+        shared_ptr<FsmNode> s_i = *s_iSet.begin();
+        
+        for ( size_t j = i+1; j < iolV->size(); j++ ) {
+            
+            shared_ptr<InputTrace> beta =
+            make_shared<InputTrace>(iolV->at(j),presentationLayer);
+            unordered_set<shared_ptr<FsmNode>> s_jSet = s0->after(*beta);
+            shared_ptr<FsmNode> s_j = *s_jSet.begin();
+            
+            InputTrace gamma =
+                s_i->calcDistinguishingTrace(s_j,pktblLst,maxInput);
+            
+            shared_ptr<InputTrace> alpha_gamma =
+                make_shared<InputTrace>(alpha->get(),presentationLayer);
+            alpha_gamma->append(gamma.get());
+            
+            shared_ptr<InputTrace> beta_gamma =
+            make_shared<InputTrace>(beta->get(),presentationLayer);
+            beta_gamma->append(gamma.get());
+            
+            iTree->addToRoot(alpha_gamma->get());
+            iTree->addToRoot(beta_gamma->get());
+
+        }
+        
+    }
+    
+    // For each sequence α.β, α ∈ Q, |β| = m – n + 1, and each non-empty prefix
+    // β1 of β that takes the DFSM from s0 to state s,
+    // add sequences α.β1.γ and ω.γ, where ω ∈ V and s0-after-ω ≠ s,
+    // and γ is a distinguishing sequence of states s0-after-α.β1
+    // and s0-after-ω.
+    IOListContainer allBeta = IOListContainer(maxInput,
+                                              1,
+                                              (int)numAddStates+1,
+                                              presentationLayer);
+    
+    shared_ptr<vector<vector<int>>> iolAllBeta = allBeta.getIOLists();
+    
+    for ( auto beta : *iolAllBeta ) {
+        
+        for ( auto alpha : *iolV ) {
+            
+            shared_ptr<InputTrace> iAlphaBeta =
+                make_shared<InputTrace>(alpha,presentationLayer);
+            iAlphaBeta->append(beta);
+            unordered_set<shared_ptr<FsmNode>>
+                s_alpha_betaSet = s0->after(*iAlphaBeta);
+            shared_ptr<FsmNode> s_alpha_beta = *s_alpha_betaSet.begin();
+            
+            for ( auto omega : *iolV ) {
+                shared_ptr<InputTrace>
+                    iOmega = make_shared<InputTrace>(omega,presentationLayer);
+                unordered_set<shared_ptr<FsmNode>>
+                    s_omegaSet = s0->after(*iOmega);
+                shared_ptr<FsmNode> s_omega = *s_omegaSet.begin();
+                
+                if ( s_alpha_beta == s_omega ) continue;
+                
+                InputTrace
+                gamma = s_alpha_beta->calcDistinguishingTrace(s_omega,
+                                                              pktblLst,
+                                                              maxInput);
+                
+                shared_ptr<InputTrace> iAlphaBetaGamma =
+                make_shared<InputTrace>(iAlphaBeta->get(),presentationLayer);
+                iAlphaBetaGamma->append(gamma.get());
+                
+                shared_ptr<InputTrace> iOmegaGamma =
+                make_shared<InputTrace>(iOmega->get(),presentationLayer);
+                iOmegaGamma->append(gamma.get());
+                
+                iTree->addToRoot(iAlphaBetaGamma->get());
+                iTree->addToRoot(iOmegaGamma->get());
+                
+            }
+            
+        }
+        
+    }
+    
+    // For each sequence α.β,α∈Q,|β|=m–n+1, and each two
+    // non-empty prefixes β1 and β2 of β that take the
+    // DFSM from state s0-after-alpha
+    // to two different states add sequences α.β1.γ and α.β2.γ,
+    // where γ is a distinguishing sequence of states
+    // s0-after-alpha.beta1 and s0-after-alpha.beta2.
+    
+    for ( auto alpha : *iolV ) {
+        
+        shared_ptr<InputTrace> iAlpha =
+            make_shared<InputTrace>(alpha,presentationLayer);
+        
+        for ( auto beta : *inputEnum.getIOLists() ) {
+        
+            for ( size_t i = 0; i < beta.size() - 1; i++ ) {
+                
+                shared_ptr<InputTrace> iBeta_1 = make_shared<InputTrace>(presentationLayer);
+                for ( size_t k = 0; k <= i; k++ ) {
+                    iBeta_1->add(beta[k]);
+                }
+                
+                for ( size_t j = i+1; j < beta.size(); j++ ) {
+                    
+                    shared_ptr<InputTrace> iBeta_2 =
+                        make_shared<InputTrace>(presentationLayer);
+                    for ( size_t k = 0; k <= j; k++ ) {
+                        iBeta_2->add(beta[k]);
+                    }
+                    
+                    shared_ptr<InputTrace> iAlphaBeta_1 =
+                        make_shared<InputTrace>(alpha,presentationLayer);
+                    iAlphaBeta_1->append(iBeta_1->get());
+                    
+                    shared_ptr<InputTrace> iAlphaBeta_2 =
+                    make_shared<InputTrace>(alpha,presentationLayer);
+                    iAlphaBeta_2->append(iBeta_2->get());
+                    
+                    unordered_set<shared_ptr<FsmNode>> s1Set =
+                    s0->after(*iAlphaBeta_1);
+                    shared_ptr<FsmNode> s1 = *s1Set.begin();
+                    
+                    unordered_set<shared_ptr<FsmNode>> s2Set =
+                    s0->after(*iAlphaBeta_2);
+                    shared_ptr<FsmNode> s2 = *s2Set.begin();
+                    
+                    if ( s1 == s2 ) continue;
+                    
+                    InputTrace gamma = s1->calcDistinguishingTrace(s2,
+                                                                   pktblLst,
+                                                                   maxInput);
+                    
+                    
+                    shared_ptr<InputTrace> iAlphaBeta_1Gamma =
+                    make_shared<InputTrace>(iAlphaBeta_1->get(),
+                                            presentationLayer);
+                    iAlphaBeta_1Gamma->append(gamma.get());
+                    
+                    shared_ptr<InputTrace> iAlphaBeta_2Gamma =
+                    make_shared<InputTrace>(iAlphaBeta_2->get(),
+                                            presentationLayer);
+                    iAlphaBeta_2Gamma->append(gamma.get());
+                    
+                    iTree->addToRoot(iAlphaBeta_1Gamma->get());
+                    iTree->addToRoot(iAlphaBeta_2Gamma->get());
+                    
+                }
+            }
+        
+        }
+    }
     
     return iTree->getIOLists();
     
