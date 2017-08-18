@@ -44,6 +44,8 @@ private:
     
     void createDfsmTransitionGraph(const std::string& fname);
     
+    void calcPkTables();
+    
 public:
 	/**
 	Create a DFSM from a file description
@@ -306,6 +308,27 @@ public:
      * must be identical as well to ensure completeness.
      */
     IOListContainer tMethod();
+    
+    
+    /**
+     *  Perform test generation by means of the H-Method, as 
+     *  described in Theorem 1 of
+     *    Rita Dorofeeva1, Khaled El-Fakih, and Nina Yevtushenko:
+     *    An Improved Conformance Testing Method. 
+     *    F. Wang (Ed.): FORTE 2005, LNCS 3731, pp. 204 – 218, 2005. 
+     *    IFIP International Federation for Information Processing 2005
+     *
+     *  This implementation requires the DFSM to be already minimised and
+     *  completely specified.
+     *
+     *  @note This implementation is still under construction.
+     *  @note Further operations implementing the variants of the
+     *        H-Method for nondeterministic FSMs which are not
+     *        completely specified will be added to the library 
+     *        in the future.
+     */
+    IOListContainer hMethodOnMinimisedDfsm(const unsigned int numAddStates);
+    
     
     /**
      *  Output DFSM in tabular format as *.csv file

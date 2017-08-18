@@ -990,6 +990,31 @@ Fsm()
 }
 
 
+void Dfsm::calcPkTables() {
+    
+    dfsmTable = toDFSMTable();
+    
+    pktblLst.clear();
+    shared_ptr<PkTable> p1 = dfsmTable->getP1Table();
+    pktblLst.push_back(p1);
+    
+    for (shared_ptr<PkTable> pk = p1->getPkPlusOneTable();
+         pk != nullptr;
+         pk = pk->getPkPlusOneTable())
+    {
+        pktblLst.push_back(pk);
+    }
+    
+#if 0
+    cout << "MINIMISE" << endl;
+    cout << *p1 << endl;
+    for (auto p : pktblLst) {
+        
+        cout << *p << endl;
+    }
+#endif
+    
+}
 
 
 Dfsm Dfsm::minimise()
@@ -997,32 +1022,9 @@ Dfsm Dfsm::minimise()
     
     vector<shared_ptr<FsmNode>> uNodes;
     removeUnreachableNodes(uNodes);
-    
-    dfsmTable = toDFSMTable();
-    
-    pktblLst.clear();
-    shared_ptr<PkTable> p1 = dfsmTable->getP1Table();
-    pktblLst.push_back(p1);
-    shared_ptr<PkTable> pMin = p1;
-    
-    for (shared_ptr<PkTable> pk = p1->getPkPlusOneTable();
-         pk != nullptr;
-         pk = pk->getPkPlusOneTable())
-    {
-        pMin = pk;
-        pktblLst.push_back(pk);
-    }
-    
-#if 0
-    
-    cout << "MINIMISE" << endl;
-    cout << *p1 << endl;
-    for (auto p : pktblLst) {
         
-        cout << *p << endl;
-    }
-    
-#endif
+    calcPkTables();
+    shared_ptr<PkTable> pMin = pktblLst[pktblLst.size()-1];
     
     return pMin->toFsm(name, maxOutput);
 }
@@ -1276,7 +1278,33 @@ void Dfsm::toCsv(const std::string& fname) {
 }
 
 
+IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
+    
+    // Auxiliary state cover set needed for further computations
+    shared_ptr<Tree> V = getStateCover();
 
+    // Test suite is initialised with the state cover
+    shared_ptr<Tree> iTree = getStateCover();
+    
+    IOListContainer inputEnum = IOListContainer(maxInput,
+                                                (int)numAddStates+1,
+                                                (int)numAddStates+1,
+                                                presentationLayer);
+    
+    // Initial test suite set is V.Sigma^{m-n+1}, m-n = numAddStates
+    iTree->add(inputEnum);
+    
+    // Add all alpha.gamma, beta.gamma where alpha, beta in V
+    // and gamma distinguishes s0-after-alpha, s0-after-beta
+    // (if alpha.gamma or beta.gamma are already in iTree, addition
+    // will not lead to a new test case)
+    IOListContainer iolcV = V->getIOLists();
+    shared_ptr<std::vector<std::vector<int>>> iolV = iolcV.getIOLists();
+    
+    
+    return iTree->getIOLists();
+    
+}
 
 
 
