@@ -101,6 +101,8 @@ public:
 	std::shared_ptr<DFSMTableRow> getDFSMTableRow(const int maxInput);
 	bool distinguished(const std::shared_ptr<FsmNode> otherNode, const std::vector<int>& iLst);
 	std::shared_ptr<InputTrace> distinguished(const std::shared_ptr<FsmNode> otherNode, std::shared_ptr<Tree> w);
+    bool rDistinguished(const std::shared_ptr<FsmNode> otherNode, const std::vector<int>& iLst);
+    std::shared_ptr<InputTrace> rDistinguished(const std::shared_ptr<FsmNode> otherNode, std::shared_ptr<Tree> w);
 
 	/**
 	Calculate a distinguishing input trace for a DFSM node. The algorithm is based

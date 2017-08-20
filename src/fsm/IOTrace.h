@@ -51,7 +51,7 @@ public:
 	@return The standard output stream used, to allow user to cascade <<
 	*/
 	friend std::ostream & operator<<(std::ostream & out, const IOTrace & trace);
-    
+    friend bool operator==(IOTrace const & iOTrace1, IOTrace const & iOTrace2);
     std::string toRttString() const;
 };
 #endif //FSM_FSM_IOTRACE_H_

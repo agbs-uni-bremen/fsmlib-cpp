@@ -29,6 +29,11 @@ ostream & operator<<(ostream & out, const IOTrace & trace)
 	return out;
 }
 
+bool operator==(IOTrace const & iOTrace1, IOTrace const & iOTrace2)
+{
+    return iOTrace1.getInputTrace() == iOTrace2.getInputTrace() && iOTrace1.getOutputTrace() == iOTrace2.getOutputTrace();
+}
+
 string IOTrace::toRttString() const {
     
     string s;

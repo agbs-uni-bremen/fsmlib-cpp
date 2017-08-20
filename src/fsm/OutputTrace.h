@@ -34,6 +34,6 @@ public:
 	@param trace The OutputTrace to print
 	@return The standard output stream used, to allow user to cascade <<
 	*/
-	friend std::ostream & operator<<(std::ostream & out, const OutputTrace & trace);
+    friend std::ostream & operator<<(std::ostream & out, const OutputTrace & trace);
 };
 #endif //FSM_FSM_OUTPUTTRACE_H_

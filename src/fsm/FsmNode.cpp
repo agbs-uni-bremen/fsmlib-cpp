@@ -274,6 +274,34 @@ shared_ptr<InputTrace> FsmNode::distinguished(const shared_ptr<FsmNode> otherNod
     return nullptr;
 }
 
+bool FsmNode::rDistinguished(const shared_ptr<FsmNode> otherNode, const vector<int>& iLst)
+{
+    if (iLst.size() < 1)
+    {
+        return false;
+    }
+    InputTrace itr = InputTrace(iLst, presentationLayer);
+    OutputTree ot1 = apply(itr);
+    OutputTree ot2 = otherNode->apply(itr);
+    vector<IOTrace> intersection = ot1.getOutputsIntersection(ot2);
+    return intersection.size() == 0;
+}
+
+shared_ptr<InputTrace> FsmNode::rDistinguished(const shared_ptr<FsmNode> otherNode, shared_ptr<Tree> w)
+{
+    IOListContainer iolc = w->getIOLists();
+    shared_ptr<vector<vector<int>>> inputLists = iolc.getIOLists();
+
+    for (vector<int>& iLst : *inputLists)
+    {
+        if (rDistinguished(otherNode, iLst))
+        {
+            return make_shared<InputTrace>(iLst, presentationLayer);
+        }
+    }
+    return nullptr;
+}
+
 InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
                                             const vector<shared_ptr<PkTable>>& pktblLst,
                                             const int maxInput)

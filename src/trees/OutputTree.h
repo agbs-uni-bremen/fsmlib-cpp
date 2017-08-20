@@ -50,6 +50,8 @@ public:
 	*/
 	bool contains(const OutputTree & ot) const;
 
+    std::vector<IOTrace> getOutputsIntersection(OutputTree & ot);
+
 	/**
 	Store the OutputTree to a standard output file in dot format
 	@param out The standard output file to use

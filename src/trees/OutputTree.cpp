@@ -35,6 +35,36 @@ bool OutputTree::contains(const OutputTree & ot) const
 	return getRoot()->superTreeOf(ot.getRoot());
 }
 
+vector<IOTrace> OutputTree::getOutputsIntersection(OutputTree & ot)
+{
+    vector<IOTrace> thisIOTrace;
+    vector<IOTrace> otherIOTrace;
+    toIOTrace(thisIOTrace);
+    ot.toIOTrace(otherIOTrace);
+
+    vector<IOTrace> intersection;
+
+    bool skip = false;
+    for (IOTrace thisTrace : thisIOTrace)
+    {
+        if (skip)
+        {
+            skip = false;
+            continue;
+        }
+        for (IOTrace otherTrace : otherIOTrace)
+        {
+            if (thisTrace == otherTrace)
+            {
+                intersection.push_back(thisTrace);
+                skip = true;
+                continue;
+            }
+        }
+    }
+    return intersection;
+}
+
 void OutputTree::toDot(ostream & out) const
 {
 	out << "digraph OutputTree {" << endl;
