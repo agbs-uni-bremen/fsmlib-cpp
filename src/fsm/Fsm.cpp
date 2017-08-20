@@ -377,6 +377,51 @@ void Fsm::dumpFsm(ofstream & outputFile) const
     }
 }
 
+vector<shared_ptr<FsmNode>> Fsm::getDReachableStates()
+{
+
+	resetColor();
+	deque<shared_ptr<FsmNode>> bfsLst;
+	unordered_map<shared_ptr<FsmNode>, shared_ptr<TreeNode>> f2t;
+
+	shared_ptr<TreeNode> root = make_shared<TreeNode>();
+	shared_ptr<Tree> dscov = make_shared<Tree>(root, presentationLayer);
+
+	shared_ptr<FsmNode> initState = getInitialState();
+	initState->setColor(FsmNode::grey);
+	bfsLst.push_back(initState);
+	f2t[initState] = root;
+
+	while (!bfsLst.empty())
+	{
+		shared_ptr<FsmNode> thisNode = bfsLst.front();
+		bfsLst.pop_front();
+		shared_ptr<TreeNode> currentTreeNode = f2t[thisNode];
+
+		for (int x = 0; x <= maxInput; ++x)
+		{
+			vector<shared_ptr<FsmNode>> successorNodes = thisNode->after(x);
+			if (successorNodes.size() != 1)
+			{
+				continue;
+			}
+			for (shared_ptr<FsmNode> tgt : successorNodes)
+			{
+				if (tgt->getColor() == FsmNode::white)
+				{
+					tgt->setColor(FsmNode::grey);
+					shared_ptr<TreeNode> itn = currentTreeNode->add(x);
+					bfsLst.push_back(tgt);
+					f2t[tgt] = itn;
+				}
+			}
+		}
+		thisNode->setColor(FsmNode::black);
+	}
+	resetColor();
+
+	return {};
+}
 
 
 shared_ptr<FsmNode> Fsm::getInitialState() const
@@ -526,6 +571,50 @@ Fsm Fsm::intersect(const Fsm & f)
     }
     
     return Fsm(f.getName(), maxInput, maxOutput, fsmInterNodes, presentationLayer);
+}
+
+shared_ptr<Tree> Fsm::getDeterministicStateCover()
+{
+	resetColor();
+	deque<shared_ptr<FsmNode>> bfsLst;
+	unordered_map<shared_ptr<FsmNode>, shared_ptr<TreeNode>> f2t;
+
+	shared_ptr<TreeNode> root = make_shared<TreeNode>();
+	shared_ptr<Tree> dscov = make_shared<Tree>(root, presentationLayer);
+
+	shared_ptr<FsmNode> initState = getInitialState();
+	initState->setColor(FsmNode::grey);
+	bfsLst.push_back(initState);
+	f2t[initState] = root;
+
+	while (!bfsLst.empty())
+	{
+		shared_ptr<FsmNode> thisNode = bfsLst.front();
+		bfsLst.pop_front();
+		shared_ptr<TreeNode> currentTreeNode = f2t[thisNode];
+
+		for (int x = 0; x <= maxInput; ++x)
+		{
+			vector<shared_ptr<FsmNode>> successorNodes = thisNode->after(x);
+			if (successorNodes.size() != 1)
+			{
+				continue;
+			}
+			for (shared_ptr<FsmNode> tgt : successorNodes)
+			{
+				if (tgt->getColor() == FsmNode::white)
+				{
+					tgt->setColor(FsmNode::grey);
+					shared_ptr<TreeNode> itn = currentTreeNode->add(x);
+					bfsLst.push_back(tgt);
+					f2t[tgt] = itn;
+				}
+			}
+		}
+		thisNode->setColor(FsmNode::black);
+	}
+	resetColor();
+	return dscov;
 }
 
 shared_ptr<Tree> Fsm::getStateCover()

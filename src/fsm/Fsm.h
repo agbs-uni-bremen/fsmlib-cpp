@@ -219,6 +219,7 @@ public:
      * \item post-state is a number in range 0..(number of states -1)
      */
     void dumpFsm(std::ofstream & outputFile) const;
+    std::vector<std::shared_ptr<FsmNode>> getDReachableStates();
     std::shared_ptr<FsmNode> getInitialState() const;
     
     /**
@@ -242,6 +243,11 @@ public:
      */
     Fsm intersect(const Fsm & f);
     
+    /**
+	 * Generate the deterministic state cover of an arbitrary FSM
+	 */
+    std::shared_ptr<Tree> getDeterministicStateCover();
+
     /**
      * Generate the state cover of an arbitrary FSM
      */
