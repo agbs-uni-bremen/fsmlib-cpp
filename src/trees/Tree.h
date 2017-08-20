@@ -93,6 +93,8 @@ public:
 	*/
 	IOListContainer getTestCases();
 
+	IOListContainer getDeterministicTestCases();
+
 	/**
 	Append a list of input traces to EVERY node of the input tree.
 	Do not create redundant input sequences that are already contained

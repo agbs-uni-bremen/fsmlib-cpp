@@ -85,6 +85,24 @@ IOListContainer Tree::getTestCases()
 	return getIOLists();
 }
 
+IOListContainer Tree::getDeterministicTestCases()
+{
+	std::shared_ptr<std::vector<std::vector<int>>> ioll = std::make_shared<std::vector<std::vector<int>>>();
+	std::shared_ptr<TreeNode> currentNode = root;
+	ioll->push_back({-1});
+	std::shared_ptr<std::vector<std::shared_ptr<TreeEdge>>> edges = currentNode->getChildren();
+
+	for (size_t i=0; i < edges->size(); ++i)
+	{
+		std::shared_ptr<TreeEdge> edge = (*edges)[i];
+		std::shared_ptr<TreeNode> node = edge->getTarget();
+		ioll->push_back(node->getPath());
+		std::shared_ptr<std::vector<std::shared_ptr<TreeEdge>>> newEdges = node->getChildren();
+		std::copy (newEdges->begin(), newEdges->end(), std::back_inserter(*edges));
+	}
+	return IOListContainer(ioll, presentationLayer);
+}
+
 void Tree::add(const IOListContainer & tcl)
 {
 	std::shared_ptr<TreeNode> r = getRoot();
