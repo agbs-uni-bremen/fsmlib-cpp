@@ -1,3 +1,4 @@
+Debug
 Debug.Linux
 Debug.OSX
 build.Linux
@@ -5,6 +6,7 @@ build.MacOSX
 build.Win
 doc/html
 doc/latex
+Release
 Release.Linux
 resources/csm.fsm
 build.Linux/**
