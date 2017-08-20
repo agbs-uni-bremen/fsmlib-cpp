@@ -21,6 +21,11 @@
 #include <trees/TestSuite.h>
 #include "json/json.h"
 
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <math.h>
+#include <stdio.h>
 
 using namespace std;
 using namespace Json;
@@ -695,64 +700,43 @@ void wVersusT() {
     
 }
 
+std::string getcwd() {
+    std::string result(1024,'\0');
+    while( getcwd(&result[0], result.size()) == 0) {
+        if( errno != ERANGE ) {
+          throw std::runtime_error(strerror(errno));
+        }
+        result.resize(result.size()*2);
+    }
+    result.resize(result.find('\0'));
+    return result;
+}
+
 
 int main()
 {
+	std::cout << "Dir " << getcwd() << endl;
     
-    
-    
-#if 0
-    int tc = atoi(argv[1]);
-    test1();
-    test2();
-    test3();
-    test4();
-    test5();
-    test6();
-    test7();
-    test8();
-    test9();
-    test10();
-    
-    gdc_test1();
-    
-    switch (tc) {
-        case 1:
-            checkPlsAuto1();
-            break;
-        case 2:
-            fsbrtsTestComplete();
-            break;
-        case 3:
-            fsbrtsTestCompleteSafe();
-            break;
-        case 4:
-            fsbrtsTestCompleteSafe2();
-            break;
-        default:
-            break;
-    }
+    shared_ptr<FsmPresentationLayer> pl =
+    make_shared<FsmPresentationLayer>("../../../resources/adaptiveIn.txt",
+            + "../../../resources/adaptiveOut.txt",
+            + "../../../resources/adaptiveState.txt");
+    Fsm fsm("../../../resources/adaptive.fsm",pl,"adaptive");
+    fsm.toDot("../../../resources/adaptive");
+	cout << endl << endl;
 
-    wVersusT();
+	shared_ptr<Tree> detStateCover = fsm.getDeterministicStateCover();
+	shared_ptr<TreeNode> root = detStateCover->getRoot();
+	IOListContainer testCases = detStateCover->getDeterministicTestCases();
+    cout << "Deterministic test cases:\n" << testCases << endl;
+	auto iOLists = testCases.getIOLists();
+
+    IOListContainer characterisationSet = fsm.getCharacterisationSet();
+    cout << "characterisationSet:\n" << characterisationSet << endl;
+
+	cout << endl << endl;
 
 
-#endif
-    
-    
-    test1();
-    test2();
-    test3();
-    test4();
-    test5();
-    test6();
-    test7();
-    test8();
-    test9();
-    test10();
-    
-
-    exit(0);
-    
 }
 
 
