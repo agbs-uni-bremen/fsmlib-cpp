@@ -244,6 +244,8 @@ public:
     
     /**
      * Generate the state cover of an arbitrary FSM
+     * (deterministic or nondeterministic, completely specified 
+     *  or not, observable or not, minimised or not)
      */
     std::shared_ptr<Tree> getStateCover();
     

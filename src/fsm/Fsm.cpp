@@ -1143,7 +1143,7 @@ IOListContainer Fsm::hsiMethod(const unsigned int numAddStates)
         hwiTrees.push_back(emptyTree);
     }
 
-    /* Ceate harmonised state identification set for every FSM state.
+    /* Create harmonised state identification set for every FSM state.
      * For each pair of nodes i and j get one element
      * of the characterisation set that distinguishes the two nodes.
      * Add the distinguishing sequence to both HWi and HWj.

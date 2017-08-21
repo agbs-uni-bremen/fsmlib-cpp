@@ -42,7 +42,8 @@ typedef enum {
     WPMETHOD,
     SAFE_WMETHOD,
     SAFE_WPMETHOD,
-    HMETHOD
+    HMETHOD,
+    HSIMETHOD
 } generation_method_t;
 
 
@@ -77,7 +78,7 @@ static bool rttMbtStyle = false;
  * @param name program name as specified in argv[0]
  */
 static void printUsage(char* name) {
-    cerr << "usage: " << name << " [-w|-h] [-s] [-n fsmname] [-p infile outfile statefile] [-a additionalstates] [-t testsuitename] [-rtt <prefix>] modelfile [model abstraction file]" << endl;
+    cerr << "usage: " << name << " [-w|-wp|-h|-hsi] [-s] [-n fsmname] [-p infile outfile statefile] [-a additionalstates] [-t testsuitename] [-rtt <prefix>] modelfile [model abstraction file]" << endl;
 }
 
 /**
@@ -137,8 +138,21 @@ static void parseParameters(int argc, char* argv[]) {
                     break;
             }
         }
+        else if ( strcmp(argv[p],"-wp") == 0 ) {
+            genMethod = WPMETHOD;
+            if ( genMethod == SAFE_WMETHOD or
+                genMethod == SAFE_WPMETHOD ) {
+                genMethod= SAFE_WPMETHOD;
+            }
+            else {
+                genMethod = WPMETHOD;
+            }
+        }
         else if ( strcmp(argv[p],"-h") == 0 ) {
             genMethod = HMETHOD;
+        }
+        else if ( strcmp(argv[p],"-hsi") == 0 ) {
+            genMethod = HSIMETHOD;
         }
         else if ( strcmp(argv[p],"-s") == 0 ) {
             switch (genMethod) {
@@ -548,6 +562,23 @@ static void generateTestSuite() {
                 for ( auto inVec : *iolc.getIOLists() ) {
                     shared_ptr<InputTrace> itrc = make_shared<InputTrace>(inVec,pl);
                     testSuite->push_back(dfsm->apply(*itrc));
+                }
+            }
+            break;
+            
+        case HSIMETHOD:
+            if ( dfsm != nullptr ) {
+                IOListContainer iolc = dfsm->hsiMethod(numAddStates);
+                for ( auto inVec : *iolc.getIOLists() ) {
+                    shared_ptr<InputTrace> itrc = make_shared<InputTrace>(inVec,pl);
+                    testSuite->push_back(dfsm->apply(*itrc));
+                }
+            }
+            else {
+                IOListContainer iolc = fsm->hsiMethod(numAddStates);
+                for ( auto inVec : *iolc.getIOLists() ) {
+                    shared_ptr<InputTrace> itrc = make_shared<InputTrace>(inVec,pl);
+                    testSuite->push_back(fsm->apply(*itrc));
                 }
             }
             break;
