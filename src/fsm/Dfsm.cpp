@@ -1331,7 +1331,7 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
             
             unordered_set<shared_ptr<FsmNode>> s_jSet = s0->after(*beta);
             shared_ptr<FsmNode> s_j = *s_jSet.begin();
-                        
+            
             InputTrace gamma =
                 s_i->calcDistinguishingTrace(s_j,pktblLst,maxInput);
             
