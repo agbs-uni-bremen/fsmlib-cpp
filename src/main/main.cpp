@@ -731,6 +731,8 @@ int main()
     cout << "Deterministic test cases:\n" << testCases << endl;
 	auto iOLists = testCases.getIOLists();
 
+
+    fsm.getRDistinguishableStates();
     IOListContainer characterisationSet = fsm.getCharacterisationSet();
     cout << "characterisationSet:\n" << characterisationSet << endl;
 

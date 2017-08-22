@@ -63,6 +63,12 @@ public:
     
     
     std::vector<std::shared_ptr<FsmTransition> >& getTransitions();
+    /**
+     * Calculates all possible outputs for a given input.
+     * @param The given input.
+     * @return All possible outputs for the given input.
+     */
+    std::vector<int> getPossibleOutputs(const int input) const;
 	int getId() const;
 	std::string getName() const;
 	bool hasBeenVisited() const;

@@ -14,6 +14,7 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <map>
 
 #include "fsm/FsmVisitor.h"
 
@@ -66,7 +67,7 @@ protected:
     std::shared_ptr<Tree> characterisationSet;
     Minimal minimal;
 
-    
+    std::vector<std::shared_ptr<FsmTransition>> transitions;
     std::vector<std::shared_ptr<OFSMTable>> ofsmTableLst;
     std::vector<std::shared_ptr<Tree>> stateIdentificationSets;
     std::shared_ptr<FsmPresentationLayer> presentationLayer;
@@ -329,6 +330,17 @@ public:
      are stored in the list stateIdentificationSets.
      */
     IOListContainer getCharacterisationSet();
+
+    /**
+     * Calculates for every state the r(1)-distinguishable states.
+     * @return A map containing the r(1)-distinguishable states for every state.
+     */
+    std::map<std::shared_ptr<FsmNode>, std::vector<std::shared_ptr<FsmNode>>> getROneDistinguishableStates();
+    /**
+     * Calculates for every state the r-distinguishable states.
+     * @return A map containing the r-distinguishable states for every state.
+     */
+    std::map<std::shared_ptr<FsmNode>, std::vector<std::shared_ptr<FsmNode>>> getRDistinguishableStates();
     
     /**
      * Calculate the state identification sets. The sets are stored
@@ -339,6 +351,19 @@ public:
      */
     void calcStateIdentificationSets();
     void calcStateIdentificationSetsFast();
+
+    /**
+     * Collects all transitions from every node of this FSM and stores them
+     * in the member variable {@code transitions}.
+     */
+    void calcTransitions();
+    /**
+     * Gets all incoming transitions for a given node. Ensure to call
+     * {@code calcTransitions} before using this method.
+     * @param node  The given node.
+     * @return All incoming transitions for the given node.
+     */
+    std::vector<std::shared_ptr<FsmTransition>> getIncomingTransitions(const std::shared_ptr<FsmNode> node) const;
 
     void appendStateIdentificationSets(const std::shared_ptr<Tree> Wp2) const;
     

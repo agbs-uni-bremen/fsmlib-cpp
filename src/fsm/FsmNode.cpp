@@ -60,6 +60,19 @@ vector<shared_ptr<FsmTransition> >& FsmNode::getTransitions()
     return transitions;
 }
 
+vector<int> FsmNode::getPossibleOutputs(const int input) const
+{
+    vector<int> result;
+    for (auto transition : transitions)
+    {
+        if (transition->getLabel()->getInput() == input)
+        {
+            result.push_back(transition->getLabel()->getOutput());
+        }
+    }
+    return result;
+}
+
 int FsmNode::getId() const
 {
     return id;
