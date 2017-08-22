@@ -70,8 +70,26 @@ public:
 	*/
 	std::shared_ptr<TreeNode> getRoot() const;
 
-	//TODO
+	/**
+     * Get vector of all I/O lists in the tree.
+     * Each list is represented as a vector.
+     * Lists which are prefixes of other lists are NOT
+     * represented as separate vectors.
+     *
+     * @return vector of I/O lists, each list again represented
+     *         as a vector.
+     */
 	IOListContainer getIOLists();
+    
+    /**
+     * Get vector of all I/O lists in the tree, including all prefixes.
+     * For example, the returned container also contains the empty list.
+     * Each list is represented as a vector. 
+     *
+     * @return vector of I/O lists, each list again represented
+     *         as a vector.
+     */
+    IOListContainer getIOListsWithPrefixes();
 
 	/**
 	Special remove operation.

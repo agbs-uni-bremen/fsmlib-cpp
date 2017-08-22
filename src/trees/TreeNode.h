@@ -33,6 +33,8 @@ protected:
 
 	//TODO
 	void add(std::vector<int>::const_iterator lstIte, const std::vector<int>::const_iterator end);
+    
+    
 public:
 	/**
 	Create a new tree node
@@ -174,6 +176,17 @@ public:
     
     
     void calcSize(size_t& theSize);
+    
+    /**
+     * Perform in-order traversal and add resulting I/O-lists into
+     * vector of I/O-lists.
+     *
+     * @param v current I/O-list, represented as vector
+     * @param ioll vector of I/O-lists
+     *
+     */
+    void traverse(std::vector<int>& v,
+                  std::shared_ptr<std::vector<std::vector<int>>> ioll);
     
     
 };

@@ -1307,17 +1307,19 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
     // Initial test suite set is V.Sigma^{m-n+1}, m-n = numAddStates
     iTree->add(inputEnum);
     
+    // Step 1.
     // Add all alpha.gamma, beta.gamma where alpha, beta in V
     // and gamma distinguishes s0-after-alpha, s0-after-beta
     // (if alpha.gamma or beta.gamma are already in iTree, addition
     // will not lead to a new test case)
-    IOListContainer iolcV = V->getIOLists();
+    IOListContainer iolcV = V->getIOListsWithPrefixes();
     shared_ptr<std::vector<std::vector<int>>> iolV = iolcV.getIOLists();
     
     for ( size_t i = 0; i < iolV->size(); i++ ) {
         
         shared_ptr<InputTrace> alpha =
         make_shared<InputTrace>(iolV->at(i),presentationLayer);
+        
         unordered_set<shared_ptr<FsmNode>> s_iSet = s0->after(*alpha);
         // Only one element in the set, since FSM is deterministic
         shared_ptr<FsmNode> s_i = *s_iSet.begin();
@@ -1326,9 +1328,10 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
             
             shared_ptr<InputTrace> beta =
             make_shared<InputTrace>(iolV->at(j),presentationLayer);
+            
             unordered_set<shared_ptr<FsmNode>> s_jSet = s0->after(*beta);
             shared_ptr<FsmNode> s_j = *s_jSet.begin();
-            
+                        
             InputTrace gamma =
                 s_i->calcDistinguishingTrace(s_j,pktblLst,maxInput);
             
@@ -1347,6 +1350,7 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
         
     }
     
+    // Step 2.
     // For each sequence α.β, α ∈ Q, |β| = m – n + 1, and each non-empty prefix
     // β1 of β that takes the DFSM from s0 to state s,
     // add sequences α.β1.γ and ω.γ, where ω ∈ V and s0-after-ω ≠ s,
@@ -1401,6 +1405,7 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
         
     }
     
+    // Step 3.
     // For each sequence α.β,α∈Q,|β|=m–n+1, and each two
     // non-empty prefixes β1 and β2 of β that take the
     // DFSM from state s0-after-alpha

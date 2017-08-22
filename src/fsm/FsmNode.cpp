@@ -168,12 +168,12 @@ OutputTree FsmNode::apply(const InputTrace& itrc, bool markAsVisited)
     return ot;
 }
 
-unordered_set<shared_ptr<FsmNode>> FsmNode::after(const InputTrace & itrc)
+unordered_set<shared_ptr<FsmNode>> FsmNode::after(const InputTrace& itrc)
 {
     unordered_set<shared_ptr<FsmNode>> nodeSet;
     nodeSet.insert(shared_from_this());
     
-    for (auto it = itrc.cbegin(); it != itrc.cend(); ++ it)
+    for (auto it = itrc.cbegin(); it != itrc.cend(); ++it)
     {
         int x = *it;
         unordered_set<shared_ptr<FsmNode>> newNodeSet;
@@ -203,16 +203,16 @@ vector<shared_ptr<FsmNode>> FsmNode::after(const int x)
 
 unordered_set<shared_ptr<FsmNode>> FsmNode::afterAsSet(const int x)
 {
-    unordered_set<shared_ptr<FsmNode>> lst;
+    unordered_set<shared_ptr<FsmNode>> nodeSet;
     
     for (auto tr : transitions)
     {
         if (tr->getLabel()->getInput() == x)
         {
-            lst.insert(tr->getTarget());
+            nodeSet.insert(tr->getTarget());
         }
     }
-    return lst;
+    return nodeSet;
 }
 
 void FsmNode::setColor(const int pcolor)
