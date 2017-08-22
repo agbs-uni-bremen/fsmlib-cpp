@@ -60,19 +60,6 @@ vector<shared_ptr<FsmTransition> >& FsmNode::getTransitions()
     return transitions;
 }
 
-vector<OutputTrace> FsmNode::getPossibleOutputs(const int input) const
-{
-    vector<OutputTrace> result;
-    for (auto transition : transitions)
-    {
-        if (transition->getLabel()->getInput() == input)
-        {
-            result.push_back(OutputTrace({transition->getLabel()->getOutput()}, presentationLayer));
-        }
-    }
-    return result;
-}
-
 int FsmNode::getId() const
 {
     return id;
@@ -115,6 +102,33 @@ bool FsmNode::isDerivedFrom(const shared_ptr<pair<shared_ptr<FsmNode>, shared_pt
 shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> FsmNode::getPair() const
 {
     return derivedFromPair;
+}
+
+vector<shared_ptr<FsmNode>> FsmNode::getPossibleOutputs(const int x, vector<OutputTrace> & outputs) const
+{
+    vector<shared_ptr<FsmNode>> result;
+    for (auto transition : transitions)
+    {
+        if (transition->getLabel()->getInput() == x)
+        {
+            result.push_back(transition->getTarget());
+            outputs.push_back(OutputTrace({transition->getLabel()->getOutput()}, presentationLayer));
+        }
+    }
+    return result;
+}
+
+vector<OutputTrace> FsmNode::getPossibleOutputs(const int x) const
+{
+    vector<OutputTrace> result;
+    for (auto transition : transitions)
+    {
+        if (transition->getLabel()->getInput() == x)
+        {
+            result.push_back(OutputTrace({transition->getLabel()->getOutput()}, presentationLayer));
+        }
+    }
+    return result;
 }
 
 shared_ptr<FsmNode> FsmNode::apply(const int e, OutputTrace & o)
@@ -179,6 +193,32 @@ OutputTree FsmNode::apply(const InputTrace& itrc, bool markAsVisited)
         }
     }
     return ot;
+}
+
+unordered_set<shared_ptr<FsmNode>> FsmNode::after(const InputTrace & itrc, const OutputTrace & otrc)
+{
+    vector<int> itrcRaw = itrc.get();
+    vector<int> otrcRaw = otrc.get();
+    unordered_set<shared_ptr<FsmNode>> nodeSet;
+    if (itrcRaw.size() != otrcRaw.size())
+    {
+        return nodeSet;
+    }
+    nodeSet.insert(shared_from_this());
+    for (size_t i = 0; i < itrcRaw.size(); ++i)
+    {
+        int x = itrcRaw.at(i);
+        int y = otrcRaw.at(i);
+        unordered_set<shared_ptr<FsmNode>> newNodeSet;
+
+        for (shared_ptr<FsmNode> n : nodeSet)
+        {
+            unordered_set<shared_ptr<FsmNode>> ns = n->afterAsSet(x, y);
+            newNodeSet.insert(ns.begin(), ns.end());
+        }
+        nodeSet = newNodeSet;
+    }
+    return nodeSet;
 }
 
 unordered_set<shared_ptr<FsmNode>> FsmNode::after(const InputTrace & itrc)

@@ -82,7 +82,6 @@ protected:
     void parseLineInitial (const std::string & line);
     void readFsmInitial (const std::string & fname);
     
-    
     std::string labelString(std::unordered_set<std::shared_ptr<FsmNode>>& lbl) const;
     
     /**
@@ -337,10 +336,10 @@ public:
      * given input.
      * @param q1 First state.
      * @param q2 Second state.
-     * @param input The input that will be applied to both states.
+     * @param x The input that will be applied to both states.
      * @return All outputs that may occur on <b>both</b> states with the given input.
      */
-    std::vector<OutputTrace> getOutputIntersection(std::shared_ptr<FsmNode> q1, std::shared_ptr<FsmNode> q2, int input) const;
+    std::vector<OutputTrace> getOutputIntersection(std::shared_ptr<FsmNode> q1, std::shared_ptr<FsmNode> q2, int x) const;
     /**
      * Calculates for every state the r(1)-distinguishable states.
      * @return A map containing the r(1)-distinguishable states for every state.
