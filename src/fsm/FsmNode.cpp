@@ -60,14 +60,14 @@ vector<shared_ptr<FsmTransition> >& FsmNode::getTransitions()
     return transitions;
 }
 
-vector<int> FsmNode::getPossibleOutputs(const int input) const
+vector<OutputTrace> FsmNode::getPossibleOutputs(const int input) const
 {
-    vector<int> result;
+    vector<OutputTrace> result;
     for (auto transition : transitions)
     {
         if (transition->getLabel()->getInput() == input)
         {
-            result.push_back(transition->getLabel()->getOutput());
+            result.push_back(OutputTrace({transition->getLabel()->getOutput()}, presentationLayer));
         }
     }
     return result;
@@ -201,6 +201,36 @@ unordered_set<shared_ptr<FsmNode>> FsmNode::after(const InputTrace & itrc)
     return nodeSet;
 }
 
+unordered_set<shared_ptr<FsmNode>> FsmNode::after(const InputTrace & itrc, const InputTrace & otrc)
+{
+
+    vector<int> itrcRaw = itrc.get();
+    vector<int> otrcRaw = otrc.get();
+    unordered_set<shared_ptr<FsmNode>> nodeSet;
+
+    if (itrcRaw.size() != otrcRaw.size())
+    {
+        return nodeSet;
+    }
+
+    nodeSet.insert(shared_from_this());
+
+    for (size_t i = 0; i < itrcRaw.size(); ++i)
+    {
+        int x = itrcRaw.at(i);
+        int y = otrcRaw.at(i);
+        unordered_set<shared_ptr<FsmNode>> newNodeSet;
+
+        for (shared_ptr<FsmNode> n : nodeSet)
+        {
+            unordered_set<shared_ptr<FsmNode>> ns = n->afterAsSet(x, y);
+            newNodeSet.insert(ns.begin(), ns.end());
+        }
+        nodeSet = newNodeSet;
+    }
+    return nodeSet;
+}
+
 vector<shared_ptr<FsmNode>> FsmNode::after(const int x)
 {
     vector<shared_ptr<FsmNode> > lst;
@@ -221,6 +251,20 @@ unordered_set<shared_ptr<FsmNode>> FsmNode::afterAsSet(const int x)
     for (auto tr : transitions)
     {
         if (tr->getLabel()->getInput() == x)
+        {
+            lst.insert(tr->getTarget());
+        }
+    }
+    return lst;
+}
+
+unordered_set<shared_ptr<FsmNode>> FsmNode::afterAsSet(const int x, const int y)
+{
+    unordered_set<shared_ptr<FsmNode>> lst;
+
+    for (auto tr : transitions)
+    {
+        if (tr->getLabel()->getInput() == x && tr->getLabel()->getOutput() == y)
         {
             lst.insert(tr->getTarget());
         }

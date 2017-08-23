@@ -28,6 +28,7 @@ class FsmPresentationLayer;
 class OFSMTable;
 class IOListContainer;
 class TestSuite;
+class OutputTrace;
 
 enum Minimal
 {
@@ -332,6 +333,15 @@ public:
     IOListContainer getCharacterisationSet();
 
     /**
+     * Returns all outputs that may occur on <b>both</b> given states when applying the
+     * given input.
+     * @param q1 First state.
+     * @param q2 Second state.
+     * @param input The input that will be applied to both states.
+     * @return All outputs that may occur on <b>both</b> states with the given input.
+     */
+    std::vector<OutputTrace> getOutputIntersection(std::shared_ptr<FsmNode> q1, std::shared_ptr<FsmNode> q2, int input) const;
+    /**
      * Calculates for every state the r(1)-distinguishable states.
      * @return A map containing the r(1)-distinguishable states for every state.
      */
@@ -357,14 +367,6 @@ public:
      * in the member variable {@code transitions}.
      */
     void calcTransitions();
-    /**
-     * Gets all incoming transitions for a given node. Ensure to call
-     * {@code calcTransitions} before using this method.
-     * @param node  The given node.
-     * @return All incoming transitions for the given node.
-     */
-    std::vector<std::shared_ptr<FsmTransition>> getIncomingTransitions(const std::shared_ptr<FsmNode> node) const;
-
     void appendStateIdentificationSets(const std::shared_ptr<Tree> Wp2) const;
     
     /**

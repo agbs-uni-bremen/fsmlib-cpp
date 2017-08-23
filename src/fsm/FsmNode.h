@@ -68,7 +68,7 @@ public:
      * @param The given input.
      * @return All possible outputs for the given input.
      */
-    std::vector<int> getPossibleOutputs(const int input) const;
+    std::vector<OutputTrace> getPossibleOutputs(const int input) const;
 	int getId() const;
 	std::string getName() const;
 	bool hasBeenVisited() const;
@@ -90,6 +90,16 @@ public:
 	*/
 	std::unordered_set<std::shared_ptr<FsmNode>> after(const InputTrace & itrc);
 
+    /**
+    Return the set of FsmNode instances reachable from this node and with the given output
+    trace after having applied the input trace itrc
+    @param itrc Input Trace to be applied to the FSM, starting with this FsmNode
+    @param itrc Output Trace that has to be produced by the given input.
+    @return Set of FsmNode instances reachable from this node via
+    input trace itrc witht the given output trace {@code otrc}.
+    */
+    std::unordered_set<std::shared_ptr<FsmNode>> after(const InputTrace & itrc, const InputTrace & otrc);
+
 	/**
 	Return list of nodes that can be reached from this node
 	when applying input x
@@ -102,6 +112,7 @@ public:
 	*/
 	std::vector<std::shared_ptr<FsmNode>> after(const int x);
 	std::unordered_set<std::shared_ptr<FsmNode>> afterAsSet(const int x);
+    std::unordered_set<std::shared_ptr<FsmNode>> afterAsSet(const int x, const int y);
 	void setColor(const int color);
 	int getColor();
 	std::shared_ptr<DFSMTableRow> getDFSMTableRow(const int maxInput);

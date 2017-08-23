@@ -924,6 +924,23 @@ IOListContainer Fsm::getCharacterisationSet()
     return tcl;
 }
 
+vector<OutputTrace> Fsm::getOutputIntersection(shared_ptr<FsmNode> q1, shared_ptr<FsmNode> q2, int x) const
+{
+    vector<OutputTrace> possibleOutputs1 = q1->getPossibleOutputs(x);
+    vector<OutputTrace> possibleOutputs2 = q2->getPossibleOutputs(x);
+    vector<OutputTrace> intersection;
+    for (OutputTrace a : possibleOutputs1)
+    {
+        for (OutputTrace b : possibleOutputs2)
+        {
+            if (a == b) {
+                intersection.push_back(a);
+            }
+        }
+    }
+    return intersection;
+}
+
 map<shared_ptr<FsmNode>, vector<shared_ptr<FsmNode>>> Fsm::getROneDistinguishableStates()
 {
     minimise();
@@ -932,23 +949,16 @@ map<shared_ptr<FsmNode>, vector<shared_ptr<FsmNode>>> Fsm::getROneDistinguishabl
     {
         rOneDistinguishableStates.insert(pair<shared_ptr<FsmNode>, vector<shared_ptr<FsmNode>>>(nodes.at(i), {}));
     }
-    shared_ptr<OFSMTable> ofsmTable = ofsmTableLst.back();
     for (size_t i = 0; i < nodes.size(); ++i)
     {
         shared_ptr<FsmNode> q1 = nodes.at(i);
-        //rOneDistinguishableStates.at(q1->getId()) = {};
         for (size_t j = i + 1; j < nodes.size(); ++j)
         {
             shared_ptr<FsmNode> q2 = nodes.at(j);
 
             for (int x = 0; x <= maxInput; ++ x)
             {
-                vector<int> possibleOutputs1 = q1->getPossibleOutputs(x);
-                vector<int> possibleOutputs2 = q2->getPossibleOutputs(x);
-                vector<int> intersection;
-                set_intersection(possibleOutputs1.begin(),possibleOutputs1.end(),
-                                 possibleOutputs2.begin(),possibleOutputs2.end(),
-                                 back_inserter(intersection));
+                vector<OutputTrace> intersection = getOutputIntersection(q1, q2, x);
                 if (intersection.size() == 0)
                 {
                     rOneDistinguishableStates.at(q1).push_back(q2);
@@ -964,25 +974,49 @@ map<shared_ptr<FsmNode>, vector<shared_ptr<FsmNode>>> Fsm::getRDistinguishableSt
 {
     calcTransitions();
     map<shared_ptr<FsmNode>, vector<shared_ptr<FsmNode>>> rOneDistinguishableStates = getROneDistinguishableStates();
-    for (auto it = rOneDistinguishableStates.begin(); it != rOneDistinguishableStates.end(); ++it)
+    bool distuingishabilityChanged = true;
+    while (distuingishabilityChanged)
     {
-        shared_ptr<FsmNode> q1 = it->first;
-        cout << "Node " << q1->getId() << ":" << endl;
-        vector<shared_ptr<FsmNode>> dist = it->second;
-        resetColor();
-        for (auto node : dist)
+        distuingishabilityChanged = false;
+        for (auto it = rOneDistinguishableStates.begin(); it != rOneDistinguishableStates.end(); ++it)
         {
-            node->setColor(FsmNode::grey);
-        }
-        for (size_t i = 0; i < nodes.size(); ++i)
-        {
-            shared_ptr<FsmNode> q2 = nodes.at(i);
-            if (q2->getColor() != FsmNode::white)
+            shared_ptr<FsmNode> q1 = it->first;
+            vector<shared_ptr<FsmNode>> dist = it->second;
+
+            for (shared_ptr<FsmNode> q2 : nodes)
             {
-                cout << "\tNode " << q2->getId() << " is already distinguishable. Skipping." << endl;
-                continue;
+                if (q1 == q2 || find(dist.begin(), dist.end(), q2) != dist.end())
+                {
+                    continue;
+                }
+                for (int x = 0; x <= maxInput; ++ x)
+                {
+                    vector<OutputTrace> intersection = getOutputIntersection(q1, q2, x);
+                    bool isDistinguishable = true;
+                    for (OutputTrace inter : intersection)
+                    {
+                        int y = inter.get()[0];
+                        unordered_set<shared_ptr<FsmNode>> afterQ1 = q1->afterAsSet(x, y);
+                        unordered_set<shared_ptr<FsmNode>> afterQ2 = q2->afterAsSet(x, y);
+                        shared_ptr<FsmNode> afterNode1 = *afterQ1.begin();
+                        shared_ptr<FsmNode> afterNode2 = *afterQ2.begin();
+                        vector<shared_ptr<FsmNode>> distLookup = rOneDistinguishableStates.at(afterNode1);
+                        if (find(distLookup.begin(), distLookup.end(), afterNode2) == distLookup.end())
+                        {
+                            isDistinguishable = false;
+                            break;
+                        }
+                    }
+                    if (isDistinguishable)
+                    {
+                        rOneDistinguishableStates.at(q1).push_back(q2);
+                        rOneDistinguishableStates.at(q2).push_back(q1);
+                        distuingishabilityChanged = true;
+                        break;
+                    }
+                }
+
             }
-            auto trans = getIncomingTransitions(q1);
         }
     }
     return rOneDistinguishableStates;
@@ -996,18 +1030,6 @@ void Fsm::calcTransitions()
          auto nodeTransitions = node->getTransitions();
          transitions.insert(transitions.end(), nodeTransitions.begin(), nodeTransitions.end());
     }
-}
-
-vector<shared_ptr<FsmTransition>> Fsm::getIncomingTransitions(const shared_ptr<FsmNode> node) const
-{
-    vector<shared_ptr<FsmTransition>> result;
-    for (auto transition : transitions)
-    {
-        if (transition->getTarget()->getId() == node->getId()) {
-            result.push_back(transition);
-        }
-    }
-    return result;
 }
 
 void Fsm::calcStateIdentificationSets()
