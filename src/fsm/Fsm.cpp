@@ -945,10 +945,67 @@ map<shared_ptr<FsmNode>, vector<shared_ptr<FsmNode>>> Fsm::getROneDistinguishabl
 {
     minimise();
     map<shared_ptr<FsmNode>, vector<shared_ptr<FsmNode>>> rOneDistinguishableStates;
+    map<shared_ptr<FsmNode>, vector<shared_ptr<FsmNode>>> notROneDistinguishableStates;
+    map<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>, shared_ptr<OutputTree>> adaptiveIOSequences;
     for (size_t i = 0; i < nodes.size(); ++i)
     {
         rOneDistinguishableStates.insert(pair<shared_ptr<FsmNode>, vector<shared_ptr<FsmNode>>>(nodes.at(i), {}));
+        vector<shared_ptr<FsmNode>> notROneDist;
+        for (size_t j = i + 1; j < nodes.size(); ++j)
+        {
+            notROneDist.push_back(nodes.at(j));
+        }
+        notROneDistinguishableStates.insert(pair<shared_ptr<FsmNode>, vector<shared_ptr<FsmNode>>>(nodes.at(i), notROneDist));
     }
+
+    for (size_t k = 0; k < nodes.size(); ++k)
+    {
+        shared_ptr<FsmNode> q1 = nodes.at(k);
+        vector<shared_ptr<FsmNode>> notROneDist = notROneDistinguishableStates.at(nodes.at(k));
+        notROneDist.push_back(nodes.at(0));
+        for (size_t j = 0; j < notROneDist.size(); ++j)
+        {
+            shared_ptr<FsmNode> q2 = notROneDist.at(j);
+            for (int x = 0; x <= maxInput; ++ x)
+            {
+                InputTrace input = InputTrace(vector<int>({x}), presentationLayer);
+                vector<OutputTrace> intersection = getOutputIntersection(q1, q2, x);
+                if (intersection.size() == 0)
+                {
+                    vector<OutputTrace> q1Output = vector<OutputTrace>();
+                    vector<OutputTrace> q2Output = vector<OutputTrace>();
+                    q1->getPossibleOutputs(x, q1Output);
+                    q2->getPossibleOutputs(x, q2Output);
+                    shared_ptr<TreeNode> q1Root = make_shared<TreeNode>();
+                    shared_ptr<TreeNode> q2Root = make_shared<TreeNode>();
+
+                    for (OutputTrace trace : q1Output)
+                    {
+                        shared_ptr<TreeNode> target = make_shared<TreeNode>();
+                        shared_ptr<TreeEdge> edge = make_shared<TreeEdge>(trace.get()[0], target);
+                        q1Root->add(edge);
+                    }
+                    for (OutputTrace trace : q2Output)
+                    {
+                        shared_ptr<TreeNode> target = make_shared<TreeNode>();
+                        shared_ptr<TreeEdge> edge = make_shared<TreeEdge>(trace.get()[0], target);
+                        q2Root->add(edge);
+                    }
+
+                    shared_ptr<OutputTree> q1Tree = make_shared<OutputTree>(q1Root, input, presentationLayer);
+                    shared_ptr<OutputTree> q2Tree = make_shared<OutputTree>(q2Root, input, presentationLayer);
+                    adaptiveIOSequences.insert(make_pair(make_pair(q1, q2), q1Tree));
+                    adaptiveIOSequences.insert(make_pair(make_pair(q2, q1), q2Tree));
+
+                    // TODO Save vectors in notROneDistinguishableStates and rOneDistinguishableStates via pointers,
+                    // finish algorithm.
+
+                }
+            }
+        }
+    }
+
+    /*
     for (size_t i = 0; i < nodes.size(); ++i)
     {
         shared_ptr<FsmNode> q1 = nodes.at(i);
@@ -967,12 +1024,12 @@ map<shared_ptr<FsmNode>, vector<shared_ptr<FsmNode>>> Fsm::getROneDistinguishabl
             }
         }
     }
+    */
     return rOneDistinguishableStates;
 }
 
 map<shared_ptr<FsmNode>, vector<shared_ptr<FsmNode>>> Fsm::getRDistinguishableStates()
 {
-    calcTransitions();
     map<shared_ptr<FsmNode>, vector<shared_ptr<FsmNode>>> rOneDistinguishableStates = getROneDistinguishableStates();
     bool distuingishabilityChanged = true;
     while (distuingishabilityChanged)
@@ -1020,16 +1077,6 @@ map<shared_ptr<FsmNode>, vector<shared_ptr<FsmNode>>> Fsm::getRDistinguishableSt
         }
     }
     return rOneDistinguishableStates;
-}
-
-void Fsm::calcTransitions()
-{
-    transitions.clear();
-    for (auto node : nodes)
-    {
-         auto nodeTransitions = node->getTransitions();
-         transitions.insert(transitions.end(), nodeTransitions.begin(), nodeTransitions.end());
-    }
 }
 
 void Fsm::calcStateIdentificationSets()

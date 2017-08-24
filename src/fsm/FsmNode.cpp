@@ -106,6 +106,7 @@ shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> FsmNode::getPair() co
 
 vector<shared_ptr<FsmNode>> FsmNode::getPossibleOutputs(const int x, vector<OutputTrace> & outputs) const
 {
+    outputs = vector<OutputTrace>();
     vector<shared_ptr<FsmNode>> result;
     for (auto transition : transitions)
     {
@@ -550,6 +551,11 @@ InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
         }
     }
     return itrc;
+}
+
+InputTrace calcRDistinguishingSet(const shared_ptr<FsmNode> otherNode, const vector<shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput)
+{
+
 }
 
 bool FsmNode::isObservable() const

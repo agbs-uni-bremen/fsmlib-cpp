@@ -361,11 +361,6 @@ public:
     void calcStateIdentificationSets();
     void calcStateIdentificationSetsFast();
 
-    /**
-     * Collects all transitions from every node of this FSM and stores them
-     * in the member variable {@code transitions}.
-     */
-    void calcTransitions();
     void appendStateIdentificationSets(const std::shared_ptr<Tree> Wp2) const;
     
     /**

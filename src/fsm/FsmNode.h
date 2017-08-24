@@ -164,6 +164,7 @@ public:
 	@return Distinguishing trace as instance of InputTrace
 	*/
 	InputTrace calcDistinguishingTrace(const std::shared_ptr<FsmNode> otherNode, const std::vector<std::shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput);
+    InputTrace calcRDistinguishingSet(const std::shared_ptr<FsmNode> otherNode, const std::vector<std::shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput);
 	bool isObservable() const;
 
 	/**
