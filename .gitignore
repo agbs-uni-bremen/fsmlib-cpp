@@ -36,7 +36,6 @@ resources/fsbrtssafe.state
 Release.Linux/**
 resources/garage-door-controller-bug.csv
 resources/gdc.fsm
-resources/unreachable_gdc.fsm
 resources/pls-example/FSBRTS.csv
 resources/pls-example/FSBRTS.ods
 resources/pls-example/FSBRTSMUT.ods
