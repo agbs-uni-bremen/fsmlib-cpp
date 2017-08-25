@@ -717,23 +717,30 @@ int main()
 {
 	std::cout << "Dir " << getcwd() << endl;
     
-    shared_ptr<FsmPresentationLayer> pl =
+    shared_ptr<FsmPresentationLayer> pl1 =
     make_shared<FsmPresentationLayer>("../../../resources/adaptiveIn.txt",
             + "../../../resources/adaptiveOut.txt",
             + "../../../resources/adaptiveState.txt");
-    Fsm fsm("../../../resources/adaptive.fsm",pl,"adaptive");
-    fsm.toDot("../../../resources/adaptive");
+    Fsm fsm1("../../../resources/adaptive.fsm",pl1,"adaptive");
+    fsm1.toDot("../../../resources/adaptive");
+
+    shared_ptr<FsmPresentationLayer> pl2 =
+    make_shared<FsmPresentationLayer>("../../../resources/adaptive2In.txt",
+            + "../../../resources/adaptive2Out.txt",
+            + "../../../resources/adaptive2State.txt");
+    Fsm fsm2("../../../resources/adaptive2.fsm",pl2,"adaptive");
+    fsm1.toDot("../../../resources/adaptive2");
 	cout << endl << endl;
 
-	shared_ptr<Tree> detStateCover = fsm.getDeterministicStateCover();
+    shared_ptr<Tree> detStateCover = fsm2.getDeterministicStateCover();
 	shared_ptr<TreeNode> root = detStateCover->getRoot();
 	IOListContainer testCases = detStateCover->getDeterministicTestCases();
     cout << "Deterministic test cases:\n" << testCases << endl;
 	auto iOLists = testCases.getIOLists();
 
 
-    fsm.getRDistinguishableStates();
-    IOListContainer characterisationSet = fsm.getCharacterisationSet();
+    fsm2.getRDistinguishableStates();
+    IOListContainer characterisationSet = fsm2.getCharacterisationSet();
     cout << "characterisationSet:\n" << characterisationSet << endl;
 
 	cout << endl << endl;
