@@ -344,12 +344,12 @@ public:
      * Calculates for every state the r(1)-distinguishable states.
      * @return A map containing the r(1)-distinguishable states for every state.
      */
-    std::map<std::shared_ptr<FsmNode>, std::shared_ptr<std::vector<std::shared_ptr<FsmNode>>>> getROneDistinguishableStates();
+    void calcROneDistinguishableStates();
     /**
      * Calculates for every state the r-distinguishable states.
      * @return A map containing the r-distinguishable states for every state.
      */
-    std::map<std::shared_ptr<FsmNode>, std::shared_ptr<std::vector<std::shared_ptr<FsmNode>>>> getRDistinguishableStates();
+    void calcRDistinguishableStates();
     
     /**
      * Calculate the state identification sets. The sets are stored

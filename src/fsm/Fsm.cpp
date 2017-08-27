@@ -13,6 +13,7 @@
 #include "fsm/FsmTransition.h"
 #include "fsm/InputTrace.h"
 #include "fsm/OFSMTable.h"
+#include "fsm/RDistinguishability.h"
 #include "sets/HittingSet.h"
 #include "trees/TreeNode.h"
 #include "trees/OutputTree.h"
@@ -941,33 +942,25 @@ vector<OutputTrace> Fsm::getOutputIntersection(shared_ptr<FsmNode> q1, shared_pt
     return intersection;
 }
 
-map<shared_ptr<FsmNode>, shared_ptr<vector<shared_ptr<FsmNode>>>> Fsm::getROneDistinguishableStates()
+void Fsm::calcROneDistinguishableStates()
 {
     minimise();
-    map<shared_ptr<FsmNode>, shared_ptr<vector<shared_ptr<FsmNode>>>> rOneDistinguishableStates;
-    map<shared_ptr<FsmNode>, shared_ptr<vector<shared_ptr<FsmNode>>>> notROneDistinguishableStates;
-    map<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>, shared_ptr<OutputTree>> adaptiveIOSequences;
     for (size_t i = 0; i < nodes.size(); ++i)
     {
-        shared_ptr<vector<shared_ptr<FsmNode>>> emptyList = make_shared<vector<shared_ptr<FsmNode>>>();
-        rOneDistinguishableStates.insert(pair<shared_ptr<FsmNode>, shared_ptr<vector<shared_ptr<FsmNode>>>>(nodes.at(i), emptyList));
-        shared_ptr<vector<shared_ptr<FsmNode>>> notROneDist = make_shared<vector<shared_ptr<FsmNode>>>();
         for (size_t j = i + 1; j < nodes.size(); ++j)
         {
-            notROneDist->push_back(nodes.at(j));
+            nodes.at(i)->getRDistinguishability()->addNotDistinguishable(1, nodes.at(j));
         }
-        notROneDistinguishableStates.insert(pair<shared_ptr<FsmNode>, shared_ptr<vector<shared_ptr<FsmNode>>>>(nodes.at(i), notROneDist));
     }
+    nodes.at(nodes.size() - 1)->getRDistinguishability()->addNotDistinguishable(1);
 
     for (size_t k = 0; k < nodes.size(); ++k)
     {
         shared_ptr<FsmNode> q1 = nodes.at(k);
-        shared_ptr<vector<shared_ptr<FsmNode>>> notROneDist = notROneDistinguishableStates.at(nodes.at(k));
-        //for (size_t j = 0; j < notROneDist->size(); ++j)
-        auto it = notROneDist->begin();
-        while (it != notROneDist->end())
+        vector<shared_ptr<FsmNode>> notROneDist = q1->getRDistinguishability()->getNotRDistinguishableWith(1);
+
+        for (auto it = notROneDist.begin(); it != notROneDist.end(); ++it)
         {
-            bool foundSomething = true;
             shared_ptr<FsmNode> q2 = *it;
             for (int x = 0; x <= maxInput; ++ x)
             {
@@ -997,20 +990,16 @@ map<shared_ptr<FsmNode>, shared_ptr<vector<shared_ptr<FsmNode>>>> Fsm::getROneDi
 
                     shared_ptr<OutputTree> q1Tree = make_shared<OutputTree>(q1Root, input, presentationLayer);
                     shared_ptr<OutputTree> q2Tree = make_shared<OutputTree>(q2Root, input, presentationLayer);
-                    adaptiveIOSequences.insert(make_pair(make_pair(q1, q2), q1Tree));
-                    adaptiveIOSequences.insert(make_pair(make_pair(q2, q1), q2Tree));
+                    q1->getRDistinguishability()->addAdaptiveIOSequence(q2, q1Tree);
+                    q2->getRDistinguishability()->addAdaptiveIOSequence(q1, q2Tree);
 
-                    rOneDistinguishableStates.at(q1)->push_back(q2);
-                    rOneDistinguishableStates.at(q2)->push_back(q1);
+                    q1->getRDistinguishability()->addDistinguishable(1, q2);
+                    q2->getRDistinguishability()->addDistinguishable(1, q1);
 
-                    it = notROneDist->erase(it);
-                    foundSomething = false;
+                    q1->getRDistinguishability()->removeNotDistinguishable(1, q2);
                     cout << "Found" << endl;
                     break;
                 }
-            }
-            if (foundSomething) {
-                ++it;
             }
         }
     }
@@ -1020,27 +1009,57 @@ map<shared_ptr<FsmNode>, shared_ptr<vector<shared_ptr<FsmNode>>>> Fsm::getROneDi
         for (size_t j = 0; j < nodes.size(); ++j)
         {
             try {
+                OutputTree tree = nodes.at(i)->getRDistinguishability()->getAdaptiveIOSequence(nodes.at(j));
                 cout << "o(" << nodes.at(i)->getName() << "," << nodes.at(j)->getName() << ") = ";
-                cout << *adaptiveIOSequences.at(make_pair(nodes.at(i), nodes.at(j))) << endl;
+                cout << tree;
             } catch (std::out_of_range e) {
-                cout << "--" << endl;
+               // Do nothing.
             }
 
         }
 
     }
-
-    return rOneDistinguishableStates;
 }
 
-map<shared_ptr<FsmNode>, shared_ptr<vector<shared_ptr<FsmNode>>>> Fsm::getRDistinguishableStates()
+void Fsm::calcRDistinguishableStates()
 {
-    map<shared_ptr<FsmNode>, shared_ptr<vector<shared_ptr<FsmNode>>>> rOneDistinguishableStates = getROneDistinguishableStates();
+
+    calcROneDistinguishableStates();
+/*
+    size_t limit = nodes.size() * (nodes.size() - 1) / 2;
+    for (size_t l = 2; l < limit; ++l)
+    {
+        for (size_t k = 1; k < nodes.size(); ++k)
+        {
+            shared_ptr<FsmNode> q1 = nodes.at(k);
+            shared_ptr<vector<shared_ptr<FsmNode>>> notROneDist = notRDistinguishableStates.at(nodes.at(k));
+            auto it = notROneDist->begin();
+            while (it != notROneDist->end())
+            {
+                shared_ptr<FsmNode> q2 = *it;
+                for (int x = 0; x <= maxInput; ++ x)
+                {
+                    InputTrace input = InputTrace(vector<int>({x}), presentationLayer);
+                    vector<OutputTrace> intersection = getOutputIntersection(q1, q2, x);
+                    for (OutputTrace inter : intersection)
+                    {
+                        int y = inter.get()[0];
+                        unordered_set<shared_ptr<FsmNode>> afterQ1 = q1->afterAsSet(x, y);
+                        unordered_set<shared_ptr<FsmNode>> afterQ2 = q2->afterAsSet(x, y);
+                        shared_ptr<FsmNode> afterNode1 = *afterQ1.begin();
+                        shared_ptr<FsmNode> afterNode2 = *afterQ2.begin();
+                    }
+                }
+            }
+        }
+    }
+*/
+    /*
     bool distuingishabilityChanged = true;
     while (distuingishabilityChanged)
     {
         distuingishabilityChanged = false;
-        for (auto it = rOneDistinguishableStates.begin(); it != rOneDistinguishableStates.end(); ++it)
+        for (auto it = rDistinguishableStates.begin(); it != rDistinguishableStates.end(); ++it)
         {
             shared_ptr<FsmNode> q1 = it->first;
             shared_ptr<vector<shared_ptr<FsmNode>>> dist = it->second;
@@ -1062,7 +1081,7 @@ map<shared_ptr<FsmNode>, shared_ptr<vector<shared_ptr<FsmNode>>>> Fsm::getRDisti
                         unordered_set<shared_ptr<FsmNode>> afterQ2 = q2->afterAsSet(x, y);
                         shared_ptr<FsmNode> afterNode1 = *afterQ1.begin();
                         shared_ptr<FsmNode> afterNode2 = *afterQ2.begin();
-                        shared_ptr<vector<shared_ptr<FsmNode>>> distLookup = rOneDistinguishableStates.at(afterNode1);
+                        shared_ptr<vector<shared_ptr<FsmNode>>> distLookup = rDistinguishableStates.at(afterNode1);
                         if (find(distLookup->begin(), distLookup->end(), afterNode2) == distLookup->end())
                         {
                             isDistinguishable = false;
@@ -1071,8 +1090,8 @@ map<shared_ptr<FsmNode>, shared_ptr<vector<shared_ptr<FsmNode>>>> Fsm::getRDisti
                     }
                     if (isDistinguishable)
                     {
-                        rOneDistinguishableStates.at(q1)->push_back(q2);
-                        rOneDistinguishableStates.at(q2)->push_back(q1);
+                        rDistinguishableStates.at(q1)->push_back(q2);
+                        rDistinguishableStates.at(q2)->push_back(q1);
                         distuingishabilityChanged = true;
                         break;
                     }
@@ -1081,7 +1100,7 @@ map<shared_ptr<FsmNode>, shared_ptr<vector<shared_ptr<FsmNode>>>> Fsm::getRDisti
             }
         }
     }
-    return rOneDistinguishableStates;
+    */
 }
 
 void Fsm::calcStateIdentificationSets()

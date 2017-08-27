@@ -739,7 +739,7 @@ int main()
 	auto iOLists = testCases.getIOLists();
 
 
-    fsm2.getRDistinguishableStates();
+    fsm2.calcRDistinguishableStates();
     IOListContainer characterisationSet = fsm2.getCharacterisationSet();
     cout << "characterisationSet:\n" << characterisationSet << endl;
 

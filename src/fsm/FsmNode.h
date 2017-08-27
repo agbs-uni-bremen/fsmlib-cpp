@@ -26,6 +26,7 @@ class InputTrace;
 class OFSMTable;
 class PkTable;
 class DFSMTableRow;
+class RDistinguishability;
 
 class FsmNode : public std::enable_shared_from_this<FsmNode>
 {
@@ -37,6 +38,7 @@ private:
 	int color;
 	std::shared_ptr<FsmPresentationLayer> presentationLayer;
 	std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> derivedFromPair;
+    std::shared_ptr<RDistinguishability> rDistinguishability;
     
     bool isInitialNode;
     
@@ -74,6 +76,7 @@ public:
 	std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> getPair() const;
 	std::shared_ptr<FsmNode> apply(const int e, OutputTrace & o);
 	OutputTree apply(const InputTrace & itrc, bool markAsVisited = false);
+    std::shared_ptr<RDistinguishability> getRDistinguishability();
     /**
      *
      * @param

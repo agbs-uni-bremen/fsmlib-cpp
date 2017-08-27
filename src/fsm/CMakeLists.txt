@@ -36,6 +36,8 @@ set (FSM_FSM_SOURCES
 	PkTable.h
 	PkTableRow.cpp
 	PkTableRow.h
+        RDistinguishability.cpp
+        RDistinguishability.h
 	Trace.cpp
 	Trace.h
 	typedef.inc

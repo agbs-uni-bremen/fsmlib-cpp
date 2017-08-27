@@ -11,6 +11,7 @@
 #include "fsm/OFSMTable.h"
 #include "fsm/DFSMTableRow.h"
 #include "fsm/PkTable.h"
+#include "fsm/RDistinguishability.h"
 #include "trees/TreeEdge.h"
 #include "trees/TreeNode.h"
 #include "trees/OutputTree.h"
@@ -29,7 +30,7 @@ presentationLayer(presentationLayer),
 derivedFromPair(nullptr),
 isInitialNode(false)
 {
-    
+    rDistinguishability = make_shared<RDistinguishability>();
 }
 
 FsmNode::FsmNode(const int id, const string & name,
@@ -102,6 +103,11 @@ bool FsmNode::isDerivedFrom(const shared_ptr<pair<shared_ptr<FsmNode>, shared_pt
 shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> FsmNode::getPair() const
 {
     return derivedFromPair;
+}
+
+shared_ptr<RDistinguishability> FsmNode::getRDistinguishability()
+{
+    return rDistinguishability;
 }
 
 vector<shared_ptr<FsmNode>> FsmNode::getPossibleOutputs(const int x, vector<OutputTrace> & outputs) const
