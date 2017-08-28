@@ -7,12 +7,15 @@
 
 class FsmNode;
 class OutputTree;
+class FsmPresentationLayer;
 
 
 class RDistinguishability
 {
+private:
+    std::shared_ptr<FsmPresentationLayer> presentationLayer;
 public:
-    RDistinguishability();
+    RDistinguishability(const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 
 protected:
     std::map<size_t, std::vector<std::shared_ptr<FsmNode>>> rDistinguishableWith;

@@ -1010,6 +1010,10 @@ void Fsm::calcROneDistinguishableStates()
         {
             try {
                 OutputTree tree = nodes.at(i)->getRDistinguishability()->getAdaptiveIOSequence(nodes.at(j));
+                if (tree.getRoot()->isLeaf())
+                {
+                    continue;
+                }
                 cout << "o(" << nodes.at(i)->getName() << "," << nodes.at(j)->getName() << ") = ";
                 cout << tree;
             } catch (std::out_of_range e) {
@@ -1045,50 +1049,11 @@ void Fsm::calcRDistinguishableStates()
                 cout << "  q2 = " << q2->getName() << ":" << endl;
                 for (int x = 0; x <= maxInput; ++ x)
                 {
-                    InputTrace input = InputTrace(vector<int>({x}), presentationLayer);
                     vector<OutputTrace> intersection = getOutputIntersection(q1, q2, x);
-                    vector<OutputTrace> q1Outputs;
-                    vector<OutputTrace> q2Outputs;
-                    vector<OutputTrace> q1O = intersection;
-                    vector<OutputTrace> q2O = intersection;
-                    q1->getPossibleOutputs(x, q1Outputs);
-                    q2->getPossibleOutputs(x, q2Outputs);
 
-                    for (auto it = q1Outputs.begin(); it != q1Outputs.end(); ++it)
-                    {
-                        bool disjunct = true;
-                        for (OutputTrace inter : intersection)
-                        {
-                            if (*it == inter)
-                            {
-                                disjunct = false;
-                                break;
-                            }
-                        }
-                        if (disjunct)
-                        {
-                            q1O.push_back(*it);
-                        }
-                    }
+                    shared_ptr<TreeNode> q1Root = make_shared<TreeNode>();
+                    shared_ptr<TreeNode> q2Root = make_shared<TreeNode>();
 
-                    for (auto it = q2Outputs.begin(); it != q2Outputs.end(); ++it)
-                    {
-                        bool disjunct = true;
-                        for (OutputTrace inter : intersection)
-                        {
-                            if (*it == inter)
-                            {
-                                disjunct = false;
-                                break;
-                            }
-                        }
-                        if (disjunct)
-                        {
-                            q2O.push_back(*it);
-                        }
-                    }
-
-                    TreeNode root;
                     bool isDistinguishable = true;
                     for (OutputTrace inter : intersection)
                     {
@@ -1108,10 +1073,76 @@ void Fsm::calcRDistinguishableStates()
                             cout << "    x = " << presentationLayer->getInId(x) << ":\t"
                             << afterNode1->getName() << " != " << afterNode2->getName()
                             << " -> " << q1->getName() << " != " << q2->getName() << endl;
+
+                            //shared_ptr<TreeNode> target1 = make_shared<TreeNode>();
+                            OutputTree childTree1 = afterNode1->getRDistinguishability()->getAdaptiveIOSequence(afterNode2);
+                            cout << "childIO1: " << childTree1.getIOLists() << endl;
+                            shared_ptr<TreeNode> childNode1 = childTree1.getRoot();
+                            shared_ptr<TreeEdge> edge1 = make_shared<TreeEdge>(inter.get()[0], childNode1);
+                            q1Root->add(edge1);
+
+                            //shared_ptr<TreeNode> target2 = make_shared<TreeNode>();
+                            OutputTree childTree2 = afterNode2->getRDistinguishability()->getAdaptiveIOSequence(afterNode1);
+                            cout << "childIO2: " << childTree2.getIOLists() << endl;
+                            shared_ptr<TreeNode> childNode2 = childTree2.getRoot();
+                            shared_ptr<TreeEdge> edge2 = make_shared<TreeEdge>(inter.get()[0], childNode2);
+                            q2Root->add(edge2);
                         }
                     }
                     if (isDistinguishable)
                     {
+                        vector<OutputTrace> q1Outputs;
+                        vector<OutputTrace> q2Outputs;
+                        q1->getPossibleOutputs(x, q1Outputs);
+                        q2->getPossibleOutputs(x, q2Outputs);
+
+                        for (auto it = q1Outputs.begin(); it != q1Outputs.end(); ++it)
+                        {
+                            bool disjunct = true;
+                            for (OutputTrace inter : intersection)
+                            {
+                                if (*it == inter)
+                                {
+                                    disjunct = false;
+                                    break;
+                                }
+                            }
+                            if (disjunct)
+                            {
+                                shared_ptr<TreeNode> target = make_shared<TreeNode>();
+                                shared_ptr<TreeEdge> edge = make_shared<TreeEdge>(it->get()[0], target);
+                                q1Root->add(edge);
+                            }
+                        }
+
+                        for (auto it = q2Outputs.begin(); it != q2Outputs.end(); ++it)
+                        {
+                            bool disjunct = true;
+                            for (OutputTrace inter : intersection)
+                            {
+                                if (*it == inter)
+                                {
+                                    disjunct = false;
+                                    break;
+                                }
+                            }
+                            if (disjunct)
+                            {
+                                shared_ptr<TreeNode> target = make_shared<TreeNode>();
+                                shared_ptr<TreeEdge> edge = make_shared<TreeEdge>(it->get()[0], target);
+                                q2Root->add(edge);
+                            }
+                        }
+
+                        InputTrace input = InputTrace(vector<int>({x}), presentationLayer);
+                        shared_ptr<OutputTree> q1Tree = make_shared<OutputTree>(q1Root, input, presentationLayer);
+                        shared_ptr<OutputTree> q2Tree = make_shared<OutputTree>(q2Root, input, presentationLayer);
+
+                        // TODO Input traces have to be adaptive as well -> Create Class InputOutputTree.
+                        //cout << "    q1Tree: " << *q1Tree << endl;
+                        //cout << "    q2Tree: " << *q2Tree << endl;
+
+
                         q1->getRDistinguishability()->addDistinguishable(l, q2);
                         q2->getRDistinguishability()->addDistinguishable(l, q1);
                         q1->getRDistinguishability()->removeNotDistinguishable(l, q2);

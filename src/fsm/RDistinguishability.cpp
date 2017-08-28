@@ -4,7 +4,7 @@
 #include "trees/OutputTree.h"
 
 using namespace std;
-RDistinguishability::RDistinguishability()
+RDistinguishability::RDistinguishability(shared_ptr<FsmPresentationLayer> presentationLayer) : presentationLayer(presentationLayer)
 {
 
 }
@@ -103,7 +103,12 @@ bool RDistinguishability::isNotRDistinguishableWith(size_t i, std::shared_ptr<Fs
 
 OutputTree RDistinguishability::getAdaptiveIOSequence(shared_ptr<FsmNode> otherNode)
 {
-    return *adaptiveIOSequences.at(otherNode);
+    auto it = adaptiveIOSequences.find(otherNode);
+    if (it == adaptiveIOSequences.end())
+    {
+        return OutputTree(make_shared<TreeNode>(), InputTrace(presentationLayer), presentationLayer);
+    }
+    return *it->second;
 }
 
 void RDistinguishability::inheritDistinguishability(size_t i)

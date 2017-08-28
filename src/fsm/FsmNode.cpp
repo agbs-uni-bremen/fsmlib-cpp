@@ -30,7 +30,7 @@ presentationLayer(presentationLayer),
 derivedFromPair(nullptr),
 isInitialNode(false)
 {
-    rDistinguishability = make_shared<RDistinguishability>();
+    rDistinguishability = make_shared<RDistinguishability>(presentationLayer);
 }
 
 FsmNode::FsmNode(const int id, const string & name,

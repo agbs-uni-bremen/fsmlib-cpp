@@ -729,7 +729,7 @@ int main()
             + "../../../resources/adaptive2Out.txt",
             + "../../../resources/adaptive2State.txt");
     Fsm fsm2("../../../resources/adaptive2.fsm",pl2,"adaptive");
-    fsm1.toDot("../../../resources/adaptive2");
+    fsm2.toDot("../../../resources/adaptive2");
 	cout << endl << endl;
 
     shared_ptr<Tree> detStateCover = fsm2.getDeterministicStateCover();
