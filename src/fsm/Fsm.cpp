@@ -1025,22 +1025,71 @@ void Fsm::calcRDistinguishableStates()
 {
 
     calcROneDistinguishableStates();
-/*
+
     size_t limit = nodes.size() * (nodes.size() - 1) / 2;
     for (size_t l = 2; l < limit; ++l)
     {
+        cout << "################ l = " << l << " ################" << endl;
+        for (size_t k = 0; k < nodes.size(); ++k)
+        {
+            nodes.at(k)->getRDistinguishability()->inheritDistinguishability(l);
+        }
         for (size_t k = 1; k < nodes.size(); ++k)
         {
             shared_ptr<FsmNode> q1 = nodes.at(k);
-            shared_ptr<vector<shared_ptr<FsmNode>>> notROneDist = notRDistinguishableStates.at(nodes.at(k));
-            auto it = notROneDist->begin();
-            while (it != notROneDist->end())
+            cout << "q1 = " << q1->getName() << ":" << endl;
+            vector<shared_ptr<FsmNode>> notROneDist = q1->getRDistinguishability()->getNotRDistinguishableWith(l);
+            for (auto it = notROneDist.begin(); it != notROneDist.end(); ++it)
             {
                 shared_ptr<FsmNode> q2 = *it;
+                cout << "  q2 = " << q2->getName() << ":" << endl;
                 for (int x = 0; x <= maxInput; ++ x)
                 {
                     InputTrace input = InputTrace(vector<int>({x}), presentationLayer);
                     vector<OutputTrace> intersection = getOutputIntersection(q1, q2, x);
+                    vector<OutputTrace> q1Outputs;
+                    vector<OutputTrace> q2Outputs;
+                    vector<OutputTrace> q1O = intersection;
+                    vector<OutputTrace> q2O = intersection;
+                    q1->getPossibleOutputs(x, q1Outputs);
+                    q2->getPossibleOutputs(x, q2Outputs);
+
+                    for (auto it = q1Outputs.begin(); it != q1Outputs.end(); ++it)
+                    {
+                        bool disjunct = true;
+                        for (OutputTrace inter : intersection)
+                        {
+                            if (*it == inter)
+                            {
+                                disjunct = false;
+                                break;
+                            }
+                        }
+                        if (disjunct)
+                        {
+                            q1O.push_back(*it);
+                        }
+                    }
+
+                    for (auto it = q2Outputs.begin(); it != q2Outputs.end(); ++it)
+                    {
+                        bool disjunct = true;
+                        for (OutputTrace inter : intersection)
+                        {
+                            if (*it == inter)
+                            {
+                                disjunct = false;
+                                break;
+                            }
+                        }
+                        if (disjunct)
+                        {
+                            q2O.push_back(*it);
+                        }
+                    }
+
+                    TreeNode root;
+                    bool isDistinguishable = true;
                     for (OutputTrace inter : intersection)
                     {
                         int y = inter.get()[0];
@@ -1048,12 +1097,32 @@ void Fsm::calcRDistinguishableStates()
                         unordered_set<shared_ptr<FsmNode>> afterQ2 = q2->afterAsSet(x, y);
                         shared_ptr<FsmNode> afterNode1 = *afterQ1.begin();
                         shared_ptr<FsmNode> afterNode2 = *afterQ2.begin();
+                        if (afterNode1 == afterNode2 || !afterNode1->getRDistinguishability()->isRDistinguishableWith(l - 1, afterNode2))
+                        {
+
+                            isDistinguishable = false;
+                            break;
+                        }
+                        else
+                        {
+                            cout << "    x = " << presentationLayer->getInId(x) << ":\t"
+                            << afterNode1->getName() << " != " << afterNode2->getName()
+                            << " -> " << q1->getName() << " != " << q2->getName() << endl;
+                        }
+                    }
+                    if (isDistinguishable)
+                    {
+                        q1->getRDistinguishability()->addDistinguishable(l, q2);
+                        q2->getRDistinguishability()->addDistinguishable(l, q1);
+                        q1->getRDistinguishability()->removeNotDistinguishable(l, q2);
+                        q2->getRDistinguishability()->removeNotDistinguishable(l, q1);
+                        break;
                     }
                 }
             }
         }
     }
-*/
+
     /*
     bool distuingishabilityChanged = true;
     while (distuingishabilityChanged)

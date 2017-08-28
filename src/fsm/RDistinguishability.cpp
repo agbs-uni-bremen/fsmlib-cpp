@@ -75,7 +75,47 @@ vector<shared_ptr<FsmNode>> RDistinguishability::getNotRDistinguishableWith(size
     return notRDistinguishableWith.at(i);
 }
 
+bool RDistinguishability::isRDistinguishableWith(size_t i, std::shared_ptr<FsmNode> node)
+{
+    for (size_t j = i; i > 0; --i)
+    {
+        auto dist = rDistinguishableWith.at(j);
+        if ( std::find(dist.begin(), dist.end(), node) != dist.end() )
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool RDistinguishability::isNotRDistinguishableWith(size_t i, std::shared_ptr<FsmNode> node)
+{
+    for (size_t j = i; i > 0; --i)
+    {
+        auto notDist = notRDistinguishableWith.at(j);
+        if ( std::find(notDist.begin(), notDist.end(), node) != notDist.end() )
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 OutputTree RDistinguishability::getAdaptiveIOSequence(shared_ptr<FsmNode> otherNode)
 {
     return *adaptiveIOSequences.at(otherNode);
+}
+
+void RDistinguishability::inheritDistinguishability(size_t i)
+{
+    auto it = rDistinguishableWith.find(i - 1);
+    if (it != rDistinguishableWith.end())
+    {
+        rDistinguishableWith.insert(make_pair(i, it->second));
+    }
+    it = notRDistinguishableWith.find(i - 1);
+    if (it != notRDistinguishableWith.end())
+    {
+        notRDistinguishableWith.insert(make_pair(i, it->second));
+    }
 }
