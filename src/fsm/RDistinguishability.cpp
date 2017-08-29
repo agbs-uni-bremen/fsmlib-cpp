@@ -55,15 +55,7 @@ void RDistinguishability::addNotDistinguishable(size_t i)
 
 void RDistinguishability::addAdaptiveIOSequence(std::shared_ptr<FsmNode> otherNode, std::shared_ptr<InputOutputTree> tree)
 {
-    auto it = adaptiveIOSequences.find(otherNode);
-    if (it == adaptiveIOSequences.end())
-    {
-        adaptiveIOSequences.insert(pair<shared_ptr<FsmNode>, std::shared_ptr<InputOutputTree>>(otherNode, {tree}));
-    }
-    else
-    {
-
-    }
+    adaptiveIOSequences.insert(pair<shared_ptr<FsmNode>, std::shared_ptr<InputOutputTree>>(otherNode, tree));
 }
 
 vector<shared_ptr<FsmNode>> RDistinguishability::getRDistinguishableWith(size_t i)

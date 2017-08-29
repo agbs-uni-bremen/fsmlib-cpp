@@ -1055,6 +1055,8 @@ void Fsm::calcRDistinguishableStates()
 
                     shared_ptr<AdaptiveTreeNode> q1Root = make_shared<AdaptiveTreeNode>(x);
                     shared_ptr<AdaptiveTreeNode> q2Root = make_shared<AdaptiveTreeNode>(x);
+                    vector<shared_ptr<TreeEdge>> q1Edges;
+                    vector<shared_ptr<TreeEdge>> q2Edges;
 
                     bool isDistinguishable = true;
                     for (OutputTrace inter : intersection)
@@ -1080,19 +1082,28 @@ void Fsm::calcRDistinguishableStates()
                             InputOutputTree childTree1 = afterNode1->getRDistinguishability()->getAdaptiveIOSequence(afterNode2);
                             cout << "      childIO1(" << afterNode1->getName() << "," << afterNode2->getName() << "): " << childTree1 << endl;
                             shared_ptr<AdaptiveTreeNode> childNode1 = static_pointer_cast<AdaptiveTreeNode>(childTree1.getRoot());
-                            shared_ptr<TreeEdge> edge1 = make_shared<TreeEdge>(inter.get()[0], childNode1);
-                            q1Root->add(edge1);
+                            shared_ptr<TreeEdge> edge1 = make_shared<TreeEdge>(y, childNode1);
+                            q1Edges.push_back(edge1);
 
                             //shared_ptr<TreeNode> target2 = make_shared<TreeNode>();
                             InputOutputTree childTree2 = afterNode2->getRDistinguishability()->getAdaptiveIOSequence(afterNode1);
                             cout << "      childIO2(" << afterNode2->getName() << "," << afterNode1->getName() << "): " << childTree2 << endl;
                             shared_ptr<AdaptiveTreeNode> childNode2 = static_pointer_cast<AdaptiveTreeNode>(childTree2.getRoot());
-                            shared_ptr<TreeEdge> edge2 = make_shared<TreeEdge>(inter.get()[0], childNode2);
-                            q2Root->add(edge2);
+                            shared_ptr<TreeEdge> edge2 = make_shared<TreeEdge>(y, childNode2);
+                            q2Edges.push_back(edge2);
                         }
                     }
                     if (isDistinguishable)
+                        //TODO Fix tree pointers. When adding subtrees to new trees, those subtrees break.
                     {
+                        for (shared_ptr<TreeEdge> edge : q1Edges)
+                        {
+                            q1Root->add(edge);
+                        }
+                        for (shared_ptr<TreeEdge> edge : q2Edges)
+                        {
+                            q2Root->add(edge);
+                        }
                         vector<OutputTrace> q1Outputs;
                         vector<OutputTrace> q2Outputs;
                         q1->getPossibleOutputs(x, q1Outputs);
@@ -1140,9 +1151,11 @@ void Fsm::calcRDistinguishableStates()
                         shared_ptr<InputOutputTree> q1Tree = make_shared<InputOutputTree>(q1Root, presentationLayer);
                         shared_ptr<InputOutputTree> q2Tree = make_shared<InputOutputTree>(q2Root, presentationLayer);
 
-                        // TODO Fix concatenation of subtrees.
                         cout << "    q1Tree: " << *q1Tree << endl;
                         cout << "    q2Tree: " << *q2Tree << endl;
+
+                        q1->getRDistinguishability()->addAdaptiveIOSequence(q2, q1Tree);
+                        q2->getRDistinguishability()->addAdaptiveIOSequence(q1, q2Tree);
 
 
                         q1->getRDistinguishability()->addDistinguishable(l, q2);
