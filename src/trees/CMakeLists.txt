@@ -1,4 +1,8 @@
 set (FSM_TREES_SOURCES
+        AdaptiveTreeNode.cpp
+        AdaptiveTreeNode.h
+        InputOutputTree.cpp
+        InputOutputTree.h
 	IOListContainer.cpp
 	IOListContainer.h
 	OutputTree.cpp
