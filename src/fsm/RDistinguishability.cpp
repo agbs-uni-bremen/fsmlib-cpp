@@ -1,7 +1,8 @@
 #include <utility>
 
 #include "RDistinguishability.h"
-#include "trees/OutputTree.h"
+#include "trees/InputOutputTree.h"
+#include "trees/AdaptiveTreeNode.h"
 
 using namespace std;
 RDistinguishability::RDistinguishability(shared_ptr<FsmPresentationLayer> presentationLayer) : presentationLayer(presentationLayer)
@@ -52,12 +53,12 @@ void RDistinguishability::addNotDistinguishable(size_t i)
     notRDistinguishableWith.insert(pair<size_t, std::vector<std::shared_ptr<FsmNode>>>(i, {}));
 }
 
-void RDistinguishability::addAdaptiveIOSequence(std::shared_ptr<FsmNode> otherNode, std::shared_ptr<OutputTree> tree)
+void RDistinguishability::addAdaptiveIOSequence(std::shared_ptr<FsmNode> otherNode, std::shared_ptr<InputOutputTree> tree)
 {
     auto it = adaptiveIOSequences.find(otherNode);
     if (it == adaptiveIOSequences.end())
     {
-        adaptiveIOSequences.insert(pair<shared_ptr<FsmNode>, std::shared_ptr<OutputTree>>(otherNode, {tree}));
+        adaptiveIOSequences.insert(pair<shared_ptr<FsmNode>, std::shared_ptr<InputOutputTree>>(otherNode, {tree}));
     }
     else
     {
@@ -101,12 +102,12 @@ bool RDistinguishability::isNotRDistinguishableWith(size_t i, std::shared_ptr<Fs
     return false;
 }
 
-OutputTree RDistinguishability::getAdaptiveIOSequence(shared_ptr<FsmNode> otherNode)
+InputOutputTree RDistinguishability::getAdaptiveIOSequence(shared_ptr<FsmNode> otherNode)
 {
     auto it = adaptiveIOSequences.find(otherNode);
     if (it == adaptiveIOSequences.end())
     {
-        return OutputTree(make_shared<TreeNode>(), InputTrace(presentationLayer), presentationLayer);
+        return InputOutputTree(make_shared<AdaptiveTreeNode>(), presentationLayer);
     }
     return *it->second;
 }

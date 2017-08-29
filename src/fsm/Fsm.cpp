@@ -20,6 +20,8 @@
 #include "trees/Tree.h"
 #include "trees/IOListContainer.h"
 #include "trees/TestSuite.h"
+#include "trees/InputOutputTree.h"
+#include "trees/AdaptiveTreeNode.h"
 
 
 using namespace std;
@@ -972,24 +974,24 @@ void Fsm::calcROneDistinguishableStates()
                     vector<OutputTrace> q2Output = vector<OutputTrace>();
                     q1->getPossibleOutputs(x, q1Output);
                     q2->getPossibleOutputs(x, q2Output);
-                    shared_ptr<TreeNode> q1Root = make_shared<TreeNode>();
-                    shared_ptr<TreeNode> q2Root = make_shared<TreeNode>();
+                    shared_ptr<AdaptiveTreeNode> q1Root = make_shared<AdaptiveTreeNode>(x);
+                    shared_ptr<AdaptiveTreeNode> q2Root = make_shared<AdaptiveTreeNode>(x);
 
                     for (OutputTrace trace : q1Output)
                     {
-                        shared_ptr<TreeNode> target = make_shared<TreeNode>();
+                        shared_ptr<AdaptiveTreeNode> target = make_shared<AdaptiveTreeNode>();
                         shared_ptr<TreeEdge> edge = make_shared<TreeEdge>(trace.get()[0], target);
                         q1Root->add(edge);
                     }
                     for (OutputTrace trace : q2Output)
                     {
-                        shared_ptr<TreeNode> target = make_shared<TreeNode>();
+                        shared_ptr<AdaptiveTreeNode> target = make_shared<AdaptiveTreeNode>();
                         shared_ptr<TreeEdge> edge = make_shared<TreeEdge>(trace.get()[0], target);
                         q2Root->add(edge);
                     }
 
-                    shared_ptr<OutputTree> q1Tree = make_shared<OutputTree>(q1Root, input, presentationLayer);
-                    shared_ptr<OutputTree> q2Tree = make_shared<OutputTree>(q2Root, input, presentationLayer);
+                    shared_ptr<InputOutputTree> q1Tree = make_shared<InputOutputTree>(q1Root, presentationLayer);
+                    shared_ptr<InputOutputTree> q2Tree = make_shared<InputOutputTree>(q2Root, presentationLayer);
                     q1->getRDistinguishability()->addAdaptiveIOSequence(q2, q1Tree);
                     q2->getRDistinguishability()->addAdaptiveIOSequence(q1, q2Tree);
 
@@ -1009,7 +1011,7 @@ void Fsm::calcROneDistinguishableStates()
         for (size_t j = 0; j < nodes.size(); ++j)
         {
             try {
-                OutputTree tree = nodes.at(i)->getRDistinguishability()->getAdaptiveIOSequence(nodes.at(j));
+                InputOutputTree tree = nodes.at(i)->getRDistinguishability()->getAdaptiveIOSequence(nodes.at(j));
                 if (tree.getRoot()->isLeaf())
                 {
                     continue;
@@ -1051,8 +1053,8 @@ void Fsm::calcRDistinguishableStates()
                 {
                     vector<OutputTrace> intersection = getOutputIntersection(q1, q2, x);
 
-                    shared_ptr<TreeNode> q1Root = make_shared<TreeNode>();
-                    shared_ptr<TreeNode> q2Root = make_shared<TreeNode>();
+                    shared_ptr<AdaptiveTreeNode> q1Root = make_shared<AdaptiveTreeNode>(x);
+                    shared_ptr<AdaptiveTreeNode> q2Root = make_shared<AdaptiveTreeNode>(x);
 
                     bool isDistinguishable = true;
                     for (OutputTrace inter : intersection)
@@ -1075,16 +1077,16 @@ void Fsm::calcRDistinguishableStates()
                             << " -> " << q1->getName() << " != " << q2->getName() << endl;
 
                             //shared_ptr<TreeNode> target1 = make_shared<TreeNode>();
-                            OutputTree childTree1 = afterNode1->getRDistinguishability()->getAdaptiveIOSequence(afterNode2);
-                            cout << "childIO1: " << childTree1.getIOLists() << endl;
-                            shared_ptr<TreeNode> childNode1 = childTree1.getRoot();
+                            InputOutputTree childTree1 = afterNode1->getRDistinguishability()->getAdaptiveIOSequence(afterNode2);
+                            cout << "      childIO1(" << afterNode1->getName() << "," << afterNode2->getName() << "): " << childTree1 << endl;
+                            shared_ptr<AdaptiveTreeNode> childNode1 = static_pointer_cast<AdaptiveTreeNode>(childTree1.getRoot());
                             shared_ptr<TreeEdge> edge1 = make_shared<TreeEdge>(inter.get()[0], childNode1);
                             q1Root->add(edge1);
 
                             //shared_ptr<TreeNode> target2 = make_shared<TreeNode>();
-                            OutputTree childTree2 = afterNode2->getRDistinguishability()->getAdaptiveIOSequence(afterNode1);
-                            cout << "childIO2: " << childTree2.getIOLists() << endl;
-                            shared_ptr<TreeNode> childNode2 = childTree2.getRoot();
+                            InputOutputTree childTree2 = afterNode2->getRDistinguishability()->getAdaptiveIOSequence(afterNode1);
+                            cout << "      childIO2(" << afterNode2->getName() << "," << afterNode1->getName() << "): " << childTree2 << endl;
+                            shared_ptr<AdaptiveTreeNode> childNode2 = static_pointer_cast<AdaptiveTreeNode>(childTree2.getRoot());
                             shared_ptr<TreeEdge> edge2 = make_shared<TreeEdge>(inter.get()[0], childNode2);
                             q2Root->add(edge2);
                         }
@@ -1109,7 +1111,7 @@ void Fsm::calcRDistinguishableStates()
                             }
                             if (disjunct)
                             {
-                                shared_ptr<TreeNode> target = make_shared<TreeNode>();
+                                shared_ptr<AdaptiveTreeNode> target = make_shared<AdaptiveTreeNode>();
                                 shared_ptr<TreeEdge> edge = make_shared<TreeEdge>(it->get()[0], target);
                                 q1Root->add(edge);
                             }
@@ -1128,19 +1130,19 @@ void Fsm::calcRDistinguishableStates()
                             }
                             if (disjunct)
                             {
-                                shared_ptr<TreeNode> target = make_shared<TreeNode>();
+                                shared_ptr<AdaptiveTreeNode> target = make_shared<AdaptiveTreeNode>();
                                 shared_ptr<TreeEdge> edge = make_shared<TreeEdge>(it->get()[0], target);
                                 q2Root->add(edge);
                             }
                         }
 
-                        InputTrace input = InputTrace(vector<int>({x}), presentationLayer);
-                        shared_ptr<OutputTree> q1Tree = make_shared<OutputTree>(q1Root, input, presentationLayer);
-                        shared_ptr<OutputTree> q2Tree = make_shared<OutputTree>(q2Root, input, presentationLayer);
+                        //InputTrace input = InputTrace(vector<int>({x}), presentationLayer);
+                        shared_ptr<InputOutputTree> q1Tree = make_shared<InputOutputTree>(q1Root, presentationLayer);
+                        shared_ptr<InputOutputTree> q2Tree = make_shared<InputOutputTree>(q2Root, presentationLayer);
 
-                        // TODO Input traces have to be adaptive as well -> Create Class InputOutputTree.
-                        //cout << "    q1Tree: " << *q1Tree << endl;
-                        //cout << "    q2Tree: " << *q2Tree << endl;
+                        // TODO Fix concatenation of subtrees.
+                        cout << "    q1Tree: " << *q1Tree << endl;
+                        cout << "    q2Tree: " << *q2Tree << endl;
 
 
                         q1->getRDistinguishability()->addDistinguishable(l, q2);
