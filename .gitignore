@@ -36,3 +36,5 @@ resources/fsbrtssafe.in
 resources/fsbrtssafe.out
 resources/fsbrtssafe.state
 Release.Linux/**
+
+src/CMakeLists.txt.user
