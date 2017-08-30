@@ -12,6 +12,16 @@ TreeEdge::TreeEdge(const int io, const std::shared_ptr<TreeNode> target)
 
 }
 
+TreeEdge::TreeEdge(std::shared_ptr<TreeEdge const> other)
+{
+    if (other->target != nullptr)
+    {
+        target = std::shared_ptr<TreeNode>(other->target->clone());
+    }
+    io = other->io;
+
+}
+
 int TreeEdge::getIO() const
 {
 	return io;
@@ -20,4 +30,9 @@ int TreeEdge::getIO() const
 std::shared_ptr<TreeNode> TreeEdge::getTarget() const
 {
 	return target;
+}
+
+TreeEdge* TreeEdge::clone() const
+{
+    return new TreeEdge( *this );
 }

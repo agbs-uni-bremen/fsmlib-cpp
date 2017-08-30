@@ -7,10 +7,11 @@
 #define FSM_TREES_TREEEDGE_H_
 
 #include <memory>
+#include "cloneable/ICloneable.h"
 
 class TreeNode;
 
-class TreeEdge
+class TreeEdge: public ICloneable
 {
 private:
 	/**
@@ -22,6 +23,8 @@ private:
 	The target of this tree edge
 	*/
 	std::shared_ptr<TreeNode> target;
+protected:
+    TreeEdge(std::shared_ptr<TreeEdge const> other);
 public:
 	/**
 	Create a new tree edge
@@ -41,5 +44,7 @@ public:
 	@return The target of this tree edge
 	*/
 	std::shared_ptr<TreeNode> getTarget() const;
+
+    virtual TreeEdge* clone() const;
 };
 #endif //FSM_TREES_TREEEDGE_H_

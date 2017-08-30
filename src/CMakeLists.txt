@@ -56,6 +56,7 @@ add_subdirectory (harness)
 add_subdirectory (example)
 add_subdirectory (generator)
 add_subdirectory (checker)
+add_subdirectory (cloneable)
 
 if(gui)
 	add_subdirectory (window)

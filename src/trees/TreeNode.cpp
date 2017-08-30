@@ -11,6 +11,17 @@ TreeNode::TreeNode()
 
 }
 
+TreeNode::TreeNode(std::shared_ptr<TreeNode> other)
+{
+    for (auto child: *other->children)
+    {
+        std::shared_ptr<TreeEdge> childCopy = std::shared_ptr<TreeEdge>(child->clone());
+        childCopy->getTarget()->setParent(shared_from_this());
+        children->push_back(childCopy);
+    }
+    deleted = other->deleted;
+}
+
 void TreeNode::setParent(const std::weak_ptr<TreeNode> pparent)
 {
 	parent = pparent;
@@ -329,7 +340,10 @@ void TreeNode::calcSize(size_t& theSize) {
     
 }
 
-
+TreeNode* TreeNode::clone() const
+{
+    return new TreeNode( *this );
+}
 
 
 

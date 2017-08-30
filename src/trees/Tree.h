@@ -15,8 +15,9 @@
 #include "trees/IOListContainer.h"
 #include "trees/TreeEdge.h"
 #include "trees/TreeNode.h"
+#include "cloneable/ICloneable.h"
 
-class Tree
+class Tree: public ICloneable
 {
 protected:
 	/**
@@ -126,6 +127,8 @@ public:
     
     /** Return number of nodes in the tree */
     size_t size();
+
+    virtual Tree* clone() const;
     
 };
 #endif //FSM_TREES_TREE_H_

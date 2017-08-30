@@ -12,10 +12,12 @@
 
 #include "trees/IOListContainer.h"
 #include "trees/TreeEdge.h"
+#include "cloneable/ICloneable.h"
 
-class TreeNode : public std::enable_shared_from_this<TreeNode>
+class TreeNode : public std::enable_shared_from_this<TreeNode>, public ICloneable
 {
 protected:
+    TreeNode(std::shared_ptr<TreeNode> other);
 	/**
 	The parent of this node
 	*/
@@ -175,6 +177,7 @@ public:
     
     void calcSize(size_t& theSize);
     
+    virtual TreeNode* clone() const;
     
 };
 #endif //FSM_TREES_TREENODE_H_
