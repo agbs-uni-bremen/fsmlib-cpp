@@ -41,6 +41,18 @@ Tree::Tree(const std::shared_ptr<TreeNode> root, const std::shared_ptr<FsmPresen
 
 }
 
+Tree::Tree(const Tree* other): presentationLayer(other->presentationLayer)
+{
+    if (other->root != nullptr)
+    {
+        root = other->root->Clone();
+    }
+    if (other->leaves.size() > 0)
+    {
+        calcLeaves();
+    }
+}
+
 std::vector<std::shared_ptr<TreeNode>> Tree::getLeaves()
 {
 	calcLeaves();
@@ -150,10 +162,12 @@ size_t Tree::size() {
     return theSize;
 }
 
+Tree* Tree::clone() const
+{
+    return new Tree( this );
+}
 
-
-
-
-
-
-
+std::shared_ptr<Tree> Tree::Clone() const
+{
+    return std::shared_ptr<Tree>(clone());
+}

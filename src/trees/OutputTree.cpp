@@ -18,7 +18,13 @@ void OutputTree::printChildrenOutput(ostream & out, const shared_ptr<TreeNode> t
 }
 
 OutputTree::OutputTree(const shared_ptr<TreeNode> root, const InputTrace & inputTrace, const shared_ptr<FsmPresentationLayer> presentationLayer)
-	: Tree(root, presentationLayer), inputTrace(inputTrace)
+    : Tree(root, presentationLayer), inputTrace(inputTrace)
+{
+
+}
+
+OutputTree::OutputTree(const OutputTree* other):
+    Tree(other), inputTrace(other->inputTrace.get(), other->presentationLayer)
 {
 
 }
@@ -105,6 +111,16 @@ void OutputTree::toIOTrace(vector<IOTrace> &iotrVec) {
         
     }
     
+}
+
+OutputTree* OutputTree::clone() const
+{
+    return new OutputTree( this );
+}
+
+std::shared_ptr<OutputTree> OutputTree::Clone() const
+{
+    return std::shared_ptr<OutputTree>(clone());
 }
 
 ostream & operator<<(ostream & out, OutputTree & ot)

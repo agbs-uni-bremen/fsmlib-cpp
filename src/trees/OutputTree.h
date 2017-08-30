@@ -30,6 +30,8 @@ private:
 	@return The standard output stream used, to allow user to cascade <<
 	*/
 	void printChildrenOutput(std::ostream & out, const std::shared_ptr<TreeNode> top, const std::shared_ptr<int> idNode, const int idInput) const;//TODO NOT PRESENT IN JAVA
+protected:
+    OutputTree(const OutputTree* other);
 public:
 	/**
 	Create a new OutputTree
@@ -66,6 +68,9 @@ public:
 
     
     void toIOTrace(std::vector<IOTrace>& iotrVec);
+
+    virtual OutputTree* clone() const;
+    std::shared_ptr<OutputTree> Clone() const;
 
 	/**
 	Output the OutputTree to a standard output stream

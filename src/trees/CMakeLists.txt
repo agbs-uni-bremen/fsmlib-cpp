@@ -18,3 +18,5 @@ set (FSM_TREES_SOURCES
 )
 
 add_library (fsm-trees ${FSM_TREES_SOURCES})
+
+target_link_libraries(fsm-trees fsm-cloneable)

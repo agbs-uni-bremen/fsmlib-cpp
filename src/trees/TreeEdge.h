@@ -24,7 +24,7 @@ private:
 	*/
 	std::shared_ptr<TreeNode> target;
 protected:
-    TreeEdge(std::shared_ptr<TreeEdge const> other);
+    TreeEdge(const TreeEdge* other);
 public:
 	/**
 	Create a new tree edge
@@ -46,5 +46,6 @@ public:
 	std::shared_ptr<TreeNode> getTarget() const;
 
     virtual TreeEdge* clone() const;
+    std::shared_ptr<TreeEdge> Clone() const;
 };
 #endif //FSM_TREES_TREEEDGE_H_

@@ -20,6 +20,7 @@
 class Tree: public ICloneable
 {
 protected:
+    Tree(const Tree* other);
 	/**
 	The root of this tree
 	*/
@@ -129,6 +130,7 @@ public:
     size_t size();
 
     virtual Tree* clone() const;
+    std::shared_ptr<Tree> Clone() const;
     
 };
 #endif //FSM_TREES_TREE_H_

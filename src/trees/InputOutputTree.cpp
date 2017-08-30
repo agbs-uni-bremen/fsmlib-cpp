@@ -8,6 +8,22 @@ InputOutputTree::InputOutputTree(const std::shared_ptr<AdaptiveTreeNode> root, c
 {
 }
 
+InputOutputTree::InputOutputTree(const InputOutputTree* other):
+    OutputTree(other)
+{
+
+}
+
+InputOutputTree* InputOutputTree::clone() const
+{
+    return new InputOutputTree( this );
+}
+
+std::shared_ptr<InputOutputTree> InputOutputTree::Clone() const
+{
+    return std::shared_ptr<InputOutputTree>(clone());
+}
+
 ostream & operator<<(ostream & out, InputOutputTree & ot)
 {
     ot.calcLeaves();

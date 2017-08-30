@@ -13,6 +13,12 @@ AdaptiveTreeNode::AdaptiveTreeNode()
 
 }
 
+AdaptiveTreeNode::AdaptiveTreeNode(const AdaptiveTreeNode* other):
+    TreeNode (other)
+{
+    input = other->input;
+}
+
 int AdaptiveTreeNode::getInput()
 {
     return input;
@@ -36,3 +42,12 @@ std::vector<int> AdaptiveTreeNode::getInputPath()
     return path;
 }
 
+AdaptiveTreeNode* AdaptiveTreeNode::clone() const
+{
+    return new AdaptiveTreeNode( this );
+}
+
+std::shared_ptr<AdaptiveTreeNode> AdaptiveTreeNode::Clone() const
+{
+    return std::shared_ptr<AdaptiveTreeNode>(clone());
+}

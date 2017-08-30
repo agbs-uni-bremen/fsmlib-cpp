@@ -17,7 +17,7 @@
 class TreeNode : public std::enable_shared_from_this<TreeNode>, public ICloneable
 {
 protected:
-    TreeNode(std::shared_ptr<TreeNode> other);
+    TreeNode(const TreeNode* other);
 	/**
 	The parent of this node
 	*/
@@ -45,7 +45,7 @@ public:
 	Set the node to this one parent
 	@param pparent The node which will be the parent of this one
 	*/
-	void setParent(const std::weak_ptr<TreeNode> parent);
+    void setParent(const std::weak_ptr<TreeNode> parent);
 
 	/**
 	Getter for the parent
@@ -178,6 +178,7 @@ public:
     void calcSize(size_t& theSize);
     
     virtual TreeNode* clone() const;
+    std::shared_ptr<TreeNode> Clone() const;
     
 };
 #endif //FSM_TREES_TREENODE_H_

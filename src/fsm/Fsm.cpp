@@ -1079,22 +1079,25 @@ void Fsm::calcRDistinguishableStates()
                             << " -> " << q1->getName() << " != " << q2->getName() << endl;
 
                             //shared_ptr<TreeNode> target1 = make_shared<TreeNode>();
-                            InputOutputTree childTree1 = afterNode1->getRDistinguishability()->getAdaptiveIOSequence(afterNode2);
-                            cout << "      childIO1(" << afterNode1->getName() << "," << afterNode2->getName() << "): " << childTree1 << endl;
-                            shared_ptr<AdaptiveTreeNode> childNode1 = static_pointer_cast<AdaptiveTreeNode>(childTree1.getRoot());
+                            shared_ptr<InputOutputTree> childTree1 = afterNode1->getRDistinguishability()->getAdaptiveIOSequence(afterNode2).Clone();
+                            // TODO Put breakpoint at following line and debug.
+                            cout << "      childIO1(" << afterNode1->getName() << "," << afterNode2->getName() << "): " << *childTree1 << endl;
+                            shared_ptr<AdaptiveTreeNode> childNode1 = static_pointer_cast<AdaptiveTreeNode>(childTree1->getRoot());
                             shared_ptr<TreeEdge> edge1 = make_shared<TreeEdge>(y, childNode1);
                             q1Edges.push_back(edge1);
 
                             //shared_ptr<TreeNode> target2 = make_shared<TreeNode>();
-                            InputOutputTree childTree2 = afterNode2->getRDistinguishability()->getAdaptiveIOSequence(afterNode1);
-                            cout << "      childIO2(" << afterNode2->getName() << "," << afterNode1->getName() << "): " << childTree2 << endl;
-                            shared_ptr<AdaptiveTreeNode> childNode2 = static_pointer_cast<AdaptiveTreeNode>(childTree2.getRoot());
+                            shared_ptr<InputOutputTree> childTree2 = afterNode2->getRDistinguishability()->getAdaptiveIOSequence(afterNode1).Clone();
+                            cout << "      childIO2(" << afterNode2->getName() << "," << afterNode1->getName() << "): " << *childTree2 << endl;
+                            shared_ptr<AdaptiveTreeNode> childNode2 = static_pointer_cast<AdaptiveTreeNode>(childTree2->getRoot());
                             shared_ptr<TreeEdge> edge2 = make_shared<TreeEdge>(y, childNode2);
                             q2Edges.push_back(edge2);
                         }
                     }
                     if (isDistinguishable)
-                        //TODO Fix tree pointers. When adding subtrees to new trees, those subtrees break.
+                        // TODO Fix
+                        //      can't find linker symbol for virtual table for `TreeEdge' value
+                        // messages when debugging.
                     {
                         for (shared_ptr<TreeEdge> edge : q1Edges)
                         {
