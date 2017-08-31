@@ -1040,7 +1040,7 @@ void Fsm::calcRDistinguishableStates()
         {
             nodes.at(k)->getRDistinguishability()->inheritDistinguishability(l);
         }
-        for (size_t k = 1; k < nodes.size(); ++k)
+        for (size_t k = 0; k < nodes.size(); ++k)
         {
             shared_ptr<FsmNode> q1 = nodes.at(k);
             cout << "q1 = " << q1->getName() << ":" << endl;
@@ -1080,7 +1080,10 @@ void Fsm::calcRDistinguishableStates()
 
                             //shared_ptr<TreeNode> target1 = make_shared<TreeNode>();
                             shared_ptr<InputOutputTree> childTree1 = afterNode1->getRDistinguishability()->getAdaptiveIOSequence(afterNode2).Clone();
-                            // TODO Put breakpoint at following line and debug.
+                            // TODO Fix
+                            //      can't find linker symbol for virtual table for `TreeEdge' value
+                            // messages when debugging.
+                            // Put breakpoint at following line and debug.
                             cout << "      childIO1(" << afterNode1->getName() << "," << afterNode2->getName() << "): " << *childTree1 << endl;
                             shared_ptr<AdaptiveTreeNode> childNode1 = static_pointer_cast<AdaptiveTreeNode>(childTree1->getRoot());
                             shared_ptr<TreeEdge> edge1 = make_shared<TreeEdge>(y, childNode1);
@@ -1095,9 +1098,6 @@ void Fsm::calcRDistinguishableStates()
                         }
                     }
                     if (isDistinguishable)
-                        // TODO Fix
-                        //      can't find linker symbol for virtual table for `TreeEdge' value
-                        // messages when debugging.
                     {
                         for (shared_ptr<TreeEdge> edge : q1Edges)
                         {

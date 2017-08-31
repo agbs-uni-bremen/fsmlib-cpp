@@ -72,24 +72,16 @@ bool RDistinguishability::isRDistinguishableWith(size_t i, std::shared_ptr<FsmNo
 {
     for (size_t j = i; i > 0; --i)
     {
-        auto dist = rDistinguishableWith.at(j);
-        if ( std::find(dist.begin(), dist.end(), node) != dist.end() )
-        {
-            return true;
+        try {
+            auto dist = rDistinguishableWith.at(j);
+            if ( std::find(dist.begin(), dist.end(), node) != dist.end() )
+            {
+                return true;
+            }
+        } catch (out_of_range e) {
+            continue;
         }
-    }
-    return false;
-}
 
-bool RDistinguishability::isNotRDistinguishableWith(size_t i, std::shared_ptr<FsmNode> node)
-{
-    for (size_t j = i; i > 0; --i)
-    {
-        auto notDist = notRDistinguishableWith.at(j);
-        if ( std::find(notDist.begin(), notDist.end(), node) != notDist.end() )
-        {
-            return true;
-        }
     }
     return false;
 }

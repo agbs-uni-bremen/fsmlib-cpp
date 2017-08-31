@@ -30,7 +30,6 @@ public:
     std::vector<std::shared_ptr<FsmNode>> getRDistinguishableWith(size_t i);
     std::vector<std::shared_ptr<FsmNode>> getNotRDistinguishableWith(size_t i);
     bool isRDistinguishableWith(size_t i, std::shared_ptr<FsmNode> node);
-    bool isNotRDistinguishableWith(size_t i, std::shared_ptr<FsmNode> node);
     InputOutputTree getAdaptiveIOSequence(std::shared_ptr<FsmNode> otherNode);
     void inheritDistinguishability(size_t i);
 
