@@ -7,7 +7,7 @@
 using namespace std;
 RDistinguishability::RDistinguishability(shared_ptr<FsmPresentationLayer> presentationLayer) : presentationLayer(presentationLayer)
 {
-
+    hBeenCalculated = false;
 }
 
 vector<shared_ptr<FsmNode>>::iterator RDistinguishability::removeNotDistinguishable(size_t i, std::shared_ptr<FsmNode> node)
@@ -68,6 +68,11 @@ vector<shared_ptr<FsmNode>> RDistinguishability::getNotRDistinguishableWith(size
     return notRDistinguishableWith.at(i);
 }
 
+bool RDistinguishability::isNotRDistinguishable()
+{
+    return notRDistinguishableWith.end()->second.size() == 0;
+}
+
 bool RDistinguishability::isRDistinguishableWith(size_t i, std::shared_ptr<FsmNode> node)
 {
     for (size_t j = i; i > 0; --i)
@@ -108,4 +113,14 @@ void RDistinguishability::inheritDistinguishability(size_t i)
     {
         notRDistinguishableWith.insert(make_pair(i, it->second));
     }
+}
+
+bool RDistinguishability::hasBeenCalculated() const
+{
+    return hBeenCalculated;
+}
+
+void RDistinguishability::hasBeenCalculated(bool hasBeen)
+{
+    hBeenCalculated = hasBeen;
 }

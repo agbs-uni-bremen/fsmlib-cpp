@@ -946,7 +946,6 @@ vector<OutputTrace> Fsm::getOutputIntersection(shared_ptr<FsmNode> q1, shared_pt
 
 void Fsm::calcROneDistinguishableStates()
 {
-    minimise();
     for (size_t i = 0; i < nodes.size(); ++i)
     {
         for (size_t j = i + 1; j < nodes.size(); ++j)
@@ -1171,6 +1170,20 @@ void Fsm::calcRDistinguishableStates()
             }
         }
     }
+    for (auto node : nodes)
+    {
+        if (node->getRDistinguishability()->isNotRDistinguishable())
+        {
+            minimal = False;
+            return;
+        }
+    }
+    for (auto node : nodes)
+    {
+        node->getRDistinguishability()->hasBeenCalculated(true);
+    }
+    minimal = True;
+    return;
 }
 
 void Fsm::calcStateIdentificationSets()

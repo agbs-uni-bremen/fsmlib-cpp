@@ -559,7 +559,7 @@ InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
     return itrc;
 }
 
-InputTrace calcRDistinguishingSet(const shared_ptr<FsmNode> otherNode, const vector<shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput)
+InputTrace FsmNode::calcRDistinguishingSet(const shared_ptr<FsmNode> otherNode, const vector<shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput)
 {
 
 }
