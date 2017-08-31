@@ -1171,54 +1171,6 @@ void Fsm::calcRDistinguishableStates()
             }
         }
     }
-
-    /*
-    bool distuingishabilityChanged = true;
-    while (distuingishabilityChanged)
-    {
-        distuingishabilityChanged = false;
-        for (auto it = rDistinguishableStates.begin(); it != rDistinguishableStates.end(); ++it)
-        {
-            shared_ptr<FsmNode> q1 = it->first;
-            shared_ptr<vector<shared_ptr<FsmNode>>> dist = it->second;
-
-            for (shared_ptr<FsmNode> q2 : nodes)
-            {
-                if (q1 == q2 || find(dist->begin(), dist->end(), q2) != dist->end())
-                {
-                    continue;
-                }
-                for (int x = 0; x <= maxInput; ++ x)
-                {
-                    vector<OutputTrace> intersection = getOutputIntersection(q1, q2, x);
-                    bool isDistinguishable = true;
-                    for (OutputTrace inter : intersection)
-                    {
-                        int y = inter.get()[0];
-                        unordered_set<shared_ptr<FsmNode>> afterQ1 = q1->afterAsSet(x, y);
-                        unordered_set<shared_ptr<FsmNode>> afterQ2 = q2->afterAsSet(x, y);
-                        shared_ptr<FsmNode> afterNode1 = *afterQ1.begin();
-                        shared_ptr<FsmNode> afterNode2 = *afterQ2.begin();
-                        shared_ptr<vector<shared_ptr<FsmNode>>> distLookup = rDistinguishableStates.at(afterNode1);
-                        if (find(distLookup->begin(), distLookup->end(), afterNode2) == distLookup->end())
-                        {
-                            isDistinguishable = false;
-                            break;
-                        }
-                    }
-                    if (isDistinguishable)
-                    {
-                        rDistinguishableStates.at(q1)->push_back(q2);
-                        rDistinguishableStates.at(q2)->push_back(q1);
-                        distuingishabilityChanged = true;
-                        break;
-                    }
-                }
-
-            }
-        }
-    }
-    */
 }
 
 void Fsm::calcStateIdentificationSets()
