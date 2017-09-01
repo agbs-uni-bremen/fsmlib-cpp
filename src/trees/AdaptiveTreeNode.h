@@ -18,6 +18,9 @@ public:
 
     virtual AdaptiveTreeNode* clone() const;
     std::shared_ptr<AdaptiveTreeNode> Clone() const;
+
+    friend bool operator==(AdaptiveTreeNode const & node1, AdaptiveTreeNode const & node2);
+    friend bool operator!=(AdaptiveTreeNode const & node1, AdaptiveTreeNode const & node2);
 };
 
 #endif // ADAPTIVETREENODE_H

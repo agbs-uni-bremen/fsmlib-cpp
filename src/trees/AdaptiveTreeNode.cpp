@@ -51,3 +51,50 @@ std::shared_ptr<AdaptiveTreeNode> AdaptiveTreeNode::Clone() const
 {
     return std::shared_ptr<AdaptiveTreeNode>(clone());
 }
+
+bool operator==(AdaptiveTreeNode const & node1, AdaptiveTreeNode const & node2)
+{
+    if (node1.input != node2.input)
+    {
+        return false;
+    }
+    if (node1.parent.expired()  || node2.parent.expired())
+    {
+        if (!node1.parent.expired() || !node2.parent.expired())
+        {
+            return false;
+        }
+    }
+    if (*node1.parent.lock() != *node2.parent.lock())
+    {
+        return false;
+    }
+    if (node1.children == nullptr || node2.children == nullptr)
+    {
+        if (node1.children != nullptr || node2.children != nullptr)
+        {
+            return false;
+        }
+    }
+    if (node1.children->size() != node2.children->size())
+    {
+        return false;
+    }
+    for (size_t i = 0; i < node1.children->size(); ++i)
+    {
+        if (*node1.children->at(i) != *node2.children->at(i))
+        {
+            return false;
+        }
+    }
+    if (node1.deleted != node2.deleted)
+    {
+        return false;
+    }
+    return true;
+}
+
+bool operator!=(AdaptiveTreeNode const & node1, AdaptiveTreeNode const & node2)
+{
+    return !(node1 == node2);
+}

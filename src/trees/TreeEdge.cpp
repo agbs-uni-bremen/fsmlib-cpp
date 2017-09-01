@@ -41,3 +41,13 @@ std::shared_ptr<TreeEdge> TreeEdge::Clone() const
 {
     return std::shared_ptr<TreeEdge>(clone());
 }
+
+bool operator==(TreeEdge const & edge1, TreeEdge const & edge2)
+{
+    return edge1.io == edge2.io && *edge1.target == *edge2.target;
+}
+
+bool operator!=(TreeEdge const & edge1, TreeEdge const & edge2)
+{
+    return !(edge1 == edge2);
+}

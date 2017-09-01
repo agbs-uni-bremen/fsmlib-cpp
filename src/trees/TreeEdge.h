@@ -47,5 +47,8 @@ public:
 
     virtual TreeEdge* clone() const;
     std::shared_ptr<TreeEdge> Clone() const;
+
+    friend bool operator==(TreeEdge const & edge1, TreeEdge const & edge2);
+    friend bool operator!=(TreeEdge const & edge1, TreeEdge const & edge2);
 };
 #endif //FSM_TREES_TREEEDGE_H_

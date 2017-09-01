@@ -133,6 +133,7 @@ public:
 	@return true if they are the same, false otherwise
 	*/
 	friend bool operator==(TreeNode const & treeNode1, TreeNode const & treeNode2);
+    friend bool operator!=(TreeNode const & treeNode1, TreeNode const & treeNode2);
 
 	/**
 	Conditional addition of a new edge emanating from this node:

@@ -227,6 +227,11 @@ bool operator==(TreeNode const & treeNode1, TreeNode const & treeNode2)
 	return true;
 }
 
+bool operator!=(TreeNode const & treeNode1, TreeNode const & treeNode2)
+{
+    return !(treeNode1 == treeNode2);
+}
+
 std::shared_ptr<TreeNode> TreeNode::add(const int x)
 {
 	for (std::shared_ptr<TreeEdge> e : *getChildren())
