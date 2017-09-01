@@ -29,6 +29,7 @@ class OFSMTable;
 class IOListContainer;
 class TestSuite;
 class OutputTrace;
+class InputOutputTree;
 
 enum Minimal
 {
@@ -350,6 +351,10 @@ public:
      * @return A map containing the r-distinguishable states for every state.
      */
     void calcRDistinguishableStates();
+
+    std::vector<std::shared_ptr<InputOutputTree>> getRStateCharacterisationSet(std::shared_ptr<FsmNode> node) const;
+
+    std::vector<std::shared_ptr<InputOutputTree>> getRCharacterisationSet() const;
     
     /**
      * Calculate the state identification sets. The sets are stored

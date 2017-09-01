@@ -742,7 +742,7 @@ int main()
     fsm2.calcRDistinguishableStates();
     IOListContainer characterisationSet = fsm2.getCharacterisationSet();
     cout << "characterisationSet:\n" << characterisationSet << endl;
-
+    fsm2.getRCharacterisationSet();
 	cout << endl << endl;
 
 

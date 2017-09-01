@@ -91,14 +91,14 @@ bool RDistinguishability::isRDistinguishableWith(size_t i, std::shared_ptr<FsmNo
     return false;
 }
 
-InputOutputTree RDistinguishability::getAdaptiveIOSequence(shared_ptr<FsmNode> otherNode)
+shared_ptr<InputOutputTree> RDistinguishability::getAdaptiveIOSequence(shared_ptr<FsmNode> otherNode)
 {
     auto it = adaptiveIOSequences.find(otherNode);
     if (it == adaptiveIOSequences.end())
     {
-        return InputOutputTree(make_shared<AdaptiveTreeNode>(), presentationLayer);
+        return make_shared<InputOutputTree>(make_shared<AdaptiveTreeNode>(), presentationLayer);
     }
-    return *it->second;
+    return it->second->Clone();
 }
 
 void RDistinguishability::inheritDistinguishability(size_t i)

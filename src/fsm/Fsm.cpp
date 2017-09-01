@@ -1010,13 +1010,13 @@ void Fsm::calcROneDistinguishableStates()
         for (size_t j = 0; j < nodes.size(); ++j)
         {
             try {
-                InputOutputTree tree = nodes.at(i)->getRDistinguishability()->getAdaptiveIOSequence(nodes.at(j));
-                if (tree.getRoot()->isLeaf())
+                shared_ptr<InputOutputTree> tree = nodes.at(i)->getRDistinguishability()->getAdaptiveIOSequence(nodes.at(j));
+                if (tree->getRoot()->isLeaf())
                 {
                     continue;
                 }
                 cout << "o(" << nodes.at(i)->getName() << "," << nodes.at(j)->getName() << ") = ";
-                cout << tree;
+                cout << *tree;
             } catch (std::out_of_range e) {
                // Do nothing.
             }
@@ -1078,7 +1078,7 @@ void Fsm::calcRDistinguishableStates()
                             << " -> " << q1->getName() << " != " << q2->getName() << endl;
 
                             //shared_ptr<TreeNode> target1 = make_shared<TreeNode>();
-                            shared_ptr<InputOutputTree> childTree1 = afterNode1->getRDistinguishability()->getAdaptiveIOSequence(afterNode2).Clone();
+                            shared_ptr<InputOutputTree> childTree1 = afterNode1->getRDistinguishability()->getAdaptiveIOSequence(afterNode2);
                             // TODO Fix
                             //      can't find linker symbol for virtual table for `TreeEdge' value
                             // messages when debugging.
@@ -1089,7 +1089,7 @@ void Fsm::calcRDistinguishableStates()
                             q1Edges.push_back(edge1);
 
                             //shared_ptr<TreeNode> target2 = make_shared<TreeNode>();
-                            shared_ptr<InputOutputTree> childTree2 = afterNode2->getRDistinguishability()->getAdaptiveIOSequence(afterNode1).Clone();
+                            shared_ptr<InputOutputTree> childTree2 = afterNode2->getRDistinguishability()->getAdaptiveIOSequence(afterNode1);
                             cout << "      childIO2(" << afterNode2->getName() << "," << afterNode1->getName() << "): " << *childTree2 << endl;
                             shared_ptr<AdaptiveTreeNode> childNode2 = static_pointer_cast<AdaptiveTreeNode>(childTree2->getRoot());
                             shared_ptr<TreeEdge> edge2 = make_shared<TreeEdge>(y, childNode2);
@@ -1184,6 +1184,44 @@ void Fsm::calcRDistinguishableStates()
     }
     minimal = True;
     return;
+}
+
+vector<shared_ptr<InputOutputTree>> Fsm::getRStateCharacterisationSet(shared_ptr<FsmNode> node) const
+{
+    if (node->getRDistinguishability()->hasBeenCalculated())
+    {
+        cout << "r-characterisation setes haven't been calculated yet." << endl;
+        exit(EXIT_FAILURE);
+    }
+    vector<shared_ptr<InputOutputTree>> result;
+    cout << "r-state characterisation set for " << node->getName() << ":\n";
+    for (shared_ptr<FsmNode> n : nodes)
+    {
+        if (n == node)
+        {
+            continue;
+        }
+        if (n->getRDistinguishability()->hasBeenCalculated())
+        {
+            cout << "r-characterisation setes haven't been calculated yet." << endl;
+            exit(EXIT_FAILURE);
+        }
+        cout << "o(" << node->getName() << "," << n->getName() << "): " << *node->getRDistinguishability()->getAdaptiveIOSequence(n) << "\n";
+        result.push_back(node->getRDistinguishability()->getAdaptiveIOSequence(n));
+    }
+    return result;
+}
+
+vector<shared_ptr<InputOutputTree>> Fsm::getRCharacterisationSet() const
+{
+    vector<shared_ptr<InputOutputTree>> result;
+    for (shared_ptr<FsmNode> n : nodes)
+    {
+        vector<shared_ptr<InputOutputTree>> set = getRStateCharacterisationSet(n);
+        result.reserve(result.size() + set.size());
+        result.insert(result.end(), set.begin(), set.end());
+    }
+    return result;
 }
 
 void Fsm::calcStateIdentificationSets()
