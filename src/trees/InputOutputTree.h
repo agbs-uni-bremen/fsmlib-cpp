@@ -17,6 +17,9 @@ public:
 
     virtual InputOutputTree* clone() const;
 
+    IOListContainer getInputLists();
+    IOListContainer getOutputLists();
+
     std::shared_ptr<InputOutputTree> Clone() const;
 
     friend std::ostream & operator<<(std::ostream & out, InputOutputTree & ot);

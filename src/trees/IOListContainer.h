@@ -43,6 +43,8 @@ private:
      * the successor list otherwise.
      */
     std::vector<int> nextLst(const int maxInput, const std::vector<int>& lst) const;
+
+    void removeRealPrefixes(const Trace & trc);
 public:
     /**
      * Create a new IOListContainer (test cases)
@@ -86,6 +88,8 @@ public:
      * @param trc
      */
     void addUnique(const Trace & trc);
+
+    void addUniqueRemovePrefixes(const Trace & trc);
 
     /**
      * Getter for the size of the IOListContainer

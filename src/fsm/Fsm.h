@@ -30,6 +30,7 @@ class IOListContainer;
 class TestSuite;
 class OutputTrace;
 class InputOutputTree;
+class IOTrace;
 
 enum Minimal
 {
@@ -352,9 +353,9 @@ public:
      */
     void calcRDistinguishableStates();
 
-    std::vector<std::shared_ptr<InputOutputTree>> getRStateCharacterisationSet(std::shared_ptr<FsmNode> node) const;
+    IOListContainer getRStateCharacterisationSet(std::shared_ptr<FsmNode> node) const;
 
-    std::vector<std::shared_ptr<InputOutputTree>> getRCharacterisationSet() const;
+    IOListContainer getRCharacterisationSet() const;
     
     /**
      * Calculate the state identification sets. The sets are stored

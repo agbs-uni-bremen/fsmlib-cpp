@@ -15,6 +15,7 @@ public:
     AdaptiveTreeNode();
     int getInput();
     std::vector<int> getInputPath();
+    std::vector<int> getOutputPath();
 
     virtual AdaptiveTreeNode* clone() const;
     std::shared_ptr<AdaptiveTreeNode> Clone() const;

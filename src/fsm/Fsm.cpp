@@ -1186,14 +1186,14 @@ void Fsm::calcRDistinguishableStates()
     return;
 }
 
-vector<shared_ptr<InputOutputTree>> Fsm::getRStateCharacterisationSet(shared_ptr<FsmNode> node) const
+IOListContainer Fsm::getRStateCharacterisationSet(shared_ptr<FsmNode> node) const
 {
     if (node->getRDistinguishability()->hasBeenCalculated())
     {
         cout << "r-characterisation setes haven't been calculated yet." << endl;
         exit(EXIT_FAILURE);
     }
-    vector<shared_ptr<InputOutputTree>> result;
+    IOListContainer result = IOListContainer(presentationLayer);
     cout << "r-state characterisation set for " << node->getName() << ":\n";
     for (shared_ptr<FsmNode> n : nodes)
     {
@@ -1206,25 +1206,33 @@ vector<shared_ptr<InputOutputTree>> Fsm::getRStateCharacterisationSet(shared_ptr
             cout << "r-characterisation setes haven't been calculated yet." << endl;
             exit(EXIT_FAILURE);
         }
-        auto sequence = node->getRDistinguishability()->getAdaptiveIOSequence(n);
+        shared_ptr<InputOutputTree> sequence = node->getRDistinguishability()->getAdaptiveIOSequence(n);
         if (!sequence->isEmpty())
         {
-            cout << "o(" << node->getName() << "," << n->getName() << "): " << *sequence << "\n";
-            result.push_back(node->getRDistinguishability()->getAdaptiveIOSequence(n));
-        }
+            IOListContainer container = sequence->getInputLists();
+            auto set = container.getIOLists();
 
+            cout << "o(" << node->getName() << "," << n->getName() << "): " << container << "\n";
+            for (auto trace : *set)
+            {
+                result.addUniqueRemovePrefixes(Trace(trace, presentationLayer));
+            }
+        }
     }
     return result;
 }
 
-vector<shared_ptr<InputOutputTree>> Fsm::getRCharacterisationSet() const
+IOListContainer Fsm::getRCharacterisationSet() const
 {
-    vector<shared_ptr<InputOutputTree>> result;
+    IOListContainer result = IOListContainer(presentationLayer);
     for (shared_ptr<FsmNode> n : nodes)
     {
-        vector<shared_ptr<InputOutputTree>> set = getRStateCharacterisationSet(n);
-        result.reserve(result.size() + set.size());
-        result.insert(result.end(), set.begin(), set.end());
+        IOListContainer container = getRStateCharacterisationSet(n);
+        auto set = container.getIOLists();
+        for (auto t : *set)
+        {
+            result.addUniqueRemovePrefixes(Trace(t, presentationLayer));
+        }
     }
     return result;
 }

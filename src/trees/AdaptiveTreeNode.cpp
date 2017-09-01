@@ -42,6 +42,23 @@ std::vector<int> AdaptiveTreeNode::getInputPath()
     return path;
 }
 
+std::vector<int> AdaptiveTreeNode::getOutputPath()
+{
+    vector<int> path;
+
+    shared_ptr<AdaptiveTreeNode> m = static_pointer_cast<AdaptiveTreeNode>(shared_from_this());
+    shared_ptr<AdaptiveTreeNode> n = static_pointer_cast<AdaptiveTreeNode>(parent.lock());
+
+    while (n != nullptr)
+    {
+        path.insert(path.begin(), n->getIO(m));
+        m = n;
+        n = static_pointer_cast<AdaptiveTreeNode>(n->getParent().lock());
+    }
+
+    return path;
+}
+
 AdaptiveTreeNode* AdaptiveTreeNode::clone() const
 {
     return new AdaptiveTreeNode( this );

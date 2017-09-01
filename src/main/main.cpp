@@ -716,33 +716,47 @@ std::string getcwd() {
 int main()
 {
 	std::cout << "Dir " << getcwd() << endl;
-    
-    shared_ptr<FsmPresentationLayer> pl1 =
-    make_shared<FsmPresentationLayer>("../../../resources/adaptiveIn.txt",
-            + "../../../resources/adaptiveOut.txt",
-            + "../../../resources/adaptiveState.txt");
-    Fsm fsm1("../../../resources/adaptive.fsm",pl1,"adaptive");
-    fsm1.toDot("../../../resources/adaptive");
+    int x = 1;
+    if (x == 1)
+    {
 
-    shared_ptr<FsmPresentationLayer> pl2 =
-    make_shared<FsmPresentationLayer>("../../../resources/adaptive2In.txt",
-            + "../../../resources/adaptive2Out.txt",
-            + "../../../resources/adaptive2State.txt");
-    Fsm fsm2("../../../resources/adaptive2.fsm",pl2,"adaptive");
-    fsm2.toDot("../../../resources/adaptive2");
-	cout << endl << endl;
+        shared_ptr<FsmPresentationLayer> pl1 =
+        make_shared<FsmPresentationLayer>("../../../resources/adaptiveIn.txt",
+                + "../../../resources/adaptiveOut.txt",
+                + "../../../resources/adaptiveState.txt");
+        Fsm fsm1("../../../resources/adaptive.fsm",pl1,"adaptive");
+        fsm1.toDot("../../../resources/adaptive");
+        fsm1.calcRDistinguishableStates();
+        IOListContainer characterisationSet = fsm1.getCharacterisationSet();
+        cout << "characterisationSet:\n" << characterisationSet << endl;
+        fsm1.getRCharacterisationSet();
+        IOListContainer rCharacterisationSet = fsm1.getRCharacterisationSet();
+        cout << "rCharacterisationSet:\n" << rCharacterisationSet << endl;
+    }
+    else if (x == 2)
+    {
 
-    shared_ptr<Tree> detStateCover = fsm2.getDeterministicStateCover();
-	shared_ptr<TreeNode> root = detStateCover->getRoot();
-	IOListContainer testCases = detStateCover->getDeterministicTestCases();
-    cout << "Deterministic test cases:\n" << testCases << endl;
-	auto iOLists = testCases.getIOLists();
+        shared_ptr<FsmPresentationLayer> pl2 =
+        make_shared<FsmPresentationLayer>("../../../resources/adaptive2In.txt",
+                + "../../../resources/adaptive2Out.txt",
+                + "../../../resources/adaptive2State.txt");
+        Fsm fsm2("../../../resources/adaptive2.fsm",pl2,"adaptive");
+        fsm2.toDot("../../../resources/adaptive2");
+        cout << endl << endl;
+
+        shared_ptr<Tree> detStateCover = fsm2.getDeterministicStateCover();
+        shared_ptr<TreeNode> root = detStateCover->getRoot();
+        IOListContainer testCases = detStateCover->getDeterministicTestCases();
+        cout << "Deterministic test cases:\n" << testCases << endl;
+        auto iOLists = testCases.getIOLists();
 
 
-    fsm2.calcRDistinguishableStates();
-    IOListContainer characterisationSet = fsm2.getCharacterisationSet();
-    cout << "characterisationSet:\n" << characterisationSet << endl;
-    fsm2.getRCharacterisationSet();
+        fsm2.calcRDistinguishableStates();
+        IOListContainer characterisationSet = fsm2.getCharacterisationSet();
+        cout << "characterisationSet:\n" << characterisationSet << endl;
+        IOListContainer rCharacterisationSet = fsm2.getRCharacterisationSet();
+        cout << "rCharacterisationSet:\n" << rCharacterisationSet << endl;
+    }
 	cout << endl << endl;
 
 

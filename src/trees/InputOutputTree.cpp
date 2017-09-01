@@ -19,6 +19,34 @@ bool InputOutputTree::isEmpty() const
     return root == nullptr || root->isLeaf();
 }
 
+IOListContainer InputOutputTree::getInputLists()
+{
+    std::shared_ptr<std::vector<std::vector<int>>> ioll = std::make_shared<std::vector<std::vector<int>>>();
+    calcLeaves();
+
+    for (std::shared_ptr<TreeNode> n : leaves)
+    {
+        std::shared_ptr<AdaptiveTreeNode> an = static_pointer_cast<AdaptiveTreeNode>(n);
+        ioll->push_back(an->getInputPath());
+    }
+
+    return IOListContainer(ioll, presentationLayer);
+}
+
+IOListContainer InputOutputTree::getOutputLists()
+{
+    std::shared_ptr<std::vector<std::vector<int>>> ioll = std::make_shared<std::vector<std::vector<int>>>();
+    calcLeaves();
+
+    for (std::shared_ptr<TreeNode> n : leaves)
+    {
+        std::shared_ptr<AdaptiveTreeNode> an = static_pointer_cast<AdaptiveTreeNode>(n);
+        ioll->push_back(an->getOutputPath());
+    }
+
+    return IOListContainer(ioll, presentationLayer);
+}
+
 InputOutputTree* InputOutputTree::clone() const
 {
     return new InputOutputTree( this );

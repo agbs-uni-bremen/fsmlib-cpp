@@ -103,6 +103,50 @@ void IOListContainer::addUnique(const Trace & trc)
     iolLst->push_back(trc.get());
 }
 
+void IOListContainer::removeRealPrefixes(const Trace & trc)
+{
+    std::vector<int> trace = trc.get();
+    auto it = iolLst->begin();
+    while (it != iolLst->end())
+    {
+        bool foundPrefix = true;
+        std::vector<int> t = *it;
+        if (t.size() >= trace.size())
+        {
+            ++it;
+            continue;
+        }
+        for (size_t i = 0; i < t.size(); ++i)
+        {
+            if (t.at(i) != trace.at(i))
+            {
+                foundPrefix = false;
+                break;
+            }
+        }
+        if (foundPrefix)
+        {
+            it = iolLst->erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
+
+void IOListContainer::addUniqueRemovePrefixes(const Trace & trc)
+{
+    removeRealPrefixes(trc);
+    for(auto inLst : *iolLst)
+    {
+        if (trc == inLst){
+            return;
+        }
+    }
+    iolLst->push_back(trc.get());
+}
+
 int IOListContainer::size() const
 {
 	return static_cast<int> (iolLst->size());
