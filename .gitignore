@@ -38,3 +38,4 @@ resources/fsbrtssafe.state
 Release.Linux/**
 
 src/CMakeLists.txt.user
+*.dot
