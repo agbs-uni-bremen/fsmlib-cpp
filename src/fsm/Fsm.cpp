@@ -1032,7 +1032,7 @@ void Fsm::calcRDistinguishableStates()
     calcROneDistinguishableStates();
 
     size_t limit = nodes.size() * (nodes.size() - 1) / 2;
-    for (size_t l = 2; l < limit; ++l)
+    for (size_t l = 2; l <= limit; ++l)
     {
         cout << "################ l = " << l << " ################" << endl;
         for (size_t k = 0; k < nodes.size(); ++k)
