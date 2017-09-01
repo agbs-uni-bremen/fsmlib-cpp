@@ -1206,8 +1206,13 @@ vector<shared_ptr<InputOutputTree>> Fsm::getRStateCharacterisationSet(shared_ptr
             cout << "r-characterisation setes haven't been calculated yet." << endl;
             exit(EXIT_FAILURE);
         }
-        cout << "o(" << node->getName() << "," << n->getName() << "): " << *node->getRDistinguishability()->getAdaptiveIOSequence(n) << "\n";
-        result.push_back(node->getRDistinguishability()->getAdaptiveIOSequence(n));
+        auto sequence = node->getRDistinguishability()->getAdaptiveIOSequence(n);
+        if (!sequence->isEmpty())
+        {
+            cout << "o(" << node->getName() << "," << n->getName() << "): " << *sequence << "\n";
+            result.push_back(node->getRDistinguishability()->getAdaptiveIOSequence(n));
+        }
+
     }
     return result;
 }

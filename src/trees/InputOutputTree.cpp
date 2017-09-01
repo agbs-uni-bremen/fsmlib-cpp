@@ -14,6 +14,11 @@ InputOutputTree::InputOutputTree(const InputOutputTree* other):
 
 }
 
+bool InputOutputTree::isEmpty() const
+{
+    return root == nullptr || root->isLeaf();
+}
+
 InputOutputTree* InputOutputTree::clone() const
 {
     return new InputOutputTree( this );

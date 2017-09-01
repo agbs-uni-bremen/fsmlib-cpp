@@ -13,11 +13,14 @@ protected:
 public:
     InputOutputTree(const std::shared_ptr<AdaptiveTreeNode> root, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 
+    bool isEmpty() const;
+
     virtual InputOutputTree* clone() const;
 
     std::shared_ptr<InputOutputTree> Clone() const;
 
     friend std::ostream & operator<<(std::ostream & out, InputOutputTree & ot);
+
 };
 
 #endif // INPUTOUTPUTTREE_H
