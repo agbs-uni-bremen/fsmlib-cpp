@@ -207,11 +207,14 @@ unordered_set<shared_ptr<FsmNode>> FsmNode::after(const InputTrace & itrc, const
     vector<int> itrcRaw = itrc.get();
     vector<int> otrcRaw = otrc.get();
     unordered_set<shared_ptr<FsmNode>> nodeSet;
+
     if (itrcRaw.size() != otrcRaw.size())
     {
         return nodeSet;
     }
+
     nodeSet.insert(shared_from_this());
+
     for (size_t i = 0; i < itrcRaw.size(); ++i)
     {
         int x = itrcRaw.at(i);
@@ -241,36 +244,6 @@ unordered_set<shared_ptr<FsmNode>> FsmNode::after(const InputTrace & itrc)
         for (shared_ptr<FsmNode> n : nodeSet)
         {
             unordered_set<shared_ptr<FsmNode>> ns = n->afterAsSet(x);
-            newNodeSet.insert(ns.begin(), ns.end());
-        }
-        nodeSet = newNodeSet;
-    }
-    return nodeSet;
-}
-
-unordered_set<shared_ptr<FsmNode>> FsmNode::after(const InputTrace & itrc, const InputTrace & otrc)
-{
-
-    vector<int> itrcRaw = itrc.get();
-    vector<int> otrcRaw = otrc.get();
-    unordered_set<shared_ptr<FsmNode>> nodeSet;
-
-    if (itrcRaw.size() != otrcRaw.size())
-    {
-        return nodeSet;
-    }
-
-    nodeSet.insert(shared_from_this());
-
-    for (size_t i = 0; i < itrcRaw.size(); ++i)
-    {
-        int x = itrcRaw.at(i);
-        int y = otrcRaw.at(i);
-        unordered_set<shared_ptr<FsmNode>> newNodeSet;
-
-        for (shared_ptr<FsmNode> n : nodeSet)
-        {
-            unordered_set<shared_ptr<FsmNode>> ns = n->afterAsSet(x, y);
             newNodeSet.insert(ns.begin(), ns.end());
         }
         nodeSet = newNodeSet;

@@ -382,7 +382,6 @@ void Fsm::dumpFsm(ofstream & outputFile) const
 
 vector<shared_ptr<FsmNode>> Fsm::getDReachableStates()
 {
-
 	resetColor();
 	deque<shared_ptr<FsmNode>> bfsLst;
 	unordered_map<shared_ptr<FsmNode>, shared_ptr<TreeNode>> f2t;

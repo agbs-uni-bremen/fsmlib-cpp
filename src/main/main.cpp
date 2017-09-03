@@ -726,10 +726,16 @@ int main()
                 + "../../../resources/adaptiveState.txt");
         Fsm fsm1("../../../resources/adaptive.fsm",pl1,"adaptive");
         fsm1.toDot("../../../resources/adaptive");
+
+        shared_ptr<Tree> detStateCover = fsm1.getDeterministicStateCover();
+        shared_ptr<TreeNode> root = detStateCover->getRoot();
+        IOListContainer testCases = detStateCover->getDeterministicTestCases();
+        cout << "Deterministic test cases:\n" << testCases << endl;
+        auto iOLists = testCases.getIOLists();
+
         fsm1.calcRDistinguishableStates();
         IOListContainer characterisationSet = fsm1.getCharacterisationSet();
         cout << "characterisationSet:\n" << characterisationSet << endl;
-        fsm1.getRCharacterisationSet();
         IOListContainer rCharacterisationSet = fsm1.getRCharacterisationSet();
         cout << "rCharacterisationSet:\n" << rCharacterisationSet << endl;
     }
@@ -742,7 +748,7 @@ int main()
                 + "../../../resources/adaptive2State.txt");
         Fsm fsm2("../../../resources/adaptive2.fsm",pl2,"adaptive");
         fsm2.toDot("../../../resources/adaptive2");
-        cout << endl << endl;
+
 
         shared_ptr<Tree> detStateCover = fsm2.getDeterministicStateCover();
         shared_ptr<TreeNode> root = detStateCover->getRoot();

@@ -116,16 +116,6 @@ public:
 	*/
 	std::unordered_set<std::shared_ptr<FsmNode>> after(const InputTrace & itrc);
 
-    /**
-    Return the set of FsmNode instances reachable from this node and with the given output
-    trace after having applied the input trace itrc
-    @param itrc Input Trace to be applied to the FSM, starting with this FsmNode
-    @param itrc Output Trace that has to be produced by the given input.
-    @return Set of FsmNode instances reachable from this node via
-    input trace itrc witht the given output trace {@code otrc}.
-    */
-    std::unordered_set<std::shared_ptr<FsmNode>> after(const InputTrace & itrc, const InputTrace & otrc);
-
 	/**
 	Return list of nodes that can be reached from this node
 	when applying input x
