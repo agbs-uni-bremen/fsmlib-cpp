@@ -356,6 +356,8 @@ public:
     IOListContainer getRStateCharacterisationSet(std::shared_ptr<FsmNode> node) const;
 
     IOListContainer getRCharacterisationSet() const;
+
+    std::vector<std::vector<std::shared_ptr<FsmNode>>> getMaximalSetsOfRDistinguishableStates() const;
     
     /**
      * Calculate the state identification sets. The sets are stored

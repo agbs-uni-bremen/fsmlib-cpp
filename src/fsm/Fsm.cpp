@@ -1236,6 +1236,49 @@ IOListContainer Fsm::getRCharacterisationSet() const
     return result;
 }
 
+vector<vector<shared_ptr<FsmNode>>> Fsm::getMaximalSetsOfRDistinguishableStates() const
+{
+    vector<vector<shared_ptr<FsmNode>>> result;
+    for (shared_ptr<FsmNode> node : nodes)
+    {
+        bool skip = false;
+        for (auto set : result)
+        {
+            for (auto n : set)
+            {
+                if (n == node)
+                {
+                    skip = true;
+                    break;
+                }
+            }
+            if (skip)
+            {
+                break;
+            }
+        }
+        if (skip)
+        {
+            continue;
+        }
+        vector<shared_ptr<FsmNode>> set = {node};
+        for (shared_ptr<FsmNode> n : nodes)
+        {
+            if (node == n)
+            {
+                continue;
+            }
+            if (n->getRDistinguishability()->isRDistinguishableWith(set))
+            {
+                set.push_back(n);
+            }
+        }
+        result.push_back(set);
+    }
+
+    return result;
+}
+
 void Fsm::calcStateIdentificationSets()
 {
     if (!isObservable())

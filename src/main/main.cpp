@@ -738,8 +738,21 @@ int main()
         cout << "characterisationSet:\n" << characterisationSet << endl;
         IOListContainer rCharacterisationSet = fsm1.getRCharacterisationSet();
         cout << "rCharacterisationSet:\n" << rCharacterisationSet << endl;
+
+        vector<vector<shared_ptr<FsmNode>>> max = fsm1.getMaximalSetsOfRDistinguishableStates();
+        cout << "max:" << endl;
+        for (auto set  : max)
+        {
+            cout << "  {";
+            for (auto node : set)
+            {
+                cout << node->getName() << ",";
+            }
+            cout << "}" << endl;
+        }
+    x = 2;
     }
-    else if (x == 2)
+    if (x == 2)
     {
 
         shared_ptr<FsmPresentationLayer> pl2 =
@@ -762,6 +775,18 @@ int main()
         cout << "characterisationSet:\n" << characterisationSet << endl;
         IOListContainer rCharacterisationSet = fsm2.getRCharacterisationSet();
         cout << "rCharacterisationSet:\n" << rCharacterisationSet << endl;
+
+        vector<vector<shared_ptr<FsmNode>>> max = fsm2.getMaximalSetsOfRDistinguishableStates();
+        cout << "max:" << endl;
+        for (auto set  : max)
+        {
+            cout << "  {";
+            for (auto node : set)
+            {
+                cout << node->getName() << ",";
+            }
+            cout << "}" << endl;
+        }
     }
 	cout << endl << endl;
 

@@ -3,6 +3,7 @@
 #include "RDistinguishability.h"
 #include "trees/InputOutputTree.h"
 #include "trees/AdaptiveTreeNode.h"
+#include "fsm/FsmNode.h"
 
 using namespace std;
 RDistinguishability::RDistinguishability(shared_ptr<FsmPresentationLayer> presentationLayer) : presentationLayer(presentationLayer)
@@ -89,6 +90,31 @@ bool RDistinguishability::isRDistinguishableWith(size_t i, std::shared_ptr<FsmNo
 
     }
     return false;
+}
+
+bool RDistinguishability::isRDistinguishableWith(std::shared_ptr<FsmNode> node)
+{
+    for (auto it = rDistinguishableWith.rbegin(); it != rDistinguishableWith.rend(); ++it)
+    {
+        vector<shared_ptr<FsmNode>> dist = it->second;
+        if ( std::find(dist.begin(), dist.end(), node) != dist.end() )
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool RDistinguishability::isRDistinguishableWith(vector<shared_ptr<FsmNode>> nodes)
+{
+    for (auto node : nodes)
+    {
+        if (!isRDistinguishableWith(node))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 shared_ptr<InputOutputTree> RDistinguishability::getAdaptiveIOSequence(shared_ptr<FsmNode> otherNode)
