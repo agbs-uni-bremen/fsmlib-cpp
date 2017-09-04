@@ -384,21 +384,17 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates()
 {
 	resetColor();
 	deque<shared_ptr<FsmNode>> bfsLst;
-	unordered_map<shared_ptr<FsmNode>, shared_ptr<TreeNode>> f2t;
-
-	shared_ptr<TreeNode> root = make_shared<TreeNode>();
-	shared_ptr<Tree> dscov = make_shared<Tree>(root, presentationLayer);
+    vector<shared_ptr<FsmNode>> nodes;
 
 	shared_ptr<FsmNode> initState = getInitialState();
 	initState->setColor(FsmNode::grey);
-	bfsLst.push_back(initState);
-	f2t[initState] = root;
+    bfsLst.push_back(initState);
+    nodes.push_back(initState);
 
 	while (!bfsLst.empty())
 	{
 		shared_ptr<FsmNode> thisNode = bfsLst.front();
 		bfsLst.pop_front();
-		shared_ptr<TreeNode> currentTreeNode = f2t[thisNode];
 
 		for (int x = 0; x <= maxInput; ++x)
 		{
@@ -412,17 +408,15 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates()
 				if (tgt->getColor() == FsmNode::white)
 				{
 					tgt->setColor(FsmNode::grey);
-					shared_ptr<TreeNode> itn = currentTreeNode->add(x);
 					bfsLst.push_back(tgt);
-					f2t[tgt] = itn;
+                    nodes.push_back(tgt);
 				}
 			}
-		}
-		thisNode->setColor(FsmNode::black);
+        }
 	}
 	resetColor();
 
-	return {};
+    return nodes;
 }
 
 

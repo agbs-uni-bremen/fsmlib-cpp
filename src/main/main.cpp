@@ -750,7 +750,15 @@ int main()
             }
             cout << "}" << endl;
         }
-    x = 2;
+
+        vector<shared_ptr<FsmNode>> dReachable = fsm1.getDReachableStates();
+        cout << "d-reachable nodes: ";
+        for (auto n : dReachable)
+        {
+            cout << n->getName() << ",";
+        }
+        cout << endl;
+    //x = 2;
     }
     if (x == 2)
     {
@@ -787,6 +795,14 @@ int main()
             }
             cout << "}" << endl;
         }
+
+        vector<shared_ptr<FsmNode>> dReachable = fsm2.getDReachableStates();
+        cout << "d-reachable nodes: ";
+        for (auto n : dReachable)
+        {
+            cout << n->getName() << ",";
+        }
+        cout << endl;
     }
 	cout << endl << endl;
 
