@@ -138,13 +138,28 @@ void IOListContainer::removeRealPrefixes(const Trace & trc)
 void IOListContainer::addUniqueRemovePrefixes(const Trace & trc)
 {
     removeRealPrefixes(trc);
+    bool isPrefix = false;
     for(auto inLst : *iolLst)
     {
         if (trc == inLst){
             return;
         }
+        for (size_t i = 0; i < trc.get().size(); ++i)
+        {
+            if (trc.get().at(i) != inLst.at(i))
+            {
+                break;
+            }
+            if (i == trc.get().size() - 1)
+            {
+                isPrefix = true;
+            }
+        }
     }
-    iolLst->push_back(trc.get());
+    if (!isPrefix)
+    {
+        iolLst->push_back(trc.get());
+    }
 }
 
 int IOListContainer::size() const

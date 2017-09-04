@@ -1218,6 +1218,7 @@ IOListContainer Fsm::getRStateCharacterisationSet(shared_ptr<FsmNode> node) cons
             }
         }
     }
+    cout << "result: " << result << endl;
     return result;
 }
 
