@@ -16,7 +16,7 @@
 #include "trees/TreeEdge.h"
 #include "trees/TreeNode.h"
 
-class Tree
+class Tree : public std::enable_shared_from_this<Tree>
 {
 protected:
 	/**
@@ -49,6 +49,11 @@ protected:
 	@param idNode The id of this node, used to differenciate node in dot format
 	*/
 	void printChildren(std::ostream & out, const std::shared_ptr<TreeNode> top, const std::shared_ptr<int> idNode) const;
+
+    /**
+     *  @return true if one of the input traces is prefix of the other one, false otherwise.
+     */
+    bool inPrefixRelation(std::vector<int> aPath, std::vector<int> bPath);
 public:
 	/**
 	Create a new tree, with a root and a presenation layer
@@ -142,6 +147,21 @@ public:
     
     /** Return number of nodes in the tree */
     size_t size();
+
+    /**
+     *  Construct a pseudo-intersection tree of this Tree and b.
+     *
+     *  Appending one of the pathes of the resulting tree to the roots of both
+     *  trees does not result in more breadth (more test cases).
+     *  Therefore it is useful to search in the resulting for distinguishing
+     *  traces for the two root nodes.
+     *
+     *  @param b For every path of one of the two trees (this and b) that is
+     *           a prefix of a path of the other tree we add the longer path to
+     *           the resulting tree.
+     *  @return Tree
+     */
+    std::shared_ptr<Tree> getPrefixRelationTree(const std::shared_ptr<Tree> &b);
     
 };
 #endif //FSM_TREES_TREE_H_
