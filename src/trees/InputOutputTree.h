@@ -14,11 +14,12 @@ public:
     InputOutputTree(const std::shared_ptr<AdaptiveTreeNode> root, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 
     bool isEmpty() const;
+    bool contains(const InputOutputTree& other) const;
 
     virtual InputOutputTree* clone() const;
 
     IOListContainer getInputLists();
-    IOListContainer getOutputLists();
+    IOListContainer getOutputLists();    
 
     std::shared_ptr<InputOutputTree> Clone() const;
 

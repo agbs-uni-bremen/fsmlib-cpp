@@ -19,6 +19,7 @@
 #include "trees/OutputTree.h"
 #include "trees/Tree.h"
 #include "trees/IOListContainer.h"
+#include "trees/IOTreeContainer.h"
 #include "trees/TestSuite.h"
 #include "trees/InputOutputTree.h"
 #include "trees/AdaptiveTreeNode.h"
@@ -1216,6 +1217,37 @@ IOListContainer Fsm::getRStateCharacterisationSet(shared_ptr<FsmNode> node) cons
     return result;
 }
 
+IOTreeContainer Fsm::getAdaptiveRStateCharacterisationSet(shared_ptr<FsmNode> node) const
+{
+    if (node->getRDistinguishability()->hasBeenCalculated())
+    {
+        cout << "r-characterisation setes haven't been calculated yet." << endl;
+        exit(EXIT_FAILURE);
+    }
+    IOTreeContainer result = IOTreeContainer(presentationLayer);
+    cout << "Adaptive r-state characterisation set for " << node->getName() << endl;
+    for (shared_ptr<FsmNode> n : nodes)
+    {
+        if (n == node)
+        {
+            continue;
+        }
+        if (n->getRDistinguishability()->hasBeenCalculated())
+        {
+            cout << "r-characterisation setes haven't been calculated yet." << endl;
+            exit(EXIT_FAILURE);
+        }
+        shared_ptr<InputOutputTree> sequence = node->getRDistinguishability()->getAdaptiveIOSequence(n);
+        if (!sequence->isEmpty())
+        {
+            cout << "o(" << node->getName() << "," << n->getName() << "): " << *sequence << endl;
+            result.addUniqueRemovePrefixes(sequence);
+        }
+    }
+    cout << "result: " << result << endl;
+    return result;
+}
+
 IOListContainer Fsm::getRCharacterisationSet() const
 {
     IOListContainer result = IOListContainer(presentationLayer);
@@ -1226,6 +1258,20 @@ IOListContainer Fsm::getRCharacterisationSet() const
         for (auto t : *set)
         {
             result.addUniqueRemovePrefixes(Trace(t, presentationLayer));
+        }
+    }
+    return result;
+}
+
+IOTreeContainer Fsm::getAdaptiveRCharacterisationSet() const
+{
+    IOTreeContainer result = IOTreeContainer(presentationLayer);
+    for (shared_ptr<FsmNode> n : nodes)
+    {
+        IOTreeContainer container = getAdaptiveRStateCharacterisationSet(n);
+        for (auto tree : *container.getList())
+        {
+            result.addUniqueRemovePrefixes(tree);
         }
     }
     return result;

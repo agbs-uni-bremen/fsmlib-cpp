@@ -17,6 +17,7 @@
 #include <fsm/FsmSimVisitor.h>
 #include <fsm/FsmOraVisitor.h>
 #include <trees/IOListContainer.h>
+#include <trees/IOTreeContainer.h>
 #include <trees/OutputTree.h>
 #include <trees/TestSuite.h>
 #include "json/json.h"
@@ -738,6 +739,8 @@ int main()
         cout << "characterisationSet:\n" << characterisationSet << endl;
         IOListContainer rCharacterisationSet = fsm1.getRCharacterisationSet();
         cout << "rCharacterisationSet:\n" << rCharacterisationSet << endl;
+        IOTreeContainer rAdaptiveCharacterisationSet = fsm1.getAdaptiveRCharacterisationSet();
+        cout << "Adaptive rCharacterisationSet:\n" << rAdaptiveCharacterisationSet << endl;
 
         vector<vector<shared_ptr<FsmNode>>> max = fsm1.getMaximalSetsOfRDistinguishableStates();
         cout << "max:" << endl;
@@ -783,6 +786,8 @@ int main()
         cout << "characterisationSet:\n" << characterisationSet << endl;
         IOListContainer rCharacterisationSet = fsm2.getRCharacterisationSet();
         cout << "rCharacterisationSet:\n" << rCharacterisationSet << endl;
+        IOTreeContainer rAdaptiveCharacterisationSet = fsm2.getAdaptiveRCharacterisationSet();
+        cout << "Adaptive rCharacterisationSet:\n" << rAdaptiveCharacterisationSet << endl;
 
         vector<vector<shared_ptr<FsmNode>>> max = fsm2.getMaximalSetsOfRDistinguishableStates();
         cout << "max:" << endl;

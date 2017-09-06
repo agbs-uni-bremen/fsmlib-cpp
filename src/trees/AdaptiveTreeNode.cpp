@@ -59,6 +59,11 @@ std::vector<int> AdaptiveTreeNode::getOutputPath()
     return path;
 }
 
+bool AdaptiveTreeNode::superTreeOf(const std::shared_ptr<AdaptiveTreeNode> otherNode) const
+{
+    return input == otherNode->getInput() && TreeNode::superTreeOf(otherNode);
+}
+
 AdaptiveTreeNode* AdaptiveTreeNode::clone() const
 {
     return new AdaptiveTreeNode( this );

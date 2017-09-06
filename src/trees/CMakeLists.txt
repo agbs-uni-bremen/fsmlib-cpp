@@ -5,6 +5,8 @@ set (FSM_TREES_SOURCES
         InputOutputTree.h
 	IOListContainer.cpp
 	IOListContainer.h
+        IOTreeContainer.cpp
+        IOTreeContainer.h
 	OutputTree.cpp
 	OutputTree.h
 	TestSuite.cpp

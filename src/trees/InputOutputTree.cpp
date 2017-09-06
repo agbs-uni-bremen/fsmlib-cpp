@@ -19,6 +19,26 @@ bool InputOutputTree::isEmpty() const
     return root == nullptr || root->isLeaf();
 }
 
+bool InputOutputTree::contains(const InputOutputTree& other) const
+{
+    if (isEmpty() || other.isEmpty())
+    {
+        if (!isEmpty() || !other.isEmpty())
+        {
+            return false;
+        }
+    }
+
+    if (!OutputTree::contains(other))
+    {
+        return false;
+    }
+
+    shared_ptr<AdaptiveTreeNode> thisRoot = static_pointer_cast<AdaptiveTreeNode>(getRoot());
+    shared_ptr<AdaptiveTreeNode> otherRoot = static_pointer_cast<AdaptiveTreeNode>(other.getRoot());
+    return thisRoot->superTreeOf(otherRoot);
+}
+
 IOListContainer InputOutputTree::getInputLists()
 {
     std::shared_ptr<std::vector<std::vector<int>>> ioll = std::make_shared<std::vector<std::vector<int>>>();

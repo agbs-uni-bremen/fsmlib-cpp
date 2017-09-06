@@ -17,6 +17,8 @@ public:
     std::vector<int> getInputPath();
     std::vector<int> getOutputPath();
 
+    bool superTreeOf(const std::shared_ptr<AdaptiveTreeNode> otherNode) const;
+
     virtual AdaptiveTreeNode* clone() const;
     std::shared_ptr<AdaptiveTreeNode> Clone() const;
 

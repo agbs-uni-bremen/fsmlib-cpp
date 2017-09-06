@@ -27,6 +27,7 @@ class InputTrace;
 class FsmPresentationLayer;
 class OFSMTable;
 class IOListContainer;
+class IOTreeContainer;
 class TestSuite;
 class OutputTrace;
 class InputOutputTree;
@@ -354,8 +355,10 @@ public:
     void calcRDistinguishableStates();
 
     IOListContainer getRStateCharacterisationSet(std::shared_ptr<FsmNode> node) const;
+    IOTreeContainer getAdaptiveRStateCharacterisationSet(std::shared_ptr<FsmNode> node) const;
 
     IOListContainer getRCharacterisationSet() const;
+    IOTreeContainer getAdaptiveRCharacterisationSet() const;
 
     std::vector<std::vector<std::shared_ptr<FsmNode>>> getMaximalSetsOfRDistinguishableStates() const;
     
