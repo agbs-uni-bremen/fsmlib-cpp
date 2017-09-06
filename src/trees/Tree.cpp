@@ -34,7 +34,21 @@ void Tree::printChildren(ostream & out, const shared_ptr<TreeNode> top, const sh
 	{
 		out << idNodeBase << " -> " << ++ *idNode << "[label = \"" << edge->getIO() << "\" ];" << endl;
 		printChildren(out, edge->getTarget(), idNode);
-	}
+    }
+}
+
+bool Tree::inPrefixRelation(std::vector<int> aPath, std::vector<int> bPath)
+{
+    if (aPath.size() == 0 || bPath.size() == 0)
+        return false;
+    for (unsigned i = 0; i<aPath.size() && i < bPath.size(); i++)
+    {
+        if (aPath[i] != bPath[i])
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 Tree::Tree(const shared_ptr<TreeNode> root, const shared_ptr<FsmPresentationLayer> presentationLayer)
@@ -148,6 +162,38 @@ size_t Tree::size() {
     
     
     return theSize;
+}
+
+std::shared_ptr<Tree> Tree::getPrefixRelationTree(const std::shared_ptr<Tree> & b)
+{
+    std::vector<std::vector<int>> aPrefixes = *(getIOListsWithPrefixes().getIOLists());
+    std::vector<std::vector<int>> bPrefixes = *(b->getIOListsWithPrefixes().getIOLists());
+
+    if (aPrefixes.at(0).size() == 0)
+    {
+        return b;
+    }
+    if (bPrefixes.at(0).size() == 0)
+    {
+        return shared_from_this();
+    }
+
+    shared_ptr<TreeNode> r = make_shared<TreeNode>();
+    shared_ptr<Tree> tree = make_shared<Tree>(r, presentationLayer);
+
+    for (auto aPrefix : aPrefixes)
+    {
+        for (auto bPrefix : bPrefixes)
+        {
+            if (inPrefixRelation(aPrefix, bPrefix))
+            {
+                r->addToThisNode(aPrefix);
+                r->addToThisNode(bPrefix);
+            }
+        }
+    }
+    return tree;
+
 }
 
 
