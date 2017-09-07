@@ -1227,9 +1227,48 @@ IOListContainer Dfsm::wMethodOnMinimisedDfsm(const unsigned int numAddStates)
 
 IOListContainer Dfsm::wpMethod(const unsigned int numAddStates)
 {
-    Fsm fMin = minimiseObservableFSM();
-    return fMin.wpMethod(numAddStates);
-    
+    Dfsm dfsmMin = minimise();
+    return dfsmMin.wpMethodOnMinimisedDfsm(numAddStates);
+}
+
+IOListContainer Dfsm::wpMethodOnMinimisedDfsm(const unsigned int numAddStates)
+{
+    shared_ptr<Tree> scov = getStateCover();
+
+    shared_ptr<Tree> tcov = getTransitionCover();
+
+    tcov->remove(scov);
+    shared_ptr<Tree> r = tcov;
+
+    IOListContainer w = getCharacterisationSet();
+
+    calcStateIdentificationSetsFast();
+
+    shared_ptr<Tree> Wp1 = scov;
+    if (numAddStates > 0)
+    {
+        IOListContainer inputEnum = IOListContainer(maxInput, 1,
+                                                    (int)numAddStates,
+                                                    presentationLayer);
+
+        Wp1->add(inputEnum);
+    }
+    Wp1->add(w);
+
+    shared_ptr<Tree> Wp2 = r;
+    if (numAddStates > 0)
+    {
+        IOListContainer inputEnum = IOListContainer(maxInput,
+                                                    (int)numAddStates,
+                                                    (int)numAddStates,
+                                                    presentationLayer);
+
+        Wp2->add(inputEnum);
+    }
+    appendStateIdentificationSets(Wp2);
+
+    Wp1->unionTree(Wp2);
+    return Wp1->getIOLists();
 }
 
 IOListContainer Dfsm::hsiMethod(const unsigned int numAddStates)
