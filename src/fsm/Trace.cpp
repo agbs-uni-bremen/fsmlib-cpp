@@ -30,6 +30,10 @@ void Trace::append(const std::vector<int>& traceToAppend) {
     
 }
 
+void Trace::append(const Trace& traceToAppend) {
+    append(traceToAppend.get());
+}
+
 std::vector<int> Trace::get() const
 {
 	return trace;

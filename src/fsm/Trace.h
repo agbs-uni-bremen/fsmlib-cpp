@@ -48,6 +48,8 @@ public:
      */
     void append(const std::vector<int>& traceToAppend);
 
+    void append(const Trace& traceToAppend);
+
 	/**
 	Getter for the trace itself
 	@return The trace itself, represented by a list of int

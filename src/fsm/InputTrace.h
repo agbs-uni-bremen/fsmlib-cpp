@@ -29,6 +29,8 @@ public:
 	InputTrace(const std::vector<int>& trace,
                const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 
+    InputTrace(const InputTrace& other, size_t n);
+
 	/**
 	Output the InputTrace to a standard output stream
 	@param out The standard output stream to use

@@ -26,7 +26,7 @@ public:
 	@param trace The trace itself, represented by a list of int
 	@param presentationLayer The presentation layer used by the trace
 	*/
-	OutputTrace(const std::vector<int>& trace, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    OutputTrace(const std::vector<int>& trace, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 
 	/**
 	Output the OutputTrace to a standard output stream

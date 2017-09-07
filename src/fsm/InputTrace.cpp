@@ -17,6 +17,21 @@ InputTrace::InputTrace(const std::vector<int>& trace, const std::shared_ptr<FsmP
 
 }
 
+InputTrace::InputTrace(const InputTrace& other, size_t n):
+    Trace(other.getPresentationLayer())
+{
+    std::vector<int> otherTrace = other.get();
+    if (n > otherTrace.size() - 1)
+    {
+        n = otherTrace.size() - 1;
+    }
+
+    if (n > 0)
+    {
+        trace = std::vector<int>(otherTrace.begin() + static_cast<std::vector<int>::difference_type>(n), otherTrace.end());
+    }
+}
+
 std::ostream & operator<<(std::ostream & out, const InputTrace & trace)
 {
 	for (auto it = trace.cbegin(); it != trace.cend(); ++ it)

@@ -741,6 +741,8 @@ int main()
         cout << "rCharacterisationSet:\n" << rCharacterisationSet << endl;
         IOTreeContainer rAdaptiveCharacterisationSet = fsm1.getAdaptiveRCharacterisationSet();
         cout << "Adaptive rCharacterisationSet:\n" << rAdaptiveCharacterisationSet << endl;
+        IOListContainer adaptiveList = rAdaptiveCharacterisationSet.toIOList();
+        cout << "Adaptive rCharacterisationSet as input traces:\n" << adaptiveList << endl;
 
         vector<vector<shared_ptr<FsmNode>>> max = fsm1.getMaximalSetsOfRDistinguishableStates();
         cout << "max:" << endl;
@@ -761,6 +763,26 @@ int main()
             cout << n->getName() << ",";
         }
         cout << endl;
+
+        InputTrace testInput = InputTrace({0,1}, pl1);
+        shared_ptr<vector<OutputTrace>> producedOutputs = make_shared<vector<OutputTrace>>();
+        vector<shared_ptr<FsmNode>> reached;
+
+        cout << "Input trace: " << testInput << endl;
+        fsm1.getInitialState()->getPossibleOutputs(testInput, producedOutputs, reached);
+        cout << "produced Outputs:" << endl;
+        for (auto o : *producedOutputs)
+        {
+            cout << o << ",";
+        }
+        cout << endl;
+        cout << "reached:" << endl;
+        for (auto n : reached)
+        {
+            cout << n->getName() << ",";
+        }
+        cout << endl;
+
     //x = 2;
     }
     if (x == 2)
@@ -788,6 +810,8 @@ int main()
         cout << "rCharacterisationSet:\n" << rCharacterisationSet << endl;
         IOTreeContainer rAdaptiveCharacterisationSet = fsm2.getAdaptiveRCharacterisationSet();
         cout << "Adaptive rCharacterisationSet:\n" << rAdaptiveCharacterisationSet << endl;
+        IOListContainer adaptiveList = rAdaptiveCharacterisationSet.toIOList();
+        cout << "Adaptive rCharacterisationSet as input traces:\n" << adaptiveList << endl;
 
         vector<vector<shared_ptr<FsmNode>>> max = fsm2.getMaximalSetsOfRDistinguishableStates();
         cout << "max:" << endl;

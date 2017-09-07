@@ -7,6 +7,7 @@
 
 #include "fsm/FsmNode.h"
 #include "fsm/FsmTransition.h"
+#include "fsm/InputTrace.h"
 #include "fsm/OutputTrace.h"
 #include "fsm/OFSMTable.h"
 #include "fsm/DFSMTableRow.h"
@@ -123,6 +124,77 @@ vector<shared_ptr<FsmNode>> FsmNode::getPossibleOutputs(const int x, vector<Outp
         }
     }
     return result;
+}
+
+void FsmNode::getPossibleOutputs(const InputTrace& inputTrace,
+                                 shared_ptr<std::vector<OutputTrace>> producedOutputTraces,
+                                 vector<shared_ptr<FsmNode>>& reachedNodes) const
+{
+    cout << "getPossibleOutputs, state: " << getName() << ", input: " << inputTrace << endl;
+    vector<int> rawInputTrace = inputTrace.get();
+
+    if (rawInputTrace.size() == 0)
+    {
+        cout << "(" << getName() << ")  " << "RETURNING" << endl;
+        return;
+    }
+
+    int input = rawInputTrace.at(0);
+    cout << "(" << getName() << ")  " << "input: " << input << endl;
+    std::vector<OutputTrace> newOutputs;
+    vector<shared_ptr<FsmNode>> targets = getPossibleOutputs(input, newOutputs);
+
+    if (newOutputs.size() != targets.size())
+    {
+        cerr << "Number of produced outputs and targets does not match." << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    for (size_t i = 0; i < newOutputs.size(); ++i)
+    {
+        cout << "(" << getName() << ")  " << "  newOutput: " << newOutputs.at(i) << endl;
+        OutputTrace newOutput = newOutputs.at(i);
+        shared_ptr<FsmNode> target = targets.at(i);
+
+        if (isInitialNode)
+        {
+            producedOutputTraces->push_back(newOutput);
+        }
+
+        shared_ptr<vector<OutputTrace>> newOutputsCopy = make_shared<vector<OutputTrace>>();
+        newOutputsCopy->push_back(newOutput);
+        cout << "(" << getName() << ")  " << "  newOutputsCopy: {" << newOutput << "}" << endl;
+
+        target->getPossibleOutputs(InputTrace(inputTrace, 1), newOutputsCopy, reachedNodes);
+        cout << "(" << getName() << ")  " << "  new newOutputsCopy: " << endl;
+        for (auto o : *newOutputsCopy)
+        {
+            cout << "(" << getName() << ")  " << "    " << o << ",";
+        }
+        cout << endl;
+
+        shared_ptr<vector<OutputTrace>> concatenatedTraces = make_shared<vector<OutputTrace>>(*producedOutputTraces);
+        for (OutputTrace& oldTrace : *concatenatedTraces)
+        {
+            for (OutputTrace& oTrace : *newOutputsCopy)
+            {
+                cout << "(" << getName() << ")  " << "  concatenating " << oldTrace << " and " << oTrace << endl;
+                oldTrace.append(oTrace);
+            }
+        }
+        cout << "(" << getName() << ")  " << "  concatenated traces:" << endl;
+        for (auto t : *concatenatedTraces)
+        {
+            cout << "(" << getName() << ")  " << "    " << t << ", ";
+        }
+        cout << endl;
+        producedOutputTraces = concatenatedTraces;
+
+        if (rawInputTrace.size() == 1)
+        {
+            reachedNodes.push_back(target);
+        }
+    }
 }
 
 vector<OutputTrace> FsmNode::getPossibleOutputs(const int x) const
