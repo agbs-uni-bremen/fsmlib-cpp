@@ -25,7 +25,14 @@ std::ostream & operator<<(std::ostream & out, const OutputTrace & trace)
 		{
 			out << ".";
 		}
-		out << trace.presentationLayer->getOutId(*it);
+        if (*it == -1)
+        {
+            out << "ε";
+        }
+        else
+        {
+            out << trace.presentationLayer->getOutId(*it);
+        }
 	}
 	return out;
 }

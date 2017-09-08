@@ -40,7 +40,14 @@ std::ostream & operator<<(std::ostream & out, const InputTrace & trace)
 		{
 			out << ".";
 		}
-		out << trace.presentationLayer->getInId(*it);
+        if (*it == -1)
+        {
+            out << "ε";
+        }
+        else
+        {
+            out << trace.presentationLayer->getInId(*it);
+        }
 	}
 	return out;
 }

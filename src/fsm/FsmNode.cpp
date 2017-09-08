@@ -123,6 +123,11 @@ vector<shared_ptr<FsmNode>> FsmNode::getPossibleOutputs(const int x, vector<Outp
             outputs.push_back(OutputTrace({transition->getLabel()->getOutput()}, presentationLayer));
         }
     }
+    if (outputs.size() == 0)
+    {
+        outputs.push_back(OutputTrace({-1}, presentationLayer));
+        result.push_back(static_pointer_cast<FsmNode>(const_pointer_cast<FsmNode>(shared_from_this())));
+    }
     return result;
 }
 
@@ -133,6 +138,7 @@ void FsmNode::getPossibleOutputs(const InputTrace& inputTrace,
     vector<int> rawInputTrace = inputTrace.get();
     if (rawInputTrace.size() == 0)
     {
+        reachedNodes.push_back(const_pointer_cast<FsmNode>(shared_from_this()));
         return;
     }
 
@@ -175,13 +181,6 @@ void FsmNode::getPossibleOutputs(const InputTrace& inputTrace,
             {
                 newlyProducedOutputTraces->push_back(nOTrace);
             }
-        }
-
-        if (rawInputTrace.size() == 1)
-        {
-            // This is the last input of the given input trace.
-            // Therefore, the next node is a potential end node.
-            reachedNodes.push_back(nextTarget);
         }
     }
     producedOutputTraces = newlyProducedOutputTraces;
