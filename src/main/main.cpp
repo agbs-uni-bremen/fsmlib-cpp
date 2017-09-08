@@ -729,10 +729,8 @@ int main()
         fsm1.toDot("../../../resources/adaptive");
 
         shared_ptr<Tree> detStateCover = fsm1.getDeterministicStateCover();
-        shared_ptr<TreeNode> root = detStateCover->getRoot();
         IOListContainer testCases = detStateCover->getDeterministicTestCases();
         cout << "Deterministic test cases:\n" << testCases << endl;
-        auto iOLists = testCases.getIOLists();
 
         fsm1.calcRDistinguishableStates();
         IOListContainer characterisationSet = fsm1.getCharacterisationSet();
@@ -782,6 +780,7 @@ int main()
             cout << n->getName() << ",";
         }
         cout << endl;
+        fsm1.getVPrime();
 
     //x = 2;
     }
@@ -797,10 +796,8 @@ int main()
 
 
         shared_ptr<Tree> detStateCover = fsm2.getDeterministicStateCover();
-        shared_ptr<TreeNode> root = detStateCover->getRoot();
         IOListContainer testCases = detStateCover->getDeterministicTestCases();
         cout << "Deterministic test cases:\n" << testCases << endl;
-        auto iOLists = testCases.getIOLists();
 
 
         fsm2.calcRDistinguishableStates();
@@ -832,6 +829,26 @@ int main()
             cout << n->getName() << ",";
         }
         cout << endl;
+
+        InputTrace testInput = InputTrace({0,0,1,1}, pl2);
+        shared_ptr<vector<OutputTrace>> producedOutputs = make_shared<vector<OutputTrace>>();
+        vector<shared_ptr<FsmNode>> reached;
+
+        cout << "Input trace: " << testInput << endl;
+        fsm2.getInitialState()->getPossibleOutputs(testInput, producedOutputs, reached);
+        cout << "produced Outputs:" << endl;
+        for (auto o : *producedOutputs)
+        {
+            cout << o << ", ";
+        }
+        cout << endl;
+        cout << "reached:" << endl;
+        for (auto n : reached)
+        {
+            cout << n->getName() << ",";
+        }
+        cout << endl;
+        fsm2.getVPrime();
     }
 	cout << endl << endl;
 

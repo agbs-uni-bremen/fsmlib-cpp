@@ -360,6 +360,8 @@ public:
     IOListContainer getRCharacterisationSet() const;
     IOTreeContainer getAdaptiveRCharacterisationSet() const;
 
+    std::vector<std::vector<std::shared_ptr<IOTrace>>> getVPrime();
+
     std::vector<std::vector<std::shared_ptr<FsmNode>>> getMaximalSetsOfRDistinguishableStates() const;
     
     /**

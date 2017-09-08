@@ -1263,6 +1263,47 @@ IOListContainer Fsm::getRCharacterisationSet() const
     return result;
 }
 
+std::vector<std::vector<std::shared_ptr<IOTrace>>> Fsm::getVPrime()
+{
+    //TODO WIP!
+    cout << "###### getVPrime() ######" << endl;
+    std::vector<std::vector<std::shared_ptr<IOTrace>>> result;
+
+    shared_ptr<Tree> detStateCover = getDeterministicStateCover();
+    IOListContainer testCases = detStateCover->getDeterministicTestCases();
+    shared_ptr<vector<vector<int>>> testCasesRaw = testCases.getIOLists();
+
+    vector<vector<OutputTrace>> allPossibleOutputTraces;
+
+    //for (vector<int> testCase : *testCasesRaw)
+    for (size_t i = 0; i < testCasesRaw->size(); ++i)
+    {
+        vector<int> testCase = testCasesRaw->at(i);
+        InputTrace input = InputTrace(testCase, presentationLayer);
+        shared_ptr<vector<OutputTrace>> producedOutputs = make_shared<vector<OutputTrace>>();
+        vector<shared_ptr<FsmNode>> reached;
+        getInitialState()->getPossibleOutputs(input, producedOutputs, reached);
+
+        cout << "Input trace: " << input << endl;
+        cout << "produced Outputs:" << endl;
+        for (auto o : *producedOutputs)
+        {
+            cout << o << ", ";
+        }
+        cout << endl;
+
+        /*
+        allPossibleOutputTraces.push_back(*producedOutputs);
+
+        for (size_t j = 0; j < testCasesRaw->size(); ++j)
+        {
+            shared_ptr<IOTrace> iOTrace = make_shared<IOTrace>(input, producedOutputs->at(j));
+        }
+        */
+    }
+    return result;
+}
+
 IOTreeContainer Fsm::getAdaptiveRCharacterisationSet() const
 {
     IOTreeContainer result = IOTreeContainer(presentationLayer);
