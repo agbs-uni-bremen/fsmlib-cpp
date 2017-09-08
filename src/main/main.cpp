@@ -764,7 +764,7 @@ int main()
         }
         cout << endl;
 
-        InputTrace testInput = InputTrace({0,1}, pl1);
+        InputTrace testInput = InputTrace({0,0,1,1}, pl1);
         shared_ptr<vector<OutputTrace>> producedOutputs = make_shared<vector<OutputTrace>>();
         vector<shared_ptr<FsmNode>> reached;
 
@@ -773,7 +773,7 @@ int main()
         cout << "produced Outputs:" << endl;
         for (auto o : *producedOutputs)
         {
-            cout << o << ",";
+            cout << o << ", ";
         }
         cout << endl;
         cout << "reached:" << endl;

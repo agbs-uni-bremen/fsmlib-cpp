@@ -127,74 +127,64 @@ vector<shared_ptr<FsmNode>> FsmNode::getPossibleOutputs(const int x, vector<Outp
 }
 
 void FsmNode::getPossibleOutputs(const InputTrace& inputTrace,
-                                 shared_ptr<std::vector<OutputTrace>> producedOutputTraces,
+                                 shared_ptr<std::vector<OutputTrace>>& producedOutputTraces,
                                  vector<shared_ptr<FsmNode>>& reachedNodes) const
 {
-    cout << "getPossibleOutputs, state: " << getName() << ", input: " << inputTrace << endl;
     vector<int> rawInputTrace = inputTrace.get();
-
     if (rawInputTrace.size() == 0)
     {
-        cout << "(" << getName() << ")  " << "RETURNING" << endl;
         return;
     }
 
     int input = rawInputTrace.at(0);
-    cout << "(" << getName() << ")  " << "input: " << input << endl;
-    std::vector<OutputTrace> newOutputs;
-    vector<shared_ptr<FsmNode>> targets = getPossibleOutputs(input, newOutputs);
+    std::vector<OutputTrace> nextOutputs;
+    vector<shared_ptr<FsmNode>> nextTargets = getPossibleOutputs(input, nextOutputs);
 
-    if (newOutputs.size() != targets.size())
+    if (nextOutputs.size() != nextTargets.size())
     {
         cerr << "Number of produced outputs and targets does not match." << endl;
         exit(EXIT_FAILURE);
     }
 
-    for (size_t i = 0; i < newOutputs.size(); ++i)
+    shared_ptr<vector<OutputTrace>> newlyProducedOutputTraces = make_shared<vector<OutputTrace>>();
+    for (size_t i = 0; i < nextOutputs.size(); ++i)
     {
-        cout << "(" << getName() << ")  " << "  newOutput: " << newOutputs.at(i) << endl;
-        OutputTrace newOutput = newOutputs.at(i);
-        shared_ptr<FsmNode> target = targets.at(i);
+        OutputTrace nextOutput = nextOutputs.at(i);
+        shared_ptr<FsmNode> nextTarget = nextTargets.at(i);
 
-        if (isInitialNode)
+        shared_ptr<vector<OutputTrace>> nextOutputCopy = make_shared<vector<OutputTrace>>();
+        nextOutputCopy->push_back(nextOutput);
+
+        nextTarget->getPossibleOutputs(InputTrace(inputTrace, 1), nextOutputCopy, reachedNodes);
+        if (producedOutputTraces->size() > 0)
         {
-            producedOutputTraces->push_back(newOutput);
-        }
-
-        shared_ptr<vector<OutputTrace>> newOutputsCopy = make_shared<vector<OutputTrace>>();
-        newOutputsCopy->push_back(newOutput);
-        cout << "(" << getName() << ")  " << "  newOutputsCopy: {" << newOutput << "}" << endl;
-
-        target->getPossibleOutputs(InputTrace(inputTrace, 1), newOutputsCopy, reachedNodes);
-        cout << "(" << getName() << ")  " << "  new newOutputsCopy: " << endl;
-        for (auto o : *newOutputsCopy)
-        {
-            cout << "(" << getName() << ")  " << "    " << o << ",";
-        }
-        cout << endl;
-
-        shared_ptr<vector<OutputTrace>> concatenatedTraces = make_shared<vector<OutputTrace>>(*producedOutputTraces);
-        for (OutputTrace& oldTrace : *concatenatedTraces)
-        {
-            for (OutputTrace& oTrace : *newOutputsCopy)
+            shared_ptr<vector<OutputTrace>> producedOutputTracesCopy = make_shared<vector<OutputTrace>>(*producedOutputTraces);
+            for (OutputTrace oldTrace : *producedOutputTracesCopy)
             {
-                cout << "(" << getName() << ")  " << "  concatenating " << oldTrace << " and " << oTrace << endl;
-                oldTrace.append(oTrace);
+                for (OutputTrace nOTrace : *nextOutputCopy)
+                {
+                    OutputTrace oldTraceCopy = OutputTrace(oldTrace);
+                    oldTraceCopy.append(nOTrace);
+                    newlyProducedOutputTraces->push_back(oldTraceCopy);
+                }
             }
         }
-        cout << "(" << getName() << ")  " << "  concatenated traces:" << endl;
-        for (auto t : *concatenatedTraces)
+        else
         {
-            cout << "(" << getName() << ")  " << "    " << t << ", ";
+            for (OutputTrace nOTrace : *nextOutputCopy)
+            {
+                newlyProducedOutputTraces->push_back(nOTrace);
+            }
         }
-        cout << endl;
-        producedOutputTraces = concatenatedTraces;
 
         if (rawInputTrace.size() == 1)
         {
-            reachedNodes.push_back(target);
+            // This is the last input of the given input trace.
+            // Therefore, the next node is a potential end node.
+            reachedNodes.push_back(nextTarget);
         }
     }
+    producedOutputTraces = newlyProducedOutputTraces;
 }
 
 vector<OutputTrace> FsmNode::getPossibleOutputs(const int x) const

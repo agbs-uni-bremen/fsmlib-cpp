@@ -90,7 +90,7 @@ public:
      */
     std::vector<std::shared_ptr<FsmNode>> getPossibleOutputs(const int x, std::vector<OutputTrace> & output) const;
 
-    void getPossibleOutputs(const InputTrace& input, std::shared_ptr<std::vector<OutputTrace>> producedOutputs, std::vector<std::shared_ptr<FsmNode>>& reachedNodes) const;
+    void getPossibleOutputs(const InputTrace& input, std::shared_ptr<std::vector<OutputTrace>>& producedOutputs, std::vector<std::shared_ptr<FsmNode>>& reachedNodes) const;
 
     /**
      * Calculates all possible outputs for a given input.
