@@ -13,6 +13,7 @@
 #include <fsm/Fsm.h>
 #include <fsm/FsmNode.h>
 #include <fsm/IOTrace.h>
+#include <fsm/IOTraceContainer.h>
 #include <fsm/FsmPrintVisitor.h>
 #include <fsm/FsmSimVisitor.h>
 #include <fsm/FsmOraVisitor.h>

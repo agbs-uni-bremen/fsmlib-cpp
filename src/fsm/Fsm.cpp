@@ -1272,23 +1272,19 @@ IOTraceContainer Fsm::getVPrime()
 
     shared_ptr<Tree> detStateCover = getDeterministicStateCover();
     IOListContainer testCases = detStateCover->getDeterministicTestCases();
-    shared_ptr<vector<vector<int>>> testCasesRaw = testCases.getIOLists();
+
+    vector<vector<int>> testCasesRaw2 = {{-1, 0, 1, 0},
+                                            {0,1, 0},
+                                            {1,1,0}};
+
+    shared_ptr<vector<vector<int>>> testCasesRaw = make_shared<vector<vector<int>>>(testCasesRaw2);
+
+    //shared_ptr<vector<vector<int>>> testCasesRaw = testCases.getIOLists();
 
     vector<shared_ptr<vector<OutputTrace>>> allPossibleOutputTraces;
     vector<InputTrace> inputTraces;
+    size_t iterations = 1;
 
-    for (size_t i = 0; i < testCasesRaw->size(); ++i)
-    {
-        vector<int> testCase = testCasesRaw->at(i);
-        InputTrace input = InputTrace(testCase, presentationLayer);
-        inputTraces.push_back(input);
-        shared_ptr<vector<OutputTrace>> producedOutputs = make_shared<vector<OutputTrace>>();
-        vector<shared_ptr<FsmNode>> reached;
-        getInitialState()->getPossibleOutputs(input, producedOutputs, reached);
-        allPossibleOutputTraces.push_back(producedOutputs);
-    }
-
-    //for (vector<int> testCase : *testCasesRaw)
     for (size_t i = 0; i < testCasesRaw->size(); ++i)
     {
         vector<int> testCase = testCasesRaw->at(i);
@@ -1296,6 +1292,7 @@ IOTraceContainer Fsm::getVPrime()
         shared_ptr<vector<OutputTrace>> producedOutputs = make_shared<vector<OutputTrace>>();
         vector<shared_ptr<FsmNode>> reached;
         getInitialState()->getPossibleOutputs(input, producedOutputs, reached);
+        iterations *= producedOutputs->size();
 
         cout << "Input trace: " << input << endl;
         cout << "produced Outputs:" << endl;
@@ -1305,15 +1302,37 @@ IOTraceContainer Fsm::getVPrime()
         }
         cout << endl;
 
-        /*
-        allPossibleOutputTraces.push_back(*producedOutputs);
+        allPossibleOutputTraces.push_back(producedOutputs);
 
-        for (size_t j = 0; j < testCasesRaw->size(); ++j)
-        {
-            shared_ptr<IOTrace> iOTrace = make_shared<IOTrace>(input, producedOutputs->at(j));
-        }
-        */
     }
+
+    cout << "iterations:" << iterations << endl;
+
+        vector<vector<int>> ot;
+
+        size_t idxA = iterations / allPossibleOutputTraces.at(0)->size();
+        for (size_t i = 0; i < testCasesRaw->size(); ++i)
+        {
+
+            vector<int> t;
+            size_t blocks = iterations / idxA;
+            cout << "i: " << i << "   idxA: " << idxA << ", blocks: " << blocks << endl;
+            size_t idxB = 0;
+
+            for (size_t b = 0; b < blocks; ++b)
+            {
+                for (size_t idx = 0; idx < idxA; ++idx)
+                {
+                    cout << "     " << idxB << endl;
+                }
+                idxB = (idxB + 1) % allPossibleOutputTraces.at(i)->size();
+            }
+
+            if (i+1 < testCasesRaw->size())
+            {
+                idxA /= allPossibleOutputTraces.at(i+1)->size();
+            }
+        }
     return result;
 }
 
