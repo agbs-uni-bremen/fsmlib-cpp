@@ -32,6 +32,7 @@ class TestSuite;
 class OutputTrace;
 class InputOutputTree;
 class IOTrace;
+class IOTraceContainer;
 
 enum Minimal
 {
@@ -360,7 +361,7 @@ public:
     IOListContainer getRCharacterisationSet() const;
     IOTreeContainer getAdaptiveRCharacterisationSet() const;
 
-    std::vector<std::vector<std::shared_ptr<IOTrace>>> getVPrime();
+    IOTraceContainer getVPrime();
 
     std::vector<std::vector<std::shared_ptr<FsmNode>>> getMaximalSetsOfRDistinguishableStates() const;
     

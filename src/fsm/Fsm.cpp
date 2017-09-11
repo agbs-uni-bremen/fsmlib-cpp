@@ -12,6 +12,7 @@
 #include "fsm/FsmNode.h"
 #include "fsm/FsmTransition.h"
 #include "fsm/InputTrace.h"
+#include "fsm/IOTraceContainer.h"
 #include "fsm/OFSMTable.h"
 #include "fsm/RDistinguishability.h"
 #include "sets/HittingSet.h"
@@ -1263,17 +1264,29 @@ IOListContainer Fsm::getRCharacterisationSet() const
     return result;
 }
 
-std::vector<std::vector<std::shared_ptr<IOTrace>>> Fsm::getVPrime()
+IOTraceContainer Fsm::getVPrime()
 {
     //TODO WIP!
     cout << "###### getVPrime() ######" << endl;
-    std::vector<std::vector<std::shared_ptr<IOTrace>>> result;
+    IOTraceContainer result = IOTraceContainer(presentationLayer);
 
     shared_ptr<Tree> detStateCover = getDeterministicStateCover();
     IOListContainer testCases = detStateCover->getDeterministicTestCases();
     shared_ptr<vector<vector<int>>> testCasesRaw = testCases.getIOLists();
 
-    vector<vector<OutputTrace>> allPossibleOutputTraces;
+    vector<shared_ptr<vector<OutputTrace>>> allPossibleOutputTraces;
+    vector<InputTrace> inputTraces;
+
+    for (size_t i = 0; i < testCasesRaw->size(); ++i)
+    {
+        vector<int> testCase = testCasesRaw->at(i);
+        InputTrace input = InputTrace(testCase, presentationLayer);
+        inputTraces.push_back(input);
+        shared_ptr<vector<OutputTrace>> producedOutputs = make_shared<vector<OutputTrace>>();
+        vector<shared_ptr<FsmNode>> reached;
+        getInitialState()->getPossibleOutputs(input, producedOutputs, reached);
+        allPossibleOutputTraces.push_back(producedOutputs);
+    }
 
     //for (vector<int> testCase : *testCasesRaw)
     for (size_t i = 0; i < testCasesRaw->size(); ++i)

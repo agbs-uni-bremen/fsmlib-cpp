@@ -26,6 +26,8 @@ set (FSM_FSM_SOURCES
 	Int2IntMap.h
 	IOTrace.cpp
 	IOTrace.h
+        IOTraceContainer.cpp
+        IOTraceContainer.h
 	OFSMTable.cpp
 	OFSMTable.h
 	OFSMTableRow.cpp
