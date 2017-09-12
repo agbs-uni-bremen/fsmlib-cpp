@@ -44,6 +44,8 @@ public:
 	*/
 	OutputTrace getOutputTrace() const;
 
+    std::vector<IOTrace> getPrefixes() const;
+
 	/**
 	Output the IOTrace to a standard output stream
 	@param out The standard output stream to use

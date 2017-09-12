@@ -1327,6 +1327,14 @@ vector<IOTraceContainer> Fsm::getVPrime()
     return result;
 }
 
+IOTraceContainer Fsm::R(std::shared_ptr<Fsm> otherFsm,
+                   std::shared_ptr<FsmNode> node,
+                   IOTrace& prefix,
+                   IOTrace& suffix) const
+{
+
+}
+
 IOTreeContainer Fsm::getAdaptiveRCharacterisationSet() const
 {
     IOTreeContainer result = IOTreeContainer(presentationLayer);

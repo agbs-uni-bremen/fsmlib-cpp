@@ -70,6 +70,8 @@ public:
     
     const std::shared_ptr<FsmPresentationLayer> getPresentationLayer() const { return presentationLayer; }
 
+    std::vector<Trace> getPrefixes() const;
+
 	/**
 	Check wheter or not, the 2 trace are the same
 	@param trace1 The first trace

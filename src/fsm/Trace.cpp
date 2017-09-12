@@ -49,6 +49,20 @@ std::vector<int>::const_iterator Trace::cend() const
 	return trace.cend();
 }
 
+std::vector<Trace> Trace::getPrefixes() const
+{
+     std::vector<Trace> result;
+     if (trace.size() > 1)
+     {
+         for (size_t i = 1; i < result.size(); ++i)
+         {
+             Trace prefix = Trace(std::vector<int>(trace.begin(), trace.end() - static_cast<std::vector<int>::difference_type>(i)), presentationLayer);
+            result.push_back(prefix);
+         }
+     }
+     return result;
+}
+
 bool operator==(Trace const & trace1, Trace const & trace2)
 {
 	if (trace1.get().size() != trace2.get().size())

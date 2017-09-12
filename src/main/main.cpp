@@ -781,7 +781,13 @@ int main()
             cout << n->getName() << ",";
         }
         cout << endl;
-        fsm1.getVPrime();
+        vector<IOTraceContainer> vPrime = fsm1.getVPrime();
+        cout << "vPrime:\n{" << endl;
+        for (auto r : vPrime)
+        {
+            cout << "  " << r << endl;
+        }
+        cout << "}" << endl;
 
     //x = 2;
     }

@@ -23,6 +23,27 @@ OutputTrace IOTrace::getOutputTrace() const
 	return outputTrace;
 }
 
+vector<IOTrace> IOTrace::getPrefixes() const
+{
+    vector<IOTrace> result;
+    vector<int> inputRaw = inputTrace.get();
+    vector<int> outputRaw = outputTrace.get();
+    if (inputRaw.size() != outputRaw.size())
+    {
+        cerr << "Input trace and output trace differ in size.";
+        exit(EXIT_FAILURE);
+    }
+
+    //vector<InputTrace> inPrefixes = inputTrace.getPrefixes();
+
+    if (inputRaw.size() > 1) {
+        for (size_t i = 0; i < inputRaw.size(); ++i)
+        {
+//            IOTrace prefix = IOTrace()
+        }
+    }
+}
+
 ostream & operator<<(ostream & out, const IOTrace & trace)
 {
 	out << trace.inputTrace << "/" << trace.outputTrace;
