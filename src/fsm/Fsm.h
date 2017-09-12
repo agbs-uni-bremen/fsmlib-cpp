@@ -361,7 +361,14 @@ public:
     IOListContainer getRCharacterisationSet() const;
     IOTreeContainer getAdaptiveRCharacterisationSet() const;
 
-    IOTraceContainer getVPrime();
+    /**
+     * Calculates all possible output traces for the deterministic state cover of the
+     * fsm and returns all possible combinations of the corresponding input traces
+     * and the related output traces.
+     * @return List of possible combinations of input traces and output traces, based
+     * on the deterministic state cover.
+     */
+    std::vector<IOTraceContainer> getVPrime();
 
     std::vector<std::vector<std::shared_ptr<FsmNode>>> getMaximalSetsOfRDistinguishableStates() const;
     
