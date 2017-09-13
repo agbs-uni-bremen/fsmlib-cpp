@@ -718,32 +718,40 @@ std::string getcwd() {
 int main()
 {
 	std::cout << "Dir " << getcwd() << endl;
+
+    shared_ptr<FsmPresentationLayer> pl1 =
+    make_shared<FsmPresentationLayer>("../../../resources/adaptiveIn.txt",
+            + "../../../resources/adaptiveOut.txt",
+            + "../../../resources/adaptiveState.txt");
+    shared_ptr<Fsm> fsm1 = make_shared<Fsm>("../../../resources/adaptive.fsm",pl1,"adaptive");
+    fsm1->toDot("../../../resources/adaptive");
+
+    shared_ptr<FsmPresentationLayer> pl2 =
+    make_shared<FsmPresentationLayer>("../../../resources/adaptive2In.txt",
+            + "../../../resources/adaptive2Out.txt",
+            + "../../../resources/adaptive2State.txt");
+    shared_ptr<Fsm> fsm2 = make_shared<Fsm>("../../../resources/adaptive2.fsm",pl2,"adaptive2");
+    fsm2->toDot("../../../resources/adaptive2");
+
+
     int x = 1;
     if (x == 1)
     {
-
-        shared_ptr<FsmPresentationLayer> pl1 =
-        make_shared<FsmPresentationLayer>("../../../resources/adaptiveIn.txt",
-                + "../../../resources/adaptiveOut.txt",
-                + "../../../resources/adaptiveState.txt");
-        Fsm fsm1("../../../resources/adaptive.fsm",pl1,"adaptive");
-        fsm1.toDot("../../../resources/adaptive");
-
-        shared_ptr<Tree> detStateCover = fsm1.getDeterministicStateCover();
+        shared_ptr<Tree> detStateCover = fsm1->getDeterministicStateCover();
         IOListContainer testCases = detStateCover->getDeterministicTestCases();
         cout << "Deterministic test cases:\n" << testCases << endl;
 
-        fsm1.calcRDistinguishableStates();
-        IOListContainer characterisationSet = fsm1.getCharacterisationSet();
+        fsm1->calcRDistinguishableStates();
+        IOListContainer characterisationSet = fsm1->getCharacterisationSet();
         cout << "characterisationSet:\n" << characterisationSet << endl;
-        IOListContainer rCharacterisationSet = fsm1.getRCharacterisationSet();
+        IOListContainer rCharacterisationSet = fsm1->getRCharacterisationSet();
         cout << "rCharacterisationSet:\n" << rCharacterisationSet << endl;
-        IOTreeContainer rAdaptiveCharacterisationSet = fsm1.getAdaptiveRCharacterisationSet();
+        IOTreeContainer rAdaptiveCharacterisationSet = fsm1->getAdaptiveRCharacterisationSet();
         cout << "Adaptive rCharacterisationSet:\n" << rAdaptiveCharacterisationSet << endl;
         IOListContainer adaptiveList = rAdaptiveCharacterisationSet.toIOList();
         cout << "Adaptive rCharacterisationSet as input traces:\n" << adaptiveList << endl;
 
-        vector<vector<shared_ptr<FsmNode>>> max = fsm1.getMaximalSetsOfRDistinguishableStates();
+        vector<vector<shared_ptr<FsmNode>>> max = fsm1->getMaximalSetsOfRDistinguishableStates();
         cout << "max:" << endl;
         for (auto set  : max)
         {
@@ -755,7 +763,7 @@ int main()
             cout << "}" << endl;
         }
 
-        vector<shared_ptr<FsmNode>> dReachable = fsm1.getDReachableStates();
+        vector<shared_ptr<FsmNode>> dReachable = fsm1->getDReachableStates();
         cout << "d-reachable nodes: ";
         for (auto n : dReachable)
         {
@@ -768,7 +776,7 @@ int main()
         vector<shared_ptr<FsmNode>> reached;
 
         cout << "Input trace: " << testInput << endl;
-        fsm1.getInitialState()->getPossibleOutputs(testInput, producedOutputs, reached);
+        fsm1->getInitialState()->getPossibleOutputs(testInput, producedOutputs, reached);
         cout << "produced Outputs:" << endl;
         for (auto o : *producedOutputs)
         {
@@ -781,7 +789,7 @@ int main()
             cout << n->getName() << ",";
         }
         cout << endl;
-        vector<IOTraceContainer> vPrime = fsm1.getVPrime();
+        vector<IOTraceContainer> vPrime = fsm1->getVPrime();
         cout << "vPrime:\n{" << endl;
         for (auto r : vPrime)
         {
@@ -789,35 +797,31 @@ int main()
         }
         cout << "}" << endl;
 
+        cout << endl;
+        IOTrace io1 = IOTrace(InputTrace({1,0,1}, pl1), OutputTrace({1,0,0}, pl1));
+        IOTrace io2 = IOTrace(InputTrace({0,1,1,0}, pl1), OutputTrace({0,1,0,0}, pl1));
+        fsm1->R(fsm1->getNodes().at(0), io1, io2);
+
     //x = 2;
     }
     if (x == 2)
     {
-
-        shared_ptr<FsmPresentationLayer> pl2 =
-        make_shared<FsmPresentationLayer>("../../../resources/adaptive2In.txt",
-                + "../../../resources/adaptive2Out.txt",
-                + "../../../resources/adaptive2State.txt");
-        Fsm fsm2("../../../resources/adaptive2.fsm",pl2,"adaptive");
-        fsm2.toDot("../../../resources/adaptive2");
-
-
-        shared_ptr<Tree> detStateCover = fsm2.getDeterministicStateCover();
+        shared_ptr<Tree> detStateCover = fsm2->getDeterministicStateCover();
         IOListContainer testCases = detStateCover->getDeterministicTestCases();
         cout << "Deterministic test cases:\n" << testCases << endl;
 
 
-        fsm2.calcRDistinguishableStates();
-        IOListContainer characterisationSet = fsm2.getCharacterisationSet();
+        fsm2->calcRDistinguishableStates();
+        IOListContainer characterisationSet = fsm2->getCharacterisationSet();
         cout << "characterisationSet:\n" << characterisationSet << endl;
-        IOListContainer rCharacterisationSet = fsm2.getRCharacterisationSet();
+        IOListContainer rCharacterisationSet = fsm2->getRCharacterisationSet();
         cout << "rCharacterisationSet:\n" << rCharacterisationSet << endl;
-        IOTreeContainer rAdaptiveCharacterisationSet = fsm2.getAdaptiveRCharacterisationSet();
+        IOTreeContainer rAdaptiveCharacterisationSet = fsm2->getAdaptiveRCharacterisationSet();
         cout << "Adaptive rCharacterisationSet:\n" << rAdaptiveCharacterisationSet << endl;
         IOListContainer adaptiveList = rAdaptiveCharacterisationSet.toIOList();
         cout << "Adaptive rCharacterisationSet as input traces:\n" << adaptiveList << endl;
 
-        vector<vector<shared_ptr<FsmNode>>> max = fsm2.getMaximalSetsOfRDistinguishableStates();
+        vector<vector<shared_ptr<FsmNode>>> max = fsm2->getMaximalSetsOfRDistinguishableStates();
         cout << "max:" << endl;
         for (auto set  : max)
         {
@@ -829,7 +833,7 @@ int main()
             cout << "}" << endl;
         }
 
-        vector<shared_ptr<FsmNode>> dReachable = fsm2.getDReachableStates();
+        vector<shared_ptr<FsmNode>> dReachable = fsm2->getDReachableStates();
         cout << "d-reachable nodes: ";
         for (auto n : dReachable)
         {
@@ -842,7 +846,7 @@ int main()
         vector<shared_ptr<FsmNode>> reached;
 
         cout << "Input trace: " << testInput << endl;
-        fsm2.getInitialState()->getPossibleOutputs(testInput, producedOutputs, reached);
+        fsm2->getInitialState()->getPossibleOutputs(testInput, producedOutputs, reached);
         cout << "produced Outputs:" << endl;
         for (auto o : *producedOutputs)
         {
@@ -855,7 +859,7 @@ int main()
             cout << n->getName() << ",";
         }
         cout << endl;
-        fsm2.getVPrime();
+        fsm2->getVPrime();
     }
 	cout << endl << endl;
 

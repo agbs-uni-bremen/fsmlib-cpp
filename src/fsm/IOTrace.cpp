@@ -10,7 +10,11 @@ using namespace std;
 IOTrace::IOTrace(const InputTrace & i, const OutputTrace & o)
 	: inputTrace(i), outputTrace(o)
 {
-
+    if (i.get().size() != o.get().size())
+    {
+        cerr << "Input trace length and output trace length differ." << endl;
+        exit(EXIT_FAILURE);
+    }
 }
 
 InputTrace IOTrace::getInputTrace() const
@@ -30,18 +34,37 @@ vector<IOTrace> IOTrace::getPrefixes() const
     vector<int> outputRaw = outputTrace.get();
     if (inputRaw.size() != outputRaw.size())
     {
-        cerr << "Input trace and output trace differ in size.";
+        cerr << "Input trace and output trace differ in size." << endl;
         exit(EXIT_FAILURE);
     }
 
     //vector<InputTrace> inPrefixes = inputTrace.getPrefixes();
 
     if (inputRaw.size() > 1) {
-        for (size_t i = 0; i < inputRaw.size(); ++i)
+        vector<Trace> inPre = inputTrace.getPrefixes();
+        vector<Trace> outPre = outputTrace.getPrefixes();
+        for (size_t i = 0; i < inPre.size(); ++i)
         {
-//            IOTrace prefix = IOTrace()
+            InputTrace ip = InputTrace(inPre.at(i).get(), inPre.at(i).getPresentationLayer());
+            OutputTrace op = OutputTrace(outPre.at(i).get(), outPre.at(i).getPresentationLayer());
+            IOTrace prefix = IOTrace(ip, op);
+            result.push_back(prefix);
         }
+
     }
+    return result;
+}
+
+
+size_t IOTrace::size() const
+{
+    return inputTrace.get().size();
+}
+
+void IOTrace::append(IOTrace& other)
+{
+    inputTrace.append(other.getInputTrace());
+    outputTrace.append(other.getOutputTrace());
 }
 
 ostream & operator<<(ostream & out, const IOTrace & trace)

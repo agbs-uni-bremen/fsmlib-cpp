@@ -30,7 +30,7 @@ public:
 	@param i The input trace contained into the iotrace
 	@param o The output trace contained into the iotrace
 	*/
-	IOTrace(const InputTrace & i, const OutputTrace & o);
+    IOTrace(const InputTrace & i, const OutputTrace & o);
 
 	/**
 	Getter for the input trace
@@ -45,6 +45,10 @@ public:
 	OutputTrace getOutputTrace() const;
 
     std::vector<IOTrace> getPrefixes() const;
+
+    size_t size() const;
+
+    void append(IOTrace& other);
 
 	/**
 	Output the IOTrace to a standard output stream

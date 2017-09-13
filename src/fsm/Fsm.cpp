@@ -12,6 +12,7 @@
 #include "fsm/FsmNode.h"
 #include "fsm/FsmTransition.h"
 #include "fsm/InputTrace.h"
+#include "fsm/IOTrace.h"
 #include "fsm/IOTraceContainer.h"
 #include "fsm/OFSMTable.h"
 #include "fsm/RDistinguishability.h"
@@ -1327,12 +1328,56 @@ vector<IOTraceContainer> Fsm::getVPrime()
     return result;
 }
 
-IOTraceContainer Fsm::R(std::shared_ptr<Fsm> otherFsm,
-                   std::shared_ptr<FsmNode> node,
-                   IOTrace& prefix,
-                   IOTrace& suffix) const
+IOTraceContainer Fsm::R(std::shared_ptr<FsmNode> node,
+                   IOTrace& base,
+                   IOTrace& suffix)
 {
+    cout << "node: " << node->getName() << endl;
+    cout << "base: " << base << endl;
+    cout << "suffix: " << suffix << endl;
 
+
+    IOTraceContainer result = IOTraceContainer(presentationLayer);
+    vector<IOTrace> prefs = suffix.getPrefixes();
+    vector<IOTrace> prefixes;
+    // Remove empty sequences from prefixes.
+    for (IOTrace& prefix : prefs)
+    {
+        if (prefix.size() != 1 ||
+                (prefix.getInputTrace().get().at(0) != -1 &&
+                prefix.getOutputTrace().get().at(0) != -1))
+        {
+            prefixes.push_back(prefix);
+        }
+    }
+    cout << "prefixes:" << endl;
+    for (auto p : prefixes)
+    {
+        cout << "  " << p << endl;
+    }
+
+    for (IOTrace prefix : prefixes)
+    {
+        cout << "prefix = " << prefix << endl;
+        IOTrace baseCopy = base;
+        baseCopy.append(prefix);
+        cout << "v = " << baseCopy << " reaches:\n  ";
+        unordered_set<shared_ptr<FsmNode>> nodes = node->after(prefix.getInputTrace(), prefix.getOutputTrace());
+        for (shared_ptr<FsmNode> n : nodes)
+        {
+            cout << n->getName() << ", ";
+            if (n == node)
+            {
+                cout << "  adding " << baseCopy << " to result" << endl;
+                result.add(baseCopy);
+            }
+        }
+        cout << endl;
+    }
+
+    cout << "result: " << result << endl;
+
+    return result;
 }
 
 IOTreeContainer Fsm::getAdaptiveRCharacterisationSet() const

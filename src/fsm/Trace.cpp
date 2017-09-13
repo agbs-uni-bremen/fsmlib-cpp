@@ -54,7 +54,7 @@ std::vector<Trace> Trace::getPrefixes() const
      std::vector<Trace> result;
      if (trace.size() > 1)
      {
-         for (size_t i = 1; i < result.size(); ++i)
+         for (size_t i = 1; i < trace.size(); ++i)
          {
              Trace prefix = Trace(std::vector<int>(trace.begin(), trace.end() - static_cast<std::vector<int>::difference_type>(i)), presentationLayer);
             result.push_back(prefix);
