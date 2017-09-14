@@ -50,6 +50,10 @@ public:
 
     void append(IOTrace& other);
 
+    void append(int input, int output);
+
+    static std::shared_ptr<IOTrace> getEmptyTrace(std::shared_ptr<FsmPresentationLayer> pl);
+
 	/**
 	Output the IOTrace to a standard output stream
 	@param out The standard output stream to use

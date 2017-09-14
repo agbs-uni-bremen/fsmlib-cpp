@@ -15,6 +15,10 @@ public:
     void addUnique(IOTrace& trc);
     void add(IOTrace& trc);
 
+    bool contains(IOTrace& trace) const;
+
+    void unify(IOTraceContainer& other);
+
     /**
      * Output the IOTraceContainer to a standard output stream
      * @param out The standard output stream to use

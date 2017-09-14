@@ -371,8 +371,13 @@ public:
     std::vector<IOTraceContainer> getVPrime();
 
     IOTraceContainer R(std::shared_ptr<FsmNode> node,
+                       IOTrace& base,
+                       IOTrace& suffix) const;
+
+    IOTraceContainer R(std::shared_ptr<FsmNode> node,
                        IOTrace& prefix,
-                       IOTrace& suffix);
+                       IOTrace& suffix,
+                       IOTraceContainer& vDoublePrime) const;
 
     std::vector<std::vector<std::shared_ptr<FsmNode>>> getMaximalSetsOfRDistinguishableStates() const;
     

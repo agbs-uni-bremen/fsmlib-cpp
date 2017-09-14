@@ -29,7 +29,8 @@ visited(false),
 color(white),
 presentationLayer(presentationLayer),
 derivedFromPair(nullptr),
-isInitialNode(false)
+isInitialNode(false),
+dReachTrace(nullptr)
 {
     rDistinguishability = make_shared<RDistinguishability>(presentationLayer);
 }
@@ -86,6 +87,16 @@ void FsmNode::setUnvisited() {
     visited = false;
 }
 
+void FsmNode::setDReachable(shared_ptr<IOTrace> trace)
+{
+    dReachTrace = trace;
+    dReachable = true;
+}
+
+void FsmNode::setNotDReachable() {
+    dReachable = false;
+}
+
 void FsmNode::setPair(const shared_ptr<FsmNode> l, const shared_ptr<FsmNode> r)
 {
     derivedFromPair = make_shared<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>(l, r);
@@ -99,6 +110,16 @@ void FsmNode::setPair(const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmN
 bool FsmNode::isDerivedFrom(const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> p) const
 {
     return derivedFromPair != nullptr && *derivedFromPair == *p;
+}
+
+bool FsmNode::isDReachable() const
+{
+    return dReachable;
+}
+
+std::shared_ptr<IOTrace> FsmNode::getDReachTrace() const
+{
+    return dReachTrace;
 }
 
 shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> FsmNode::getPair() const
@@ -320,6 +341,20 @@ vector<shared_ptr<FsmNode>> FsmNode::after(const int x)
         if (tr->getLabel()->getInput() == x)
         {
             lst.push_back(tr->getTarget());
+        }
+    }
+    return lst;
+}
+
+vector<shared_ptr<FsmNode>> FsmNode::after(const int x, std::vector<int>& producedOutputs)
+{
+    vector<shared_ptr<FsmNode> > lst;
+    for (auto tr : transitions)
+    {
+        if (tr->getLabel()->getInput() == x)
+        {
+            lst.push_back(tr->getTarget());
+            producedOutputs.push_back(tr->getLabel()->getOutput());
         }
     }
     return lst;

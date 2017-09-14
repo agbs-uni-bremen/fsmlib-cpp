@@ -37,6 +37,25 @@ void IOTraceContainer::add(IOTrace& trc)
     list->push_back(trc);
 }
 
+bool IOTraceContainer::contains(IOTrace& trace) const
+{
+    for (IOTrace& t : *list)
+    {
+        if (t == trace)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void IOTraceContainer::unify(IOTraceContainer& other)
+{
+    for (IOTrace& trace : *other.getList())
+    {
+        addUnique(trace);
+    }
+}
 
 std::ostream & operator<<(std::ostream & out, const IOTraceContainer & iot)
 {

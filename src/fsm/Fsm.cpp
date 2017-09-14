@@ -388,33 +388,72 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates()
 	resetColor();
 	deque<shared_ptr<FsmNode>> bfsLst;
     vector<shared_ptr<FsmNode>> nodes;
+    map<shared_ptr<FsmNode>, shared_ptr<IOTrace>> paths;
 
 	shared_ptr<FsmNode> initState = getInitialState();
 	initState->setColor(FsmNode::grey);
     bfsLst.push_back(initState);
     nodes.push_back(initState);
+    initState->setDReachable(IOTrace::getEmptyTrace(presentationLayer));
+    paths.insert(make_pair(initState, IOTrace::getEmptyTrace(presentationLayer)));
 
 	while (!bfsLst.empty())
 	{
 		shared_ptr<FsmNode> thisNode = bfsLst.front();
 		bfsLst.pop_front();
 
+        shared_ptr<IOTrace> thisNodePath;
+
+        if (!thisNode->isInitial())
+        {
+            try
+            {
+                thisNodePath = paths.at(thisNode);
+            }
+            catch (out_of_range e)
+            {
+                // DO nothing.
+            }
+        }
+
 		for (int x = 0; x <= maxInput; ++x)
 		{
-			vector<shared_ptr<FsmNode>> successorNodes = thisNode->after(x);
+            vector<int> producedOutputs;
+            vector<shared_ptr<FsmNode>> successorNodes = thisNode->after(x, producedOutputs);
 			if (successorNodes.size() != 1)
 			{
 				continue;
 			}
-			for (shared_ptr<FsmNode> tgt : successorNodes)
-			{
-				if (tgt->getColor() == FsmNode::white)
-				{
-					tgt->setColor(FsmNode::grey);
-					bfsLst.push_back(tgt);
-                    nodes.push_back(tgt);
-				}
-			}
+            shared_ptr<FsmNode> tgt = successorNodes.at(0);
+            try
+            {
+                paths.at(tgt);
+                // Path alrteady exists. Do nothing.
+            }
+            catch (out_of_range e)
+            {
+                // Create new path, since it doesn't exist.
+                if (thisNodePath)
+                {
+                    shared_ptr<IOTrace> newPath(thisNodePath);
+                    newPath->append(x, producedOutputs.at(0));
+                    paths.insert(make_pair(tgt, newPath));
+                }
+                else
+                {
+                    InputTrace in = InputTrace({x}, presentationLayer);
+                    OutputTrace out = OutputTrace({producedOutputs.at(0)}, presentationLayer);
+                    shared_ptr<IOTrace> newPath = make_shared<IOTrace>(in, out);
+                    paths.insert(make_pair(tgt, newPath));
+                }
+            }
+            if (tgt->getColor() == FsmNode::white)
+            {
+                tgt->setColor(FsmNode::grey);
+                bfsLst.push_back(tgt);
+                nodes.push_back(tgt);
+                tgt->setDReachable(paths.at(tgt));
+            }
         }
 	}
 	resetColor();
@@ -1330,7 +1369,7 @@ vector<IOTraceContainer> Fsm::getVPrime()
 
 IOTraceContainer Fsm::R(std::shared_ptr<FsmNode> node,
                    IOTrace& base,
-                   IOTrace& suffix)
+                   IOTrace& suffix) const
 {
     cout << "node: " << node->getName() << endl;
     cout << "base: " << base << endl;
@@ -1378,6 +1417,22 @@ IOTraceContainer Fsm::R(std::shared_ptr<FsmNode> node,
     cout << "result: " << result << endl;
 
     return result;
+}
+
+IOTraceContainer Fsm::R(std::shared_ptr<FsmNode> node,
+                   IOTrace& base,
+                   IOTrace& suffix,
+                   IOTraceContainer& vDoublePrime) const
+{
+    IOTraceContainer r = R(node, base, suffix);
+    cout << "r: " << r << endl;
+    if (node->isDReachable() && vDoublePrime.contains(*node->getDReachTrace()))
+    {
+        cout << "  Adding: " << *node->getDReachTrace() << endl;
+        r.add(*node->getDReachTrace());
+        cout << "  r: " << r << endl;
+    }
+    return r;
 }
 
 IOTreeContainer Fsm::getAdaptiveRCharacterisationSet() const

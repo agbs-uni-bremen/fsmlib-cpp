@@ -16,6 +16,7 @@
 #include <deque>
 
 #include "fsm/FsmVisitor.h"
+#include "fsm/IOTrace.h"
 
 class FsmTransition;
 class FsmPresentationLayer;
@@ -41,6 +42,8 @@ private:
     std::shared_ptr<RDistinguishability> rDistinguishability;
     
     bool isInitialNode;
+    bool dReachable;
+    std::shared_ptr<IOTrace> dReachTrace;
     
     /**
      *  List of requirements satisfied by the node
@@ -70,9 +73,13 @@ public:
 	bool hasBeenVisited() const;
 	void setVisited();
     void setUnvisited();
+    void setDReachable(std::shared_ptr<IOTrace> trace);
+    void setNotDReachable();
 	void setPair(const std::shared_ptr<FsmNode> l, const std::shared_ptr<FsmNode> r);
 	void setPair(const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p);
 	bool isDerivedFrom(const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p) const;
+    bool isDReachable() const;
+    std::shared_ptr<IOTrace> getDReachTrace() const;
 	std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> getPair() const;
 	std::shared_ptr<FsmNode> apply(const int e, OutputTrace & o);
 	OutputTree apply(const InputTrace & itrc, bool markAsVisited = false);
@@ -129,6 +136,7 @@ public:
 	otherwise.
 	*/
 	std::vector<std::shared_ptr<FsmNode>> after(const int x);
+    std::vector<std::shared_ptr<FsmNode>> after(const int x, std::vector<int>& producedOutputs);
 	std::unordered_set<std::shared_ptr<FsmNode>> afterAsSet(const int x);
     std::unordered_set<std::shared_ptr<FsmNode>> afterAsSet(const int x, const int y);
 	void setColor(const int color);

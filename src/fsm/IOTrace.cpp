@@ -67,6 +67,19 @@ void IOTrace::append(IOTrace& other)
     outputTrace.append(other.getOutputTrace());
 }
 
+void IOTrace::append(int input, int output)
+{
+    inputTrace.add(input);
+    outputTrace.add(output);
+}
+
+shared_ptr<IOTrace> IOTrace::getEmptyTrace(shared_ptr<FsmPresentationLayer> pl)
+{
+    InputTrace i = InputTrace({-1}, pl);
+    OutputTrace o = OutputTrace({-1}, pl);
+    return make_shared<IOTrace>(i, o);
+}
+
 ostream & operator<<(ostream & out, const IOTrace & trace)
 {
 	out << trace.inputTrace << "/" << trace.outputTrace;

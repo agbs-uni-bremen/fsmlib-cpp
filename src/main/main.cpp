@@ -800,7 +800,12 @@ int main()
         cout << endl;
         IOTrace io1 = IOTrace(InputTrace({1,0,1}, pl1), OutputTrace({1,0,0}, pl1));
         IOTrace io2 = IOTrace(InputTrace({0,1,1,0}, pl1), OutputTrace({0,1,0,0}, pl1));
-        fsm1->R(fsm1->getNodes().at(0), io1, io2);
+        //IOTraceContainer rOne = fsm1->R(fsm1->getNodes().at(0), io1, io2);
+        for (IOTraceContainer& cont : vPrime)
+        {
+            cout << "R for " << cont << endl;
+            fsm1->R(fsm1->getNodes().at(0), io1, io2, cont);
+        }
 
     //x = 2;
     }
