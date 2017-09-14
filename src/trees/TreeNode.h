@@ -174,6 +174,16 @@ public:
 	input trace against the tree.
 	*/
 	std::shared_ptr<TreeNode> after(std::vector<int>::const_iterator lstIte, const std::vector<int>::const_iterator end);
+
+    std::shared_ptr<TreeNode> after(const int y) const;
+
+    /**
+     * Determines wether this node has an edge with the given output.
+     * @param y The given output
+     * @return {@code true}, if there is an outgoing edge with the given output,
+     * {@code false} otherwise.
+     */
+    bool isDefined(int y) const;
     
     
     void calcSize(size_t& theSize);

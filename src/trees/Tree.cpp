@@ -150,6 +150,10 @@ void Tree::addAfter(const InputTrace & tr, const IOListContainer & cnt)
 	n->addToThisNode(cnt);
 }
 
+bool Tree::isDefined(int y) const
+{
+    return root->isDefined(y);
+}
 
 size_t Tree::size() {
     

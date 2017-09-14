@@ -1304,6 +1304,44 @@ IOListContainer Fsm::getRCharacterisationSet() const
     return result;
 }
 
+IOTraceContainer Fsm::getPossibleIOTraces(std::shared_ptr<FsmNode> node,
+                                          std::shared_ptr<const InputOutputTree> tree) const
+{
+    if (tree->isEmpty())
+    {
+        return IOTraceContainer(IOTrace::getEmptyTrace(presentationLayer), presentationLayer);
+    }
+    IOTraceContainer result = IOTraceContainer(presentationLayer);
+
+    for (int y = 0; y < maxOutput; ++y)
+    {
+        shared_ptr<AdaptiveTreeNode> treeRoot = static_pointer_cast<AdaptiveTreeNode>(tree->getRoot());
+        int x = treeRoot->getInput();
+        bool isPossibleOutput = node->isPossibleOutput(x, y);
+        if (isPossibleOutput && !tree->isDefined(y))
+        {
+            IOTrace trace = IOTrace(x, y , presentationLayer);
+            result.addUnique(trace);
+        }
+        else if (isPossibleOutput && tree->isDefined(y))
+        {
+            unordered_set<shared_ptr<FsmNode>> nextNodes = node->afterAsSet(x, y);
+            if (nextNodes.size() != 1)
+            {
+                cerr << "The FSM does not seem to be observable." << endl;
+                exit(EXIT_FAILURE);
+            }
+            shared_ptr<FsmNode> nextNode = *nextNodes.begin();
+            shared_ptr<AdaptiveTreeNode> nextTreeNode = static_pointer_cast<AdaptiveTreeNode>(treeRoot->after(y));
+            IOTraceContainer iONext = getPossibleIOTraces(nextNode, make_shared<InputOutputTree>(nextTreeNode, presentationLayer));
+            //TODO WIP!
+        }
+    }
+
+
+    return result;
+}
+
 vector<IOTraceContainer> Fsm::getVPrime()
 {
     vector<IOTraceContainer> result;
@@ -1367,7 +1405,7 @@ vector<IOTraceContainer> Fsm::getVPrime()
     return result;
 }
 
-IOTraceContainer Fsm::R(std::shared_ptr<FsmNode> node,
+IOTraceContainer Fsm::r(std::shared_ptr<FsmNode> node,
                    IOTrace& base,
                    IOTrace& suffix) const
 {
@@ -1419,20 +1457,20 @@ IOTraceContainer Fsm::R(std::shared_ptr<FsmNode> node,
     return result;
 }
 
-IOTraceContainer Fsm::R(std::shared_ptr<FsmNode> node,
+IOTraceContainer Fsm::rPlus(std::shared_ptr<FsmNode> node,
                    IOTrace& base,
                    IOTrace& suffix,
                    IOTraceContainer& vDoublePrime) const
 {
-    IOTraceContainer r = R(node, base, suffix);
-    cout << "r: " << r << endl;
+    IOTraceContainer rResult = r(node, base, suffix);
+    cout << "rResult: " << rResult << endl;
     if (node->isDReachable() && vDoublePrime.contains(*node->getDReachTrace()))
     {
         cout << "  Adding: " << *node->getDReachTrace() << endl;
-        r.add(*node->getDReachTrace());
-        cout << "  r: " << r << endl;
+        rResult.add(*node->getDReachTrace());
+        cout << "  rResult: " << rResult << endl;
     }
-    return r;
+    return rResult;
 }
 
 IOTreeContainer Fsm::getAdaptiveRCharacterisationSet() const

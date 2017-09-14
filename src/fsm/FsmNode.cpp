@@ -220,6 +220,18 @@ vector<OutputTrace> FsmNode::getPossibleOutputs(const int x) const
     return result;
 }
 
+bool FsmNode::isPossibleOutput(const int x, const int y) const
+{
+    for (auto transition : transitions)
+    {
+        if (transition->getLabel()->getInput() == x && transition->getLabel()->getOutput() == y)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 shared_ptr<FsmNode> FsmNode::apply(const int e, OutputTrace & o)
 {
     for (shared_ptr<FsmTransition> tr : transitions)

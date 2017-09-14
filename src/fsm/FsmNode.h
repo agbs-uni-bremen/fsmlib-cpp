@@ -106,6 +106,8 @@ public:
      */
     std::vector<OutputTrace> getPossibleOutputs(const int x) const;
 
+    bool isPossibleOutput(const int x, const int y) const;
+
     /**
     Return the set of FsmNode instances reachable from this node after
     having applied the input trace itrc with the given output trace {@code otrc}.

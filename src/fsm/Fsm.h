@@ -361,6 +361,9 @@ public:
     IOListContainer getRCharacterisationSet() const;
     IOTreeContainer getAdaptiveRCharacterisationSet() const;
 
+    IOTraceContainer getPossibleIOTraces(std::shared_ptr<FsmNode> node,
+            std::shared_ptr<const InputOutputTree> tree) const;
+
     /**
      * Calculates all possible output traces for the deterministic state cover of the
      * fsm and returns all possible combinations of the corresponding input traces
@@ -370,11 +373,11 @@ public:
      */
     std::vector<IOTraceContainer> getVPrime();
 
-    IOTraceContainer R(std::shared_ptr<FsmNode> node,
+    IOTraceContainer r(std::shared_ptr<FsmNode> node,
                        IOTrace& base,
                        IOTrace& suffix) const;
 
-    IOTraceContainer R(std::shared_ptr<FsmNode> node,
+    IOTraceContainer rPlus(std::shared_ptr<FsmNode> node,
                        IOTrace& prefix,
                        IOTrace& suffix,
                        IOTraceContainer& vDoublePrime) const;

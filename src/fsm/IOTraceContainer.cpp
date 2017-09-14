@@ -14,6 +14,12 @@ IOTraceContainer::IOTraceContainer(shared_ptr<vector<IOTrace>>& list, const shar
 
 }
 
+IOTraceContainer::IOTraceContainer(shared_ptr<IOTrace> trace, const std::shared_ptr<FsmPresentationLayer> presentationLayer):
+    list(make_shared<std::vector<IOTrace>>()), presentationLayer(presentationLayer)
+{
+    list->push_back(*trace);
+}
+
 
 shared_ptr<vector<IOTrace>> IOTraceContainer::getList() const
 {

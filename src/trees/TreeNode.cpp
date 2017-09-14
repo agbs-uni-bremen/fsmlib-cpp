@@ -335,6 +335,30 @@ std::shared_ptr<TreeNode> TreeNode::after(std::vector<int>::const_iterator lstIt
 	return shared_from_this();
 }
 
+std::shared_ptr<TreeNode> TreeNode::after(const int y) const
+{
+    for (std::shared_ptr<TreeEdge> edge : *children)
+    {
+        if (edge->getIO() == y)
+        {
+            return edge->getTarget();
+        }
+    }
+    return nullptr;
+}
+
+bool TreeNode::isDefined(int y) const
+{
+    for (std::shared_ptr<TreeEdge> edge : *children)
+    {
+        if (edge->getIO() == y)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 void TreeNode::calcSize(size_t& theSize) {
     
     theSize++;

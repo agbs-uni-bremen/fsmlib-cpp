@@ -31,6 +31,7 @@ public:
 	@param o The output trace contained into the iotrace
 	*/
     IOTrace(const InputTrace & i, const OutputTrace & o);
+    IOTrace(const int i, const int o, std::shared_ptr<FsmPresentationLayer> pl);
 
 	/**
 	Getter for the input trace

@@ -804,7 +804,7 @@ int main()
         for (IOTraceContainer& cont : vPrime)
         {
             cout << "R for " << cont << endl;
-            fsm1->R(fsm1->getNodes().at(0), io1, io2, cont);
+            fsm1->rPlus(fsm1->getNodes().at(0), io1, io2, cont);
         }
 
     //x = 2;

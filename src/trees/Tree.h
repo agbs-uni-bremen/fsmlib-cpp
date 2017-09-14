@@ -125,6 +125,14 @@ public:
 
 	//TODO
 	void addAfter(const InputTrace & tr, const IOListContainer & cnt);
+
+    /**
+     * Determines wether this tree's root node has an outgoing edge with the given io.
+     * @param y The given io
+     * @return {@code true}, if there is an outgoing edge with the given io,
+     * {@code false} otherwise.
+     */
+    bool isDefined(int y) const;
     
     /** Return number of nodes in the tree */
     size_t size();

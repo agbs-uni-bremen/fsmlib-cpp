@@ -17,6 +17,12 @@ IOTrace::IOTrace(const InputTrace & i, const OutputTrace & o)
     }
 }
 
+IOTrace::IOTrace(const int i, const int o, shared_ptr<FsmPresentationLayer> pl):
+    inputTrace({i}, pl), outputTrace({o}, pl)
+{
+
+}
+
 InputTrace IOTrace::getInputTrace() const
 {
 	return inputTrace;
