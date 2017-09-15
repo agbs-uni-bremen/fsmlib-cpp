@@ -13,12 +13,53 @@ public:
     IOTraceContainer(std::shared_ptr<std::vector<IOTrace>>& list, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
     IOTraceContainer(std::shared_ptr<IOTrace> trace, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
     std::shared_ptr<std::vector<IOTrace>> getList() const;
+    /**
+     * Adds the given trace to the container, only if the container
+     * does not already contain a trace with the given inputs and outputs.
+     * @param trc The given trace
+     */
     void addUnique(IOTrace& trc);
+
+    /**
+     * Adds the given trace to the container.
+     * @param trc The given trace
+     */
     void add(IOTrace& trc);
 
+    /**
+     * Every trace from the given container that is not already being held by
+     * this container gets added to this container.
+     * @param trc The given container
+     */
+    void addUnique(IOTraceContainer& container);
+
+    /**
+     * Adds every trace from the given container to this container.
+     * @param container The given container.
+     */
+    void add(IOTraceContainer& container);
+
+    /**
+     * Checks if the container contains the given trace .
+     * @param trace The given trace
+     * @return {@code true}, if the container contains the given trace,
+     * {@code false}, otherwise.
+     */
     bool contains(IOTrace& trace) const;
 
-    void unify(IOTraceContainer& other);
+    /**
+     * Concatenates a given trace with each element of this container.
+     * This modifies the container.
+     * @param trace The given trace.
+     */
+    void concatenate(IOTrace& trace);
+
+    /**
+     * Concatenates each element of a given trace container with each
+     * element of this container. This container will be modified.
+     * @param container The given container of traces.
+     */
+    void concatenate(IOTraceContainer& container);
 
     /**
      * Output the IOTraceContainer to a standard output stream

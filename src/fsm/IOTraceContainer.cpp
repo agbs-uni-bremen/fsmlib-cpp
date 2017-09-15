@@ -43,6 +43,22 @@ void IOTraceContainer::add(IOTrace& trc)
     list->push_back(trc);
 }
 
+void IOTraceContainer::addUnique(IOTraceContainer& container)
+{
+    for (IOTrace& trace : *container.getList())
+    {
+        addUnique(trace);
+    }
+}
+
+void IOTraceContainer::add(IOTraceContainer& container)
+{
+    for (IOTrace& trace : *container.getList())
+    {
+        add(trace);
+    }
+}
+
 bool IOTraceContainer::contains(IOTrace& trace) const
 {
     for (IOTrace& t : *list)
@@ -55,11 +71,22 @@ bool IOTraceContainer::contains(IOTrace& trace) const
     return false;
 }
 
-void IOTraceContainer::unify(IOTraceContainer& other)
+void IOTraceContainer::concatenate(IOTrace& trace)
 {
-    for (IOTrace& trace : *other.getList())
+    for (IOTrace& t : *list)
     {
-        addUnique(trace);
+        t.append(trace);
+    }
+}
+
+void IOTraceContainer::concatenate(IOTraceContainer& container)
+{
+    for (IOTrace& thisTrace : *list)
+    {
+        for (IOTrace& otherTrace : *container.getList())
+        {
+            thisTrace.append(otherTrace);
+        }
     }
 }
 

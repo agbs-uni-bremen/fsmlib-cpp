@@ -1305,26 +1305,35 @@ IOListContainer Fsm::getRCharacterisationSet() const
 }
 
 IOTraceContainer Fsm::getPossibleIOTraces(std::shared_ptr<FsmNode> node,
-                                          std::shared_ptr<const InputOutputTree> tree) const
+                                          std::shared_ptr<InputOutputTree> tree) const
 {
+    cout << "(" << node->getName() << ") " << "getPossibleIOTraces()" << endl;
+    cout << "(" << node->getName() << ") " << "  node: " << node->getName()  << endl;
+    cout << "(" << node->getName() << ") " << "  tree: " << *tree  << endl;
     if (tree->isEmpty())
     {
+        cout << "(" << node->getName() << ") " << "  tree is empty. returning." << endl;
         return IOTraceContainer(IOTrace::getEmptyTrace(presentationLayer), presentationLayer);
     }
     IOTraceContainer result = IOTraceContainer(presentationLayer);
 
-    for (int y = 0; y < maxOutput; ++y)
+    for (int y = 0; y <= maxOutput; ++y)
     {
         shared_ptr<AdaptiveTreeNode> treeRoot = static_pointer_cast<AdaptiveTreeNode>(tree->getRoot());
         int x = treeRoot->getInput();
         bool isPossibleOutput = node->isPossibleOutput(x, y);
+        cout << "(" << node->getName() << ") " << "  y: " << y << endl;
+        cout << "(" << node->getName() << ") " << "  x: " << x << endl;
+        cout << "(" << node->getName() << ") " << "  isPossibleOutput: " << isPossibleOutput << endl;
         if (isPossibleOutput && !tree->isDefined(y))
         {
+            cout << "(" << node->getName() << ") " << "  tree is not defined."  << endl;
             IOTrace trace = IOTrace(x, y , presentationLayer);
             result.addUnique(trace);
         }
         else if (isPossibleOutput && tree->isDefined(y))
         {
+            cout << "(" << node->getName() << ") " << "  tree is defined."  << endl;
             unordered_set<shared_ptr<FsmNode>> nextNodes = node->afterAsSet(x, y);
             if (nextNodes.size() != 1)
             {
@@ -1332,13 +1341,33 @@ IOTraceContainer Fsm::getPossibleIOTraces(std::shared_ptr<FsmNode> node,
                 exit(EXIT_FAILURE);
             }
             shared_ptr<FsmNode> nextNode = *nextNodes.begin();
+            cout << "(" << node->getName() << ") " << "    nextNode: " << nextNode->getName()  << endl;
             shared_ptr<AdaptiveTreeNode> nextTreeNode = static_pointer_cast<AdaptiveTreeNode>(treeRoot->after(y));
-            IOTraceContainer iONext = getPossibleIOTraces(nextNode, make_shared<InputOutputTree>(nextTreeNode, presentationLayer));
-            //TODO WIP!
+            cout << "(" << node->getName() << ") " << "    nextTreeNode input: " << nextTreeNode->getInput()  << endl;
+            shared_ptr<InputOutputTree> nextTree = make_shared<InputOutputTree>(nextTreeNode, presentationLayer);
+            cout << "(" << node->getName() << ") " << "    nextTree: " << *nextTree  << endl;
+            IOTraceContainer iONext = getPossibleIOTraces(nextNode, nextTree);
+            cout << "(" << node->getName() << ") " << "    iONext: " << iONext  << endl;
+            IOTrace trace = IOTrace(x, y , presentationLayer);
+            iONext.concatenate(trace);
+            cout << "(" << node->getName() << ") " << "    iONext: " << iONext  << endl;
+            result.addUnique(iONext);
         }
+        cout << "(" << node->getName() << ") " << "#####################################" << endl;
     }
 
+    return result;
+}
 
+IOTraceContainer Fsm::getPossibleIOTraces(std::shared_ptr<FsmNode> node,
+        std::shared_ptr<IOTreeContainer> treeContainer) const
+{
+    IOTraceContainer result = IOTraceContainer(presentationLayer);;
+    for (shared_ptr<InputOutputTree> tree : *treeContainer->getList())
+    {
+        IOTraceContainer container = getPossibleIOTraces(node, tree);
+        result.addUnique(container);
+    }
     return result;
 }
 

@@ -23,7 +23,7 @@ void Trace::add(const int e)
 }
 
 void Trace::append(const std::vector<int>& traceToAppend) {
-    
+    trace.reserve(trace.size() + traceToAppend.size());
     for ( size_t i = 0; i < traceToAppend.size(); i++ ) {
         trace.push_back(traceToAppend.at(i));
     }

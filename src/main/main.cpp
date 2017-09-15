@@ -807,6 +807,8 @@ int main()
             fsm1->rPlus(fsm1->getNodes().at(0), io1, io2, cont);
         }
 
+        fsm1->getPossibleIOTraces(fsm1->getInitialState(), rAdaptiveCharacterisationSet.getList()->at(0));
+
     //x = 2;
     }
     if (x == 2)

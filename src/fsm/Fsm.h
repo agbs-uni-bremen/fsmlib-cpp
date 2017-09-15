@@ -361,8 +361,25 @@ public:
     IOListContainer getRCharacterisationSet() const;
     IOTreeContainer getAdaptiveRCharacterisationSet() const;
 
+    /**
+     * Returns all possible input/output sequences that can be produced when
+     * applying a given adaptive test case tree to a given state.
+     * @param node The given state
+     * @param tree The given adaptive test case
+     * @return All input/output traces that can be produced
+     */
     IOTraceContainer getPossibleIOTraces(std::shared_ptr<FsmNode> node,
-            std::shared_ptr<const InputOutputTree> tree) const;
+            std::shared_ptr<InputOutputTree> tree) const;
+
+    /**
+     * Returns all possible input/output sequences that can be produced when
+     * applying each element of a given adaptive test case tree container to a given state.
+     * @param node The given state
+     * @param treeContainer The given container with adaptive test cases
+     * @return All input/output traces that can be produced
+     */
+    IOTraceContainer getPossibleIOTraces(std::shared_ptr<FsmNode> node,
+            std::shared_ptr<IOTreeContainer> treeContainer) const;
 
     /**
      * Calculates all possible output traces for the deterministic state cover of the
