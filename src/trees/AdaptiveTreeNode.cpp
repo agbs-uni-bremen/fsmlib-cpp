@@ -71,7 +71,12 @@ AdaptiveTreeNode* AdaptiveTreeNode::clone() const
 
 std::shared_ptr<AdaptiveTreeNode> AdaptiveTreeNode::Clone() const
 {
-    return std::shared_ptr<AdaptiveTreeNode>(clone());
+    std::shared_ptr<AdaptiveTreeNode> copy = std::shared_ptr<AdaptiveTreeNode>(clone());
+    for (auto child: *(copy->children))
+    {
+        child->getTarget()->setParent(copy);
+    }
+    return copy;
 }
 
 bool operator==(AdaptiveTreeNode const & node1, AdaptiveTreeNode const & node2)

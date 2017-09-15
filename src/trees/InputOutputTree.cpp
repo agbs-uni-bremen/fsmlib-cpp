@@ -4,8 +4,9 @@
 using namespace std;
 
 InputOutputTree::InputOutputTree(const std::shared_ptr<AdaptiveTreeNode> root, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
-    : OutputTree(root, InputTrace({root->getInput()}, presentationLayer), presentationLayer)
+    : OutputTree(root->Clone(), InputTrace({root->getInput()}, presentationLayer), presentationLayer)
 {
+
 }
 
 InputOutputTree::InputOutputTree(const InputOutputTree* other):
@@ -80,9 +81,8 @@ std::shared_ptr<InputOutputTree> InputOutputTree::Clone() const
 ostream & operator<<(ostream & out, InputOutputTree & ot)
 {
     ot.calcLeaves();
-    vector<shared_ptr<TreeNode>> leaves = ot.getLeaves();
 
-    for (shared_ptr<TreeNode> leave : leaves)
+    for (shared_ptr<TreeNode> leave : ot.leaves)
     {
         shared_ptr<AdaptiveTreeNode> l = static_pointer_cast<AdaptiveTreeNode>(leave);
         vector<int> inputPath = l->getInputPath();
