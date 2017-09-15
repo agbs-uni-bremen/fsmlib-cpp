@@ -207,6 +207,12 @@ void FsmNode::getPossibleOutputs(const InputTrace& inputTrace,
     producedOutputTraces = newlyProducedOutputTraces;
 }
 
+void FsmNode::getPossibleOutputs(const InputTrace& input, std::shared_ptr<std::vector<OutputTrace>>& producedOutputs) const
+{
+    vector<shared_ptr<FsmNode>> rN;
+    getPossibleOutputs(input, producedOutputs, rN);
+}
+
 vector<OutputTrace> FsmNode::getPossibleOutputs(const int x) const
 {
     vector<OutputTrace> result;
@@ -323,6 +329,11 @@ unordered_set<shared_ptr<FsmNode>> FsmNode::after(const InputTrace & itrc, const
         nodeSet = newNodeSet;
     }
     return nodeSet;
+}
+
+std::unordered_set<std::shared_ptr<FsmNode>> FsmNode::after(const IOTrace& trace)
+{
+    return after(trace.getInputTrace(), trace.getOutputTrace());
 }
 
 unordered_set<shared_ptr<FsmNode>> FsmNode::after(const InputTrace & itrc)

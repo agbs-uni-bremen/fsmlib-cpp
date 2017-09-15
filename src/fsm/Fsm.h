@@ -382,6 +382,28 @@ public:
             std::shared_ptr<IOTreeContainer> treeContainer) const;
 
     /**
+     * Returns a set of input/output sequences that can be produced by this
+     * FSM when applying each element of the given adaptive test cases to
+     * the state that gets reached by applying the given trace {@code trace}
+     * to this FSM.
+     * @param adaptiveTestCases The given adaptive test cases
+     * @param trace The given trace
+     * @return A set of all input/output traces that can be produced
+     */
+    IOTraceContainer bOmega(std::shared_ptr<IOTreeContainer> adaptiveTestCases, IOTrace& trace) const;
+
+    /**
+     * Returns a set of input/output sequences that can be produced by this
+     * FSM when applying each element of the given adaptive test cases to
+     * each state that can be reached by applying each input trace from the given
+     * input traces {@code inputTraces} to this FSM.
+     * @param adaptiveTestCases The given adaptive test cases
+     * @param inputTraces The given input traces
+     * @return A set of all input/output traces that can be produced
+     */
+    IOTraceContainer bOmega(std::shared_ptr<IOTreeContainer> adaptiveTestCases, std::vector<InputTrace>& inputTraces) const;
+
+    /**
      * Calculates all possible output traces for the deterministic state cover of the
      * fsm and returns all possible combinations of the corresponding input traces
      * and the related output traces.

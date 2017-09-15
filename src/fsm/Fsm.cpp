@@ -1304,8 +1304,8 @@ IOListContainer Fsm::getRCharacterisationSet() const
     return result;
 }
 
-IOTraceContainer Fsm::getPossibleIOTraces(std::shared_ptr<FsmNode> node,
-                                          std::shared_ptr<InputOutputTree> tree) const
+IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
+                                          shared_ptr<InputOutputTree> tree) const
 {
     cout << "(" << node->getName() << ") " << "getPossibleIOTraces()" << endl;
     cout << "(" << node->getName() << ") " << "  node: " << node->getName()  << endl;
@@ -1359,14 +1359,60 @@ IOTraceContainer Fsm::getPossibleIOTraces(std::shared_ptr<FsmNode> node,
     return result;
 }
 
-IOTraceContainer Fsm::getPossibleIOTraces(std::shared_ptr<FsmNode> node,
-        std::shared_ptr<IOTreeContainer> treeContainer) const
+IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
+        shared_ptr<IOTreeContainer> treeContainer) const
 {
     IOTraceContainer result = IOTraceContainer(presentationLayer);;
     for (shared_ptr<InputOutputTree> tree : *treeContainer->getList())
     {
         IOTraceContainer container = getPossibleIOTraces(node, tree);
         result.addUnique(container);
+    }
+    return result;
+}
+
+IOTraceContainer Fsm::bOmega(shared_ptr<IOTreeContainer> adaptiveTestCases, IOTrace& trace) const
+{
+    IOTraceContainer result = IOTraceContainer(presentationLayer);
+
+    shared_ptr<FsmNode> initialState = getInitialState();
+    if (!initialState)
+    {
+        return result;
+    }
+
+    unordered_set<shared_ptr<FsmNode>> successorNodes = initialState->after(trace);
+    if (successorNodes.size() == 0)
+    {
+        return result;
+    }
+    if (successorNodes.size() != 1)
+    {
+        cerr << "The FSM does not seem to be observable." << endl;
+        exit(EXIT_FAILURE);
+    }
+    shared_ptr<FsmNode> successorNode = *successorNodes.begin();
+    return getPossibleIOTraces(successorNode, adaptiveTestCases);
+}
+
+IOTraceContainer Fsm::bOmega(std::shared_ptr<IOTreeContainer> adaptiveTestCases, vector<InputTrace>& inputTraces) const
+{
+    IOTraceContainer result = IOTraceContainer(presentationLayer);
+    shared_ptr<FsmNode> initialState = getInitialState();
+    if (!initialState)
+    {
+        return result;
+    }
+    for (InputTrace& inputTrace : inputTraces)
+    {
+        shared_ptr<vector<OutputTrace>> producedOutputs;
+        initialState->getPossibleOutputs(inputTrace, producedOutputs);
+        for (OutputTrace& outputTrace : *producedOutputs)
+        {
+            IOTrace iOTrace = IOTrace(inputTrace, outputTrace);
+            IOTraceContainer produced = bOmega(adaptiveTestCases, iOTrace);
+            result.addUnique(produced);
+        }
     }
     return result;
 }
