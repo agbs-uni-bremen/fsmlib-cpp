@@ -1579,6 +1579,25 @@ size_t Fsm::lowerBound(const IOTrace& base,
     return result;
 }
 
+IOTraceContainer Fsm::adaptiveStateCounting()
+{
+    shared_ptr<Tree> detStateCoverTree = getDeterministicStateCover();
+    IOListContainer detStateCoverRaw = detStateCoverTree->getDeterministicTestCases();
+    vector<shared_ptr<InputTrace>> detStateCover;
+    for (vector<int> trace : *detStateCoverRaw.getIOLists())
+    {
+        detStateCover.push_back(make_shared<InputTrace>(trace, presentationLayer));
+    }
+
+    vector<shared_ptr<InputTrace>> t = detStateCover;
+    vector<shared_ptr<InputTrace>> tC = detStateCover;
+    while (tC.size() != 0)
+    {
+        //TODO WIP
+        break;
+    }
+}
+
 
 IOTreeContainer Fsm::getAdaptiveRCharacterisationSet() const
 {

@@ -429,6 +429,8 @@ public:
               IOTraceContainer& vDoublePrime,
               std::vector<std::shared_ptr<FsmNode>> dReachableStates) const;
 
+    IOTraceContainer adaptiveStateCounting();
+
     std::vector<std::vector<std::shared_ptr<FsmNode>>> getMaximalSetsOfRDistinguishableStates() const;
     
     /**
