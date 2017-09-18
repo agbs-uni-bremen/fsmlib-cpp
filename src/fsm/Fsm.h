@@ -379,7 +379,7 @@ public:
      * @return All input/output traces that can be produced
      */
     IOTraceContainer getPossibleIOTraces(std::shared_ptr<FsmNode> node,
-            std::shared_ptr<IOTreeContainer> treeContainer) const;
+            IOTreeContainer& treeContainer) const;
 
     /**
      * Returns a set of input/output sequences that can be produced by this
@@ -390,7 +390,7 @@ public:
      * @param trace The given trace
      * @return A set of all input/output traces that can be produced
      */
-    IOTraceContainer bOmega(std::shared_ptr<IOTreeContainer> adaptiveTestCases, IOTrace& trace) const;
+    IOTraceContainer bOmega(IOTreeContainer& adaptiveTestCases, IOTrace& trace) const;
 
     /**
      * Returns a set of input/output sequences that can be produced by this
@@ -401,7 +401,7 @@ public:
      * @param inputTraces The given input traces
      * @return A set of all input/output traces that can be produced
      */
-    IOTraceContainer bOmega(std::shared_ptr<IOTreeContainer> adaptiveTestCases, std::vector<InputTrace>& inputTraces) const;
+    IOTraceContainer bOmega(IOTreeContainer& adaptiveTestCases, std::vector<std::shared_ptr<InputTrace>> inputTraces) const;
 
     /**
      * Calculates all possible output traces for the deterministic state cover of the
@@ -413,13 +413,21 @@ public:
     std::vector<IOTraceContainer> getVPrime();
 
     IOTraceContainer r(std::shared_ptr<FsmNode> node,
-                       IOTrace& base,
-                       IOTrace& suffix) const;
+                       const IOTrace& base,
+                       const IOTrace& suffix) const;
 
     IOTraceContainer rPlus(std::shared_ptr<FsmNode> node,
-                       IOTrace& prefix,
-                       IOTrace& suffix,
-                       IOTraceContainer& vDoublePrime) const;
+                       const IOTrace& prefix,
+                       const IOTrace& suffix,
+                       const IOTraceContainer& vDoublePrime) const;
+
+    size_t lowerBound(const IOTrace& base,
+              const IOTrace& suffix,
+              std::vector<std::shared_ptr<InputTrace>> takenInputs,
+              std::vector<std::shared_ptr<FsmNode>> states,
+              IOTreeContainer& adaptiveTestCases,
+              IOTraceContainer& vDoublePrime,
+              std::vector<std::shared_ptr<FsmNode>> dReachableStates) const;
 
     std::vector<std::vector<std::shared_ptr<FsmNode>>> getMaximalSetsOfRDistinguishableStates() const;
     

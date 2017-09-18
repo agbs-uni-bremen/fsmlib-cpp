@@ -62,6 +62,24 @@ public:
     void concatenate(IOTraceContainer& container);
 
     /**
+     * Removes all occurrences of the given trace from this container.
+     * @param trace The given trace
+     */
+    void remove (IOTrace& trace);
+
+    /**
+     * Removes all occurrebces of the traces in the given container from this container.
+     * @param container The given container of traces that will be removed.
+     */
+    void remove (IOTraceContainer& container);
+
+    /**
+     * Returns the size of the conteiner.
+     * @return The size of the container
+     */
+    size_t size() const { return list->size(); }
+
+    /**
      * Output the IOTraceContainer to a standard output stream
      * @param out The standard output stream to use
      * @param ot The IOTraceContainer to print

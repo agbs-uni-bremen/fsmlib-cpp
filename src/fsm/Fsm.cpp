@@ -1360,10 +1360,10 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
 }
 
 IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
-        shared_ptr<IOTreeContainer> treeContainer) const
+        IOTreeContainer& treeContainer) const
 {
     IOTraceContainer result = IOTraceContainer(presentationLayer);;
-    for (shared_ptr<InputOutputTree> tree : *treeContainer->getList())
+    for (shared_ptr<InputOutputTree> tree : *treeContainer.getList())
     {
         IOTraceContainer container = getPossibleIOTraces(node, tree);
         result.addUnique(container);
@@ -1371,7 +1371,7 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
     return result;
 }
 
-IOTraceContainer Fsm::bOmega(shared_ptr<IOTreeContainer> adaptiveTestCases, IOTrace& trace) const
+IOTraceContainer Fsm::bOmega(IOTreeContainer& adaptiveTestCases, IOTrace& trace) const
 {
     IOTraceContainer result = IOTraceContainer(presentationLayer);
 
@@ -1395,7 +1395,7 @@ IOTraceContainer Fsm::bOmega(shared_ptr<IOTreeContainer> adaptiveTestCases, IOTr
     return getPossibleIOTraces(successorNode, adaptiveTestCases);
 }
 
-IOTraceContainer Fsm::bOmega(std::shared_ptr<IOTreeContainer> adaptiveTestCases, vector<InputTrace>& inputTraces) const
+IOTraceContainer Fsm::bOmega(IOTreeContainer& adaptiveTestCases, vector<shared_ptr<InputTrace>> inputTraces) const
 {
     IOTraceContainer result = IOTraceContainer(presentationLayer);
     shared_ptr<FsmNode> initialState = getInitialState();
@@ -1403,13 +1403,13 @@ IOTraceContainer Fsm::bOmega(std::shared_ptr<IOTreeContainer> adaptiveTestCases,
     {
         return result;
     }
-    for (InputTrace& inputTrace : inputTraces)
+    for (shared_ptr<InputTrace> inputTrace : inputTraces)
     {
         shared_ptr<vector<OutputTrace>> producedOutputs;
-        initialState->getPossibleOutputs(inputTrace, producedOutputs);
+        initialState->getPossibleOutputs(*inputTrace, producedOutputs);
         for (OutputTrace& outputTrace : *producedOutputs)
         {
-            IOTrace iOTrace = IOTrace(inputTrace, outputTrace);
+            IOTrace iOTrace = IOTrace(*inputTrace, outputTrace);
             IOTraceContainer produced = bOmega(adaptiveTestCases, iOTrace);
             result.addUnique(produced);
         }
@@ -1481,8 +1481,8 @@ vector<IOTraceContainer> Fsm::getVPrime()
 }
 
 IOTraceContainer Fsm::r(std::shared_ptr<FsmNode> node,
-                   IOTrace& base,
-                   IOTrace& suffix) const
+                   const IOTrace& base,
+                   const IOTrace& suffix) const
 {
     cout << "node: " << node->getName() << endl;
     cout << "base: " << base << endl;
@@ -1533,9 +1533,9 @@ IOTraceContainer Fsm::r(std::shared_ptr<FsmNode> node,
 }
 
 IOTraceContainer Fsm::rPlus(std::shared_ptr<FsmNode> node,
-                   IOTrace& base,
-                   IOTrace& suffix,
-                   IOTraceContainer& vDoublePrime) const
+                   const IOTrace& base,
+                   const IOTrace& suffix,
+                   const IOTraceContainer& vDoublePrime) const
 {
     IOTraceContainer rResult = r(node, base, suffix);
     cout << "rResult: " << rResult << endl;
@@ -1547,6 +1547,38 @@ IOTraceContainer Fsm::rPlus(std::shared_ptr<FsmNode> node,
     }
     return rResult;
 }
+
+size_t Fsm::lowerBound(const IOTrace& base,
+          const IOTrace& suffix,
+          vector<shared_ptr<InputTrace>> takenInputs,
+          vector<shared_ptr<FsmNode>> states,
+          IOTreeContainer& adaptiveTestCases,
+          IOTraceContainer& vDoublePrime,
+          vector<shared_ptr<FsmNode>> dReachableStates) const
+{
+    size_t result = 0;
+
+    IOTraceContainer testTraces = bOmega(adaptiveTestCases, takenInputs);
+
+    for (shared_ptr<FsmNode> state : states)
+    {
+        const IOTraceContainer& rResult = r(state, base, suffix);
+        result += rResult.size();
+        if(find(dReachableStates.begin(), dReachableStates.end(), state) != dReachableStates.end()) {
+            ++result;
+        }
+
+        const IOTraceContainer rPlusResult = rPlus(state, base, suffix, vDoublePrime);
+        for (IOTrace& trace : *rPlusResult.getList())
+        {
+            IOTraceContainer traces = bOmega(adaptiveTestCases, trace);
+            testTraces.remove(traces);
+        }
+    }
+    result += testTraces.size();
+    return result;
+}
+
 
 IOTreeContainer Fsm::getAdaptiveRCharacterisationSet() const
 {

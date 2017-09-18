@@ -90,6 +90,29 @@ void IOTraceContainer::concatenate(IOTraceContainer& container)
     }
 }
 
+void IOTraceContainer::remove (IOTrace& trace)
+{
+    for (auto it = list->begin(); it != list->end();)
+    {
+        if (*it == trace)
+        {
+            it = list->erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
+
+void IOTraceContainer::remove (IOTraceContainer& container)
+{
+    for (IOTrace& trace : *container.getList())
+    {
+        remove(trace);
+    }
+}
+
 std::ostream & operator<<(std::ostream & out, const IOTraceContainer & iot)
 {
     out << "{ ";
