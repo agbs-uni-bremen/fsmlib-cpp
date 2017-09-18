@@ -30,6 +30,7 @@ public:
                const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 
     InputTrace(const InputTrace& other, size_t n);
+    InputTrace(const InputTrace& other);
 
 	/**
 	Output the InputTrace to a standard output stream
@@ -39,5 +40,6 @@ public:
 	*/
 	friend std::ostream & operator<<(std::ostream & out,
                                      const InputTrace & trace);
+    InputTrace& operator=(InputTrace&& other);
 };
 #endif //FSM_FSM_INPUTTRACE_H_

@@ -177,6 +177,17 @@ int FsmPresentationLayer::state2Num(const std::string& name) {
     return -1;
 }
 
+FsmPresentationLayer& FsmPresentationLayer::operator=(FsmPresentationLayer& other)
+{
+    if (this != &other)
+    {
+        in2String = other.in2String;
+        out2String = other.out2String;
+        state2String = other.state2String;
+    }
+    return *this;
+}
+
 
 
 

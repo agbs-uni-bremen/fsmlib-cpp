@@ -32,6 +32,7 @@ public:
 	*/
     IOTrace(const InputTrace & i, const OutputTrace & o);
     IOTrace(const int i, const int o, std::shared_ptr<FsmPresentationLayer> pl);
+    IOTrace(const IOTrace & ioTrace);
 
 	/**
 	Getter for the input trace
@@ -63,6 +64,7 @@ public:
 	*/
 	friend std::ostream & operator<<(std::ostream & out, const IOTrace & trace);
     friend bool operator==(IOTrace const & iOTrace1, IOTrace const & iOTrace2);
+    IOTrace& operator= (IOTrace&& other);
     std::string toRttString() const;
 };
 #endif //FSM_FSM_IOTRACE_H_

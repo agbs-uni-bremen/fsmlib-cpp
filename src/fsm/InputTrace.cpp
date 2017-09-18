@@ -32,6 +32,12 @@ InputTrace::InputTrace(const InputTrace& other, size_t n):
     }
 }
 
+InputTrace::InputTrace(const InputTrace& other):
+    Trace(other)
+{
+
+}
+
 std::ostream & operator<<(std::ostream & out, const InputTrace & trace)
 {
 	for (auto it = trace.cbegin(); it != trace.cend(); ++ it)
@@ -50,4 +56,13 @@ std::ostream & operator<<(std::ostream & out, const InputTrace & trace)
         }
 	}
 	return out;
+}
+
+InputTrace& InputTrace::operator=(InputTrace&& other)
+{
+    if (this != &other)
+    {
+        Trace::operator=(std::move(other));
+    }
+    return *this;
 }

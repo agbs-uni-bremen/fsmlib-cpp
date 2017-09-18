@@ -137,5 +137,6 @@ public:
 	 * @param otherPresentationLayer The other presentation layer to be compared
 	 */
 	bool compare(std::shared_ptr<FsmPresentationLayer> otherPresentationLayer);
+    FsmPresentationLayer& operator=(FsmPresentationLayer& other);
 };
 #endif //FSM_INTERFACE_FSMPRESENTATIONLAYER_H_

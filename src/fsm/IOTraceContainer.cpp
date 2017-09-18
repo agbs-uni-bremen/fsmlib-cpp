@@ -96,7 +96,6 @@ void IOTraceContainer::remove (IOTrace& trace)
     {
         if (*it == trace)
         {
-            //TODO fix;
             it = list->erase(it);
         }
         else

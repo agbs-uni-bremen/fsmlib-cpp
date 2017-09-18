@@ -17,6 +17,12 @@ Trace::Trace(const std::vector<int>& trace, const std::shared_ptr<FsmPresentatio
 
 }
 
+Trace::Trace(const Trace& other):
+    trace(other.trace), presentationLayer(other.presentationLayer)
+{
+
+}
+
 void Trace::add(const int e)
 {
 	trace.push_back(e);
@@ -108,4 +114,14 @@ std::ostream & operator<<(std::ostream & out, const Trace & trace)
 		out << *it;
 	}
 	return out;
+}
+
+Trace& Trace::operator=(Trace&& other)
+{
+    if (this != &other)
+    {
+        trace = std::move(other.trace);
+        presentationLayer = std::move(other.presentationLayer);
+    }
+    return *this;
 }

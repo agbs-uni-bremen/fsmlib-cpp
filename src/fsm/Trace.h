@@ -22,7 +22,7 @@ protected:
 	/**
 	The presentation layer used by the trace
 	*/
-	const std::shared_ptr<FsmPresentationLayer> presentationLayer;
+    std::shared_ptr<FsmPresentationLayer> presentationLayer;
 public:
 	/**
 	Create an empty trace, with only one presentation layer
@@ -37,6 +37,8 @@ public:
 	*/
 	Trace(const std::vector<int>& trace,
           const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+
+    Trace(const Trace& other);
 	
 	/**
 	 * Add an element, at the end of the trace
@@ -96,5 +98,7 @@ public:
 	@return The standard output stream used, to allow user to cascade <<
 	*/
 	friend std::ostream & operator<<(std::ostream & out, const Trace & trace);
+
+    Trace& operator=(Trace&& other);
 };
 #endif //FSM_FSM_TRACE_H_

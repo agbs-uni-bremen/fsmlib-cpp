@@ -23,6 +23,12 @@ IOTrace::IOTrace(const int i, const int o, shared_ptr<FsmPresentationLayer> pl):
 
 }
 
+IOTrace::IOTrace(const IOTrace & ioTrace):
+inputTrace(ioTrace.inputTrace), outputTrace(ioTrace.outputTrace)
+{
+
+}
+
 InputTrace IOTrace::getInputTrace() const
 {
 	return inputTrace;
@@ -95,6 +101,16 @@ ostream & operator<<(ostream & out, const IOTrace & trace)
 bool operator==(IOTrace const & iOTrace1, IOTrace const & iOTrace2)
 {
     return iOTrace1.getInputTrace() == iOTrace2.getInputTrace() && iOTrace1.getOutputTrace() == iOTrace2.getOutputTrace();
+}
+
+IOTrace& IOTrace::operator= (IOTrace&& other)
+{
+    if (this != &other)
+    {
+        inputTrace = std::move(other.inputTrace);
+        outputTrace = std::move(other.outputTrace);
+    }
+    return *this;
 }
 
 string IOTrace::toRttString() const {
