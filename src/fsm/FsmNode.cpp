@@ -138,6 +138,14 @@ vector<shared_ptr<FsmNode>> FsmNode::getPossibleOutputs(const int x, vector<Outp
 {
     outputs = vector<OutputTrace>();
     vector<shared_ptr<FsmNode>> result;
+
+    if (x == FsmLabel::EPSILON_INPUT)
+    {
+        outputs.push_back(OutputTrace({FsmLabel::EPSILON_OUTPUT}, presentationLayer));
+        result.push_back(static_pointer_cast<FsmNode>(const_pointer_cast<FsmNode>(shared_from_this())));
+        return result;
+    }
+
     for (auto transition : transitions)
     {
         if (transition->getLabel()->getInput() == x)
