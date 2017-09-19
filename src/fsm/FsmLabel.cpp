@@ -5,6 +5,10 @@
  */
 #include "fsm/FsmLabel.h"
 
+const int FsmLabel::EPSILON_INPUT = -1;
+const int FsmLabel::EPSILON_OUTPUT = -1;
+const int FsmLabel::ERROR_OUTPUT = -2;
+
 FsmLabel::FsmLabel(const int input,
                    const int output,
                    const std::shared_ptr<FsmPresentationLayer> presentationLayer)

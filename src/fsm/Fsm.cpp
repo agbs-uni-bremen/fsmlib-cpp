@@ -855,6 +855,50 @@ Fsm Fsm::minimise()
     return minimiseObservableFSM();
 }
 
+Fsm Fsm::makeComplete(CompleteMode mode)
+{
+    vector<shared_ptr<FsmNode>> newNodes = nodes;
+    bool addErrorState = false;
+    shared_ptr<FsmNode> errorNode;
+    if (mode == ErrorState)
+    {
+        errorNode = make_shared<FsmNode>(FsmNode::ERROR_NODE_ID, "Error", presentationLayer);
+        for (int x = 0; x <= maxInput; ++x)
+        {
+            shared_ptr<FsmLabel> label = make_shared<FsmLabel>(x, FsmLabel::EPSILON_OUTPUT, presentationLayer);
+            shared_ptr<FsmTransition> transition = make_shared<FsmTransition>(errorNode, errorNode, label);
+            errorNode->addTransition(transition);
+        }
+    }
+    for (shared_ptr<FsmNode> node : nodes)
+    {
+        for (int x = 0; x <= maxInput; ++x)
+        {
+            if(!node->isPossibleInput(x))
+            {
+                if (mode == ErrorState)
+                {
+                    addErrorState = true;
+                    shared_ptr<FsmLabel> label = make_shared<FsmLabel>(x, FsmLabel::ERROR_OUTPUT, presentationLayer);
+                    shared_ptr<FsmTransition> transition = make_shared<FsmTransition>(node, errorNode, label);
+                    node->addTransition(transition);
+                }
+                else if (mode == SelfLoop)
+                {
+                    shared_ptr<FsmLabel> label = make_shared<FsmLabel>(x, FsmLabel::EPSILON_OUTPUT, presentationLayer);
+                    shared_ptr<FsmTransition> transition = make_shared<FsmTransition>(node, node, label);
+                    node->addTransition(transition);
+                }
+            }
+        }
+    }
+    if (addErrorState)
+    {
+        nodes.push_back(errorNode);
+    }
+    return Fsm(name + "_COMPLETE", maxInput, maxOutput, newNodes, presentationLayer);
+}
+
 bool Fsm::isCharSet(const shared_ptr<Tree> w) const
 {
     for (unsigned int i = 0; i < nodes.size(); ++ i)

@@ -23,6 +23,8 @@
 
 using namespace std;
 
+const int FsmNode::ERROR_NODE_ID = -1;
+
 FsmNode::FsmNode(const int id, const shared_ptr<FsmPresentationLayer> presentationLayer)
 : id(id),
 visited(false),
@@ -144,11 +146,6 @@ vector<shared_ptr<FsmNode>> FsmNode::getPossibleOutputs(const int x, vector<Outp
             outputs.push_back(OutputTrace({transition->getLabel()->getOutput()}, presentationLayer));
         }
     }
-    if (outputs.size() == 0)
-    {
-        outputs.push_back(OutputTrace({-1}, presentationLayer));
-        result.push_back(static_pointer_cast<FsmNode>(const_pointer_cast<FsmNode>(shared_from_this())));
-    }
     return result;
 }
 
@@ -231,6 +228,18 @@ bool FsmNode::isPossibleOutput(const int x, const int y) const
     for (auto transition : transitions)
     {
         if (transition->getLabel()->getInput() == x && transition->getLabel()->getOutput() == y)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool FsmNode::isPossibleInput(const int x) const
+{
+    for (auto transition : transitions)
+    {
+        if (transition->getLabel()->getInput() == x)
         {
             return true;
         }
@@ -729,12 +738,3 @@ void FsmNode::accept(FsmVisitor& v,
     }
     
 }
-
-
-
-
-
-
-
-
-
