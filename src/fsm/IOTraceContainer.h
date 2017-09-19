@@ -2,6 +2,7 @@
 #define IOTRACECONTAINER_H
 
 #include "fsm/IOTrace.h"
+#include "trees/OutputTree.h"
 
 class IOTraceContainer
 {
@@ -33,11 +34,15 @@ public:
      */
     void addUnique(IOTraceContainer& container);
 
+    void addUnique(OutputTree& tree);
+
     /**
      * Adds every trace from the given container to this container.
      * @param container The given container.
      */
     void add(IOTraceContainer& container);
+
+    void add(OutputTree& tree);
 
     /**
      * Checks if the container contains the given trace .

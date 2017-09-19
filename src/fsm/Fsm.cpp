@@ -1625,6 +1625,9 @@ size_t Fsm::lowerBound(const IOTrace& base,
 
 IOTraceContainer Fsm::adaptiveStateCounting()
 {
+
+    IOTreeContainer adaptiveTestCases = getAdaptiveRCharacterisationSet();
+
     shared_ptr<Tree> detStateCoverTree = getDeterministicStateCover();
     IOListContainer detStateCoverRaw = detStateCoverTree->getDeterministicTestCases();
     vector<shared_ptr<InputTrace>> detStateCover;
@@ -1637,7 +1640,12 @@ IOTraceContainer Fsm::adaptiveStateCounting()
     vector<shared_ptr<InputTrace>> tC = detStateCover;
     while (tC.size() != 0)
     {
+        IOTraceContainer observedTraces(presentationLayer);
+        shared_ptr<InputTrace> inputTrace = *tC.begin();
+        OutputTree result = apply(*inputTrace, false);
+
         //TODO WIP
+
         break;
     }
 }

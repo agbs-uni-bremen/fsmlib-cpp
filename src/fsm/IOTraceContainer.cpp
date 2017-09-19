@@ -51,9 +51,29 @@ void IOTraceContainer::addUnique(IOTraceContainer& container)
     }
 }
 
+void IOTraceContainer::addUnique(OutputTree& tree)
+{
+    std::vector<IOTrace> iOTraces;
+    tree.toIOTrace(iOTraces);
+    for (IOTrace& trace : iOTraces)
+    {
+        addUnique(trace);
+    }
+}
+
 void IOTraceContainer::add(IOTraceContainer& container)
 {
     for (IOTrace& trace : *container.getList())
+    {
+        add(trace);
+    }
+}
+
+void IOTraceContainer::add(OutputTree& tree)
+{
+    std::vector<IOTrace> iOTraces;
+    tree.toIOTrace(iOTraces);
+    for (IOTrace& trace : iOTraces)
     {
         add(trace);
     }
