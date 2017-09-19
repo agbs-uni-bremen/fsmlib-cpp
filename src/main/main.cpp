@@ -772,15 +772,15 @@ int main()
         cout << endl;
 
         InputTrace testInput = InputTrace({0,0,1,1}, pl1);
-        shared_ptr<vector<OutputTrace>> producedOutputs = make_shared<vector<OutputTrace>>();
+        vector<shared_ptr<OutputTrace>> producedOutputs;
         vector<shared_ptr<FsmNode>> reached;
 
         cout << "Input trace: " << testInput << endl;
         fsm1->getInitialState()->getPossibleOutputs(testInput, producedOutputs, reached);
         cout << "produced Outputs:" << endl;
-        for (auto o : *producedOutputs)
+        for (auto o : producedOutputs)
         {
-            cout << o << ", ";
+            cout << *o << ", ";
         }
         cout << endl;
         cout << "reached:" << endl;
@@ -849,15 +849,15 @@ int main()
         cout << endl;
 
         InputTrace testInput = InputTrace({0,0,1,1}, pl2);
-        shared_ptr<vector<OutputTrace>> producedOutputs = make_shared<vector<OutputTrace>>();
+        vector<shared_ptr<OutputTrace>> producedOutputs;
         vector<shared_ptr<FsmNode>> reached;
 
         cout << "Input trace: " << testInput << endl;
         fsm2->getInitialState()->getPossibleOutputs(testInput, producedOutputs, reached);
         cout << "produced Outputs:" << endl;
-        for (auto o : *producedOutputs)
+        for (auto o : producedOutputs)
         {
-            cout << o << ", ";
+            cout << *o << ", ";
         }
         cout << endl;
         cout << "reached:" << endl;

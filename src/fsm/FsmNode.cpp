@@ -134,14 +134,16 @@ shared_ptr<RDistinguishability> FsmNode::getRDistinguishability()
     return rDistinguishability;
 }
 
-vector<shared_ptr<FsmNode>> FsmNode::getPossibleOutputs(const int x, vector<OutputTrace> & outputs) const
+vector<shared_ptr<FsmNode>> FsmNode::getPossibleOutputs(const int x, vector<shared_ptr<OutputTrace>> & outputs) const
 {
-    outputs = vector<OutputTrace>();
+    outputs = vector<shared_ptr<OutputTrace>>();
     vector<shared_ptr<FsmNode>> result;
 
     if (x == FsmLabel::EPSILON_INPUT)
     {
-        outputs.push_back(OutputTrace({FsmLabel::EPSILON_OUTPUT}, presentationLayer));
+        vector<int> traceRaw({FsmLabel::EPSILON_OUTPUT});
+        shared_ptr<OutputTrace> oT = make_shared<OutputTrace>(traceRaw, presentationLayer);
+        outputs.push_back(oT);
         result.push_back(static_pointer_cast<FsmNode>(const_pointer_cast<FsmNode>(shared_from_this())));
         return result;
     }
@@ -151,14 +153,16 @@ vector<shared_ptr<FsmNode>> FsmNode::getPossibleOutputs(const int x, vector<Outp
         if (transition->getLabel()->getInput() == x)
         {
             result.push_back(transition->getTarget());
-            outputs.push_back(OutputTrace({transition->getLabel()->getOutput()}, presentationLayer));
+            vector<int> traceRaw({transition->getLabel()->getOutput()});
+            shared_ptr<OutputTrace> oT = make_shared<OutputTrace>(traceRaw, presentationLayer);
+            outputs.push_back(oT);
         }
     }
     return result;
 }
 
 void FsmNode::getPossibleOutputs(const InputTrace& inputTrace,
-                                 shared_ptr<std::vector<OutputTrace>>& producedOutputTraces,
+                                 vector<shared_ptr<OutputTrace>>& producedOutputTraces,
                                  vector<shared_ptr<FsmNode>>& reachedNodes) const
 {
     vector<int> rawInputTrace = inputTrace.get();
@@ -169,7 +173,7 @@ void FsmNode::getPossibleOutputs(const InputTrace& inputTrace,
     }
 
     int input = rawInputTrace.at(0);
-    std::vector<OutputTrace> nextOutputs;
+    vector<shared_ptr<OutputTrace>> nextOutputs;
     vector<shared_ptr<FsmNode>> nextTargets = getPossibleOutputs(input, nextOutputs);
 
     if (nextOutputs.size() != nextTargets.size())
@@ -178,54 +182,56 @@ void FsmNode::getPossibleOutputs(const InputTrace& inputTrace,
         exit(EXIT_FAILURE);
     }
 
-    shared_ptr<vector<OutputTrace>> newlyProducedOutputTraces = make_shared<vector<OutputTrace>>();
+    vector<shared_ptr<OutputTrace>> newlyProducedOutputTraces;
     for (size_t i = 0; i < nextOutputs.size(); ++i)
     {
-        OutputTrace nextOutput = nextOutputs.at(i);
+        shared_ptr<OutputTrace> nextOutput = nextOutputs.at(i);
         shared_ptr<FsmNode> nextTarget = nextTargets.at(i);
 
-        shared_ptr<vector<OutputTrace>> nextOutputCopy = make_shared<vector<OutputTrace>>();
-        nextOutputCopy->push_back(nextOutput);
+        vector<shared_ptr<OutputTrace>> nextOutputCopy;
+        nextOutputCopy.push_back(nextOutput);
 
         nextTarget->getPossibleOutputs(InputTrace(inputTrace, 1), nextOutputCopy, reachedNodes);
-        if (producedOutputTraces->size() > 0)
+        if (producedOutputTraces.size() > 0)
         {
-            shared_ptr<vector<OutputTrace>> producedOutputTracesCopy = make_shared<vector<OutputTrace>>(*producedOutputTraces);
-            for (OutputTrace oldTrace : *producedOutputTracesCopy)
+            vector<shared_ptr<OutputTrace>> producedOutputTracesCopy = vector<shared_ptr<OutputTrace>>(producedOutputTraces);
+            for (shared_ptr<OutputTrace> oldTrace : producedOutputTracesCopy)
             {
-                for (OutputTrace nOTrace : *nextOutputCopy)
+                for (shared_ptr<OutputTrace> nOTrace : nextOutputCopy)
                 {
-                    OutputTrace oldTraceCopy = OutputTrace(oldTrace);
-                    oldTraceCopy.append(nOTrace);
-                    newlyProducedOutputTraces->push_back(oldTraceCopy);
+                    shared_ptr<OutputTrace> oldTraceCopy = make_shared<OutputTrace>(*oldTrace);
+                    oldTraceCopy->append(*nOTrace);
+                    newlyProducedOutputTraces.push_back(oldTraceCopy);
                 }
             }
         }
         else
         {
-            for (OutputTrace nOTrace : *nextOutputCopy)
+            for (shared_ptr<OutputTrace> nOTrace : nextOutputCopy)
             {
-                newlyProducedOutputTraces->push_back(nOTrace);
+                newlyProducedOutputTraces.push_back(nOTrace);
             }
         }
     }
     producedOutputTraces = newlyProducedOutputTraces;
 }
 
-void FsmNode::getPossibleOutputs(const InputTrace& input, std::shared_ptr<std::vector<OutputTrace>>& producedOutputs) const
+void FsmNode::getPossibleOutputs(const InputTrace& input, vector<shared_ptr<OutputTrace>>& producedOutputs) const
 {
     vector<shared_ptr<FsmNode>> rN;
     getPossibleOutputs(input, producedOutputs, rN);
 }
 
-vector<OutputTrace> FsmNode::getPossibleOutputs(const int x) const
+vector<shared_ptr<OutputTrace>> FsmNode::getPossibleOutputs(const int x) const
 {
-    vector<OutputTrace> result;
+    vector<shared_ptr<OutputTrace>> result;
     for (auto transition : transitions)
     {
         if (transition->getLabel()->getInput() == x)
         {
-            result.push_back(OutputTrace({transition->getLabel()->getOutput()}, presentationLayer));
+            vector<int> traceRaw({transition->getLabel()->getOutput()});
+            shared_ptr<OutputTrace> oT = make_shared<OutputTrace>(traceRaw, presentationLayer);
+            result.push_back(oT);
         }
     }
     return result;

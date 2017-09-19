@@ -720,6 +720,11 @@ OutputTree Fsm::apply(const InputTrace & itrc, bool markAsVisited)
     return getInitialState()->apply(itrc,markAsVisited);
 }
 
+void Fsm::apply(const InputTrace& input, vector<shared_ptr<OutputTrace>>& producedOutputs, vector<shared_ptr<FsmNode>>& reachedNodes) const
+{
+    return getInitialState()->getPossibleOutputs(input, producedOutputs, reachedNodes);
+}
+
 Fsm Fsm::transformToObservableFSM() const
 {
     vector<shared_ptr<FsmNode>> nodeLst;
@@ -1006,16 +1011,16 @@ IOListContainer Fsm::getCharacterisationSet()
     return tcl;
 }
 
-vector<OutputTrace> Fsm::getOutputIntersection(shared_ptr<FsmNode> q1, shared_ptr<FsmNode> q2, int x) const
+vector<shared_ptr<OutputTrace>> Fsm::getOutputIntersection(shared_ptr<FsmNode> q1, shared_ptr<FsmNode> q2, int x) const
 {
-    vector<OutputTrace> possibleOutputs1 = q1->getPossibleOutputs(x);
-    vector<OutputTrace> possibleOutputs2 = q2->getPossibleOutputs(x);
-    vector<OutputTrace> intersection;
-    for (OutputTrace a : possibleOutputs1)
+    vector<shared_ptr<OutputTrace>> possibleOutputs1 = q1->getPossibleOutputs(x);
+    vector<shared_ptr<OutputTrace>> possibleOutputs2 = q2->getPossibleOutputs(x);
+    vector<shared_ptr<OutputTrace>> intersection;
+    for (shared_ptr<OutputTrace> a : possibleOutputs1)
     {
-        for (OutputTrace b : possibleOutputs2)
+        for (shared_ptr<OutputTrace> b : possibleOutputs2)
         {
-            if (a == b) {
+            if (*a == *b) {
                 intersection.push_back(a);
             }
         }
@@ -1045,26 +1050,26 @@ void Fsm::calcROneDistinguishableStates()
             for (int x = 0; x <= maxInput; ++ x)
             {
                 InputTrace input = InputTrace(vector<int>({x}), presentationLayer);
-                vector<OutputTrace> intersection = getOutputIntersection(q1, q2, x);
+                vector<shared_ptr<OutputTrace>> intersection = getOutputIntersection(q1, q2, x);
                 if (intersection.size() == 0)
                 {
-                    vector<OutputTrace> q1Output = vector<OutputTrace>();
-                    vector<OutputTrace> q2Output = vector<OutputTrace>();
+                    vector<shared_ptr<OutputTrace>> q1Output;
+                    vector<shared_ptr<OutputTrace>> q2Output;
                     q1->getPossibleOutputs(x, q1Output);
                     q2->getPossibleOutputs(x, q2Output);
                     shared_ptr<AdaptiveTreeNode> q1Root = make_shared<AdaptiveTreeNode>(x);
                     shared_ptr<AdaptiveTreeNode> q2Root = make_shared<AdaptiveTreeNode>(x);
 
-                    for (OutputTrace trace : q1Output)
+                    for (shared_ptr<OutputTrace> trace : q1Output)
                     {
                         shared_ptr<AdaptiveTreeNode> target = make_shared<AdaptiveTreeNode>();
-                        shared_ptr<TreeEdge> edge = make_shared<TreeEdge>(trace.get()[0], target);
+                        shared_ptr<TreeEdge> edge = make_shared<TreeEdge>(trace->get()[0], target);
                         q1Root->add(edge);
                     }
-                    for (OutputTrace trace : q2Output)
+                    for (shared_ptr<OutputTrace> trace : q2Output)
                     {
                         shared_ptr<AdaptiveTreeNode> target = make_shared<AdaptiveTreeNode>();
-                        shared_ptr<TreeEdge> edge = make_shared<TreeEdge>(trace.get()[0], target);
+                        shared_ptr<TreeEdge> edge = make_shared<TreeEdge>(trace->get()[0], target);
                         q2Root->add(edge);
                     }
 
@@ -1129,7 +1134,7 @@ void Fsm::calcRDistinguishableStates()
                 cout << "  q2 = " << q2->getName() << ":" << endl;
                 for (int x = 0; x <= maxInput; ++ x)
                 {
-                    vector<OutputTrace> intersection = getOutputIntersection(q1, q2, x);
+                    vector<shared_ptr<OutputTrace>> intersection = getOutputIntersection(q1, q2, x);
 
                     shared_ptr<AdaptiveTreeNode> q1Root = make_shared<AdaptiveTreeNode>(x);
                     shared_ptr<AdaptiveTreeNode> q2Root = make_shared<AdaptiveTreeNode>(x);
@@ -1137,9 +1142,9 @@ void Fsm::calcRDistinguishableStates()
                     vector<shared_ptr<TreeEdge>> q2Edges;
 
                     bool isDistinguishable = true;
-                    for (OutputTrace inter : intersection)
+                    for (shared_ptr<OutputTrace> inter : intersection)
                     {
-                        int y = inter.get()[0];
+                        int y = inter->get()[0];
                         unordered_set<shared_ptr<FsmNode>> afterQ1 = q1->afterAsSet(x, y);
                         unordered_set<shared_ptr<FsmNode>> afterQ2 = q2->afterAsSet(x, y);
                         shared_ptr<FsmNode> afterNode1 = *afterQ1.begin();
@@ -1185,17 +1190,17 @@ void Fsm::calcRDistinguishableStates()
                         {
                             q2Root->add(edge);
                         }
-                        vector<OutputTrace> q1Outputs;
-                        vector<OutputTrace> q2Outputs;
+                        vector<shared_ptr<OutputTrace>> q1Outputs;
+                        vector<shared_ptr<OutputTrace>> q2Outputs;
                         q1->getPossibleOutputs(x, q1Outputs);
                         q2->getPossibleOutputs(x, q2Outputs);
 
                         for (auto it = q1Outputs.begin(); it != q1Outputs.end(); ++it)
                         {
                             bool disjunct = true;
-                            for (OutputTrace inter : intersection)
+                            for (shared_ptr<OutputTrace> inter : intersection)
                             {
-                                if (*it == inter)
+                                if (**it == *inter)
                                 {
                                     disjunct = false;
                                     break;
@@ -1204,7 +1209,7 @@ void Fsm::calcRDistinguishableStates()
                             if (disjunct)
                             {
                                 shared_ptr<AdaptiveTreeNode> target = make_shared<AdaptiveTreeNode>();
-                                shared_ptr<TreeEdge> edge = make_shared<TreeEdge>(it->get()[0], target);
+                                shared_ptr<TreeEdge> edge = make_shared<TreeEdge>((*it)->get()[0], target);
                                 q1Root->add(edge);
                             }
                         }
@@ -1212,9 +1217,9 @@ void Fsm::calcRDistinguishableStates()
                         for (auto it = q2Outputs.begin(); it != q2Outputs.end(); ++it)
                         {
                             bool disjunct = true;
-                            for (OutputTrace inter : intersection)
+                            for (shared_ptr<OutputTrace> inter : intersection)
                             {
-                                if (*it == inter)
+                                if (**it == *inter)
                                 {
                                     disjunct = false;
                                     break;
@@ -1223,7 +1228,7 @@ void Fsm::calcRDistinguishableStates()
                             if (disjunct)
                             {
                                 shared_ptr<AdaptiveTreeNode> target = make_shared<AdaptiveTreeNode>();
-                                shared_ptr<TreeEdge> edge = make_shared<TreeEdge>(it->get()[0], target);
+                                shared_ptr<TreeEdge> edge = make_shared<TreeEdge>((*it)->get()[0], target);
                                 q2Root->add(edge);
                             }
                         }
@@ -1449,11 +1454,11 @@ IOTraceContainer Fsm::bOmega(IOTreeContainer& adaptiveTestCases, vector<shared_p
     }
     for (shared_ptr<InputTrace> inputTrace : inputTraces)
     {
-        shared_ptr<vector<OutputTrace>> producedOutputs;
+        vector<shared_ptr<OutputTrace>> producedOutputs;
         initialState->getPossibleOutputs(*inputTrace, producedOutputs);
-        for (OutputTrace& outputTrace : *producedOutputs)
+        for (shared_ptr<OutputTrace> outputTrace : producedOutputs)
         {
-            IOTrace iOTrace = IOTrace(*inputTrace, outputTrace);
+            IOTrace iOTrace = IOTrace(*inputTrace, *outputTrace);
             IOTraceContainer produced = bOmega(adaptiveTestCases, iOTrace);
             result.addUnique(produced);
         }
@@ -1470,7 +1475,7 @@ vector<IOTraceContainer> Fsm::getVPrime()
     /* Get raw input sequences from the determinisitc state cover. */
     shared_ptr<vector<vector<int>>> testCasesRaw = testCases.getIOLists();
 
-    vector<shared_ptr<vector<OutputTrace>>> allPossibleOutputTraces;
+    vector<vector<shared_ptr<OutputTrace>>> allPossibleOutputTraces;
     size_t iterations = 1;
 
     /* Get all possible output traces generated by the determinisitc state cover. */
@@ -1478,15 +1483,15 @@ vector<IOTraceContainer> Fsm::getVPrime()
     {
         vector<int> testCase = testCasesRaw->at(i);
         InputTrace input = InputTrace(testCase, presentationLayer);
-        shared_ptr<vector<OutputTrace>> producedOutputs = make_shared<vector<OutputTrace>>();
+        vector<shared_ptr<OutputTrace>> producedOutputs;
         vector<shared_ptr<FsmNode>> reached;
         getInitialState()->getPossibleOutputs(input, producedOutputs, reached);
-        iterations *= producedOutputs->size();
+        iterations *= producedOutputs.size();
         allPossibleOutputTraces.push_back(producedOutputs);
     }
 
     vector<vector<vector<int>>> ot;
-    size_t repetitions = iterations / allPossibleOutputTraces.at(0)->size();
+    size_t repetitions = iterations / allPossibleOutputTraces.at(0).size();
     for (size_t i = 0; i < testCasesRaw->size(); ++i)
     {
         vector<vector<int>> t;
@@ -1497,14 +1502,14 @@ vector<IOTraceContainer> Fsm::getVPrime()
         {
             for (size_t idx = 0; idx < repetitions; ++idx)
             {
-                t.push_back(allPossibleOutputTraces.at(i)->at(outputIndex).get());
+                t.push_back(allPossibleOutputTraces.at(i).at(outputIndex)->get());
             }
-            outputIndex = (outputIndex + 1) % allPossibleOutputTraces.at(i)->size();
+            outputIndex = (outputIndex + 1) % allPossibleOutputTraces.at(i).size();
         }
 
         if (i+1 < testCasesRaw->size())
         {
-            repetitions /= allPossibleOutputTraces.at(i+1)->size();
+            repetitions /= allPossibleOutputTraces.at(i+1).size();
         }
         ot.push_back(t);
     }
@@ -1642,7 +1647,11 @@ IOTraceContainer Fsm::adaptiveStateCounting()
     {
         IOTraceContainer observedTraces(presentationLayer);
         shared_ptr<InputTrace> inputTrace = *tC.begin();
-        OutputTree result = apply(*inputTrace, false);
+
+        vector<shared_ptr<OutputTrace>> producedOutputs;
+        vector<shared_ptr<FsmNode>> reachedNodes;
+
+        apply(*inputTrace, producedOutputs, reachedNodes);
 
         //TODO WIP
 
