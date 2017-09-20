@@ -86,8 +86,10 @@ protected:
     /** Integer id of the initial state */
     int initStateIdx;
     
+    std::shared_ptr<FsmNode> errorState;
     std::shared_ptr<Tree> characterisationSet;
     Minimal minimal;
+    bool complete;
 
     std::vector<std::shared_ptr<FsmTransition>> transitions;
     std::vector<std::shared_ptr<OFSMTable>> ofsmTableLst;
@@ -315,6 +317,7 @@ public:
      */
     bool isObservable() const;
     Minimal isMinimal() const;
+    bool isComplete() const;
     
     /**
      *   Check for unreachable states and remove them from the 
@@ -350,6 +353,12 @@ public:
      * @return The new completely specified FSM
      */
     Fsm makeComplete(CompleteMode mode);
+
+    /**
+     * Returns the error state of this fsm.
+     * @return The error state
+     */
+    std::shared_ptr<FsmNode> getErrorState();
 
     bool isCharSet(const std::shared_ptr<Tree> w) const;
     void minimiseCharSet(const std::shared_ptr<Tree> w);

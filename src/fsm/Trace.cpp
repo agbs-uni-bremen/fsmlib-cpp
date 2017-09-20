@@ -36,8 +36,20 @@ void Trace::append(const std::vector<int>& traceToAppend) {
     
 }
 
+void Trace::prepend(const std::vector<int>& traceToPrepend) {
+    trace.reserve(trace.size() + traceToPrepend.size());
+    for ( size_t i = 0; i < traceToPrepend.size(); i++ ) {
+        trace.insert(trace.begin(), traceToPrepend.at(i));
+    }
+
+}
+
 void Trace::append(const Trace& traceToAppend) {
     append(traceToAppend.get());
+}
+
+void Trace::prepend(const Trace& traceToPrepend) {
+    prepend(traceToPrepend.get());
 }
 
 std::vector<int> Trace::get() const

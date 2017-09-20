@@ -50,7 +50,16 @@ public:
 
     size_t size() const;
 
+    /**
+     * Appends the given trace to this trace.
+     * @param other The given trace
+     */
     void append(IOTrace& other);
+    /**
+     * Prepends the given trace to this trace.
+     * @param other The given trace
+     */
+    void prepend(IOTrace& other);
 
     void append(int input, int output);
 

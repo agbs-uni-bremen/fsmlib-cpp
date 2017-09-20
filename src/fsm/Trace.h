@@ -49,8 +49,22 @@ public:
      * Append a vector of int to the trace
      */
     void append(const std::vector<int>& traceToAppend);
+    /**
+     * Prepends the given vector of int to this trace.
+     * @param traceToPrepend The given vector of int
+     */
+    void prepend(const std::vector<int>& traceToPrepend);
 
+    /**
+     * Appends the given trace to this trace.
+     * @param traceToPrepend The given trace
+     */
     void append(const Trace& traceToAppend);
+    /**
+     * Prepends the given trace to this trace.
+     * @param traceToPrepend The given trace
+     */
+    void prepend(const Trace& traceToPrepend);
 
 	/**
 	Getter for the trace itself

@@ -110,6 +110,15 @@ void IOTraceContainer::concatenate(IOTraceContainer& container)
     }
 }
 
+void IOTraceContainer::concatenateToFront(InputTrace& inputTrace, OutputTrace outputTrace)
+{
+    IOTrace newIOTrace(inputTrace, outputTrace);
+    for (IOTrace& iOTrace : *list)
+    {
+        iOTrace.prepend(newIOTrace);
+    }
+}
+
 void IOTraceContainer::remove (IOTrace& trace)
 {
     for (auto it = list->begin(); it != list->end();)

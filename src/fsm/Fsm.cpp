@@ -819,6 +819,11 @@ Minimal Fsm::isMinimal() const
     return minimal;
 }
 
+bool Fsm::isComplete() const
+{
+    return complete;
+}
+
 Fsm Fsm::minimiseObservableFSM()
 {
     /*Create new list to store all existing OFSMTables*/
@@ -862,6 +867,7 @@ Fsm Fsm::minimise()
 
 Fsm Fsm::makeComplete(CompleteMode mode)
 {
+    cout << "makeComplete():" << endl;
     vector<shared_ptr<FsmNode>> newNodes = nodes;
     bool addErrorState = false;
     shared_ptr<FsmNode> errorNode;
@@ -877,10 +883,13 @@ Fsm Fsm::makeComplete(CompleteMode mode)
     }
     for (shared_ptr<FsmNode> node : nodes)
     {
+        cout << "  State " << node->getName() << ": " << endl;
         for (int x = 0; x <= maxInput; ++x)
         {
+            cout << "    Input " << presentationLayer->getInId(x);
             if(!node->isPossibleInput(x))
             {
+                cout << " is not defined." << endl;
                 if (mode == ErrorState)
                 {
                     addErrorState = true;
@@ -895,13 +904,30 @@ Fsm Fsm::makeComplete(CompleteMode mode)
                     node->addTransition(transition);
                 }
             }
+            else
+            {
+                cout << " is defined." << endl;
+            }
         }
     }
-    if (addErrorState)
+    if (mode == ErrorState && addErrorState)
     {
         nodes.push_back(errorNode);
+        errorState = errorNode;
     }
-    return Fsm(name + "_COMPLETE", maxInput, maxOutput, newNodes, presentationLayer);
+    else if (mode == ErrorState && !addErrorState)
+    {
+        // Adding solitary error state without any incoming transition from another state.
+        errorState = errorNode;
+    }
+    Fsm fsmComplete(name + "_COMPLETE", maxInput, maxOutput, newNodes, presentationLayer);
+    fsmComplete.complete = true;
+    return fsmComplete;
+}
+
+shared_ptr<FsmNode> Fsm::getErrorState()
+{
+    return errorState;
 }
 
 bool Fsm::isCharSet(const shared_ptr<Tree> w) const
@@ -1630,7 +1656,11 @@ size_t Fsm::lowerBound(const IOTrace& base,
 
 IOTraceContainer Fsm::adaptiveStateCounting()
 {
-
+    if (!isComplete())
+    {
+        cerr << "This FSM may not be completely specified.";
+        exit(EXIT_FAILURE);
+    }
     IOTreeContainer adaptiveTestCases = getAdaptiveRCharacterisationSet();
 
     shared_ptr<Tree> detStateCoverTree = getDeterministicStateCover();
@@ -1645,7 +1675,6 @@ IOTraceContainer Fsm::adaptiveStateCounting()
     vector<shared_ptr<InputTrace>> tC = detStateCover;
     while (tC.size() != 0)
     {
-        IOTraceContainer observedTraces(presentationLayer);
         shared_ptr<InputTrace> inputTrace = *tC.begin();
 
         vector<shared_ptr<OutputTrace>> producedOutputs;
@@ -1653,8 +1682,46 @@ IOTraceContainer Fsm::adaptiveStateCounting()
 
         apply(*inputTrace, producedOutputs, reachedNodes);
 
-        //TODO WIP
+        if(std::find(reachedNodes.begin(), reachedNodes.end(), getErrorState()) != reachedNodes.end()) {
+            cout << "Failure observed:" << endl;
+            cout << "  Input Trace: " << *inputTrace << endl;
+            cout << "  Produced Outputs:\n  ";
+            for (size_t i = 0; i < producedOutputs.size(); ++i)
+            {
+                cout << *producedOutputs.at(i);
+                if (i != producedOutputs.size() - 1)
+                {
+                    cout << ", ";
+                }
+            }
+            cout << endl;
+            cout << "  Reached nodes:\n  ";
+            for (size_t i = 0; i < reachedNodes.size(); ++i)
+            {
+                cout << reachedNodes.at(i)->getName();
+                if (i != reachedNodes.size() - 1)
+                {
+                    cout << ", ";
+                }
+            }
+            cout << endl;
+            break;
+        }
 
+        if (producedOutputs.size() != reachedNodes.size())
+        {
+            cerr << "Number of produced outputs and number of reached nodes do not match.";
+            exit(EXIT_FAILURE);
+        }
+
+        for (size_t i = 0; i< producedOutputs.size(); ++i)
+        {
+            shared_ptr<FsmNode> node = reachedNodes.at(i);
+            shared_ptr<OutputTrace> outputTrace = producedOutputs.at(i);
+            IOTraceContainer observedTraces = getPossibleIOTraces(node, adaptiveTestCases);
+            observedTraces.concatenateToFront(*inputTrace, *outputTrace);
+        }
+        //TODO WIP
         break;
     }
 }

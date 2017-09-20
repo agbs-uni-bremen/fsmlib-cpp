@@ -809,6 +809,9 @@ int main()
 
         fsm1->getPossibleIOTraces(fsm1->getInitialState(), rAdaptiveCharacterisationSet.getList()->at(0));
 
+        Fsm fsm1Complete = fsm1->makeComplete(ErrorState);
+        fsm1Complete.adaptiveStateCounting();
+
     //x = 2;
     }
     if (x == 2)

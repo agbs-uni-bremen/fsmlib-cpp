@@ -79,6 +79,12 @@ void IOTrace::append(IOTrace& other)
     outputTrace.append(other.getOutputTrace());
 }
 
+void IOTrace::prepend(IOTrace& other)
+{
+    inputTrace.prepend(other.getInputTrace());
+    outputTrace.prepend(other.getOutputTrace());
+}
+
 void IOTrace::append(int input, int output)
 {
     inputTrace.add(input);

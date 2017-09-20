@@ -67,6 +67,14 @@ public:
     void concatenate(IOTraceContainer& container);
 
     /**
+     * Concatenates the given input trace and the given output trace as an {@code IOTrace}
+     * to the front of each trace in this container.
+     * @param inputTrace The given input trace
+     * @param outputTrace The given output trace
+     */
+    void concatenateToFront(InputTrace& inputTrace, OutputTrace outputTrace);
+
+    /**
      * Removes all occurrences of the given trace from this container.
      * @param trace The given trace
      */
