@@ -142,6 +142,16 @@ void IOTraceContainer::remove (IOTraceContainer& container)
     }
 }
 
+vector<OutputTrace> IOTraceContainer::getOutputTraces() const
+{
+    vector<OutputTrace> result;
+    for (IOTrace& iOTrace : *list)
+    {
+        result.push_back(iOTrace.getOutputTrace());
+    }
+    return result;
+}
+
 std::ostream & operator<<(std::ostream & out, const IOTraceContainer & iot)
 {
     out << "{ ";

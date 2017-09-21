@@ -1747,10 +1747,20 @@ IOTraceContainer Fsm::adaptiveStateCounting()
                             maxPrefix = &iOTrace;
                         }
                     }
+                    vector<shared_ptr<FsmNode>> foundRDistSet;
+                    bool cancel = false;
                     for (const vector<shared_ptr<FsmNode>>& rDistStates : maximalSetsOfRDistinguishableStates)
                     {
+                        if (cancel)
+                        {
+                            break;
+                        }
                         for (size_t i = 0; i < rDistStates.size() - 1; ++i)
                         {
+                            if (cancel)
+                            {
+                                break;
+                            }
                             shared_ptr<FsmNode> s1 = rDistStates.at(i);
                             for (size_t j = i + 1; j < rDistStates.size(); ++j)
                             {
@@ -1761,11 +1771,36 @@ IOTraceContainer Fsm::adaptiveStateCounting()
                                 }
                                 const IOTraceContainer& s1RPlus = rPlus(s1, *maxPrefix, currentTrace, vDoublePrime);
                                 const IOTraceContainer& s2RPlus = rPlus(s2, *maxPrefix, currentTrace, vDoublePrime);
-                                //TODO WIP
-                                // call distinguishAllStates(...)
+
+                                unordered_set<shared_ptr<FsmNode>> reached1;
+                                unordered_set<shared_ptr<FsmNode>> reached2;
+
+                                for (IOTrace& trace : *s1RPlus.getList())
+                                {
+                                    unordered_set<shared_ptr<FsmNode>> reached = getInitialState()->after(trace);
+                                    reached1.insert(reached.begin(), reached.end());
+
+                                }
+                                for (IOTrace& trace : *s2RPlus.getList())
+                                {
+                                    unordered_set<shared_ptr<FsmNode>> reached = getInitialState()->after(trace);
+                                    reached2.insert(reached.begin(), reached.end());
+                                }
+
+                                vector<shared_ptr<FsmNode>> reached1V(reached1.begin(), reached1.end());
+                                vector<shared_ptr<FsmNode>> reached2V(reached2.begin(), reached2.end());
+
+                                if (rDistinguishesAllStates(reached1V, reached2V, adaptiveTestCases))
+                                {
+                                    foundRDistSet = rDistStates;
+                                    cancel = true;
+                                    break;
+                                }
                             }
                         }
                     }
+                    //TODO WIP
+                    // Calculate LB(...)
                 }
             }
         }
@@ -1775,9 +1810,9 @@ IOTraceContainer Fsm::adaptiveStateCounting()
     return result;
 }
 
-bool Fsm::distinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
+bool Fsm::rDistinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
                             std::vector<std::shared_ptr<FsmNode>>& nodesB,
-                            IOTreeContainer& adaptiveTestCases) const
+                            const IOTreeContainer& adaptiveTestCases) const
 {
     for (size_t i = 0; i < nodesA.size(); ++i)
     {
@@ -1790,7 +1825,7 @@ bool Fsm::distinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
                 cout << nodeA->getName() << " == " << nodeB->getName() << ". This should not happen." << endl;
                 return false;
             }
-            if (!distinguishes(nodeA, nodeB, adaptiveTestCases))
+            if (!rDistinguishes(nodeA, nodeB, adaptiveTestCases))
             {
                 return false;
             }
@@ -1799,11 +1834,39 @@ bool Fsm::distinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
     return true;
 }
 
-bool Fsm::distinguishes(std::shared_ptr<FsmNode> nodeA,
-                  std::shared_ptr<FsmNode> nodeB,
-                  IOTreeContainer& adaptiveTestCases) const
+bool Fsm::rDistinguishes(shared_ptr<FsmNode> nodeA,
+                         shared_ptr<FsmNode> nodeB,
+                         const IOTreeContainer& adaptiveTestCases) const
 {
-    //TODO WIP
+    for (shared_ptr<InputOutputTree> tree : *adaptiveTestCases.getList())
+    {
+        if (rDistinguishes(nodeA, nodeB, tree))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Fsm::rDistinguishes(shared_ptr<FsmNode> nodeA,
+                         shared_ptr<FsmNode> nodeB,
+                         shared_ptr<InputOutputTree> adaptiveTestCase) const
+{
+    IOTraceContainer containerA = getPossibleIOTraces(nodeA, adaptiveTestCase);
+    IOTraceContainer containerB = getPossibleIOTraces(nodeB, adaptiveTestCase);
+    vector<OutputTrace> outputsA = containerA.getOutputTraces();
+    vector<OutputTrace> outputsB = containerB.getOutputTraces();
+
+    for (OutputTrace& traceA: outputsA)
+    {
+        for (OutputTrace& traceB : outputsB)
+        {
+            if (traceA == traceB)
+            {
+                return false;
+            }
+        }
+    }
     return true;
 }
 

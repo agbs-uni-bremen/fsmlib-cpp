@@ -87,6 +87,12 @@ public:
     void remove (IOTraceContainer& container);
 
     /**
+     * Returns all output traces.
+     * @return All output traces
+     */
+    std::vector<OutputTrace> getOutputTraces() const;
+
+    /**
      * Returns the size of the conteiner.
      * @return The size of the container
      */

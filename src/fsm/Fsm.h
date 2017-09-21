@@ -482,9 +482,9 @@ public:
      * @return {@code} true, if {@code adaptiveTestCases} distuinguishes all states
      * from {@code nodesA} from all states from {@code nodesB}; {@code false}, otherwise
      */
-    bool distinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
+    bool rDistinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
                                 std::vector<std::shared_ptr<FsmNode>>& nodesB,
-                                IOTreeContainer& adaptiveTestCases) const;
+                                const IOTreeContainer& adaptiveTestCases) const;
 
     /**
      * Determines if the given adaptive test cases distinguish state {@code nodesA}
@@ -495,9 +495,22 @@ public:
      * @return {@code} true, if {@code adaptiveTestCases} distuinguishes state
      * {@code nodeA} from state {@code nodeB}; {@code false}, otherwise
      */
-    bool distinguishes(std::shared_ptr<FsmNode> nodeA,
+    bool rDistinguishes(std::shared_ptr<FsmNode> nodeA,
                       std::shared_ptr<FsmNode> nodeB,
-                      IOTreeContainer& adaptiveTestCases) const;
+                      const IOTreeContainer& adaptiveTestCases) const;
+
+    /**
+     * Determines if the given adaptive test case distinguish state {@code nodesA}
+     * from state {@code nodeB}.
+     * @param nodeA First state
+     * @param nodesB Second state
+     * @param adaptiveTestCase The adaptive test case that will be used
+     * @return {@code} true, if {@code adaptiveTestCase} distuinguishes state
+     * {@code nodeA} from state {@code nodeB}; {@code false}, otherwise
+     */
+    bool rDistinguishes(std::shared_ptr<FsmNode> nodeA,
+                      std::shared_ptr<FsmNode> nodeB,
+                      std::shared_ptr<InputOutputTree> adaptiveTestCase) const;
 
     /**
      * Calculates a set of maximal sets of r-distinguishable states.
