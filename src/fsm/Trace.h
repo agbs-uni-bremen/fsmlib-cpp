@@ -66,6 +66,21 @@ public:
      */
     void prepend(const Trace& traceToPrepend);
 
+    /**
+     * Determines if the given trace is a prefix of this trace.
+     * @param other The given trace
+     * @return {@code true}, if the given trace is a prefix of
+     * this trace, {@code false}, otherwise.
+     */
+    bool isPrefix(const Trace& other) const;
+    /**
+     * Determines if this trace is a prefix of the given trace.
+     * @param other The given trace
+     * @return {@code true}, if this trace is a prefix of
+     * the given trace, {@code false}, otherwise.
+     */
+    bool isPrefixOf(const Trace& other) const;
+
 	/**
 	Getter for the trace itself
 	@return The trace itself, represented by a list of int

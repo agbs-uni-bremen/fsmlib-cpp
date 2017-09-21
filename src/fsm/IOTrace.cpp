@@ -29,6 +29,12 @@ inputTrace(ioTrace.inputTrace), outputTrace(ioTrace.outputTrace)
 
 }
 
+IOTrace::IOTrace(std::shared_ptr<FsmPresentationLayer> pl):
+    inputTrace({}, pl), outputTrace({}, pl)
+{
+
+}
+
 InputTrace IOTrace::getInputTrace() const
 {
 	return inputTrace;
@@ -89,6 +95,18 @@ void IOTrace::append(int input, int output)
 {
     inputTrace.add(input);
     outputTrace.add(output);
+}
+
+bool IOTrace::isPrefix(const IOTrace& other) const
+{
+    return inputTrace.isPrefix(other.inputTrace) &&
+            outputTrace.isPrefix(other.outputTrace);
+}
+
+bool IOTrace::isPrefixOf(const IOTrace& other) const
+{
+    return inputTrace.isPrefixOf(other.inputTrace) &&
+            outputTrace.isPrefixOf(other.outputTrace);
 }
 
 shared_ptr<IOTrace> IOTrace::getEmptyTrace(shared_ptr<FsmPresentationLayer> pl)

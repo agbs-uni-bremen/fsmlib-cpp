@@ -421,7 +421,7 @@ public:
      * @return All input/output traces that can be produced
      */
     IOTraceContainer getPossibleIOTraces(std::shared_ptr<FsmNode> node,
-            IOTreeContainer& treeContainer) const;
+            const IOTreeContainer& treeContainer) const;
 
     /**
      * Returns a set of input/output sequences that can be produced by this
@@ -473,6 +473,36 @@ public:
 
     IOTraceContainer adaptiveStateCounting();
 
+    /**
+     * Determines if the given adaptive test cases distinguish all states from
+     * {@code nodesA} from all states from {@code nodeB}.
+     * @param nodesA First set of states
+     * @param nodesB Second set of states
+     * @param adaptiveTestCases The adaptive test cases that will be used
+     * @return {@code} true, if {@code adaptiveTestCases} distuinguishes all states
+     * from {@code nodesA} from all states from {@code nodesB}; {@code false}, otherwise
+     */
+    bool distinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
+                                std::vector<std::shared_ptr<FsmNode>>& nodesB,
+                                IOTreeContainer& adaptiveTestCases) const;
+
+    /**
+     * Determines if the given adaptive test cases distinguish state {@code nodesA}
+     * from state {@code nodeB}.
+     * @param nodeA First state
+     * @param nodesB Second state
+     * @param adaptiveTestCases The adaptive test cases that will be used
+     * @return {@code} true, if {@code adaptiveTestCases} distuinguishes state
+     * {@code nodeA} from state {@code nodeB}; {@code false}, otherwise
+     */
+    bool distinguishes(std::shared_ptr<FsmNode> nodeA,
+                      std::shared_ptr<FsmNode> nodeB,
+                      IOTreeContainer& adaptiveTestCases) const;
+
+    /**
+     * Calculates a set of maximal sets of r-distinguishable states.
+     * @return A set of maximal sets of r-distinguishable states
+     */
     std::vector<std::vector<std::shared_ptr<FsmNode>>> getMaximalSetsOfRDistinguishableStates() const;
     
     /**

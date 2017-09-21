@@ -52,6 +52,27 @@ void Trace::prepend(const Trace& traceToPrepend) {
     prepend(traceToPrepend.get());
 }
 
+bool Trace::isPrefix(const Trace& other) const
+{
+    if (other.get().size() > trace.size())
+    {
+        return false;
+    }
+    for (size_t i = 0; i < other.get().size(); ++i)
+    {
+        if (other.get().at(i) != trace.at(i))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Trace::isPrefixOf(const Trace& other) const
+{
+ return other.isPrefix(*this);
+}
+
 std::vector<int> Trace::get() const
 {
 	return trace;

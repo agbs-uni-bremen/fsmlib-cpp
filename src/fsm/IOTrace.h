@@ -33,6 +33,7 @@ public:
     IOTrace(const InputTrace & i, const OutputTrace & o);
     IOTrace(const int i, const int o, std::shared_ptr<FsmPresentationLayer> pl);
     IOTrace(const IOTrace & ioTrace);
+    IOTrace(std::shared_ptr<FsmPresentationLayer> pl);
 
 	/**
 	Getter for the input trace
@@ -62,6 +63,21 @@ public:
     void prepend(IOTrace& other);
 
     void append(int input, int output);
+
+    /**
+     * Determines if the given trace is a prefix of this trace.
+     * @param other The given trace
+     * @return {@code true}, if the given trace is a prefix of
+     * this trace, {@code false}, otherwise.
+     */
+    bool isPrefix(const IOTrace& other) const;
+    /**
+     * Determines if this trace is a prefix of the given trace.
+     * @param other The given trace
+     * @return {@code true}, if this trace is a prefix of
+     * the given trace, {@code false}, otherwise.
+     */
+    bool isPrefixOf(const IOTrace& other) const;
 
     static std::shared_ptr<IOTrace> getEmptyTrace(std::shared_ptr<FsmPresentationLayer> pl);
 
