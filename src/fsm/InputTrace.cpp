@@ -38,6 +38,18 @@ InputTrace::InputTrace(const InputTrace& other):
 
 }
 
+bool InputTrace::contains(const std::vector<std::shared_ptr<InputTrace>>& list, const InputTrace& trace)
+{
+    for (std::shared_ptr<InputTrace> t : list)
+    {
+        if (*t == trace)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 std::ostream & operator<<(std::ostream & out, const InputTrace & trace)
 {
 	for (auto it = trace.cbegin(); it != trace.cend(); ++ it)

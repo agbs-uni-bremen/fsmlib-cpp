@@ -32,6 +32,8 @@ public:
     InputTrace(const InputTrace& other, size_t n);
     InputTrace(const InputTrace& other);
 
+    static bool contains(const std::vector<std::shared_ptr<InputTrace>>& list, const InputTrace& trace);
+
 	/**
 	Output the InputTrace to a standard output stream
 	@param out The standard output stream to use

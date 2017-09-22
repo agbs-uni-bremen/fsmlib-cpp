@@ -411,7 +411,8 @@ public:
      * @return All input/output traces that can be produced
      */
     IOTraceContainer getPossibleIOTraces(std::shared_ptr<FsmNode> node,
-            std::shared_ptr<InputOutputTree> tree) const;
+                                         std::shared_ptr<InputOutputTree> tree,
+                                         const bool cleanTrailingEmptyTraces = true) const;
 
     /**
      * Returns all possible input/output sequences that can be produced when
@@ -421,7 +422,8 @@ public:
      * @return All input/output traces that can be produced
      */
     IOTraceContainer getPossibleIOTraces(std::shared_ptr<FsmNode> node,
-            const IOTreeContainer& treeContainer) const;
+                                         const IOTreeContainer& treeContainer,
+                                         const bool cleanTrailingEmptyTraces = true) const;
 
     /**
      * Returns a set of input/output sequences that can be produced by this
@@ -432,7 +434,7 @@ public:
      * @param trace The given trace
      * @return A set of all input/output traces that can be produced
      */
-    IOTraceContainer bOmega(IOTreeContainer& adaptiveTestCases, IOTrace& trace) const;
+    IOTraceContainer bOmega(const IOTreeContainer& adaptiveTestCases, const IOTrace& trace) const;
 
     /**
      * Returns a set of input/output sequences that can be produced by this
@@ -443,7 +445,7 @@ public:
      * @param inputTraces The given input traces
      * @return A set of all input/output traces that can be produced
      */
-    IOTraceContainer bOmega(IOTreeContainer& adaptiveTestCases, std::vector<std::shared_ptr<InputTrace>> inputTraces) const;
+    IOTraceContainer bOmega(const IOTreeContainer& adaptiveTestCases, const std::vector<std::shared_ptr<InputTrace>>& inputTraces) const;
 
     /**
      * Calculates all possible output traces for the deterministic state cover of the
@@ -463,15 +465,39 @@ public:
                        const IOTrace& suffix,
                        const IOTraceContainer& vDoublePrime) const;
 
+    /**
+     * Calculates the lower bound that may be placed on the number of states
+     * of the FSM if there has been no repetition in the states of the product
+     * machine for a given input/output sequence.
+     *
+     * Let x/y be the given input/output sequence, being observed when applying
+     * a determinisitc state cover input sequence.
+     * @param base Input/output sequence with the input sequence being an element
+     * of the deterministic state cover and the output sequence being a possible
+     * output to said input sequence. `base` is a prefix of x/y.
+     * @param suffix Suffix x/y with base.suffix = x/y
+     * @param takenInputs Set of input sequences that have been followed during
+     * adaptive state counting.
+     * @param states A maximum set of r-distinguishable states, that has been used
+     * during the calculation of `base` and `suffix`.
+     * @param adaptiveTestCases The corresponding adaptive test cases.
+     * @param vDoublePrime A set of input/output sequences that represents one
+     * possible combination of all input traces from the deterministic state cover
+     * and theirs corresponding output sequences.
+     * @param dReachableStates All d-reachable states.
+     * @return The lower bound that may be placed on the number of states
+     * of the FSM if there has been no repetition in the states of the product
+     * machine for a given input/output sequence.
+     */
     size_t lowerBound(const IOTrace& base,
               const IOTrace& suffix,
-              std::vector<std::shared_ptr<InputTrace>> takenInputs,
-              std::vector<std::shared_ptr<FsmNode>> states,
-              IOTreeContainer& adaptiveTestCases,
-              IOTraceContainer& vDoublePrime,
-              std::vector<std::shared_ptr<FsmNode>> dReachableStates) const;
+              const std::vector<std::shared_ptr<InputTrace>>& takenInputs,
+              const std::vector<std::shared_ptr<FsmNode>>& states,
+              const IOTreeContainer& adaptiveTestCases,
+              const IOTraceContainer& vDoublePrime,
+              const std::vector<std::shared_ptr<FsmNode>>& dReachableStates) const;
 
-    IOTraceContainer adaptiveStateCounting();
+    IOTraceContainer adaptiveStateCounting(const size_t m);
 
     /**
      * Determines if the given adaptive test cases distinguish all states from

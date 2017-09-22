@@ -97,6 +97,6 @@ ostream & operator<<(ostream & out, const IOTreeContainer & ot)
         cout << "]";
         first = false;
     }
-    out << "}\n";
+    out << "}";
     return out;
 }

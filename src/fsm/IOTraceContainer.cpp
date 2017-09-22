@@ -113,9 +113,14 @@ void IOTraceContainer::concatenate(IOTraceContainer& container)
 void IOTraceContainer::concatenateToFront(InputTrace& inputTrace, OutputTrace outputTrace)
 {
     IOTrace newIOTrace(inputTrace, outputTrace);
-    for (IOTrace& iOTrace : *list)
+    concatenateToFront(newIOTrace);
+}
+
+void IOTraceContainer::concatenateToFront(IOTrace& iOTrace)
+{
+    for (IOTrace& iOT : *list)
     {
-        iOTrace.prepend(newIOTrace);
+        iOT.prepend(iOTrace);
     }
 }
 

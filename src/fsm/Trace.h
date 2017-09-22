@@ -73,6 +73,14 @@ public:
      * this trace, {@code false}, otherwise.
      */
     bool isPrefix(const Trace& other) const;
+
+    /**
+     * Determines if the given trace is a suffix of this trace.
+     * @param other The given trace
+     * @return `true`, if the given trace is a suffix of
+     * this trace, `false`, otherwise.
+     */
+    bool isSuffix(const Trace& other) const;
     /**
      * Determines if this trace is a prefix of the given trace.
      * @param other The given trace
@@ -80,6 +88,8 @@ public:
      * the given trace, {@code false}, otherwise.
      */
     bool isPrefixOf(const Trace& other) const;
+
+    void removeElements(int n);
 
 	/**
 	Getter for the trace itself
@@ -102,6 +112,8 @@ public:
     const std::shared_ptr<FsmPresentationLayer> getPresentationLayer() const { return presentationLayer; }
 
     std::vector<Trace> getPrefixes() const;
+
+    static bool contains(const std::vector<std::shared_ptr<Trace>>& list, const Trace& trace);
 
 	/**
 	Check wheter or not, the 2 trace are the same

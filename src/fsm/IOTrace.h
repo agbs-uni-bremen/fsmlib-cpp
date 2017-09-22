@@ -33,6 +33,7 @@ public:
     IOTrace(const InputTrace & i, const OutputTrace & o);
     IOTrace(const int i, const int o, std::shared_ptr<FsmPresentationLayer> pl);
     IOTrace(const IOTrace & ioTrace);
+    IOTrace(const IOTrace & ioTrace, int n);
     IOTrace(std::shared_ptr<FsmPresentationLayer> pl);
 
 	/**
@@ -71,6 +72,14 @@ public:
      * this trace, {@code false}, otherwise.
      */
     bool isPrefix(const IOTrace& other) const;
+
+    /**
+     * Determines if the given trace is a suffix of this trace.
+     * @param other The given trace
+     * @return `true`, if the given trace is a suffix of
+     * this trace, `false`,, otherwise.
+     */
+    bool isSuffix(const IOTrace& other) const;
     /**
      * Determines if this trace is a prefix of the given trace.
      * @param other The given trace

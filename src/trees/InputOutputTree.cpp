@@ -82,8 +82,10 @@ ostream & operator<<(ostream & out, InputOutputTree & ot)
 {
     ot.calcLeaves();
 
-    for (shared_ptr<TreeNode> leave : ot.leaves)
+    //for (shared_ptr<TreeNode> leave : ot.leaves)
+    for (size_t k = 0; k < ot.leaves.size(); ++k)
     {
+        shared_ptr<TreeNode> leave = ot.leaves.at(k);
         shared_ptr<AdaptiveTreeNode> l = static_pointer_cast<AdaptiveTreeNode>(leave);
         vector<int> inputPath = l->getInputPath();
         vector<int> outputPath = l->getPath();
@@ -96,8 +98,10 @@ ostream & operator<<(ostream & out, InputOutputTree & ot)
 
             out << "(" << ot.presentationLayer->getInId(inputPath.at(i)) << "/" << ot.presentationLayer->getOutId(outputPath.at(i)) << ")";
         }
-        out << "\n";
-
+        if (k != ot.leaves.size() - 1)
+        {
+            cout << ", ";
+        }
     }
     return out;
 }

@@ -215,19 +215,19 @@ void FsmNode::getPossibleOutputs(const InputTrace& inputTrace,
     }
     producedOutputTraces = newlyProducedOutputTraces;
 
-    cout << "getPossibleOutputs(): " << getName() << ", " << inputTrace << ", " << producedOutputTraces.size() << ", " << reachedNodes.size() << endl;
-    cout << "  reached nodes:\n  ";
+//    cout << "getPossibleOutputs(): " << getName() << ", " << inputTrace << ", " << producedOutputTraces.size() << ", " << reachedNodes.size() << endl;
+//    cout << "  reached nodes:\n  ";
     for (auto n : reachedNodes)
     {
-        cout << n->getName() << ", ";
+//        cout << n->getName() << ", ";
     }
-    cout << endl;
-    cout << "  outputs:\n  " << endl;
+//    cout << endl;
+//    cout << "  outputs:\n  " << endl;
     for (auto n : producedOutputTraces)
     {
-        cout << *n << ", ";
+//        cout << *n << ", ";
     }
-    cout << endl;
+//    cout << endl;
 }
 
 void FsmNode::getPossibleOutputs(const InputTrace& input, vector<shared_ptr<OutputTrace>>& producedOutputs) const

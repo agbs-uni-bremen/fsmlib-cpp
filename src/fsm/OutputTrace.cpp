@@ -17,6 +17,18 @@ OutputTrace::OutputTrace(const std::vector<int>& trace, const std::shared_ptr<Fs
 
 }
 
+bool OutputTrace::contains(const std::vector<std::shared_ptr<OutputTrace>>& list, const OutputTrace& trace)
+{
+    for (std::shared_ptr<OutputTrace> t : list)
+    {
+        if (*t == trace)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 std::ostream & operator<<(std::ostream & out, const OutputTrace & trace)
 {
 	for (auto it = trace.cbegin(); it != trace.cend(); ++ it)

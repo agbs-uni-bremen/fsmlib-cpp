@@ -68,9 +68,39 @@ bool Trace::isPrefix(const Trace& other) const
     return true;
 }
 
+bool Trace::isSuffix(const Trace& other) const
+{
+    if (other.get().size() > trace.size())
+    {
+        return false;
+    }
+    const int thisMax = static_cast<int>(get().size()) - 1;
+    const int otherMax = static_cast<int>(other.get().size()) - 1;
+    for (int i = 0; i <= otherMax ; ++i)
+    {
+        if (other.get().at(static_cast<size_t>(otherMax - i)) != trace.at(static_cast<size_t>(thisMax - i)))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool Trace::isPrefixOf(const Trace& other) const
 {
  return other.isPrefix(*this);
+}
+
+void Trace::removeElements(int n)
+{
+    if (n > 0)
+    {
+        trace.erase(trace.begin(), trace.begin() + n);
+    }
+    else if (n < 0)
+    {
+        trace.erase(trace.end() + n, trace.end());
+    }
 }
 
 std::vector<int> Trace::get() const
@@ -100,6 +130,18 @@ std::vector<Trace> Trace::getPrefixes() const
          }
      }
      return result;
+}
+
+bool Trace::contains(const std::vector<std::shared_ptr<Trace>>& list, const Trace& trace)
+{
+    for (std::shared_ptr<Trace> t : list)
+    {
+        if (*t == trace)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool operator==(Trace const & trace1, Trace const & trace2)
