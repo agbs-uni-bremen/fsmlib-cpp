@@ -1389,7 +1389,9 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
     if (tree->isEmpty())
     {
         cout << "(" << node->getName() << ") " << "  tree is empty. returning." << endl;
-        return IOTraceContainer(IOTrace::getEmptyTrace(presentationLayer), presentationLayer);
+        std::shared_ptr<IOTrace> emptyTrace = IOTrace::getEmptyTrace(presentationLayer);
+        emptyTrace->setTargetNode(node);
+        return IOTraceContainer(emptyTrace, presentationLayer);
     }
     IOTraceContainer result = IOTraceContainer(presentationLayer);
 
@@ -1398,19 +1400,12 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
         shared_ptr<AdaptiveTreeNode> treeRoot = static_pointer_cast<AdaptiveTreeNode>(tree->getRoot());
         int x = treeRoot->getInput();
         bool isPossibleOutput = node->isPossibleOutput(x, y);
-        cout << "(" << node->getName() << ") " << "  x: " << x << endl;
-        cout << "(" << node->getName() << ") " << "  y: " << y << endl;
-
+        cout << "(" << node->getName() << ") " << "  x: " << presentationLayer->getInId(x) << endl;
+        cout << "(" << node->getName() << ") " << "  y: " << presentationLayer->getOutId(y) << endl;
         cout << "(" << node->getName() << ") " << "  isPossibleOutput: " << isPossibleOutput << endl;
-        if (isPossibleOutput && !tree->isDefined(y))
+
+        if (isPossibleOutput)
         {
-            IOTrace trace = IOTrace(x, y , presentationLayer);
-            cout << "(" << node->getName() << ") " << "  tree is not defined."  << endl;
-            result.addUnique(trace);
-        }
-        else if (isPossibleOutput && tree->isDefined(y))
-        {
-            cout << "(" << node->getName() << ") " << "  tree is defined."  << endl;
             unordered_set<shared_ptr<FsmNode>> nextNodes = node->afterAsSet(x, y);
             if (nextNodes.size() != 1)
             {
@@ -1418,36 +1413,55 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
                 exit(EXIT_FAILURE);
             }
             shared_ptr<FsmNode> nextNode = *nextNodes.begin();
-            cout << "(" << node->getName() << ") " << "    nextNode: " << nextNode->getName()  << endl;
-            shared_ptr<AdaptiveTreeNode> nextTreeNode = static_pointer_cast<AdaptiveTreeNode>(treeRoot->after(y));
-            cout << "(" << node->getName() << ") " << "    nextTreeNode input: " << nextTreeNode->getInput()  << endl;
-            shared_ptr<InputOutputTree> nextTree = make_shared<InputOutputTree>(nextTreeNode, presentationLayer);
-            cout << "(" << node->getName() << ") " << "    nextTree: " << *nextTree  << endl;
-            IOTraceContainer iONext = getPossibleIOTraces(nextNode, nextTree);
-            cout << "(" << node->getName() << ") " << "    iONext: " << iONext  << endl;
-            IOTrace trace = IOTrace(x, y , presentationLayer);
-            iONext.concatenateToFront(trace);
-            cout << "(" << node->getName() << ") " << "    iONext: " << iONext  << endl;
-            cout << "(" << node->getName() << ") " << "    cleanTrailingEmptyTraces: " << cleanTrailingEmptyTraces  << endl;
-            if (cleanTrailingEmptyTraces)
+
+            if (!tree->isDefined(y))
             {
-                shared_ptr<IOTrace> emptyTrace = IOTrace::getEmptyTrace(presentationLayer);
-                for (IOTrace& t : *iONext.getList())
+                IOTrace trace = IOTrace(x, y, nextNode, presentationLayer);
+                cout << "(" << node->getName() << ") " << "  tree is NOT defined. Adding " << trace  << endl;
+                result.addUnique(trace);
+            }
+            else if (tree->isDefined(y))
+            {
+                cout << "(" << node->getName() << ") " << "  tree is defined."  << endl;
+                cout << "(" << node->getName() << ") " << "    nextNode: " << nextNode->getName()  << endl;
+                shared_ptr<AdaptiveTreeNode> nextTreeNode = static_pointer_cast<AdaptiveTreeNode>(treeRoot->after(y));
+                cout << "(" << node->getName() << ") " << "    nextTreeNode input: " << presentationLayer->getInId(nextTreeNode->getInput())  << endl;
+                shared_ptr<InputOutputTree> nextTree = make_shared<InputOutputTree>(nextTreeNode, presentationLayer);
+                cout << "(" << node->getName() << ") " << "    nextTree: " << *nextTree  << endl;
+                IOTraceContainer iONext = getPossibleIOTraces(nextNode, nextTree);
+                cout << "(" << node->getName() << ") " << "    iONext: " << iONext  << endl;
+                IOTrace trace = IOTrace(x, y, nextNode, presentationLayer);
+                if (iONext.isEmpty())
                 {
-                    cout << "(" << node->getName() << ") " << "    t.size(): " << t.size() << endl;
-                    cout << "(" << node->getName() << ") " << "    isSuffix: " << t.isSuffix(*emptyTrace) << endl;
-                    if (t.size() > 1 && t.isSuffix(*emptyTrace))
-                    {
-                        cout << "(" << node->getName() << ") " << "    REMOVING EMPTY SUFFIX from " << t << endl;
-                        t = IOTrace(t, -1);
-                    }
+                    iONext.add(trace);
+                }
+                else
+                {
+                    iONext.concatenateToFront(trace);
                 }
                 cout << "(" << node->getName() << ") " << "    iONext: " << iONext  << endl;
+                cout << "(" << node->getName() << ") " << "    cleanTrailingEmptyTraces: " << cleanTrailingEmptyTraces  << endl;
+                if (cleanTrailingEmptyTraces)
+                {
+                    shared_ptr<IOTrace> emptyTrace = IOTrace::getEmptyTrace(presentationLayer);
+                    for (IOTrace& t : *iONext.getList())
+                    {
+                        cout << "(" << node->getName() << ") " << "    t.size(): " << t.size() << endl;
+                        cout << "(" << node->getName() << ") " << "    isSuffix: " << t.isSuffix(*emptyTrace) << endl;
+                        if (t.size() > 1 && t.isSuffix(*emptyTrace))
+                        {
+                            cout << "(" << node->getName() << ") " << "    REMOVING EMPTY SUFFIX from " << t << endl;
+                            t = IOTrace(t, -1, t.getTargetNode());
+                        }
+                    }
+                    cout << "(" << node->getName() << ") " << "    iONext: " << iONext  << endl;
+                }
+                result.addUnique(iONext);
             }
-            result.addUnique(iONext);
         }
         cout << "(" << node->getName() << ") " << "#####################################" << endl;
     }
+    cout << "(" << node->getName() << ") " << "--- result: " << result << endl;
     return result;
 }
 
@@ -1672,7 +1686,7 @@ size_t Fsm::lowerBound(const IOTrace& base,
     return result;
 }
 
-IOTraceContainer Fsm::adaptiveStateCounting(const size_t m)
+bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces)
 {
     if (!isComplete())
     {
@@ -1680,8 +1694,9 @@ IOTraceContainer Fsm::adaptiveStateCounting(const size_t m)
         exit(EXIT_FAILURE);
     }
 
-    IOTraceContainer result(presentationLayer);
-
+    /**
+     * Adaptive test cases for this FSM (Ω).
+     */
     const IOTreeContainer& adaptiveTestCases = getAdaptiveRCharacterisationSet();
     cout << "adaptiveTestCases: " << adaptiveTestCases << endl;
     IOListContainer adaptiveList = adaptiveTestCases.toIOList();
@@ -1692,13 +1707,22 @@ IOTraceContainer Fsm::adaptiveStateCounting(const size_t m)
 
     shared_ptr<Tree> detStateCoverTree = getDeterministicStateCover();
     IOListContainer detStateCoverRaw = detStateCoverTree->getDeterministicTestCases();
+    cout << "detStateCoverRaw: " << detStateCoverRaw << endl;
     vector<shared_ptr<InputTrace>> detStateCover;
     for (vector<int> trace : *detStateCoverRaw.getIOLists())
     {
         detStateCover.push_back(make_shared<InputTrace>(trace, presentationLayer));
     }
 
+    /**
+     * T - set of input sequences that have been followed by Ω.
+     */
     vector<shared_ptr<InputTrace>> t = detStateCover;
+    /**
+     * T_c - set of current elements of T: those that are being considered in the search
+     * through state space. The elements in T_c are the maximal sequences considered that
+     * do not meet the termination criterion.
+     */
     vector<shared_ptr<InputTrace>> tC = detStateCover;
     while (tC.size() != 0)
     {
@@ -1715,12 +1739,21 @@ IOTraceContainer Fsm::adaptiveStateCounting(const size_t m)
         }
         cout << endl;
         map<shared_ptr<InputTrace>, vector<shared_ptr<OutputTrace>>> observedOutputsTCElements;
-        map<shared_ptr<InputTrace>, IOTraceContainer> observedOutputsTCOmegaElements;
+
+        // Applying all input traces from T_c to this FSM.
+        // All observed outputs are bein recorded.
+        // If the FSM enters the error state, adaptive state counting terminates.
         for (shared_ptr<InputTrace> inputTrace : tC)
         {
 
             cout << "  inputTrace: " << *inputTrace << endl;
+            /**
+             * Holds the produced output traces for the current input trace.
+             */
             vector<shared_ptr<OutputTrace>> producedOutputs;
+            /**
+             * Holds the reached nodes for the current input trace.
+             */
             vector<shared_ptr<FsmNode>> reachedNodes;
 
             apply(*inputTrace, producedOutputs, reachedNodes);
@@ -1737,6 +1770,7 @@ IOTraceContainer Fsm::adaptiveStateCounting(const size_t m)
             observedOutputsTCElements.insert(make_pair(inputTrace, producedOutputs));
 
             if(std::find(reachedNodes.begin(), reachedNodes.end(), getErrorState()) != reachedNodes.end()) {
+                // FSM entered the error state.
                 cout << "  Failure observed:" << endl;
                 cout << "    Input Trace: " << *inputTrace << endl;
                 cout << "    Produced Outputs:\n      ";
@@ -1747,6 +1781,11 @@ IOTraceContainer Fsm::adaptiveStateCounting(const size_t m)
                     {
                         cout << ", ";
                     }
+                    // Adding observed traces for simple input traces only in case of error.
+                    // When no error is being observed, this traces are bein used later when
+                    // concatenating them with the adaptive test cases.
+                    IOTrace iOTrace(*inputTrace, *producedOutputs.at(i), reachedNodes.at(i));
+                    observedTraces.addUnique(iOTrace);
                 }
                 cout << endl;
                 cout << "    Reached nodes:\n      ";
@@ -1759,7 +1798,7 @@ IOTraceContainer Fsm::adaptiveStateCounting(const size_t m)
                     }
                 }
                 cout << endl;
-                break;
+                return false;
             }
 
             if (producedOutputs.size() != reachedNodes.size())
@@ -1768,25 +1807,19 @@ IOTraceContainer Fsm::adaptiveStateCounting(const size_t m)
                 exit(EXIT_FAILURE);
             }
 
+            // Applying adaptive test cases to every node reached by the current input trace.
             for (size_t i = 0; i< producedOutputs.size(); ++i)
             {
                 shared_ptr<FsmNode> node = reachedNodes.at(i);
                 shared_ptr<OutputTrace> outputTrace = producedOutputs.at(i);
-                IOTraceContainer observedTraces = getPossibleIOTraces(node, adaptiveTestCases);
-                cout << "  observedTraces: " << observedTraces << endl;
-                observedTraces.concatenateToFront(*inputTrace, *outputTrace);
-                observedOutputsTCOmegaElements.insert(make_pair(inputTrace, observedTraces));
+                cout << "----------------- Getting adaptive traces -----------------" << endl;
+                IOTraceContainer observedAdaptiveTraces = getPossibleIOTraces(node, adaptiveTestCases);
+                cout << "  observedAdaptiveTraces: " << observedAdaptiveTraces << endl;
+                cout << "  concatenating: " << *inputTrace << "/" << *outputTrace << endl;
+                observedAdaptiveTraces.concatenateToFront(*inputTrace, *outputTrace);
+                cout << "  observedAdaptiveTraces after concatenation to front: " << observedAdaptiveTraces << endl;
+                observedTraces.addUnique(observedAdaptiveTraces);
             }
-            cout << "  observedOutputsTCOmegaElements: ";
-            for (auto e : observedOutputsTCOmegaElements)
-            {
-                cout << *e.first << ":\n    ";
-                for (auto ot : *e.second.getList())
-                {
-                    cout << ot << ", ";
-                }
-            }
-            cout << endl;
         }
 
         bool cancel = false;
@@ -1876,14 +1909,6 @@ IOTraceContainer Fsm::adaptiveStateCounting(const size_t m)
             }
             if (!cancel)
             {
-                if (!InputTrace::contains(t, *inputTrace) && !InputTrace::contains(newTC, *inputTrace))
-                {
-                    newTC.push_back(inputTrace);
-                }
-                if (!InputTrace::contains(newT, *inputTrace))
-                {
-                    newT.push_back(inputTrace);
-                }
                 for (int x = 0; x <= maxInput; ++x)
                 {
                     shared_ptr<InputTrace> concat  = make_shared<InputTrace>(*inputTrace);
@@ -1894,17 +1919,16 @@ IOTraceContainer Fsm::adaptiveStateCounting(const size_t m)
                     }
                     if (!InputTrace::contains(newT, *concat))
                     {
-                        newT.push_back(inputTrace);
+                        newT.push_back(concat);
                     }
                 }
             }
         }
         tC = newTC;
         t = newT;
-        //TODO WIP
-        break;
     }
-    return result;
+    cout << "  RESULT: " << observedTraces << endl;
+    return true;
 }
 
 bool Fsm::rDistinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,

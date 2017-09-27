@@ -12,6 +12,8 @@
 #include "fsm/InputTrace.h"
 #include "fsm/OutputTrace.h"
 
+class FsmNode;
+
 class IOTrace
 {
 private:
@@ -24,6 +26,11 @@ private:
 	The output trace contained into the iotrace
 	*/
 	OutputTrace outputTrace;
+
+    /**
+     * The node that can be reached via this trace
+     */
+    std::shared_ptr<FsmNode> targetNode;
 public:
 	/**
 	Create an iotrace from one inut trace and one output trace
@@ -31,9 +38,12 @@ public:
 	@param o The output trace contained into the iotrace
 	*/
     IOTrace(const InputTrace & i, const OutputTrace & o);
+    IOTrace(const InputTrace & i, const OutputTrace & o, std::shared_ptr<FsmNode> targetNode);
     IOTrace(const int i, const int o, std::shared_ptr<FsmPresentationLayer> pl);
+    IOTrace(const int i, const int o, std::shared_ptr<FsmNode> targetNode, std::shared_ptr<FsmPresentationLayer> pl);
     IOTrace(const IOTrace & ioTrace);
     IOTrace(const IOTrace & ioTrace, int n);
+    IOTrace(const IOTrace & ioTrace, int n, std::shared_ptr<FsmNode> targetNode);
     IOTrace(std::shared_ptr<FsmPresentationLayer> pl);
 
 	/**
@@ -49,6 +59,16 @@ public:
 	OutputTrace getOutputTrace() const;
 
     std::vector<IOTrace> getPrefixes() const;
+
+    void setTargetNode(std::shared_ptr<FsmNode> target)
+    {
+        targetNode = target;
+    }
+
+    std::shared_ptr<FsmNode> getTargetNode()
+    {
+        return targetNode;
+    }
 
     size_t size() const;
 

@@ -4,6 +4,7 @@
  * Licensed under the EUPL V.1.1
  */
 #include "fsm/IOTrace.h"
+#include "fsm/FsmNode.h"
 
 using namespace std;
 
@@ -17,14 +18,26 @@ IOTrace::IOTrace(const InputTrace & i, const OutputTrace & o)
     }
 }
 
+IOTrace::IOTrace(const InputTrace & i, const OutputTrace & o, std::shared_ptr<FsmNode> targetNode)
+    : IOTrace(i, o)
+{
+    this->targetNode = targetNode;
+}
+
 IOTrace::IOTrace(const int i, const int o, shared_ptr<FsmPresentationLayer> pl):
     inputTrace({i}, pl), outputTrace({o}, pl)
 {
 
 }
 
+IOTrace::IOTrace(const int i, const int o, std::shared_ptr<FsmNode> targetNode, shared_ptr<FsmPresentationLayer> pl):
+    IOTrace(i, o, pl)
+{
+    this->targetNode = targetNode;
+}
+
 IOTrace::IOTrace(const IOTrace & ioTrace):
-inputTrace(ioTrace.inputTrace), outputTrace(ioTrace.outputTrace)
+inputTrace(ioTrace.inputTrace), outputTrace(ioTrace.outputTrace), targetNode(ioTrace.targetNode)
 {
 
 }
@@ -34,6 +47,12 @@ IOTrace::IOTrace(const IOTrace & ioTrace, int n):
 {
     inputTrace.removeElements(n);
     outputTrace.removeElements(n);
+}
+
+IOTrace::IOTrace(const IOTrace & ioTrace, int n, std::shared_ptr<FsmNode> targetNode):
+    IOTrace(ioTrace, n)
+{
+    this->targetNode = targetNode;
 }
 
 IOTrace::IOTrace(std::shared_ptr<FsmPresentationLayer> pl):
@@ -131,7 +150,11 @@ shared_ptr<IOTrace> IOTrace::getEmptyTrace(shared_ptr<FsmPresentationLayer> pl)
 
 ostream & operator<<(ostream & out, const IOTrace & trace)
 {
-	out << trace.inputTrace << "/" << trace.outputTrace;
+    out << trace.inputTrace << "/" << trace.outputTrace;
+    if (trace.targetNode)
+    {
+        out << " -> " << trace.targetNode->getName();
+    }
 	return out;
 }
 
@@ -146,6 +169,7 @@ IOTrace& IOTrace::operator= (IOTrace&& other)
     {
         inputTrace = std::move(other.inputTrace);
         outputTrace = std::move(other.outputTrace);
+        targetNode = other.targetNode;
     }
     return *this;
 }

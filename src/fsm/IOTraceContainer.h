@@ -104,6 +104,8 @@ public:
      */
     size_t size() const { return list->size(); }
 
+    bool isEmpty() const {return size() == 0; }
+
     /**
      * Output the IOTraceContainer to a standard output stream
      * @param out The standard output stream to use

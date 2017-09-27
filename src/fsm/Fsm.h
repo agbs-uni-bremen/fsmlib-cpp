@@ -404,8 +404,9 @@ public:
     IOTreeContainer getAdaptiveRCharacterisationSet() const;
 
     /**
-     * Returns all possible input/output sequences that can be produced when
-     * applying a given adaptive test case tree to a given state.
+     * Returns all possible input/output sequences that can be produced and all
+     * nodes that can be reached when applying a given adaptive test case tree
+     * to a given state.
      * @param node The given state
      * @param tree The given adaptive test case
      * @return All input/output traces that can be produced
@@ -415,8 +416,9 @@ public:
                                          const bool cleanTrailingEmptyTraces = true) const;
 
     /**
-     * Returns all possible input/output sequences that can be produced when
-     * applying each element of a given adaptive test case tree container to a given state.
+     * Returns all possible input/output sequences that can be produced and all nodes
+     * that can be reached when applying each element of a given adaptive test case
+     * tree container to a given state.
      * @param node The given state
      * @param treeContainer The given container with adaptive test cases
      * @return All input/output traces that can be produced
@@ -497,7 +499,7 @@ public:
               const IOTraceContainer& vDoublePrime,
               const std::vector<std::shared_ptr<FsmNode>>& dReachableStates) const;
 
-    IOTraceContainer adaptiveStateCounting(const size_t m);
+    bool adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces);
 
     /**
      * Determines if the given adaptive test cases distinguish all states from
