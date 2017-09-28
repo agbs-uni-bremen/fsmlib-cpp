@@ -13,6 +13,20 @@ TreeNode::TreeNode()
     
 }
 
+std::shared_ptr<TreeNode> TreeNode::clone() const
+{
+    shared_ptr<TreeNode> clone = make_shared<TreeNode>();
+    clone->getChildren()->reserve(children->size());
+
+    for (const auto& c : *children)
+    {
+        std::shared_ptr<TreeEdge> childClone = c->clone();
+        childClone->getTarget()->setParent(clone);
+        clone->getChildren()->push_back(childClone);
+    }
+    return clone;
+}
+
 void TreeNode::setParent(const weak_ptr<TreeNode> pparent)
 {
     parent = pparent;
