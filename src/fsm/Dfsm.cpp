@@ -443,10 +443,15 @@ void Dfsm::createAtRandom()
     }
 }
 
+std::vector<std::shared_ptr<PkTable> > Dfsm::getPktblLst() const
+{
+    return pktblLst;
+}
+
 shared_ptr<DFSMTable> Dfsm::toDFSMTable() const
 {
     shared_ptr<DFSMTable> tbl
-    = make_shared<DFSMTable>(nodes.size(), maxInput, presentationLayer);
+            = make_shared<DFSMTable>(nodes.size(), maxInput, presentationLayer);
     
     for (unsigned int i = 0; i < nodes.size(); ++ i)
     {

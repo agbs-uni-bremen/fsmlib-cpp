@@ -42,6 +42,7 @@ typedef enum {
     WPMETHOD,
     SAFE_WMETHOD,
     SAFE_WPMETHOD,
+    SAFE_HMETHOD,
     HMETHOD,
     HSIMETHOD
 } generation_method_t;
@@ -160,6 +161,8 @@ static void parseParameters(int argc, char* argv[]) {
                     break;
                 case WMETHOD: genMethod = SAFE_WMETHOD;
                     break;
+                case HMETHOD: genMethod = SAFE_HMETHOD;
+                    break;
                 default:
                     break;
             }
@@ -234,7 +237,9 @@ static void parseParameters(int argc, char* argv[]) {
         }
         
         if ( haveModelFileName and
-            (genMethod == SAFE_WPMETHOD or genMethod == SAFE_WMETHOD) ) {
+            (genMethod == SAFE_WPMETHOD or
+             genMethod == SAFE_WMETHOD or
+             genMethod == SAFE_HMETHOD) ) {
             p++;
             if ( p >= argc ) {
                 cerr << argv[0] << ": missing model abstraction file" << endl;
@@ -372,6 +377,195 @@ static void readModelAbstraction(model_type_t mtp,
     
 }
 
+static void safeHMethod(shared_ptr<TestSuite> testSuite) {
+
+    // Minimise original reference DFSM
+    shared_ptr<Dfsm> dfsmRefMin = make_shared<Dfsm>(dfsm->minimise());
+    dfsmRefMin->minimise();
+
+    Dfsm dfsmAbstractionMin = dfsmAbstraction->minimise();
+    dfsmAbstractionMin.minimise();
+
+    dfsmRefMin->toDot("FSM_MINIMAL");
+    dfsmAbstractionMin.toDot("ABS_FSM_MINIMAL");
+    dfsmAbstractionMin.toCsv("ABS_FSM_MINIMAL");
+    cout << "REF    size = " << dfsm->size() << endl;
+    cout << "REFMIN size = " << dfsmRefMin->size() << endl;
+    cout << "ABSMIN size = " << dfsmAbstractionMin.size() << endl;
+
+    shared_ptr<FsmNode> s0 = dfsmRefMin->getInitialState();
+    std::shared_ptr<FsmPresentationLayer> pl = dfsmRefMin->getPresentationLayer();
+
+    shared_ptr<Tree> iTree = dfsmRefMin->getStateCover();
+
+    // A be a set consisting of alpha.w, beta.w for any alpha != beta in V
+    // and a distinguishing trace w. q0-after-alpha !~ q0-after-beta
+    IOListContainer iolcV = iTree->getIOListsWithPrefixes();
+    shared_ptr<std::vector<std::vector<int>>> iolV = iolcV.getIOLists();
+
+
+    filebuf fb;
+    fb.open ("scov.dot",std::ios::out);
+    ostream os0(&fb);
+    iTree->toDot(os0);
+    fb.close();
+
+    // B = V.(union_(i=1)^(m-n+1) Sigma_I)
+    shared_ptr<Tree> B = dfsmRefMin->getStateCover();
+    IOListContainer inputEnum = IOListContainer(dfsmRefMin->getMaxInput(),
+                                                1,
+                                                numAddStates + 1,
+                                                pl);
+    B->add(inputEnum);
+
+    iTree->unionTree(B);
+
+    for (unsigned i = 0; i < iolV->size(); i++)
+    {
+        shared_ptr<InputTrace> alpha = make_shared<InputTrace>(iolV->at(i), pl);
+        for (unsigned j = i + 1; j < iolV->size(); j++)
+        {
+            shared_ptr<InputTrace> beta = make_shared<InputTrace>(iolV->at(j), pl);
+
+            shared_ptr<Tree> alphaTree = iTree->getSubTree(alpha);
+            shared_ptr<Tree> betaTree = iTree->getSubTree(beta);
+
+            shared_ptr<Tree> prefixRelationTree = alphaTree->getPrefixRelationTree(betaTree);
+
+            bool distinguished = dfsmRefMin->appendDistinguishingTraceIfExistsInTree(alpha, beta, iTree, prefixRelationTree);
+
+            if (distinguished) continue;
+
+            distinguished = dfsmRefMin->calcDistinguishingTraceAfterLeaf(alpha, beta, iTree, prefixRelationTree);
+
+            if (!distinguished)
+            {
+                shared_ptr<FsmNode> afterAlpha = *s0->after(*alpha).begin();
+                shared_ptr<FsmNode> afterBeta = *s0->after(*beta).begin();
+
+                InputTrace gamma =
+                    afterAlpha->calcDistinguishingTrace(afterBeta,dfsmRefMin->getPktblLst(),dfsmRefMin->getMaxInput());
+
+                shared_ptr<InputTrace> alpha_gamma =
+                    make_shared<InputTrace>(alpha->get(),pl);
+                alpha_gamma->append(gamma.get());
+
+                shared_ptr<InputTrace> beta_gamma =
+                make_shared<InputTrace>(beta->get(),pl);
+                beta_gamma->append(gamma.get());
+
+                iTree->addToRoot(alpha_gamma->get());
+                iTree->addToRoot(beta_gamma->get());
+            }
+        }
+    }
+
+    // calculate s-equivalence to B
+    IOListContainer iolcB = B->getIOListsWithPrefixes();
+    shared_ptr<std::vector<std::vector<int>>> iolB = iolcB.getIOLists();
+
+
+    // calculate C1
+    // distinguishing trace for alpha in V and beta in B
+
+    shared_ptr<FsmNode> abs_s0 = dfsmAbstractionMin.getInitialState();
+    for (unsigned i = 0; i < iolV->size(); i++)
+    {
+        shared_ptr<InputTrace> alpha = make_shared<InputTrace>(iolV->at(i), pl);
+        shared_ptr<FsmNode> afterAlpha = *abs_s0->after(*alpha).begin();
+
+        for (unsigned j = 0; j < iolB->size(); j++)
+        {
+            shared_ptr<InputTrace> beta = make_shared<InputTrace>(iolB->at(j), pl);
+            shared_ptr<FsmNode> afterBeta = *abs_s0->after(*beta).begin();
+            if (afterAlpha == afterBeta) continue;
+
+            shared_ptr<Tree> alphaTree = iTree->getSubTree(alpha);
+            shared_ptr<Tree> betaTree = iTree->getSubTree(beta);
+
+            shared_ptr<Tree> prefixRelationTree = alphaTree->getPrefixRelationTree(betaTree);
+
+            bool distinguished = dfsmAbstractionMin.appendDistinguishingTraceIfExistsInTree(alpha, beta, iTree, prefixRelationTree);
+            if (distinguished) continue;
+            distinguished = dfsmAbstractionMin.calcDistinguishingTraceAfterLeaf(alpha, beta, iTree, prefixRelationTree);
+
+            if (!distinguished)
+            {
+                InputTrace gamma =
+                    afterAlpha->calcDistinguishingTrace(afterBeta,
+                                                        dfsmAbstractionMin.getPktblLst(),
+                                                        dfsmAbstractionMin.getMaxInput());
+
+                shared_ptr<InputTrace> alpha_gamma =
+                    make_shared<InputTrace>(alpha->get(),pl);
+                alpha_gamma->append(gamma.get());
+
+                shared_ptr<InputTrace> beta_gamma =
+                make_shared<InputTrace>(beta->get(),pl);
+                beta_gamma->append(gamma.get());
+
+                iTree->addToRoot(alpha_gamma->get());
+                iTree->addToRoot(beta_gamma->get());
+            }
+
+        }
+    }
+
+    // calculate C2
+    // distinguishing trace for alpha, beta in B. alpha in Pref(beta).
+
+    // For each sequence α.β,α∈Q,|β|=m–n+1, and each two
+    // non-empty prefixes β1 and β2 of β that take the
+    // DFSM from state s0-after-alpha
+    // to two different states add sequences α.β1.γ and α.β2.γ,
+    // where γ is a distinguishing sequence of states
+    // s0-after-alpha.beta1 and s0-after-alpha.beta2.
+
+    for (std::vector<int> b : *iolB)
+    {
+        shared_ptr<InputTrace> beta = make_shared<InputTrace>(b, pl);
+        shared_ptr<FsmNode> afterBeta = *abs_s0->after(*beta).begin();
+
+        for (unsigned i = 0; i < b.size()+1; i++)
+        {
+            std::vector<int> a(b.begin(), b.begin() + i);
+            shared_ptr<InputTrace> alpha = make_shared<InputTrace>(a, pl);
+            shared_ptr<FsmNode> afterAlpha = *abs_s0->after(*alpha).begin();
+            if (afterAlpha == afterBeta) continue;
+
+            shared_ptr<Tree> betaTree = iTree->getSubTree(beta);
+            shared_ptr<Tree> alphaTree = iTree->getSubTree(alpha);
+
+            shared_ptr<Tree> prefixRelationTree = alphaTree->getPrefixRelationTree(betaTree);
+
+            bool distinguished = dfsmAbstractionMin.appendDistinguishingTraceIfExistsInTree(alpha, beta, iTree, prefixRelationTree);
+            if (distinguished) continue;
+            distinguished = dfsmAbstractionMin.calcDistinguishingTraceAfterLeaf(alpha, beta, iTree, prefixRelationTree);
+
+            if (!distinguished)
+            {
+                InputTrace gamma =
+                    afterAlpha->calcDistinguishingTrace(afterBeta,
+                                                        dfsmAbstractionMin.getPktblLst(),
+                                                        dfsmAbstractionMin.getMaxInput());
+
+                shared_ptr<InputTrace> alpha_gamma =
+                    make_shared<InputTrace>(alpha->get(),pl);
+                alpha_gamma->append(gamma.get());
+
+                shared_ptr<InputTrace> beta_gamma =
+                make_shared<InputTrace>(beta->get(),pl);
+                beta_gamma->append(gamma.get());
+
+                iTree->addToRoot(alpha_gamma->get());
+                iTree->addToRoot(beta_gamma->get());
+            }
+        }
+    }
+
+    IOListContainer iolc = iTree->getTestCases();
+    *testSuite = dfsmRefMin->createTestSuite(iolc);
+}
 
 static void safeWpMethod(shared_ptr<TestSuite> testSuite) {
     
@@ -583,6 +777,9 @@ static void generateTestSuite() {
             }
             break;
             
+        case SAFE_HMETHOD:
+            safeHMethod(testSuite);
+            break;
         case SAFE_WPMETHOD:
             safeWpMethod(testSuite);
             break;
@@ -626,8 +823,8 @@ int main(int argc, char* argv[])
     readModel(modelType,modelFile,fsmName,fsm,dfsm);
     
     if ( genMethod == SAFE_WPMETHOD or
-        genMethod == SAFE_WMETHOD ) {
-        
+         genMethod == SAFE_WMETHOD or
+         genMethod == SAFE_HMETHOD) {
         if ( dfsm == nullptr ) {
             cerr << "SAFE W/WP METHOD only operates on deterministic FSMs - exit."
             << endl;

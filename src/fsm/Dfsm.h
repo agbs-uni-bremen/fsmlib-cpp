@@ -375,5 +375,6 @@ public:
      *  @return true if a distinguishing trace could be found, false otherwise.
      */
     bool calcDistinguishingTraceAfterLeaf(std::shared_ptr<InputTrace> alpha, std::shared_ptr<InputTrace> beta, std::shared_ptr<Tree> iTree, std::shared_ptr<Tree> prefixRelationTree);
+    std::vector<std::shared_ptr<PkTable> > getPktblLst() const;
 };
 #endif //FSM_FSM_DFSM_H_
