@@ -9,6 +9,7 @@ class IOTraceContainer
 private:
     std::shared_ptr<std::vector<IOTrace>> list;
     const std::shared_ptr<FsmPresentationLayer> presentationLayer;
+    void removeRealPrefixes(const IOTrace & trc);
 public:
     IOTraceContainer(const std::shared_ptr<FsmPresentationLayer> presentationLayer);
     IOTraceContainer(std::shared_ptr<std::vector<IOTrace>>& list, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
@@ -20,6 +21,9 @@ public:
      * @param trc The given trace
      */
     void addUnique(IOTrace& trc);
+
+    void addUniqueRemovePrefixes(const IOTrace& trc);
+    void addUniqueRemovePrefixes(const IOTraceContainer& cont);
 
     /**
      * Adds the given trace to the container.

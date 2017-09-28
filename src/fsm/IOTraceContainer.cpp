@@ -37,6 +37,46 @@ void IOTraceContainer::addUnique(IOTrace& trc)
     list->push_back(trc);
 }
 
+void IOTraceContainer::addUniqueRemovePrefixes(const IOTrace& trc)
+{
+    removeRealPrefixes(trc);
+    for (IOTrace& trace : *list)
+    {
+        if (trc == trace || trace.isPrefix(trc))
+        {
+            // The list contains either the trace itself or the trace as prefix of another trace.
+            return;
+        }
+    }
+    // No other trace has been found that contains the trace as prefix.
+    list->push_back(trc);
+}
+
+void IOTraceContainer::addUniqueRemovePrefixes(const IOTraceContainer& cont)
+{
+    for (IOTrace& trc : *cont.getList())
+    {
+        addUniqueRemovePrefixes(trc);
+    }
+}
+
+void IOTraceContainer::removeRealPrefixes(const IOTrace & trc)
+{
+    auto it = list->begin();
+    while (it  != list->end())
+    {
+        if (it->isPrefixOf(trc))
+        {
+            it = list->erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+
+}
+
 
 void IOTraceContainer::add(IOTrace& trc)
 {

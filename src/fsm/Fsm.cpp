@@ -1909,6 +1909,7 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
             }
             if (!cancel)
             {
+                // Expanding sequences.
                 for (int x = 0; x <= maxInput; ++x)
                 {
                     shared_ptr<InputTrace> concat  = make_shared<InputTrace>(*inputTrace);

@@ -138,7 +138,6 @@ void IOListContainer::removeRealPrefixes(const Trace & trc)
 void IOListContainer::addUniqueRemovePrefixes(const Trace & trc)
 {
     removeRealPrefixes(trc);
-    bool isPrefix = false;
     for(auto inLst : *iolLst)
     {
         if (trc == inLst){
@@ -152,14 +151,13 @@ void IOListContainer::addUniqueRemovePrefixes(const Trace & trc)
             }
             if (i == trc.get().size() - 1)
             {
-                isPrefix = true;
+                // The list contains the trace already as prefix.
+                return;
             }
         }
     }
-    if (!isPrefix)
-    {
-        iolLst->push_back(trc.get());
-    }
+    // No other trace has been found that contains the trace as prefix.
+    iolLst->push_back(trc.get());
 }
 
 int IOListContainer::size() const
