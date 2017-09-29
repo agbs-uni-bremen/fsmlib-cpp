@@ -23,8 +23,6 @@
 
 using namespace std;
 
-const int FsmNode::ERROR_NODE_ID = -1;
-
 FsmNode::FsmNode(const int id, const shared_ptr<FsmPresentationLayer> presentationLayer)
 : id(id),
 visited(false),

@@ -54,7 +54,6 @@ public:
 	const static int white = 0;
 	const static int grey = 1;
 	const static int black = 2;
-    const static int ERROR_NODE_ID;
 	FsmNode(const int id,
             const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 	FsmNode(const int id,
@@ -207,8 +206,6 @@ public:
     void markAsInitial() { isInitialNode = true; }
     bool isInitial() const { return isInitialNode; }
 
-    bool isErrorNode() const {return id == ERROR_NODE_ID; }
-    
     /**
      * Accept an FsmVisitor, if this node has not been visited already.
      * If the visitor is accepted, this node calls the accept methods of 

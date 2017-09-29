@@ -873,7 +873,8 @@ Fsm Fsm::makeComplete(CompleteMode mode)
     shared_ptr<FsmNode> errorNode;
     if (mode == ErrorState)
     {
-        errorNode = make_shared<FsmNode>(FsmNode::ERROR_NODE_ID, "Error", presentationLayer);
+        errorNode = make_shared<FsmNode>(getMaxNodes() + 1, "Error", presentationLayer);
+        presentationLayer->addState2String("Error");
         for (int x = 0; x <= maxInput; ++x)
         {
             shared_ptr<FsmLabel> label = make_shared<FsmLabel>(x, FsmLabel::EPSILON_OUTPUT, presentationLayer);
