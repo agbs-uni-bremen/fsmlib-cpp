@@ -62,9 +62,27 @@ public:
                          const std::string & outputs,
                          const std::string & states);
 
+    static std::shared_ptr<FsmPresentationLayer> mergeAlphabets(std::shared_ptr<const FsmPresentationLayer> plA, std::shared_ptr<const FsmPresentationLayer> plB);
+
+    void setState2String(std::vector<std::string> state2String)
+    {
+        this->state2String = state2String;
+    }
+
+    void addState2String(std::string name)
+    {
+        state2String.push_back(name);
+    }
+
     void removeState2String(const int index)
     {
         state2String.erase(state2String.begin() + index);
+    }
+
+    int addOut2String(std::string name)
+    {
+        out2String.push_back(name);
+        return static_cast<int>(out2String.size() - 1);
     }
 
 	/**

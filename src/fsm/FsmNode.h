@@ -54,7 +54,8 @@ public:
 	const static int white = 0;
 	const static int grey = 1;
 	const static int black = 2;
-	FsmNode(const int id,
+
+    FsmNode(const int id,
             const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 	FsmNode(const int id,
             const std::string & name,

@@ -184,6 +184,13 @@ public:
         const int maxOutput,
         const std::vector<std::shared_ptr<FsmNode>> lst,
         const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+
+    Fsm(const std::string & fsmName,
+        const int maxInput,
+        const int maxOutput,
+        const std::vector<std::shared_ptr<FsmNode>> lst,
+        const int initStateIdx,
+        const std::shared_ptr<FsmPresentationLayer> presentationLayer);
     
     
     /**
@@ -216,6 +223,17 @@ public:
                     const std::shared_ptr<FsmPresentationLayer>
                     presentationLayer,
                     const unsigned seed = 0);
+
+    /**
+     * Creates the product machine for two given FSM.
+     * The product machine behaves like `iut` where it is consistent with
+     * `reference`. Otherwise it moves to the state `Fail` and stays there.
+     * @param reference The reference model
+     * @param iut The implementation under test
+     * @param fsmName Name of the product machine to be created
+     * @return The product machine
+     */
+    static std::shared_ptr<Fsm> createProductMachine(std::shared_ptr<Fsm> reference, std::shared_ptr<Fsm> iut, const std::string & fsmName);
     
     
     /**

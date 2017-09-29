@@ -726,6 +726,21 @@ int main()
     shared_ptr<Fsm> fsm1 = make_shared<Fsm>("../../../resources/adaptive.fsm",pl1,"adaptive");
     fsm1->toDot("../../../resources/adaptive");
 
+    shared_ptr<FsmPresentationLayer> pl1Iut =
+    make_shared<FsmPresentationLayer>("../../../resources/adaptive-iutIn.txt",
+            + "../../../resources/adaptive-iutOut.txt",
+            + "../../../resources/adaptive-iutState.txt");
+    shared_ptr<Fsm> fsm1Iut = make_shared<Fsm>("../../../resources/adaptive-iut.fsm",pl1,"adaptive-iut");
+    fsm1Iut->toDot("../../../resources/adaptive-iut");
+
+    shared_ptr<Fsm> fsm1Product = Fsm::createProductMachine(fsm1, fsm1Iut, "");
+    fsm1Product->toDot("../../../resources/adaptive-product");
+
+    Fsm fsm1ProductMin = fsm1Product->minimise();
+    fsm1ProductMin.toDot("../../../resources/adaptive-product-min");
+
+    return 0;
+
     shared_ptr<FsmPresentationLayer> pl2 =
     make_shared<FsmPresentationLayer>("../../../resources/adaptive2In.txt",
             + "../../../resources/adaptive2Out.txt",

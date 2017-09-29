@@ -4,6 +4,7 @@
  * Licensed under the EUPL V.1.1
  */
 #include "interface/FsmPresentationLayer.h"
+#include <algorithm>
 
 FsmPresentationLayer::FsmPresentationLayer()
 {
@@ -49,6 +50,47 @@ FsmPresentationLayer::FsmPresentationLayer(const std::string& inputs, const std:
 	{
 		state2String.push_back(line);
 	}
+}
+
+std::shared_ptr<FsmPresentationLayer> FsmPresentationLayer::mergeAlphabets(
+        std::shared_ptr<const FsmPresentationLayer> plA,
+        std::shared_ptr<const FsmPresentationLayer> plB)
+{
+    std::shared_ptr<FsmPresentationLayer> result = std::make_shared<FsmPresentationLayer>();
+    size_t minNumberInputs = std::min(plA->in2String.size(), plB->in2String.size());
+    const std::vector<std::string>& biggerInputs = plA->in2String.size() > plB->in2String.size() ? plA->in2String : plB->in2String;
+
+    size_t minNumberOutputs = std::min(plA->out2String.size(), plB->out2String.size());
+    const std::vector<std::string>& biggerOutputs = plA->out2String.size() > plB->out2String.size() ? plA->out2String : plB->out2String;
+
+    for (size_t i = 0; i < minNumberInputs; ++i)
+    {
+        if (plA->in2String.at(i) != plB->in2String.at(i))
+        {
+            std::cerr << "Could not merge presentation layers. Input alphabets differ." << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        result->in2String.push_back(plA->in2String.at(i));
+    }
+    for (size_t i = minNumberInputs; i < biggerInputs.size(); ++i)
+    {
+        result->in2String.push_back(biggerInputs.at(i));
+    }
+
+    for (size_t i = 0; i < minNumberOutputs; ++i)
+    {
+        if (plA->out2String.at(i) != plB->out2String.at(i))
+        {
+            std::cerr << "Could not merge presentation layers. Output alphabets differ." << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        result->out2String.push_back(plA->out2String.at(i));
+    }
+    for (size_t i = minNumberOutputs; i < biggerOutputs.size(); ++i)
+    {
+        result->out2String.push_back(biggerOutputs.at(i));
+    }
+    return result;
 }
 
 std::string FsmPresentationLayer::getInId(const unsigned int id) const

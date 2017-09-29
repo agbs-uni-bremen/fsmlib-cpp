@@ -361,6 +361,33 @@ presentationLayer(presentationLayer)
     
 }
 
+Fsm::Fsm(const string & fsmName,
+         const int maxInput,
+         const int maxOutput,
+         const vector<shared_ptr<FsmNode>> lst,
+         const int initStateIdx,
+         const shared_ptr<FsmPresentationLayer> presentationLayer):
+    name(fsmName),
+    currentParsedNode(nullptr),
+    maxInput(maxInput),
+    maxOutput(maxOutput),
+    maxState((int)(lst.size()-1)),
+    initStateIdx(initStateIdx),
+    characterisationSet(nullptr),
+    minimal(Maybe),
+    presentationLayer(presentationLayer)
+    {
+        nodes.insert(nodes.end(), lst.begin(), lst.end());
+        // reset all nodes as 'white' and 'unvisited'
+
+        for ( auto n : nodes ) {
+            n->setColor(FsmNode::white);
+            n->setUnvisited();
+        }
+
+        nodes[initStateIdx]->markAsInitial();
+
+    }
 
 
 void Fsm::dumpFsm(ofstream & outputFile) const
@@ -2636,7 +2663,96 @@ Fsm::createRandomFsm(const string & fsmName,
     
 }
 
+shared_ptr<Fsm> Fsm::createProductMachine(shared_ptr<Fsm> reference, shared_ptr<Fsm> iut, const string& fsmName)
+{
+    shared_ptr<FsmPresentationLayer> pl = FsmPresentationLayer::mergeAlphabets(reference->getPresentationLayer(), iut->getPresentationLayer());
+    const size_t failOutput = static_cast<size_t>(pl->addOut2String("fail"));
+    size_t maxInput = pl->getIn2String().size() - 1;
+    size_t maxOutput = pl->getOut2String().size() - 1;
+    vector<string> state2String;
+    vector<shared_ptr<FsmNode>> nodes;
+    map<shared_ptr<FsmNode>, pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> productNodesToOriginalNodes;
+    map<pair<int, int>, shared_ptr<FsmNode>> originalNodeIdsToProductNode;
+    int productNodeId = 0;
+    for(shared_ptr<FsmNode> nodeA : reference->getNodes())
+    {
+        for(shared_ptr<FsmNode> nodeB : iut->getNodes())
+        {
+            shared_ptr<FsmNode> productNode = make_shared<FsmNode>(productNodeId, fsmName, pl);
+            productNodesToOriginalNodes.insert(make_pair(productNode, make_pair(nodeA, nodeB)));
+            originalNodeIdsToProductNode.insert(make_pair(make_pair(nodeA->getId(), nodeB->getId()), productNode));
+            string nodeName = "(" + nodeA->getName() + "," + nodeB->getName() + ")";
+            state2String.push_back(nodeName);
+            nodes.push_back(productNode);
+            productNodeId++;
+        }
+    }
 
+    shared_ptr<FsmNode> failState = make_shared<FsmNode>(productNodeId, fsmName, pl);
+
+    for (size_t x = 0; x <= maxInput; ++x)
+    {
+        shared_ptr<FsmLabel> failLabel = make_shared<FsmLabel>(x, failOutput, pl);
+        shared_ptr<FsmTransition> failTransition = make_shared<FsmTransition>(
+                    failState,
+                    failState,
+                    failLabel);
+        failState->addTransition(failTransition);
+    }
+
+    for(auto it = productNodesToOriginalNodes.begin(); it != productNodesToOriginalNodes.end(); ++it)
+    {
+        shared_ptr<FsmNode> productNode = it->first;
+        shared_ptr<FsmNode> nodeA = it->second.first;
+        shared_ptr<FsmNode> nodeB = it->second.second;
+        for (size_t x = 0; x <= maxInput; ++x)
+        {
+            for (size_t y = 0; y <= maxOutput; ++y)
+            {
+                if (y == failOutput)
+                {
+                    continue;
+                }
+                shared_ptr<FsmLabel> productLabel = make_shared<FsmLabel>(x, y, pl);
+                unordered_set<shared_ptr<FsmNode>> targetsA = nodeA->afterAsSet(static_cast<int>(x), static_cast<int>(y));
+                unordered_set<shared_ptr<FsmNode>> targetsB = nodeB->afterAsSet(static_cast<int>(x), static_cast<int>(y));
+                if (targetsB.size() > 0 && targetsA.size() == 0)
+                {
+                    // The transition with input x and output y is defined for the IUT, but it isn't for the reference.
+                    // Therefore, the product machine will lead to the fail state.
+                    shared_ptr<FsmTransition> productTransition = make_shared<FsmTransition>(
+                                productNode,
+                                failState,
+                                productLabel);
+                    productNode->addTransition(productTransition);
+                    continue;
+                }
+                for (shared_ptr<FsmNode> targetA : targetsA)
+                {
+                    for (shared_ptr<FsmNode> targetB : targetsB)
+                    {
+                        shared_ptr<FsmNode> productTarget = originalNodeIdsToProductNode.at(make_pair(targetA->getId(), targetB->getId()));
+                        shared_ptr<FsmTransition> productTransition = make_shared<FsmTransition>(
+                                    productNode,
+                                    productTarget,
+                                    productLabel);
+                        productNode->addTransition(productTransition);
+                        //shared_ptr<FsmNode> originInProduct =
+                    }
+                }
+            }
+        }
+    }
+
+    int initStateIdx = originalNodeIdsToProductNode.at(
+                make_pair(reference->getInitialState()->getId(),iut->getInitialState()->getId()))->getId();
+
+    state2String.push_back("Fail");
+    nodes.push_back(failState);
+    pl->setState2String(state2String);
+    shared_ptr<Fsm> result = make_shared<Fsm>(fsmName, maxInput, maxOutput, nodes, initStateIdx, pl);
+    return result;
+}
 
 
 
