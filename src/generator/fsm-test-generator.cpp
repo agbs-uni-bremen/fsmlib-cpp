@@ -403,13 +403,6 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
     IOListContainer iolcV = iTree->getIOListsWithPrefixes();
     shared_ptr<std::vector<std::vector<int>>> iolV = iolcV.getIOLists();
 
-
-    filebuf fb;
-    fb.open ("scov.dot",std::ios::out);
-    ostream os0(&fb);
-    iTree->toDot(os0);
-    fb.close();
-
     // B = V.(union_(i=1)^(m-n+1) Sigma_I)
     shared_ptr<Tree> B = dfsmRefMin->getStateCover();
     IOListContainer inputEnum = IOListContainer(dfsmRefMin->getMaxInput(),
@@ -480,21 +473,25 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
             shared_ptr<FsmNode> afterBeta = *abs_s0->after(*beta).begin();
             if (afterAlpha == afterBeta) continue;
 
+            shared_ptr<FsmNode> s0AfterAlpha = *s0->after(*alpha).begin();
+            shared_ptr<FsmNode> s0AfterBeta = *s0->after(*beta).begin();
+            if (s0AfterAlpha == s0AfterBeta) continue;
+
             shared_ptr<Tree> alphaTree = iTree->getSubTree(alpha);
             shared_ptr<Tree> betaTree = iTree->getSubTree(beta);
 
             shared_ptr<Tree> prefixRelationTree = alphaTree->getPrefixRelationTree(betaTree);
 
-            bool distinguished = dfsmAbstractionMin.appendDistinguishingTraceIfExistsInTree(alpha, beta, iTree, prefixRelationTree);
+            bool distinguished = dfsmRefMin->appendDistinguishingTraceIfExistsInTree(alpha, beta, iTree, prefixRelationTree);
             if (distinguished) continue;
-            distinguished = dfsmAbstractionMin.calcDistinguishingTraceAfterLeaf(alpha, beta, iTree, prefixRelationTree);
+            distinguished = dfsmRefMin->calcDistinguishingTraceAfterLeaf(alpha, beta, iTree, prefixRelationTree);
 
             if (!distinguished)
             {
                 InputTrace gamma =
-                    afterAlpha->calcDistinguishingTrace(afterBeta,
-                                                        dfsmAbstractionMin.getPktblLst(),
-                                                        dfsmAbstractionMin.getMaxInput());
+                    s0AfterAlpha->calcDistinguishingTrace(s0AfterBeta,
+                                                        dfsmRefMin->getPktblLst(),
+                                                        dfsmRefMin->getMaxInput());
 
                 shared_ptr<InputTrace> alpha_gamma =
                     make_shared<InputTrace>(alpha->get(),pl);
@@ -533,21 +530,25 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
             shared_ptr<FsmNode> afterAlpha = *abs_s0->after(*alpha).begin();
             if (afterAlpha == afterBeta) continue;
 
+            shared_ptr<FsmNode> s0AfterAlpha = *s0->after(*alpha).begin();
+            shared_ptr<FsmNode> s0AfterBeta = *s0->after(*beta).begin();
+            if (s0AfterAlpha == s0AfterBeta) continue;
+
             shared_ptr<Tree> betaTree = iTree->getSubTree(beta);
             shared_ptr<Tree> alphaTree = iTree->getSubTree(alpha);
 
             shared_ptr<Tree> prefixRelationTree = alphaTree->getPrefixRelationTree(betaTree);
 
-            bool distinguished = dfsmAbstractionMin.appendDistinguishingTraceIfExistsInTree(alpha, beta, iTree, prefixRelationTree);
+            bool distinguished = dfsmRefMin->appendDistinguishingTraceIfExistsInTree(alpha, beta, iTree, prefixRelationTree);
             if (distinguished) continue;
-            distinguished = dfsmAbstractionMin.calcDistinguishingTraceAfterLeaf(alpha, beta, iTree, prefixRelationTree);
+            distinguished = dfsmRefMin->calcDistinguishingTraceAfterLeaf(alpha, beta, iTree, prefixRelationTree);
 
             if (!distinguished)
             {
                 InputTrace gamma =
-                    afterAlpha->calcDistinguishingTrace(afterBeta,
-                                                        dfsmAbstractionMin.getPktblLst(),
-                                                        dfsmAbstractionMin.getMaxInput());
+                    s0AfterAlpha->calcDistinguishingTrace(s0AfterBeta,
+                                                        dfsmRefMin->getPktblLst(),
+                                                        dfsmRefMin->getMaxInput());
 
                 shared_ptr<InputTrace> alpha_gamma =
                     make_shared<InputTrace>(alpha->get(),pl);
