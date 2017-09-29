@@ -1770,6 +1770,7 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
             cout << endl;
             observedOutputsTCElements.insert(make_pair(inputTrace, producedOutputs));
 
+            //TODO this has to be the failure state
             if(std::find(reachedNodes.begin(), reachedNodes.end(), getErrorState()) != reachedNodes.end()) {
                 // FSM entered the error state.
                 cout << "  Failure observed:" << endl;
@@ -1820,6 +1821,18 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
                 observedAdaptiveTraces.concatenateToFront(*inputTrace, *outputTrace);
                 cout << "  observedAdaptiveTraces after concatenation to front: " << observedAdaptiveTraces << endl;
                 observedTraces.addUnique(observedAdaptiveTraces);
+                for (IOTrace& trace : *observedAdaptiveTraces.getList())
+                {
+                    //TODO this has to be the failure state
+                    if(trace.getTargetNode() == getErrorState()) {
+                        // FSM entered the error state.
+                        cout << "  Failure observed:" << endl;
+                        cout << "    Input Trace: " << *inputTrace << endl;
+                        cout << "    Observed adaptive traces:" << endl;
+                        cout << observedAdaptiveTraces << endl;
+                        return false;
+                    }
+                }
             }
         }
 
