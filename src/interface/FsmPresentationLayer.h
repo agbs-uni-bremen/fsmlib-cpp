@@ -62,6 +62,11 @@ public:
                          const std::string & outputs,
                          const std::string & states);
 
+    void removeState2String(const int index)
+    {
+        state2String.erase(state2String.begin() + index);
+    }
+
 	/**
 	 * Getter for a particular input name
 	 * @param id The id of the input

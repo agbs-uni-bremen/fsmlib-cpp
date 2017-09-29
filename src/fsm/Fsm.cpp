@@ -1595,11 +1595,17 @@ bool Fsm::removeUnreachableNodes(std::vector<shared_ptr<FsmNode>>& unreachableNo
     // Mark all reachable nodes as 'visited'
     accept(v);
     
+    // When removing nodes from the FSM, the node ids of all remaining nodes
+    // have to be adapted, in order to match the index in the list of nodes.
+    int subtractFromId = 0;
     for ( auto n : nodes ) {
         if ( not n->hasBeenVisited() ) {
             unreachableNodes.push_back(n);
+            presentationLayer->removeState2String(n->getId() - subtractFromId);
+            ++subtractFromId;
         }
         else {
+            n->setId(n->getId() - subtractFromId);
             newNodes.push_back(n);
         }
     }
