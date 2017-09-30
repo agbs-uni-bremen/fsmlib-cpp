@@ -443,10 +443,15 @@ void Dfsm::createAtRandom()
     }
 }
 
+std::vector<std::shared_ptr<PkTable> > Dfsm::getPktblLst() const
+{
+    return pktblLst;
+}
+
 shared_ptr<DFSMTable> Dfsm::toDFSMTable() const
 {
     shared_ptr<DFSMTable> tbl
-    = make_shared<DFSMTable>(nodes.size(), maxInput, presentationLayer);
+            = make_shared<DFSMTable>(nodes.size(), maxInput, presentationLayer);
     
     for (unsigned int i = 0; i < nodes.size(); ++ i)
     {
@@ -1227,9 +1232,48 @@ IOListContainer Dfsm::wMethodOnMinimisedDfsm(const unsigned int numAddStates)
 
 IOListContainer Dfsm::wpMethod(const unsigned int numAddStates)
 {
-    Fsm fMin = minimiseObservableFSM();
-    return fMin.wpMethod(numAddStates);
-    
+    Dfsm dfsmMin = minimise();
+    return dfsmMin.wpMethodOnMinimisedDfsm(numAddStates);
+}
+
+IOListContainer Dfsm::wpMethodOnMinimisedDfsm(const unsigned int numAddStates)
+{
+    shared_ptr<Tree> scov = getStateCover();
+
+    shared_ptr<Tree> tcov = getTransitionCover();
+
+    tcov->remove(scov);
+    shared_ptr<Tree> r = tcov;
+
+    IOListContainer w = getCharacterisationSet();
+
+    calcStateIdentificationSetsFast();
+
+    shared_ptr<Tree> Wp1 = scov;
+    if (numAddStates > 0)
+    {
+        IOListContainer inputEnum = IOListContainer(maxInput, 1,
+                                                    (int)numAddStates,
+                                                    presentationLayer);
+
+        Wp1->add(inputEnum);
+    }
+    Wp1->add(w);
+
+    shared_ptr<Tree> Wp2 = r;
+    if (numAddStates > 0)
+    {
+        IOListContainer inputEnum = IOListContainer(maxInput,
+                                                    (int)numAddStates,
+                                                    (int)numAddStates,
+                                                    presentationLayer);
+
+        Wp2->add(inputEnum);
+    }
+    appendStateIdentificationSets(Wp2);
+
+    Wp1->unionTree(Wp2);
+    return Wp1->getIOLists();
 }
 
 IOListContainer Dfsm::hsiMethod(const unsigned int numAddStates)
@@ -1414,24 +1458,15 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
         
         shared_ptr<InputTrace> alpha =
         make_shared<InputTrace>(iolV->at(i),presentationLayer);
-        
-        unordered_set<shared_ptr<FsmNode>> s_iSet = s0->after(*alpha);
-        // Only one element in the set, since FSM is deterministic
-        shared_ptr<FsmNode> s_i = *s_iSet.begin();
-        shared_ptr <TreeNode> tn_i = iTree->getRoot()->after(alpha->cbegin(), alpha->cend());
-        shared_ptr<Tree> tr_i = make_shared<Tree>(tn_i, presentationLayer);
 
         for ( size_t j = i+1; j < iolV->size(); j++ ) {
             
             shared_ptr<InputTrace> beta =
             make_shared<InputTrace>(iolV->at(j),presentationLayer);
-            
-            unordered_set<shared_ptr<FsmNode>> s_jSet = s0->after(*beta);
-            shared_ptr<FsmNode> s_j = *s_jSet.begin();
 
-            shared_ptr <TreeNode> tn_j = iTree->getRoot()->after(beta->cbegin(), beta->cend());
-            shared_ptr<Tree> tr_j = make_shared<Tree>(tn_j, presentationLayer);
-            shared_ptr<Tree> prefixRelationTree = tr_i->getPrefixRelationTree(tr_j);
+            shared_ptr<Tree> alphaTree = iTree->getSubTree(alpha);
+            shared_ptr<Tree> betaTree = iTree->getSubTree(beta);
+            shared_ptr<Tree> prefixRelationTree = alphaTree->getPrefixRelationTree(betaTree);
 
             bool distinguished = appendDistinguishingTraceIfExistsInTree(alpha, beta, iTree, prefixRelationTree);
 
@@ -1441,6 +1476,12 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
 
             if (!distinguished)
             {
+                // Only one element in the set, since FSM is deterministic
+                unordered_set<shared_ptr<FsmNode>> s_iSet = s0->after(*alpha);
+                shared_ptr<FsmNode> s_i = *s_iSet.begin();
+                unordered_set<shared_ptr<FsmNode>> s_jSet = s0->after(*beta);
+                shared_ptr<FsmNode> s_j = *s_jSet.begin();
+
                 InputTrace gamma =
                     s_i->calcDistinguishingTrace(s_j,pktblLst,maxInput);
 
@@ -1489,17 +1530,12 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
                 unordered_set<shared_ptr<FsmNode>>
                     s_omegaSet = s0->after(*iOmega);
                 shared_ptr<FsmNode> s_omega = *s_omegaSet.begin();
-                
+
                 if ( s_alpha_beta == s_omega ) continue;
 
-                shared_ptr <TreeNode> tnAfterAlphaBeta = iTree->getRoot()->after(iAlphaBeta->cbegin(), iAlphaBeta->cend());
-                shared_ptr <TreeNode> tnAfterOmega = iTree->getRoot()->after(iOmega->cbegin(), iOmega->cend());
-
-                shared_ptr<Tree> trAfterAlphaBeta = make_shared<Tree>(tnAfterAlphaBeta, presentationLayer);
-                shared_ptr<Tree> trAfterOmega = make_shared<Tree>(tnAfterOmega, presentationLayer);
-                shared_ptr<Tree> prefixRelationTree = trAfterAlphaBeta->getPrefixRelationTree(trAfterOmega);
-
-                // maybe there is a prefixed Input that already distinguishes
+                shared_ptr<Tree> alphaBetaTree = iTree->getSubTree(iAlphaBeta);
+                shared_ptr<Tree> trAfterOmega = iTree->getSubTree(iOmega);
+                shared_ptr<Tree> prefixRelationTree = alphaBetaTree->getPrefixRelationTree(trAfterOmega);
 
                 bool distinguished = appendDistinguishingTraceIfExistsInTree(iAlphaBeta, iOmega, iTree, prefixRelationTree);
 
@@ -1577,11 +1613,9 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
                     
                     if ( s1 == s2 ) continue;
 
-                    shared_ptr <TreeNode> tnAfterAlphaBeta1 = iTree->getRoot()->after(iAlphaBeta_1->cbegin(), iAlphaBeta_1->cend());
-                    shared_ptr <TreeNode> tnAfterAlphaBeta2 = iTree->getRoot()->after(iAlphaBeta_2->cbegin(), iAlphaBeta_2->cend());
-                    shared_ptr<Tree> trAfterAlphaBeta1 = make_shared<Tree>(tnAfterAlphaBeta1, presentationLayer);
-                    shared_ptr<Tree> trAfterAlphaBeta2 = make_shared<Tree>(tnAfterAlphaBeta2, presentationLayer);
-                    shared_ptr<Tree> prefixIntersectionTree = trAfterAlphaBeta1->getPrefixRelationTree(trAfterAlphaBeta2);
+                    shared_ptr<Tree> afterAlphaBeta1Tree = iTree->getSubTree(iAlphaBeta_1);
+                    shared_ptr<Tree> afterAlphaBeta2Tree = iTree->getSubTree(iAlphaBeta_2);
+                    shared_ptr<Tree> prefixIntersectionTree = afterAlphaBeta1Tree->getPrefixRelationTree(afterAlphaBeta2Tree);
 
                     bool distinguished = appendDistinguishingTraceIfExistsInTree(iAlphaBeta_1, iAlphaBeta_2, iTree, prefixIntersectionTree);
 
@@ -1613,18 +1647,7 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
         
         }
     }
-    
+
     return iTree->getIOLists();
-    
+
 }
-
-
-
-
-
-
-
-
-
-
-

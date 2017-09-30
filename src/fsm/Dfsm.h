@@ -286,6 +286,11 @@ public:
 	IOListContainer wpMethod(const unsigned int numAddStates);
 
     /**
+     * Apply the Wp Method on a DFSM that is already minimised
+     */
+    IOListContainer wpMethodOnMinimisedDfsm(const unsigned int numAddStates);
+
+    /**
      * WORK IN PROGRESS
      * Perform test generation by means of the HSI-Method. The algorithm
      * we have implemented is applicable to both nondeterministic and
@@ -370,5 +375,6 @@ public:
      *  @return true if a distinguishing trace could be found, false otherwise.
      */
     bool calcDistinguishingTraceAfterLeaf(std::shared_ptr<InputTrace> alpha, std::shared_ptr<InputTrace> beta, std::shared_ptr<Tree> iTree, std::shared_ptr<Tree> prefixRelationTree);
+    std::vector<std::shared_ptr<PkTable> > getPktblLst() const;
 };
 #endif //FSM_FSM_DFSM_H_

@@ -41,6 +41,11 @@ public:
 	*/
 	TreeNode();
 
+    /**
+     * Create a copy of this TreeNode and all its children
+     */
+    std::shared_ptr<TreeNode> clone() const;
+
 	/**
 	Set the node to this one parent
 	@param pparent The node which will be the parent of this one

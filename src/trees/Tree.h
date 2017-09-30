@@ -163,5 +163,12 @@ public:
      */
     std::shared_ptr<Tree> getPrefixRelationTree(const std::shared_ptr<Tree> &b);
     
+    /**
+     * create a deep copy of a subtree that is reached by alpha
+     * @param alpha InputTrace that leads to the root of the new subtree
+     * @return Tree subtree with after-alpha as the new root node
+     *         or null if no tree node could be found after applying alpha
+     */
+    std::shared_ptr<Tree> getSubTree(const std::shared_ptr<InputTrace> alpha);
 };
 #endif //FSM_TREES_TREE_H_
