@@ -226,7 +226,7 @@ string OFSMTable::getMembers(const int c) const
 			memSet += ",";
 		}
 		first = false;
-		memSet += to_string(i);
+		memSet += presentationLayer->getStateId(i,"");
 	}
 	memSet += "}";
 	return memSet;
@@ -247,13 +247,29 @@ bool OFSMTable::compareColumns(int x1, int y1, int x2, int y2) {
 
 Fsm OFSMTable::toFsm(const string & name) const
 {
-	string minFsmName = name;
+	string minFsmName = "";
 	vector<shared_ptr<FsmNode>> nodeLst;
+    
+    /* We need a new presentation layer.
+     * Input and output names are the same as for the original FSM,
+     * but states should have new names including the set of
+     *  original nodes that are equivalent.
+     */
+    vector<string> minState2String;
+    for (int i = 0; i <= maxClassId(); ++i) {
+        string newName(minFsmName + getMembers(i));
+        minState2String.push_back(newName);
+    }
+    
+    shared_ptr<FsmPresentationLayer> minPl =
+    make_shared<FsmPresentationLayer>(presentationLayer->getIn2String(),
+                                      presentationLayer->getOut2String(),
+                                      minState2String);
 
 	/*Create the FSM states, one for each class*/
 	for (int i = 0; i <= maxClassId(); ++ i)
 	{
-		shared_ptr<FsmNode> newNode = make_shared<FsmNode>(i, minFsmName + "\n" + getMembers(i), presentationLayer);
+		shared_ptr<FsmNode> newNode = make_shared<FsmNode>(i, minState2String[i], minPl);
 		nodeLst.push_back(newNode);
 	}
 

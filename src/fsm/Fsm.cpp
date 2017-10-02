@@ -1597,6 +1597,9 @@ bool Fsm::removeUnreachableNodes(std::vector<shared_ptr<FsmNode>>& unreachableNo
     
     // When removing nodes from the FSM, the node ids of all remaining nodes
     // have to be adapted, in order to match the index in the list of nodes.
+    // This is necessary, because during minimisation with OFSM tables or
+    // Pk-tables, the algorithms rely on the range of row numbers being
+    // identical to the range of node ids of the reachable nodes.
     int subtractFromId = 0;
     for ( auto n : nodes ) {
         if ( not n->hasBeenVisited() ) {
