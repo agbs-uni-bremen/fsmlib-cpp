@@ -64,7 +64,9 @@ public:
 
     void removeState2String(const int index)
     {
-        state2String.erase(state2String.begin() + index);
+        if ( state2String.size() > index) {
+            state2String.erase(state2String.begin() + index);
+        }
     }
 
 	/**
