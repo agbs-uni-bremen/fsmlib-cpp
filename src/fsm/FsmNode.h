@@ -63,7 +63,8 @@ public:
     
     
     std::vector<std::shared_ptr<FsmTransition> >& getTransitions();
-	int getId() const;
+    int getId() const;
+    void setId(const int id) { this->id = id; }
 	std::string getName() const;
 	bool hasBeenVisited() const;
 	void setVisited();
