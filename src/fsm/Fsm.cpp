@@ -1268,7 +1268,7 @@ ostream & operator<<(ostream & out, const Fsm & fsm)
             continue;
         }
         string nodeName = (fsm.nodes.at(i)->getName().empty()) ? "s" : fsm.nodes.at(i)->getName();
-        out << i << "[label=\"" << nodeName << "(" << i << ")\"];" << endl;
+        out << i << "[label=\"" << nodeName << "(" << fsm.nodes.at(i)->getId() << ")\"];" << endl;
         
         if (i == fsm.initStateIdx)
         {

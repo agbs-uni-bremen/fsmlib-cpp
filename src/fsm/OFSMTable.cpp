@@ -59,7 +59,7 @@ OFSMTable::OFSMTable(const vector<shared_ptr<FsmNode>>& nodes, const int maxInpu
 {
 	for (int n = 0; n < numStates; ++ n)
 	{
-		s2c [n] = 0;//insertion
+		s2c[n] = 0;
 	}
 
 	for (int i = 0; i < numStates; ++ i)
