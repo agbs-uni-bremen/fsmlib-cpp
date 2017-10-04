@@ -1136,7 +1136,6 @@ void Fsm::calcROneDistinguishableStates()
                     q2->getRDistinguishability()->addDistinguishable(1, q1);
 
                     q1->getRDistinguishability()->removeNotDistinguishable(1, q2);
-                    cout << "Found" << endl;
                     break;
                 }
             }
@@ -1153,8 +1152,8 @@ void Fsm::calcROneDistinguishableStates()
                 {
                     continue;
                 }
-                cout << "o(" << nodes.at(i)->getName() << "," << nodes.at(j)->getName() << ") = ";
-                cout << *tree;
+                cout << "σ(" << nodes.at(i)->getName() << "," << nodes.at(j)->getName() << ") = ";
+                cout << *tree << endl;
             } catch (std::out_of_range e) {
                // Do nothing.
             }
@@ -1328,7 +1327,7 @@ IOListContainer Fsm::getRStateCharacterisationSet(shared_ptr<FsmNode> node) cons
 {
     if (node->getRDistinguishability()->hasBeenCalculated())
     {
-        cout << "r-characterisation setes haven't been calculated yet." << endl;
+        cout << "r-characterisation sets haven't been calculated yet." << endl;
         exit(EXIT_FAILURE);
     }
     IOListContainer result = IOListContainer(presentationLayer);
@@ -1341,7 +1340,7 @@ IOListContainer Fsm::getRStateCharacterisationSet(shared_ptr<FsmNode> node) cons
         }
         if (n->getRDistinguishability()->hasBeenCalculated())
         {
-            cout << "r-characterisation setes haven't been calculated yet." << endl;
+            cout << "r-characterisation sets haven't been calculated yet." << endl;
             exit(EXIT_FAILURE);
         }
         shared_ptr<InputOutputTree> sequence = node->getRDistinguishability()->getAdaptiveIOSequence(n);
@@ -1350,22 +1349,22 @@ IOListContainer Fsm::getRStateCharacterisationSet(shared_ptr<FsmNode> node) cons
             IOListContainer container = sequence->getInputLists();
             auto set = container.getIOLists();
 
-            cout << "o(" << node->getName() << "," << n->getName() << "): " << container << "\n";
+            cout << "σ(" << node->getName() << "," << n->getName() << "): " << container << "\n";
             for (auto trace : *set)
             {
                 result.addUniqueRemovePrefixes(Trace(trace, presentationLayer));
             }
         }
     }
-    cout << "result: " << result << endl;
+    cout << "SCS(" << node->getName() << ") = " << result << endl;
     return result;
 }
 
 IOTreeContainer Fsm::getAdaptiveRStateCharacterisationSet(shared_ptr<FsmNode> node) const
 {
-    if (node->getRDistinguishability()->hasBeenCalculated())
+    if (!node->getRDistinguishability()->hasBeenCalculated())
     {
-        cout << "r-characterisation setes haven't been calculated yet." << endl;
+        cout << "r-characterisation sets haven't been calculated yet." << endl;
         exit(EXIT_FAILURE);
     }
     IOTreeContainer result = IOTreeContainer(presentationLayer);
@@ -1378,17 +1377,17 @@ IOTreeContainer Fsm::getAdaptiveRStateCharacterisationSet(shared_ptr<FsmNode> no
         }
         if (n->getRDistinguishability()->hasBeenCalculated())
         {
-            cout << "r-characterisation setes haven't been calculated yet." << endl;
+            cout << "r-characterisation sets haven't been calculated yet." << endl;
             exit(EXIT_FAILURE);
         }
         shared_ptr<InputOutputTree> sequence = node->getRDistinguishability()->getAdaptiveIOSequence(n);
         if (!sequence->isEmpty())
         {
-            cout << "o(" << node->getName() << "," << n->getName() << "): " << *sequence << endl;
+            cout << "σ(" << node->getName() << "," << n->getName() << "): " << *sequence << endl;
             result.addUniqueRemovePrefixes(sequence);
         }
     }
-    cout << "result: " << result << endl;
+    cout << "SCS(" << node->getName() << ") = " << result << endl;
     return result;
 }
 
