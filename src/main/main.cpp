@@ -730,7 +730,7 @@ int main()
     make_shared<FsmPresentationLayer>("../../../resources/adaptive-iutIn.txt",
             + "../../../resources/adaptive-iutOut.txt",
             + "../../../resources/adaptive-iutState.txt");
-    shared_ptr<Fsm> fsm1Iut = make_shared<Fsm>("../../../resources/adaptive-iut.fsm",pl1,"adaptive-iut");
+    shared_ptr<Fsm> fsm1Iut = make_shared<Fsm>("../../../resources/adaptive-iut-fail.fsm",pl1,"adaptive-iut");
     fsm1Iut->toDot("../../../resources/adaptive-iut");
 
     shared_ptr<Fsm> fsm1Product = Fsm::createProductMachine(fsm1, fsm1Iut, "");
@@ -738,8 +738,6 @@ int main()
 
     Fsm fsm1ProductMin = fsm1Product->minimise();
     fsm1ProductMin.toDot("../../../resources/adaptive-product-min");
-
-    return 0;
 
     shared_ptr<FsmPresentationLayer> pl2 =
     make_shared<FsmPresentationLayer>("../../../resources/adaptive2In.txt",
@@ -824,9 +822,11 @@ int main()
 
         fsm1->getPossibleIOTraces(fsm1->getInitialState(), rAdaptiveCharacterisationSet.getList()->at(0));
 
-        Fsm fsm1Complete = fsm1->makeComplete(ErrorState);
-        IOTraceContainer observedTraces(pl1);
-        fsm1Complete.adaptiveStateCounting(4, observedTraces);
+        Fsm fsm1ProductComplete = fsm1ProductMin.makeComplete(ErrorState);
+        fsm1ProductComplete.calcRDistinguishableStates();
+        fsm1ProductComplete.toDot("../../../resources/adaptive-product-min-complete");
+        IOTraceContainer observedTraces(fsm1ProductComplete.getPresentationLayer());
+        fsm1ProductComplete.adaptiveStateCounting(4, observedTraces);
 
     //x = 2;
     }
