@@ -1314,15 +1314,15 @@ void Fsm::calcRDistinguishableStates()
     }
     for (auto node : nodes)
     {
+        node->getRDistinguishability()->hasBeenCalculated(true);
+    }
+    for (auto node : nodes)
+    {
         if (node->getRDistinguishability()->isNotRDistinguishable())
         {
             minimal = False;
             return;
         }
-    }
-    for (auto node : nodes)
-    {
-        node->getRDistinguishability()->hasBeenCalculated(true);
     }
     minimal = True;
     return;
@@ -1330,7 +1330,7 @@ void Fsm::calcRDistinguishableStates()
 
 IOListContainer Fsm::getRStateCharacterisationSet(shared_ptr<FsmNode> node) const
 {
-    if (node->getRDistinguishability()->hasBeenCalculated())
+    if (!node->getRDistinguishability()->hasBeenCalculated())
     {
         cout << "r-characterisation sets haven't been calculated yet." << endl;
         exit(EXIT_FAILURE);
@@ -1343,7 +1343,7 @@ IOListContainer Fsm::getRStateCharacterisationSet(shared_ptr<FsmNode> node) cons
         {
             continue;
         }
-        if (n->getRDistinguishability()->hasBeenCalculated())
+        if (!n->getRDistinguishability()->hasBeenCalculated())
         {
             cout << "r-characterisation sets haven't been calculated yet." << endl;
             exit(EXIT_FAILURE);
@@ -1380,7 +1380,7 @@ IOTreeContainer Fsm::getAdaptiveRStateCharacterisationSet(shared_ptr<FsmNode> no
         {
             continue;
         }
-        if (n->getRDistinguishability()->hasBeenCalculated())
+        if (!n->getRDistinguishability()->hasBeenCalculated())
         {
             cout << "r-characterisation sets haven't been calculated yet." << endl;
             exit(EXIT_FAILURE);
