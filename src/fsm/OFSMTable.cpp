@@ -262,7 +262,7 @@ Fsm OFSMTable::toFsm(const string & name) const
 	{
 		/*The node id of the new FsmState corresponds to the
 		class id we are currently processing.*/
-		int classId = srcNode->getId();
+        int classId = s2c.at(srcNode->getId());
 
 		/*Find the first OFSMTableRow where the associated original FsmState
 		belongs to class classId. Since other rows associated with
@@ -293,8 +293,8 @@ Fsm OFSMTable::toFsm(const string & name) const
 					/*Find the new FsmNode in the minimised FSM
 					which has tgtClassId as node id*/
 					for (shared_ptr<FsmNode> tgtNode : nodeLst)
-					{
-						if (tgtNode->getId() == tgtClassId)
+                    {
+                        if (s2c.at(tgtNode->getId()) == tgtClassId)
 						{
 							/*Create the transition with label x/y
 							and target node tgtNode*/
