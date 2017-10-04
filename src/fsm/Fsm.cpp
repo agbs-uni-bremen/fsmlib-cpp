@@ -958,6 +958,11 @@ shared_ptr<FsmNode> Fsm::getErrorState()
     return errorState;
 }
 
+shared_ptr<FsmNode> Fsm::getFailState()
+{
+    return failState;
+}
+
 bool Fsm::isCharSet(const shared_ptr<Tree> w) const
 {
     for (unsigned int i = 0; i < nodes.size(); ++ i)
@@ -1796,8 +1801,7 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
             cout << endl;
             observedOutputsTCElements.insert(make_pair(inputTrace, producedOutputs));
 
-            //TODO this has to be the failure state
-            if(std::find(reachedNodes.begin(), reachedNodes.end(), getErrorState()) != reachedNodes.end()) {
+            if(std::find(reachedNodes.begin(), reachedNodes.end(), getFailState()) != reachedNodes.end()) {
                 // FSM entered the error state.
                 cout << "  Failure observed:" << endl;
                 cout << "    Input Trace: " << *inputTrace << endl;
@@ -1849,8 +1853,7 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
                 observedTraces.addUnique(observedAdaptiveTraces);
                 for (IOTrace& trace : *observedAdaptiveTraces.getList())
                 {
-                    //TODO this has to be the failure state
-                    if(trace.getTargetNode() == getErrorState()) {
+                    if(trace.getTargetNode() == getFailState()) {
                         // FSM entered the error state.
                         cout << "  Failure observed:" << endl;
                         cout << "    Input Trace: " << *inputTrace << endl;
@@ -2750,6 +2753,7 @@ shared_ptr<Fsm> Fsm::createProductMachine(shared_ptr<Fsm> reference, shared_ptr<
     nodes.push_back(failState);
     pl->setState2String(state2String);
     shared_ptr<Fsm> result = make_shared<Fsm>(fsmName, maxInput, maxOutput, nodes, initStateIdx, pl);
+    result->failState = failState;
     return result;
 }
 

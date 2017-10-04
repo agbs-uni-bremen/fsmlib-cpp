@@ -87,6 +87,7 @@ protected:
     int initStateIdx;
     
     std::shared_ptr<FsmNode> errorState;
+    std::shared_ptr<FsmNode> failState;
     std::shared_ptr<Tree> characterisationSet;
     Minimal minimal;
     bool complete;
@@ -377,6 +378,7 @@ public:
      * @return The error state
      */
     std::shared_ptr<FsmNode> getErrorState();
+    std::shared_ptr<FsmNode> getFailState();
 
     bool isCharSet(const std::shared_ptr<Tree> w) const;
     void minimiseCharSet(const std::shared_ptr<Tree> w);
