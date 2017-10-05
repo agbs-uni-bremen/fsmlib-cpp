@@ -719,6 +719,17 @@ int main()
 {
 	std::cout << "Dir " << getcwd() << endl;
 
+    shared_ptr<FsmPresentationLayer> plBug =
+            make_shared<FsmPresentationLayer>("../../../resources/adaptivebug-in.txt",
+                                              + "../../../resources/adaptive-bug-out.txt",
+                                              + "../../../resources/adaptive-bug-states.txt");
+    shared_ptr<Fsm> fsm1Bug = make_shared<Fsm>("../../../resources/adaptive-product.fsm", plBug ,"adaptive-bug");
+    fsm1Bug->toDot("../../../resources/adaptive-bug");
+    Fsm fsm1BugMin = fsm1Bug->minimise();
+    fsm1BugMin.toDot("../../../resources/adaptive-bug-min");
+
+    return 0;
+
     shared_ptr<FsmPresentationLayer> pl1 =
     make_shared<FsmPresentationLayer>("../../../resources/adaptiveIn.txt",
             + "../../../resources/adaptiveOut.txt",
@@ -735,6 +746,10 @@ int main()
 
     shared_ptr<Fsm> fsm1Product = Fsm::createProductMachine(fsm1, fsm1Iut, "");
     fsm1Product->toDot("../../../resources/adaptive-product");
+
+    ofstream outFile("adaptive-product.fsm");
+    fsm1Product->dumpFsm(outFile);
+    outFile.close();
 
     Fsm fsm1ProductMin = fsm1Product->minimise();
     fsm1ProductMin.toDot("../../../resources/adaptive-product-min");
