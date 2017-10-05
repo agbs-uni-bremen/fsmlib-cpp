@@ -17,7 +17,7 @@
 #include "trees/TreeNode.h"
 #include "cloneable/ICloneable.h"
 
-class Tree: public ICloneable
+class Tree: public ICloneable, public std::enable_shared_from_this<Tree>
 {
 protected:
     Tree(const Tree* other);
@@ -51,6 +51,11 @@ protected:
 	@param idNode The id of this node, used to differenciate node in dot format
 	*/
 	void printChildren(std::ostream & out, const std::shared_ptr<TreeNode> top, const std::shared_ptr<int> idNode) const;
+
+    /**
+     *  @return true if one of the input traces is prefix of the other one, false otherwise.
+     */
+    bool inPrefixRelation(std::vector<int> aPath, std::vector<int> bPath);
 public:
 	/**
 	Create a new tree, with a root and a presenation layer
@@ -72,8 +77,26 @@ public:
 	*/
 	std::shared_ptr<TreeNode> getRoot() const;
 
-	//TODO
+	/**
+     * Get vector of all I/O lists in the tree.
+     * Each list is represented as a vector.
+     * Lists which are prefixes of other lists are NOT
+     * represented as separate vectors.
+     *
+     * @return vector of I/O lists, each list again represented
+     *         as a vector.
+     */
 	IOListContainer getIOLists();
+    
+    /**
+     * Get vector of all I/O lists in the tree, including all prefixes.
+     * For example, the returned container also contains the empty list.
+     * Each list is represented as a vector. 
+     *
+     * @return vector of I/O lists, each list again represented
+     *         as a vector.
+     */
+    IOListContainer getIOListsWithPrefixes();
 
 	/**
 	Special remove operation.
@@ -139,6 +162,28 @@ public:
 
     virtual Tree* _clone() const;
     std::shared_ptr<Tree> Clone() const;
+
+    /**
+     *  Construct a pseudo-intersection tree of this Tree and b.
+     *
+     *  Appending one of the pathes of the resulting tree to the roots of both
+     *  trees does not result in more breadth (more test cases).
+     *  Therefore it is useful to search in the resulting for distinguishing
+     *  traces for the two root nodes.
+     *
+     *  @param b For every path of one of the two trees (this and b) that is
+     *           a prefix of a path of the other tree we add the longer path to
+     *           the resulting tree.
+     *  @return Tree
+     */
+    std::shared_ptr<Tree> getPrefixRelationTree(const std::shared_ptr<Tree> &b);
     
+    /**
+     * create a deep copy of a subtree that is reached by alpha
+     * @param alpha InputTrace that leads to the root of the new subtree
+     * @return Tree subtree with after-alpha as the new root node
+     *         or null if no tree node could be found after applying alpha
+     */
+    std::shared_ptr<Tree> getSubTree(const std::shared_ptr<InputTrace> alpha);
 };
 #endif //FSM_TREES_TREE_H_

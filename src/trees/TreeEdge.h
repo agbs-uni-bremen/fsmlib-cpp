@@ -33,6 +33,10 @@ public:
 	*/
 	TreeEdge(const int io, const std::shared_ptr<TreeNode> target);
 
+    /**
+     * Create and return a copy of this Edge
+     */
+    std::shared_ptr<TreeEdge> clone();
 	/**
 	Getter for the input or ouput
 	@return The input or output of this tree edge

@@ -2438,7 +2438,7 @@ IOListContainer Fsm::hsiMethod(const unsigned int numAddStates)
         hwiTrees.push_back(emptyTree);
     }
 
-    /* Ceate harmonised state identification set for every FSM state.
+    /* Create harmonised state identification set for every FSM state.
      * For each pair of nodes i and j get one element
      * of the characterisation set that distinguishes the two nodes.
      * Add the distinguishing sequence to both HWi and HWj.
@@ -2563,7 +2563,7 @@ ostream & operator<<(ostream & out, const Fsm & fsm)
             continue;
         }
         string nodeName = (fsm.nodes.at(i)->getName().empty()) ? "s" : fsm.nodes.at(i)->getName();
-        out << i << "[label=\"" << nodeName << "(" << i << ")\"];" << endl;
+        out << i << "[label=\"" << nodeName << "(" << fsm.nodes.at(i)->getId() << ")\"];" << endl;
         
         if (i == fsm.initStateIdx)
         {
@@ -2982,6 +2982,9 @@ bool Fsm::removeUnreachableNodes(std::vector<shared_ptr<FsmNode>>& unreachableNo
     
     // When removing nodes from the FSM, the node ids of all remaining nodes
     // have to be adapted, in order to match the index in the list of nodes.
+    // This is necessary, because during minimisation with OFSM tables or
+    // Pk-tables, the algorithms rely on the range of row numbers being
+    // identical to the range of node ids of the reachable nodes.
     int subtractFromId = 0;
     for ( auto n : nodes ) {
         if ( not n->hasBeenVisited() ) {

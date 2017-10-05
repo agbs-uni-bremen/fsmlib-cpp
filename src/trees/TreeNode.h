@@ -35,11 +35,18 @@ protected:
 
 	//TODO
 	void add(std::vector<int>::const_iterator lstIte, const std::vector<int>::const_iterator end);
+    
+    
 public:
 	/**
 	Create a new tree node
 	*/
 	TreeNode();
+
+    /**
+     * Create a copy of this TreeNode and all its children
+     */
+    std::shared_ptr<TreeNode> clone() const;
 
 	/**
 	Set the node to this one parent
@@ -190,6 +197,18 @@ public:
     
     virtual TreeNode* _clone() const;
     std::shared_ptr<TreeNode> Clone() const;
+
+    /**
+     * Perform in-order traversal and add resulting I/O-lists into
+     * vector of I/O-lists.
+     *
+     * @param v current I/O-list, represented as vector
+     * @param ioll vector of I/O-lists
+     *
+     */
+    void traverse(std::vector<int>& v,
+                  std::shared_ptr<std::vector<std::vector<int>>> ioll);
+    
     
 };
 #endif //FSM_TREES_TREENODE_H_

@@ -204,7 +204,7 @@ string PkTable::getMembers(const int c) const
 			memSet += ",";
 		}
 		first = false;
-        memSet += presentationLayer->getStateId(i,""); // to_string(i);
+        memSet += presentationLayer->getStateId(i,"");
 	}
 	memSet += "}";
 	return memSet;

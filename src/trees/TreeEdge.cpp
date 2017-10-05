@@ -19,7 +19,13 @@ TreeEdge::TreeEdge(const TreeEdge* other)
         target = other->target->Clone();
     }
     io = other->io;
+}
 
+std::shared_ptr<TreeEdge> TreeEdge::clone()
+{
+    auto targetClone = target->clone();
+    std::shared_ptr<TreeEdge> clone = std::make_shared<TreeEdge>(io, targetClone);
+    return clone;
 }
 
 int TreeEdge::getIO() const
