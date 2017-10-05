@@ -257,7 +257,7 @@ Fsm OFSMTable::toFsm(const string & name) const
      */
     vector<string> minState2String;
     for (int i = 0; i <= maxClassId(); ++i) {
-        string newName(minFsmName + "\n" + getMembers(i));
+        string newName(minFsmName + " " + getMembers(i));
         minState2String.push_back(newName);
     }
     
