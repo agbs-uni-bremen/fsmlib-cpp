@@ -76,7 +76,10 @@ public:
 
     void removeState2String(const int index)
     {
-        state2String.erase(state2String.begin() + index);
+        if (index >= 0 && state2String.size() > static_cast<size_t>(index))
+        {
+            state2String.erase(state2String.begin() + index);
+        }
     }
 
     int addOut2String(std::string name)
