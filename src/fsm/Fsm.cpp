@@ -875,6 +875,27 @@ Fsm Fsm::minimiseObservableFSM()
     /*Create the minimised FSM from tbl and return it*/
     Fsm fsm = tbl->toFsm(name + "_MIN");
     fsm.minimal = True;
+
+    if (failState || errorState)
+    {
+        for (shared_ptr<FsmNode> node : fsm.nodes)
+        {
+            if (!fsm.failState && failState && tbl->getS2C().at(node->getId()) == tbl->getS2C().at(failState->getId()))
+            {
+                cout << "  Setting failState:" << node->getName() << "(" << node->getId() << ", " << node << ")" << endl;
+                fsm.failState = node;
+            }
+            if (!fsm.errorState && errorState && tbl->getS2C().at(node->getId()) == tbl->getS2C().at(errorState->getId()))
+            {
+                cout << "  Setting errorState:" << node->getName() << endl;
+                fsm.errorState = node;
+            }
+            if ((!failState || fsm.failState) && (!errorState || fsm.errorState))
+            {
+                break;
+            }
+        }
+    }
     return fsm;
 }
 
@@ -897,10 +918,15 @@ Fsm Fsm::makeComplete(CompleteMode mode)
     cout << "makeComplete():" << endl;
     vector<shared_ptr<FsmNode>> newNodes = nodes;
     bool addErrorState = false;
-    shared_ptr<FsmNode> errorNode;
+    bool newErrorState = false;
+    shared_ptr<FsmNode> errorNode = errorState;
     if (mode == ErrorState)
     {
-        errorNode = make_shared<FsmNode>(getMaxNodes() + 1, "Error", presentationLayer);
+        if (!errorNode)
+        {
+            errorNode = make_shared<FsmNode>(getMaxNodes() + 1, "Error", presentationLayer);
+            newErrorState = true;
+        }
         presentationLayer->addState2String("Error");
         for (int x = 0; x <= maxInput; ++x)
         {
@@ -909,7 +935,7 @@ Fsm Fsm::makeComplete(CompleteMode mode)
             errorNode->addTransition(transition);
         }
     }
-    for (shared_ptr<FsmNode> node : nodes)
+    for (shared_ptr<FsmNode> node : newNodes)
     {
         cout << "  State " << node->getName() << ": " << endl;
         for (int x = 0; x <= maxInput; ++x)
@@ -938,18 +964,17 @@ Fsm Fsm::makeComplete(CompleteMode mode)
             }
         }
     }
-    if (mode == ErrorState && addErrorState)
+    if (mode == ErrorState && newErrorState && addErrorState)
     {
-        nodes.push_back(errorNode);
-        errorState = errorNode;
-    }
-    else if (mode == ErrorState && !addErrorState)
-    {
-        // Adding solitary error state without any incoming transition from another state.
-        errorState = errorNode;
+        newNodes.push_back(errorNode);
     }
     Fsm fsmComplete(name + "_COMPLETE", maxInput, maxOutput, newNodes, presentationLayer);
     fsmComplete.complete = true;
+    if (mode == ErrorState)
+    {
+        fsmComplete.errorState = errorNode;
+    }
+    fsmComplete.failState = failState;
     return fsmComplete;
 }
 
@@ -1726,6 +1751,8 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
         exit(EXIT_FAILURE);
     }
 
+    const shared_ptr<FsmNode> failState = getFailState();
+
     /**
      * Adaptive test cases for this FSM (Ω).
      */
@@ -1799,9 +1826,19 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
                 }
             }
             cout << endl;
+            cout << "    reachedNodes:\n      ";
+            for (size_t i = 0; i < reachedNodes.size(); ++i)
+            {
+                cout << reachedNodes.at(i)->getName();
+                if (i != reachedNodes.size() - 1)
+                {
+                    cout << ", ";
+                }
+            }
+            cout << endl;
             observedOutputsTCElements.insert(make_pair(inputTrace, producedOutputs));
 
-            if(std::find(reachedNodes.begin(), reachedNodes.end(), getFailState()) != reachedNodes.end()) {
+            if(failState && std::find(reachedNodes.begin(), reachedNodes.end(), failState) != reachedNodes.end()) {
                 // FSM entered the error state.
                 cout << "  Failure observed:" << endl;
                 cout << "    Input Trace: " << *inputTrace << endl;
@@ -1853,7 +1890,7 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
                 observedTraces.addUnique(observedAdaptiveTraces);
                 for (IOTrace& trace : *observedAdaptiveTraces.getList())
                 {
-                    if(trace.getTargetNode() == getFailState()) {
+                    if(failState && trace.getTargetNode() == failState) {
                         // FSM entered the error state.
                         cout << "  Failure observed:" << endl;
                         cout << "    Input Trace: " << *inputTrace << endl;
