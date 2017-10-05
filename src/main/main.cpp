@@ -826,7 +826,7 @@ int main()
         fsm1ProductComplete.calcRDistinguishableStates();
         fsm1ProductComplete.toDot("../../../resources/adaptive-product-min-complete");
         IOTraceContainer observedTraces(fsm1ProductComplete.getPresentationLayer());
-        fsm1ProductComplete.adaptiveStateCounting(4, observedTraces);
+        fsm1ProductComplete.adaptiveStateCounting(7, observedTraces);
 
     //x = 2;
     }
