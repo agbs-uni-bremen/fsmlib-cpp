@@ -719,6 +719,7 @@ int main()
 {
 	std::cout << "Dir " << getcwd() << endl;
 
+    /*
     shared_ptr<FsmPresentationLayer> plBug =
             make_shared<FsmPresentationLayer>("../../../resources/adaptivebug-in.txt",
                                               + "../../../resources/adaptive-bug-out.txt",
@@ -728,7 +729,8 @@ int main()
     Fsm fsm1BugMin = fsm1Bug->minimise();
     fsm1BugMin.toDot("../../../resources/adaptive-bug-min");
 
-    return 0;
+    //return 0;
+    */
 
     shared_ptr<FsmPresentationLayer> pl1 =
     make_shared<FsmPresentationLayer>("../../../resources/adaptiveIn.txt",
