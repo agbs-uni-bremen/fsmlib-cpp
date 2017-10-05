@@ -880,12 +880,12 @@ Fsm Fsm::minimiseObservableFSM()
     {
         for (shared_ptr<FsmNode> node : fsm.nodes)
         {
-            if (!fsm.failState && failState && tbl->getS2C().at(node->getId()) == tbl->getS2C().at(failState->getId()))
+            if (!fsm.failState && failState && node->getId() == tbl->getS2C().at(failState->getId()))
             {
                 cout << "  Setting failState:" << node->getName() << "(" << node->getId() << ", " << node << ")" << endl;
                 fsm.failState = node;
             }
-            if (!fsm.errorState && errorState && tbl->getS2C().at(node->getId()) == tbl->getS2C().at(errorState->getId()))
+            if (!fsm.errorState && errorState && node->getId() == tbl->getS2C().at(errorState->getId()))
             {
                 cout << "  Setting errorState:" << node->getName() << endl;
                 fsm.errorState = node;
