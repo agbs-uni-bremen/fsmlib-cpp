@@ -247,7 +247,7 @@ bool OFSMTable::compareColumns(int x1, int y1, int x2, int y2) {
 
 Fsm OFSMTable::toFsm(const string & name) const
 {
-	string minFsmName = "";
+	string minFsmName = name;
 	vector<shared_ptr<FsmNode>> nodeLst;
     
     /* We need a new presentation layer.
@@ -257,7 +257,7 @@ Fsm OFSMTable::toFsm(const string & name) const
      */
     vector<string> minState2String;
     for (int i = 0; i <= maxClassId(); ++i) {
-        string newName(minFsmName + getMembers(i));
+        string newName(minFsmName + "\n" + getMembers(i));
         minState2String.push_back(newName);
     }
     
@@ -266,57 +266,74 @@ Fsm OFSMTable::toFsm(const string & name) const
                                       presentationLayer->getOut2String(),
                                       minState2String);
 
-	/*Create the FSM states, one for each class*/
+	/* Create the FSM states, one for each class.
+     * The ids of the new states are the class ids.
+     * For external names of the new states, we use their
+     * sets of equivalent states, as stored in minState2String
+     */
 	for (int i = 0; i <= maxClassId(); ++ i)
 	{
-		shared_ptr<FsmNode> newNode = make_shared<FsmNode>(i, minState2String[i], minPl);
+		shared_ptr<FsmNode> newNode =
+            make_shared<FsmNode>(i, minState2String[i], minPl);
 		nodeLst.push_back(newNode);
 	}
 
-	/*For each FSM state, add outgoing transitions*/
+	/* For each FSM state, add outgoing transitions */
 	for (shared_ptr<FsmNode> srcNode : nodeLst)
 	{
-		/*The node id of the new FsmState corresponds to the
-		class id we are currently processing.*/
-        int classId = s2c.at(srcNode->getId());
+		/*
+         * By construction in the previous for-loop,
+         * the node id of the new FsmState equals the
+         * class id the state belongs to.
+         */
+        int classId = srcNode->getId();
 
-		/*Find the first OFSMTableRow where the associated original FsmState
-		belongs to class classId. Since other rows associated with
-		the same class have equivalent post-states, we only need to
-		find one representative row.*/
+		/* Find the first OFSMTableRow where the associated original
+         * FsmState belongs to class classId.
+         * Since other rows associated with the same class have
+         * equivalent post-states, we only need to
+		 * find one representative row.
+         */
 		shared_ptr<OFSMTableRow> row = nullptr;
-		for (int i = 0; i < numStates && row == nullptr; ++ i)
+		for (int i = 0; i < numStates && row == nullptr; i++)
 		{
 			if (classId == s2c.at(i))
 			{
-				row = rows [i];
+				row = rows[i];
 			}
 		}
 
-		/*Process all outgoing transitions of the original
-		FsmNode represented by row.They also become transitions
-		of the new srcNode in the minimised FSM*/
-		for (int x = 0; x <= maxInput; ++ x)
+		/*
+         * Process all outgoing transitions of the original
+		 * FsmNode represented by row.They also become transitions
+		 * of the new srcNode in the minimised FSM
+         */
+		for (int x = 0; x <= maxInput; x++)
 		{
-			for (int y = 0; y <= maxOutput; ++ y)
+			for (int y = 0; y <= maxOutput; y++)
 			{
 				int tgtStateId = row->get(x, y);
 				if (tgtStateId >= 0)
 				{
-					/*get the class id of the target node in the original FSM*/
+					/* Get the class id of the target node in the original FSM */
 					int tgtClassId = s2c.at(tgtStateId);
 
-					/*Find the new FsmNode in the minimised FSM
-					which has tgtClassId as node id*/
+					/* Find the new FsmNode in the minimised FSM
+                     * which has tgtClassId as node id
+                     */
 					for (shared_ptr<FsmNode> tgtNode : nodeLst)
                     {
-                        if (s2c.at(tgtNode->getId()) == tgtClassId)
+                        /* Remember: all nodes in nodeLst have an id
+                         * which equals their class id.
+                         */
+                        if (tgtNode->getId() == tgtClassId)
 						{
-							/*Create the transition with label x/y
-							and target node tgtNode*/
+							/* Create the transition with label x/y
+                             * and target node tgtNode
+                             */
 							shared_ptr<FsmTransition> tr = make_shared<FsmTransition>(srcNode,
                                                                                       tgtNode,
-                                                                                      make_shared<FsmLabel>(x, y, presentationLayer));
+                                                                                      make_shared<FsmLabel>(x, y, minPl));
 							srcNode->addTransition(tr);
 							break;
 						}
@@ -325,7 +342,7 @@ Fsm OFSMTable::toFsm(const string & name) const
 			}
 		}
 	}
-	return Fsm(minFsmName, maxInput, maxOutput, nodeLst, presentationLayer);
+	return Fsm(minFsmName, maxInput, maxOutput, nodeLst, minPl);
 }
 
 ostream & operator<<(ostream & out, const OFSMTable & ofsmTable)
