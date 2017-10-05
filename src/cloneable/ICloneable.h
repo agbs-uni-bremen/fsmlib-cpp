@@ -5,7 +5,7 @@
 
 struct ICloneable {
 private:
-    virtual ICloneable* clone() const = 0;
+    virtual ICloneable* _clone() const = 0;
 public:
     std::shared_ptr<ICloneable> Clone() const;
     virtual ~ICloneable();

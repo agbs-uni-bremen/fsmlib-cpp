@@ -68,14 +68,14 @@ IOListContainer InputOutputTree::getOutputLists()
     return IOListContainer(ioll, presentationLayer);
 }
 
-InputOutputTree* InputOutputTree::clone() const
+InputOutputTree* InputOutputTree::_clone() const
 {
     return new InputOutputTree( this );
 }
 
 std::shared_ptr<InputOutputTree> InputOutputTree::Clone() const
 {
-    return std::shared_ptr<InputOutputTree>(clone());
+    return std::shared_ptr<InputOutputTree>(_clone());
 }
 
 ostream & operator<<(ostream & out, InputOutputTree & ot)

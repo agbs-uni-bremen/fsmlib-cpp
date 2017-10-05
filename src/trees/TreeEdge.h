@@ -45,7 +45,7 @@ public:
 	*/
 	std::shared_ptr<TreeNode> getTarget() const;
 
-    virtual TreeEdge* clone() const;
+    virtual TreeEdge* _clone() const;
     std::shared_ptr<TreeEdge> Clone() const;
 
     friend bool operator==(TreeEdge const & edge1, TreeEdge const & edge2);

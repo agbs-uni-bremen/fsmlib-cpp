@@ -113,14 +113,14 @@ void OutputTree::toIOTrace(vector<IOTrace> &iotrVec) {
     
 }
 
-OutputTree* OutputTree::clone() const
+OutputTree* OutputTree::_clone() const
 {
     return new OutputTree( this );
 }
 
 std::shared_ptr<OutputTree> OutputTree::Clone() const
 {
-    return std::shared_ptr<OutputTree>(clone());
+    return std::shared_ptr<OutputTree>(_clone());
 }
 
 ostream & operator<<(ostream & out, OutputTree & ot)

@@ -166,12 +166,12 @@ size_t Tree::size() {
     return theSize;
 }
 
-Tree* Tree::clone() const
+Tree* Tree::_clone() const
 {
     return new Tree( this );
 }
 
 std::shared_ptr<Tree> Tree::Clone() const
 {
-    return std::shared_ptr<Tree>(clone());
+    return std::shared_ptr<Tree>(_clone());
 }

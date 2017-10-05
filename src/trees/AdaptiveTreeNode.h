@@ -19,7 +19,7 @@ public:
 
     bool superTreeOf(const std::shared_ptr<AdaptiveTreeNode> otherNode) const;
 
-    virtual AdaptiveTreeNode* clone() const;
+    virtual AdaptiveTreeNode* _clone() const;
     std::shared_ptr<AdaptiveTreeNode> Clone() const;
 
     friend bool operator==(AdaptiveTreeNode const & node1, AdaptiveTreeNode const & node2);

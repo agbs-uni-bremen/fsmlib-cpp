@@ -137,7 +137,7 @@ public:
     /** Return number of nodes in the tree */
     size_t size();
 
-    virtual Tree* clone() const;
+    virtual Tree* _clone() const;
     std::shared_ptr<Tree> Clone() const;
     
 };

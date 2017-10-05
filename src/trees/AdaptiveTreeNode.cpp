@@ -64,14 +64,14 @@ bool AdaptiveTreeNode::superTreeOf(const std::shared_ptr<AdaptiveTreeNode> other
     return input == otherNode->getInput() && TreeNode::superTreeOf(otherNode);
 }
 
-AdaptiveTreeNode* AdaptiveTreeNode::clone() const
+AdaptiveTreeNode* AdaptiveTreeNode::_clone() const
 {
     return new AdaptiveTreeNode( this );
 }
 
 std::shared_ptr<AdaptiveTreeNode> AdaptiveTreeNode::Clone() const
 {
-    std::shared_ptr<AdaptiveTreeNode> copy = std::shared_ptr<AdaptiveTreeNode>(clone());
+    std::shared_ptr<AdaptiveTreeNode> copy = std::shared_ptr<AdaptiveTreeNode>(_clone());
     for (auto child: *(copy->children))
     {
         child->getTarget()->setParent(copy);

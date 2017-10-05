@@ -369,14 +369,14 @@ void TreeNode::calcSize(size_t& theSize) {
     
 }
 
-TreeNode* TreeNode::clone() const
+TreeNode* TreeNode::_clone() const
 {
     return new TreeNode( this );
 }
 
 std::shared_ptr<TreeNode> TreeNode::Clone() const
 {
-    std::shared_ptr<TreeNode> copy = std::shared_ptr<TreeNode>(clone());
+    std::shared_ptr<TreeNode> copy = std::shared_ptr<TreeNode>(_clone());
     for (auto child: *(copy->children))
     {
         child->getTarget()->setParent(copy);

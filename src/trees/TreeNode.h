@@ -188,7 +188,7 @@ public:
     
     void calcSize(size_t& theSize);
     
-    virtual TreeNode* clone() const;
+    virtual TreeNode* _clone() const;
     std::shared_ptr<TreeNode> Clone() const;
     
 };

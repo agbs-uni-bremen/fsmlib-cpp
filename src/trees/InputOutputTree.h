@@ -16,7 +16,7 @@ public:
     bool isEmpty() const;
     bool contains(const InputOutputTree& other) const;
 
-    virtual InputOutputTree* clone() const;
+    virtual InputOutputTree* _clone() const;
 
     IOListContainer getInputLists();
     IOListContainer getOutputLists();    

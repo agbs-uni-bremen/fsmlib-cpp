@@ -32,14 +32,14 @@ std::shared_ptr<TreeNode> TreeEdge::getTarget() const
 	return target;
 }
 
-TreeEdge* TreeEdge::clone() const
+TreeEdge* TreeEdge::_clone() const
 {
     return new TreeEdge( this );
 }
 
 std::shared_ptr<TreeEdge> TreeEdge::Clone() const
 {
-    return std::shared_ptr<TreeEdge>(clone());
+    return std::shared_ptr<TreeEdge>(_clone());
 }
 
 bool operator==(TreeEdge const & edge1, TreeEdge const & edge2)
