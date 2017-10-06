@@ -9,6 +9,10 @@ PROJECT (fsm)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DENABLE_DEBUG_MACRO")
 
 #####################################################################
+# Adding flag, in order to auto configure the Easylogging++ logger
+add_definitions(-DAUTO_INITIALIZE_EASYLOGGINGPP)
+
+#####################################################################
 #enable warning for MSVC and gcc
 
 if (MSVC)

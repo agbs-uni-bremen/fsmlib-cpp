@@ -22,7 +22,7 @@
 #include <trees/OutputTree.h>
 #include <trees/TestSuite.h>
 #include "json/json.h"
-#include "easylogging++.h"
+#include "logging/easylogging++.h"
 
 #include <unistd.h>
 #include <errno.h>
@@ -32,8 +32,6 @@
 
 using namespace std;
 using namespace Json;
-
-INITIALIZE_EASYLOGGINGPP
 
 void assertInconclusive(string tc, string comment = "") {
     

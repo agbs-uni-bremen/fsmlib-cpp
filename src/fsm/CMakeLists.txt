@@ -46,3 +46,4 @@ set (FSM_FSM_SOURCES
 )
 
 add_library (fsm-fsm ${FSM_FSM_SOURCES})
+target_link_libraries (fsm-fsm easyloggingpp)
