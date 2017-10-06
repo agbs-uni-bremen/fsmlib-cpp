@@ -199,19 +199,19 @@ vector<OutputTrace> IOTraceContainer::getOutputTraces() const
 
 std::ostream & operator<<(std::ostream & out, const IOTraceContainer & iot)
 {
-    out << "{ ";
+    out << "{\n";
 
     bool isFirst = true;
     for (IOTrace& trace : *iot.list)
     {
         if (!isFirst)
         {
-            out << "," << std::endl << "  ";
+            out << ",\n";
         }
 
-        out << trace;
+        out << "  " << trace;
         isFirst = false;
     }
-    out << " }";
+    out << "\n}";
     return out;
 }

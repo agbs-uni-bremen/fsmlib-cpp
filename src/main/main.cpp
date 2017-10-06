@@ -736,10 +736,7 @@ int main()
     fsm1Bug->toDot("../../../resources/adaptive-bug");
     Fsm fsm1BugMin = fsm1Bug->minimise();
     fsm1BugMin.toDot("../../../resources/adaptive-bug-min");
-    cout << "Ready." << endl;
-
-    //return 0;
-
+    LOG(INFO) << "Ready.";
 
     shared_ptr<FsmPresentationLayer> pl1 =
     make_shared<FsmPresentationLayer>("../../../resources/adaptiveIn.txt",
@@ -778,71 +775,79 @@ int main()
     {
         shared_ptr<Tree> detStateCover = fsm1->getDeterministicStateCover();
         IOListContainer testCases = detStateCover->getDeterministicTestCases();
-        cout << "Deterministic test cases:\n" << testCases << endl;
+        LOG(DEBUG) << "Deterministic test cases:\n" << testCases;
 
         fsm1->calcRDistinguishableStates();
         IOListContainer characterisationSet = fsm1->getCharacterisationSet();
-        cout << "characterisationSet:\n" << characterisationSet << endl;
+        LOG(DEBUG) << "characterisationSet:\n" << characterisationSet;
         IOListContainer rCharacterisationSet = fsm1->getRCharacterisationSet();
-        cout << "rCharacterisationSet:\n" << rCharacterisationSet << endl;
+        LOG(DEBUG) << "rCharacterisationSet:\n" << rCharacterisationSet;
         IOTreeContainer rAdaptiveCharacterisationSet = fsm1->getAdaptiveRCharacterisationSet();
-        cout << "Adaptive rCharacterisationSet:\n" << rAdaptiveCharacterisationSet << endl;
+        LOG(DEBUG) << "Adaptive rCharacterisationSet:\n" << rAdaptiveCharacterisationSet;
         IOListContainer adaptiveList = rAdaptiveCharacterisationSet.toIOList();
-        cout << "Adaptive rCharacterisationSet as input traces:\n" << adaptiveList << endl;
-
+        LOG(DEBUG) << "Adaptive rCharacterisationSet as input traces:\n" << adaptiveList;
         vector<vector<shared_ptr<FsmNode>>> max = fsm1->getMaximalSetsOfRDistinguishableStates();
-        cout << "max:" << endl;
+        LOG(DEBUG) << "max:";
+        std::stringstream ss;
         for (auto set  : max)
         {
-            cout << "  {";
+            ss << "  {";
             for (auto node : set)
             {
-                cout << node->getName() << ",";
+                ss << node->getName() << ",";
             }
-            cout << "}" << endl;
+            ss << " }";
+            LOG(DEBUG) << ss.str();
+            ss.str(std::string());
         }
 
         vector<shared_ptr<FsmNode>> dReachable = fsm1->getDReachableStates();
-        cout << "d-reachable nodes: ";
+        ss << "d-reachable nodes: ";
         for (auto n : dReachable)
         {
-            cout << n->getName() << ",";
+            ss << n->getName() << ",";
         }
-        cout << endl;
+        LOG(DEBUG) << ss.str();
+        ss.str(std::string());
 
         InputTrace testInput = InputTrace({0,0,1,1}, pl1);
         vector<shared_ptr<OutputTrace>> producedOutputs;
         vector<shared_ptr<FsmNode>> reached;
 
-        cout << "Input trace: " << testInput << endl;
+        LOG(DEBUG) << "Input trace: " << testInput;
         fsm1->getInitialState()->getPossibleOutputs(testInput, producedOutputs, reached);
-        cout << "produced Outputs:" << endl;
+        LOG(DEBUG) << "produced Outputs:";
+        ss << "  ";
         for (auto o : producedOutputs)
         {
-            cout << *o << ", ";
+            ss << *o << ", ";
         }
-        cout << endl;
-        cout << "reached:" << endl;
+        LOG(DEBUG) << ss.str();
+        ss.str(std::string());
+        LOG(DEBUG) << "reached:";
+        ss << "  ";
         for (auto n : reached)
         {
-            cout << n->getName() << ",";
+            ss << n->getName() << ",";
         }
-        cout << endl;
+        LOG(DEBUG) << ss.str();
+        ss.str(std::string());
+
         vector<IOTraceContainer> vPrime = fsm1->getVPrime();
-        cout << "vPrime:\n{" << endl;
+        ss << "vPrime:\n";
+        ss << "{\n";
         for (auto r : vPrime)
         {
-            cout << "  " << r << endl;
+            ss << "  " << r;
         }
-        cout << "}" << endl;
+        ss << "\n}";
+        LOG(DEBUG) << ss.str();
+        ss.str(std::string());
 
-        cout << endl;
         IOTrace io1 = IOTrace(InputTrace({1,0,1}, pl1), OutputTrace({1,0,0}, pl1));
         IOTrace io2 = IOTrace(InputTrace({0,1,1,0}, pl1), OutputTrace({0,1,0,0}, pl1));
-        //IOTraceContainer rOne = fsm1->R(fsm1->getNodes().at(0), io1, io2);
         for (IOTraceContainer& cont : vPrime)
         {
-            cout << "R for " << cont << endl;
             fsm1->rPlus(fsm1->getNodes().at(0), io1, io2, cont);
         }
 

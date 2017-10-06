@@ -100,7 +100,7 @@ ostream & operator<<(ostream & out, InputOutputTree & ot)
         }
         if (k != ot.leaves.size() - 1)
         {
-            cout << ", ";
+            out << ", ";
         }
     }
     return out;

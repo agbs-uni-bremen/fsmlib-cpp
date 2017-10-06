@@ -25,6 +25,7 @@
 #include "trees/TestSuite.h"
 #include "trees/InputOutputTree.h"
 #include "trees/AdaptiveTreeNode.h"
+#include "logging/easylogging++.h"
 
 
 using namespace std;
@@ -882,12 +883,12 @@ Fsm Fsm::minimiseObservableFSM()
         {
             if (!fsm.failState && failState && node->getId() == tbl->getS2C().at(failState->getId()))
             {
-                cout << "  Setting failState:" << node->getName() << "(" << node->getId() << ", " << node << ")" << endl;
+                LOG(DEBUG) << "  Setting failState:" << node->getName() << "(" << node->getId() << ", " << node << ")";
                 fsm.failState = node;
             }
             if (!fsm.errorState && errorState && node->getId() == tbl->getS2C().at(errorState->getId()))
             {
-                cout << "  Setting errorState:" << node->getName() << endl;
+                LOG(DEBUG) << "  Setting errorState:" << node->getName();
                 fsm.errorState = node;
             }
             if ((!failState || fsm.failState) && (!errorState || fsm.errorState))
@@ -915,7 +916,7 @@ Fsm Fsm::minimise()
 
 Fsm Fsm::makeComplete(CompleteMode mode)
 {
-    cout << "makeComplete():" << endl;
+    LOG(DEBUG) << "makeComplete():";
     vector<shared_ptr<FsmNode>> newNodes = nodes;
     bool addErrorState = false;
     bool newErrorState = false;
@@ -937,13 +938,14 @@ Fsm Fsm::makeComplete(CompleteMode mode)
     }
     for (shared_ptr<FsmNode> node : newNodes)
     {
-        cout << "  State " << node->getName() << ": " << endl;
+        LOG(DEBUG) << "  State " << node->getName() << ": ";
         for (int x = 0; x <= maxInput; ++x)
         {
-            cout << "    Input " << presentationLayer->getInId(x);
+            std::stringstream ss;
+            ss << "    Input " << presentationLayer->getInId(x);
             if(!node->isPossibleInput(x))
             {
-                cout << " is not defined." << endl;
+                ss << " is not defined.";
                 if (mode == ErrorState)
                 {
                     addErrorState = true;
@@ -960,8 +962,9 @@ Fsm Fsm::makeComplete(CompleteMode mode)
             }
             else
             {
-                cout << " is defined." << endl;
+                ss << " is defined.";
             }
+            LOG(DEBUG) << ss.str();
         }
     }
     if (mode == ErrorState && newErrorState && addErrorState)
@@ -1042,8 +1045,7 @@ IOListContainer Fsm::getCharacterisationSet()
     // We have to calculate teh chracterisation set from scratch
     if (!isObservable())
     {
-        cout << "This FSM is not observable - cannot calculate the charactersiation set." << endl;
-        exit(EXIT_FAILURE);
+        LOG(FATAL) << "This FSM is not observable - cannot calculate the charactersiation set.";
     }
     
     /*Call minimisation algorithm again for creating the OFSM-Tables*/
@@ -1182,8 +1184,9 @@ void Fsm::calcROneDistinguishableStates()
                 {
                     continue;
                 }
-                cout << "σ(" << nodes.at(i)->getName() << "," << nodes.at(j)->getName() << ") = ";
-                cout << *tree << endl;
+                std::stringstream ss;
+                ss << "σ(" << nodes.at(i)->getName() << "," << nodes.at(j)->getName() << ") = " << *tree;
+                LOG(DEBUG) << ss.str();
             } catch (std::out_of_range e) {
                // Do nothing.
             }
@@ -1201,7 +1204,7 @@ void Fsm::calcRDistinguishableStates()
     size_t limit = nodes.size() * (nodes.size() - 1) / 2;
     for (size_t l = 2; l <= limit; ++l)
     {
-        cout << "################ l = " << l << " ################" << endl;
+        LOG(DEBUG) << "################ l = " << l << " ################";
         for (size_t k = 0; k < nodes.size(); ++k)
         {
             nodes.at(k)->getRDistinguishability()->inheritDistinguishability(l);
@@ -1209,12 +1212,12 @@ void Fsm::calcRDistinguishableStates()
         for (size_t k = 0; k < nodes.size(); ++k)
         {
             shared_ptr<FsmNode> q1 = nodes.at(k);
-            cout << "q1 = " << q1->getName() << ":" << endl;
+            LOG(DEBUG) << "q1 = " << q1->getName() << ":";
             vector<shared_ptr<FsmNode>> notROneDist = q1->getRDistinguishability()->getNotRDistinguishableWith(l);
             for (auto it = notROneDist.begin(); it != notROneDist.end(); ++it)
             {
                 shared_ptr<FsmNode> q2 = *it;
-                cout << "  q2 = " << q2->getName() << ":" << endl;
+                LOG(DEBUG) << "  q2 = " << q2->getName() << ":";
                 for (int x = 0; x <= maxInput; ++ x)
                 {
                     vector<shared_ptr<OutputTrace>> intersection = getOutputIntersection(q1, q2, x);
@@ -1240,7 +1243,7 @@ void Fsm::calcRDistinguishableStates()
                         }
                         else
                         {
-                            cout << "    x = " << presentationLayer->getInId(x) << ":\t"
+                            LOG(DEBUG) << "    x = " << presentationLayer->getInId(x) << ":\t"
                             << afterNode1->getName() << " != " << afterNode2->getName()
                             << " -> " << q1->getName() << " != " << q2->getName() << endl;
 
@@ -1250,14 +1253,19 @@ void Fsm::calcRDistinguishableStates()
                             //      can't find linker symbol for virtual table for `TreeEdge' value
                             // messages when debugging.
                             // Put breakpoint at following line and debug.
-                            cout << "      childIO1(" << afterNode1->getName() << "," << afterNode2->getName() << "): " << *childTree1 << endl;
+                            stringstream ss;
+                            ss << "      childIO1(" << afterNode1->getName() << "," << afterNode2->getName() << "): " << *childTree1;
+                            LOG(DEBUG) << ss.str();
+                            ss.str(std::string());
+
                             shared_ptr<AdaptiveTreeNode> childNode1 = static_pointer_cast<AdaptiveTreeNode>(childTree1->getRoot());
                             shared_ptr<TreeEdge> edge1 = make_shared<TreeEdge>(y, childNode1);
                             q1Edges.push_back(edge1);
 
                             //shared_ptr<TreeNode> target2 = make_shared<TreeNode>();
                             shared_ptr<InputOutputTree> childTree2 = afterNode2->getRDistinguishability()->getAdaptiveIOSequence(afterNode1);
-                            cout << "      childIO2(" << afterNode2->getName() << "," << afterNode1->getName() << "): " << *childTree2 << endl;
+                            ss << "      childIO2(" << afterNode2->getName() << "," << afterNode1->getName() << "): " << *childTree2 << endl;
+                            LOG(DEBUG) << ss.str();
                             shared_ptr<AdaptiveTreeNode> childNode2 = static_pointer_cast<AdaptiveTreeNode>(childTree2->getRoot());
                             shared_ptr<TreeEdge> edge2 = make_shared<TreeEdge>(y, childNode2);
                             q2Edges.push_back(edge2);
@@ -1320,8 +1328,12 @@ void Fsm::calcRDistinguishableStates()
                         shared_ptr<InputOutputTree> q1Tree = make_shared<InputOutputTree>(q1Root, presentationLayer);
                         shared_ptr<InputOutputTree> q2Tree = make_shared<InputOutputTree>(q2Root, presentationLayer);
 
-                        cout << "    q1Tree: " << *q1Tree << endl;
-                        cout << "    q2Tree: " << *q2Tree << endl;
+                        stringstream ss;
+                        ss << "    q1Tree: " << *q1Tree;
+                        LOG(DEBUG) << ss.str();
+                        ss.str(std::string());
+                        ss << "    q2Tree: " << *q2Tree;
+                        LOG(DEBUG) << ss.str();
 
                         q1->getRDistinguishability()->addAdaptiveIOSequence(q2, q1Tree);
                         q2->getRDistinguishability()->addAdaptiveIOSequence(q1, q2Tree);
