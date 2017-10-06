@@ -253,8 +253,13 @@ static void parseParameters(int argc, char* argv[]) {
                     exit(1);
                 }
                 modelAbstractionFile = string(argv[p]);
-                modelAbstractionType = FSM_JSON;
-                
+                if ( strstr(argv[p],".csv")  )
+                {
+                    modelAbstractionType = FSM_CSV;
+                } else
+                {
+                    modelAbstractionType = FSM_JSON;
+                }
             }
         
     }
