@@ -401,25 +401,25 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
     cout << "ABSMIN size = " << dfsmAbstractionMin.size() << endl;
     
     shared_ptr<FsmNode> s0 = dfsmRefMin.getInitialState();
-    std::shared_ptr<FsmPresentationLayer> pl = dfsmRefMin.getPresentationLayer();
+    shared_ptr<FsmPresentationLayer> pl = dfsmRefMin.getPresentationLayer();
     
     shared_ptr<Tree> iTree = dfsmRefMin.getStateCover();
     
-    // A be a set consisting of alpha.w, beta.w for any alpha != beta in V
+    // Let A be a set consisting of alpha.w, beta.w for any alpha != beta in V
     // and a distinguishing trace w. q0-after-alpha !~ q0-after-beta
     IOListContainer iolcV = iTree->getIOListsWithPrefixes();
-    shared_ptr<std::vector<std::vector<int>>> iolV = iolcV.getIOLists();
+    shared_ptr<vector<vector<int>>> iolV = iolcV.getIOLists();
     
-    // B = V.(union_(i=1)^(m-n+1) Sigma_I)
+    // Let B = V.(union_(i=1)^(m-n+1) Sigma_I)
     shared_ptr<Tree> B = dfsmRefMin.getStateCover();
     IOListContainer inputEnum = IOListContainer(dfsmRefMin.getMaxInput(),
                                                 1,
                                                 numAddStates + 1,
                                                 pl);
     B->add(inputEnum);
-    
     iTree->unionTree(B);
     
+    // Continue calculation of A
     for (unsigned i = 0; i < iolV->size(); i++)
     {
         shared_ptr<InputTrace> alpha = make_shared<InputTrace>(iolV->at(i), pl);
@@ -462,7 +462,7 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
     
     // calculate s-equivalence to B
     IOListContainer iolcB = B->getIOListsWithPrefixes();
-    shared_ptr<std::vector<std::vector<int>>> iolB = iolcB.getIOLists();
+    shared_ptr<vector<vector<int>>> iolB = iolcB.getIOLists();
     
     
     // calculate C1
@@ -525,14 +525,14 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
     // where γ is a distinguishing sequence of states
     // s0-after-alpha.beta1 and s0-after-alpha.beta2.
     
-    for (std::vector<int> b : *iolB)
+    for (vector<int> b : *iolB)
     {
         shared_ptr<InputTrace> beta = make_shared<InputTrace>(b, pl);
         shared_ptr<FsmNode> afterBeta = *abs_s0->after(*beta).begin();
         
         for (unsigned i = 0; i < b.size()+1; i++)
         {
-            std::vector<int> a(b.begin(), b.begin() + i);
+            vector<int> a(b.begin(), b.begin() + i);
             shared_ptr<InputTrace> alpha = make_shared<InputTrace>(a, pl);
             shared_ptr<FsmNode> afterAlpha = *abs_s0->after(*alpha).begin();
             if (afterAlpha == afterBeta) continue;
