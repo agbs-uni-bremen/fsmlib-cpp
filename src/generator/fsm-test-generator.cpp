@@ -388,10 +388,9 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
     
     // Minimise original reference DFSM
     Dfsm dfsmRefMin = dfsm->minimise();
-    
+
     // Minimise abstracted Dfsm
     Dfsm dfsmAbstractionMin = dfsmAbstraction->minimise();
-    dfsmAbstractionMin.minimise();
     
     dfsmRefMin.toDot("FSM_MINIMAL");
     dfsmAbstractionMin.toDot("ABS_FSM_MINIMAL");
