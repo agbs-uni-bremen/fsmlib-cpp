@@ -3,6 +3,10 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.8.11)
 
 #set the name of the project
 PROJECT (fsm)
+#####################################################################
+#Setting debug macro if this is a DEBUG build
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DENABLE_DEBUG_MACRO")
 
 #####################################################################
 #enable warning for MSVC and gcc
@@ -43,6 +47,7 @@ endif(gui)
 #set the root source diectory as include directory
 include_directories (${CMAKE_SOURCE_DIR})
 include_directories (${CMAKE_SOURCE_DIR}/externals/jsoncpp-0.10.0/include)
+include_directories (${CMAKE_SOURCE_DIR}/externals/easyloggingpp_v9.95.0)
 include_directories (${CMAKE_BINARY_DIR})
 
 #add every subdirectory to cmake

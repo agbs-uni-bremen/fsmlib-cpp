@@ -22,6 +22,7 @@
 #include <trees/OutputTree.h>
 #include <trees/TestSuite.h>
 #include "json/json.h"
+#include "easylogging++.h"
 
 #include <unistd.h>
 #include <errno.h>
@@ -31,6 +32,8 @@
 
 using namespace std;
 using namespace Json;
+
+INITIALIZE_EASYLOGGINGPP
 
 void assertInconclusive(string tc, string comment = "") {
     
@@ -717,8 +720,15 @@ std::string getcwd() {
 
 int main()
 {
-	std::cout << "Dir " << getcwd() << endl;
+    const string loggerConfigDir = "../../../src/externals/easyloggingpp_v9.95.0";
+#ifdef ENABLE_DEBUG_MACRO
+    el::Configurations logConfig(loggerConfigDir + "/Debug.cfg");
+#else
+    el::Configurations logConfig(loggerConfigDir + "/Release.cfg");
+#endif
+    el::Loggers::reconfigureAllLoggers(logConfig);
 
+    LOG(DEBUG) << "Dir " << getcwd();
 
     shared_ptr<FsmPresentationLayer> plBug =
                 make_shared<FsmPresentationLayer>("../../../resources/adaptive-product-in.txt",
