@@ -44,8 +44,6 @@ private:
     
     void createDfsmTransitionGraph(const std::string& fname);
     
-    void calcPkTables();
-    
 public:
 	/**
 	Create a DFSM from a file description
@@ -208,6 +206,8 @@ public:
 	\note This requires that the operation minimise() has been called before.
 	*/
 	void printTables() const;
+
+    void calcPkTables();
 
 	/**
 	Calculate characterisation set according to Gill's algorithm
