@@ -85,14 +85,22 @@ static void printUsage(char* name) {
 /**
  *  Determine the model type of a model specified in an *.fsm file.
  *
- *  @param modelFile Name of the *.fsm file containing the model
+ *  @param modelFile Name of the file containing the model
  *
- *  @return FSM_BASIC, if the model file contains the low-level
- *                     encoding.
+ *  @return FSM_BASIC, if the model file has extension .fsm and
+ *          contains the low-level encoding.
  *
- *  @return FSM_JSON, if the model contains the JSON encoding.
+ *  @return FSM_JSON, if the model file has extension .fsm and
+ *                    contains the JSON encoding.
+ *
+ *  @return FSM_CSV, if the model file has extension .csv
+ *
  */
 static model_type_t getModelType(const string& mf) {
+    
+    if ( mf.find(".csv") != string::npos ) {
+        return FSM_CSV;
+    }
     
     model_type_t t = FSM_BASIC;
     
@@ -229,7 +237,7 @@ static void parseParameters(int argc, char* argv[]) {
         else if ( strstr(argv[p],".csv")  ) {
             haveModelFileName = true;
             modelFile = string(argv[p]);
-            modelType = FSM_CSV;
+            modelType = getModelType(modelFile);
         }
         else if ( strstr(argv[p],".fsm")  ) {
             haveModelFileName = true;
@@ -253,13 +261,7 @@ static void parseParameters(int argc, char* argv[]) {
                     exit(1);
                 }
                 modelAbstractionFile = string(argv[p]);
-                if ( strstr(argv[p],".csv")  )
-                {
-                    modelAbstractionType = FSM_CSV;
-                } else
-                {
-                    modelAbstractionType = FSM_JSON;
-                }
+                modelAbstractionType = getModelType(modelAbstractionFile); 
             }
         
     }
