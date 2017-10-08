@@ -465,57 +465,57 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
             }
         }
     }
-    
-    // calculate s-equivalence to B
-    IOListContainer iolcB = B->getIOListsWithPrefixes();
-    shared_ptr<vector<vector<int>>> iolB = iolcB.getIOLists();
-    
-    
+
     // calculate C1
-    // distinguishing trace for alpha in V and beta in B
-    
+    // distinguishing trace for α.β, α ∈ Q and ω ∈ V
+    shared_ptr<vector<vector<int>>> iolB = inputEnum.getIOLists();
     shared_ptr<FsmNode> abs_s0 = dfsmAbstractionMin.getInitialState();
-    for (unsigned i = 0; i < iolV->size(); i++)
+    for (auto beta : *iolB)
     {
-        shared_ptr<InputTrace> alpha = make_shared<InputTrace>(iolV->at(i), pl);
-        shared_ptr<FsmNode> afterAlpha = *abs_s0->after(*alpha).begin();
-        
-        for (unsigned j = 0; j < iolB->size(); j++)
+        for (auto alpha : *iolV)
         {
-            shared_ptr<InputTrace> beta = make_shared<InputTrace>(iolB->at(j), pl);
-            shared_ptr<FsmNode> afterBeta = *abs_s0->after(*beta).begin();
-            if (afterAlpha == afterBeta) continue;
-            
-            shared_ptr<FsmNode> s0AfterAlpha = *s0->after(*alpha).begin();
-            shared_ptr<FsmNode> s0AfterBeta = *s0->after(*beta).begin();
-            if (s0AfterAlpha == s0AfterBeta) continue;
-            
-            shared_ptr<Tree> alphaTree = iTree->getSubTree(alpha);
-            shared_ptr<Tree> betaTree = iTree->getSubTree(beta);
-            
-            shared_ptr<Tree> prefixRelationTree = alphaTree->getPrefixRelationTree(betaTree);
-            
-            bool distinguished = dfsmRefMin.appendDistinguishingTraceIfExistsInTree(alpha, beta, iTree, prefixRelationTree);
-            if (distinguished) continue;
-            distinguished = dfsmRefMin.calcDistinguishingTraceAfterLeaf(alpha, beta, iTree, prefixRelationTree);
-            
-            if (!distinguished)
+            shared_ptr<InputTrace> alphaBeta = make_shared<InputTrace>(alpha, pl);
+            alphaBeta->append(beta);
+            shared_ptr<FsmNode> afterAlphaBeta = *abs_s0->after(*alphaBeta).begin();
+
+            for (auto o : *iolV)
             {
-                InputTrace gamma =
-                s0AfterAlpha->calcDistinguishingTrace(s0AfterBeta,
-                                                      dfsmRefMin.getPktblLst(),
-                                                      dfsmRefMin.getMaxInput());
-                
-                shared_ptr<InputTrace> alpha_gamma =
-                make_shared<InputTrace>(alpha->get(),pl);
-                alpha_gamma->append(gamma.get());
-                
-                shared_ptr<InputTrace> beta_gamma =
-                make_shared<InputTrace>(beta->get(),pl);
-                beta_gamma->append(gamma.get());
-                
-                iTree->addToRoot(alpha_gamma->get());
-                iTree->addToRoot(beta_gamma->get());
+                shared_ptr<InputTrace> omega = make_shared<InputTrace>(o, pl);
+                shared_ptr<FsmNode> afterOmega = *abs_s0->after(*omega).begin();
+                if (afterAlphaBeta == afterOmega) continue;
+
+                shared_ptr<FsmNode> s0AfterAlphaBeta = *s0->after(*alphaBeta).begin();
+                shared_ptr<FsmNode> s0AfterOmega = *s0->after(*omega).begin();
+                if (s0AfterAlphaBeta == s0AfterOmega) continue;
+
+                shared_ptr<Tree> alphaBetaTree = iTree->getSubTree(alphaBeta);
+                shared_ptr<Tree> omegaTree = iTree->getSubTree(omega);
+
+                shared_ptr<Tree> prefixRelationTree = alphaBetaTree->getPrefixRelationTree(omegaTree);
+
+                bool distinguished = dfsmRefMin.appendDistinguishingTraceIfExistsInTree(alphaBeta, omega, iTree, prefixRelationTree);
+                if (distinguished) continue;
+                distinguished = dfsmRefMin.calcDistinguishingTraceAfterLeaf(alphaBeta, omega, iTree, prefixRelationTree);
+
+                if (!distinguished)
+                {
+                    InputTrace gamma =
+                    s0AfterAlphaBeta->calcDistinguishingTrace(s0AfterOmega,
+                                                          dfsmRefMin.getPktblLst(),
+                                                          dfsmRefMin.getMaxInput());
+
+                    shared_ptr<InputTrace> alpha_gamma =
+                    make_shared<InputTrace>(alphaBeta->get(),pl);
+                    alpha_gamma->append(gamma.get());
+
+                    shared_ptr<InputTrace> beta_gamma =
+                    make_shared<InputTrace>(omega->get(),pl);
+                    beta_gamma->append(gamma.get());
+
+                    iTree->addToRoot(alpha_gamma->get());
+                    iTree->addToRoot(beta_gamma->get());
+                }
+
             }
             
         }
