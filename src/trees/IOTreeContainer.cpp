@@ -92,9 +92,9 @@ ostream & operator<<(ostream & out, const IOTreeContainer & ot)
         {
             out << ", ";
         }
-        cout << "[";
+        out << "[";
         out << *tree;
-        cout << "]";
+        out << "]";
         first = false;
     }
     out << "}";

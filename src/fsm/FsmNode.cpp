@@ -20,6 +20,7 @@
 #include "trees/TreeNode.h"
 #include "trees/IOListContainer.h"
 #include "interface/FsmPresentationLayer.h"
+#include "logging/easylogging++.h"
 
 using namespace std;
 
@@ -176,8 +177,7 @@ void FsmNode::getPossibleOutputs(const InputTrace& inputTrace,
 
     if (nextOutputs.size() != nextTargets.size())
     {
-        cerr << "Number of produced outputs and targets does not match." << endl;
-        exit(EXIT_FAILURE);
+        LOG(FATAL) << "Number of produced outputs and targets does not match.";
     }
 
     vector<shared_ptr<OutputTrace>> newlyProducedOutputTraces;
@@ -213,19 +213,21 @@ void FsmNode::getPossibleOutputs(const InputTrace& inputTrace,
     }
     producedOutputTraces = newlyProducedOutputTraces;
 
-//    cout << "getPossibleOutputs(): " << getName() << ", " << inputTrace << ", " << producedOutputTraces.size() << ", " << reachedNodes.size() << endl;
-//    cout << "  reached nodes:\n  ";
+    VLOG(3) << "getPossibleOutputs(): " << getName() << ", " << inputTrace << ", " << producedOutputTraces.size() << ", " << reachedNodes.size();
+    stringstream ss;
+    ss << "  reached nodes: ";
     for (auto n : reachedNodes)
     {
-//        cout << n->getName() << ", ";
+        ss << n->getName() << ", ";
     }
-//    cout << endl;
-//    cout << "  outputs:\n  " << endl;
+    VLOG(3) << ss.str();
+    ss.str(std::string());
+    ss << "  outputs: ";
     for (auto n : producedOutputTraces)
     {
-//        cout << *n << ", ";
+        ss << *n << ", ";
     }
-//    cout << endl;
+    VLOG(3) << ss.str();
 }
 
 void FsmNode::getPossibleOutputs(const InputTrace& input, vector<shared_ptr<OutputTrace>>& producedOutputs) const
@@ -472,7 +474,7 @@ shared_ptr<DFSMTableRow> FsmNode::getDFSMTableRow(const int maxInput)
          by the same input. In this case we cannot calculate a  DFSMTableRow.*/
         if (io.at(x) >= 0)
         {
-            cout << "Cannot calculated DFSM table for nondeterministic FSM." << endl;
+            LOG(ERROR) << "Cannot calculated DFSM table for nondeterministic FSM.";
             return nullptr;
         }
         

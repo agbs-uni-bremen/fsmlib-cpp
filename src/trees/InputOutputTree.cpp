@@ -80,12 +80,19 @@ std::shared_ptr<InputOutputTree> InputOutputTree::Clone() const
 
 ostream & operator<<(ostream & out, InputOutputTree & ot)
 {
-    ot.calcLeaves();
+    out << ot.str();
+    return out;
+}
+
+string InputOutputTree::str()
+{
+    string str;
+    calcLeaves();
 
     //for (shared_ptr<TreeNode> leave : ot.leaves)
-    for (size_t k = 0; k < ot.leaves.size(); ++k)
+    for (size_t k = 0; k < leaves.size(); ++k)
     {
-        shared_ptr<TreeNode> leave = ot.leaves.at(k);
+        shared_ptr<TreeNode> leave = leaves.at(k);
         shared_ptr<AdaptiveTreeNode> l = static_pointer_cast<AdaptiveTreeNode>(leave);
         vector<int> inputPath = l->getInputPath();
         vector<int> outputPath = l->getPath();
@@ -93,15 +100,15 @@ ostream & operator<<(ostream & out, InputOutputTree & ot)
         {
             if ( i > 0 )
             {
-                out << ".";
+                str += ".";
             }
 
-            out << "(" << ot.presentationLayer->getInId(inputPath.at(i)) << "/" << ot.presentationLayer->getOutId(outputPath.at(i)) << ")";
+            str += "(" + presentationLayer->getInId(inputPath.at(i)) + "/" + presentationLayer->getOutId(outputPath.at(i)) + ")";
         }
-        if (k != ot.leaves.size() - 1)
+        if (k != leaves.size() - 1)
         {
-            out << ", ";
+            str += ", ";
         }
     }
-    return out;
+    return str;
 }

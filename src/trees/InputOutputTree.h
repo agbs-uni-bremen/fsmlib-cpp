@@ -24,6 +24,7 @@ public:
     std::shared_ptr<InputOutputTree> Clone() const;
 
     friend std::ostream & operator<<(std::ostream & out, InputOutputTree & ot);
+    std::string str();
 
 };
 
