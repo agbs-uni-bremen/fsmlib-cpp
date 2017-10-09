@@ -2711,10 +2711,17 @@ Fsm::createRandomFsm(const string & fsmName,
 
 shared_ptr<Fsm> Fsm::createProductMachine(shared_ptr<Fsm> reference, shared_ptr<Fsm> iut, const string& fsmName)
 {
+    TIMED_FUNC(timerObj);
+    reference->getPresentationLayer()->truncateIn2String(reference->maxInput + 1);
+    reference->getPresentationLayer()->truncateOut2String(reference->maxOutput + 1);
+    reference->getPresentationLayer()->truncateState2String(reference->maxState + 1);
+    iut->getPresentationLayer()->truncateIn2String(reference->maxInput + 1);
+    iut->getPresentationLayer()->truncateOut2String(reference->maxOutput + 1);
+    iut->getPresentationLayer()->truncateState2String(reference->maxState + 1);
     shared_ptr<FsmPresentationLayer> pl = FsmPresentationLayer::mergeAlphabets(reference->getPresentationLayer(), iut->getPresentationLayer());
     const size_t failOutput = static_cast<size_t>(pl->addOut2String("fail"));
-    size_t maxInput = pl->getIn2String().size() - 1;
-    size_t maxOutput = pl->getOut2String().size() - 1;
+    size_t maxInput = static_cast<size_t>(max(reference->maxInput, iut->maxInput));
+    size_t maxOutput = static_cast<size_t>(max(reference->maxOutput, iut->maxOutput)) + 1;
     vector<string> state2String;
     vector<shared_ptr<FsmNode>> nodes;
     map<shared_ptr<FsmNode>, pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> productNodesToOriginalNodes;

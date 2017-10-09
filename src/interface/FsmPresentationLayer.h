@@ -88,6 +88,10 @@ public:
         return static_cast<int>(out2String.size() - 1);
     }
 
+    void truncateState2String(const int index);
+    void truncateIn2String(const int index);
+    void truncateOut2String(const int index);
+
 	/**
 	 * Getter for a particular input name
 	 * @param id The id of the input

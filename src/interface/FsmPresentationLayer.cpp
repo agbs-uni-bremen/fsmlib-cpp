@@ -93,6 +93,30 @@ std::shared_ptr<FsmPresentationLayer> FsmPresentationLayer::mergeAlphabets(
     return result;
 }
 
+void FsmPresentationLayer::truncateState2String(const int index)
+{
+    if (state2String.size() > static_cast<size_t>(index))
+    {
+        state2String.erase(state2String.begin() + index, state2String.end());
+    }
+}
+
+void FsmPresentationLayer::truncateIn2String(const int index)
+{
+    if (in2String.size() > static_cast<size_t>(index))
+    {
+        in2String.erase(in2String.begin() + index, in2String.end());
+    }
+}
+
+void FsmPresentationLayer::truncateOut2String(const int index)
+{
+    if (out2String.size() > static_cast<size_t>(index))
+    {
+        out2String.erase(out2String.begin() + index, out2String.end());
+    }
+}
+
 std::string FsmPresentationLayer::getInId(const unsigned int id) const
 {
 	if (id >= in2String.size())
