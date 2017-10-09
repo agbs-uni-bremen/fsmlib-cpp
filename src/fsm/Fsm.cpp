@@ -6,6 +6,7 @@
 
 #include <chrono>
 #include <deque>
+#include <algorithm>
 
 #include "fsm/Dfsm.h"
 #include "fsm/Fsm.h"
