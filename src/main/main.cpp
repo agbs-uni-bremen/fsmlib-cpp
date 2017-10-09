@@ -716,8 +716,9 @@ std::string getcwd() {
 }
 
 
-int main()
+int main(int argc, char* argv[])
 {
+    START_EASYLOGGINGPP(argc, argv);
     const string loggerConfigDir = "../../../src/externals/easyloggingpp_v9.95.0";
 #ifdef ENABLE_DEBUG_MACRO
     el::Configurations logConfig(loggerConfigDir + "/Debug.cfg");
