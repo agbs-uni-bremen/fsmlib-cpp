@@ -729,15 +729,11 @@ int main(int argc, char* argv[])
 
     LOG(DEBUG) << "Dir " << getcwd();
 
-    shared_ptr<FsmPresentationLayer> plBug =
-                make_shared<FsmPresentationLayer>("../../../resources/adaptive-product-in.txt",
-                                                  + "../../../resources/adaptive-product-out.txt",
-                                                  + "../../../resources/adaptive-product-states.txt");
-    shared_ptr<Fsm> fsm1Bug = make_shared<Fsm>("../../../resources/adaptive-product.fsm", plBug ,"adaptive-bug");
-    fsm1Bug->toDot("../../../resources/adaptive-bug");
-    Fsm fsm1BugMin = fsm1Bug->minimise();
-    fsm1BugMin.toDot("../../../resources/adaptive-bug-min");
-    LOG(INFO) << "Ready.";
+    shared_ptr<FsmPresentationLayer> plTest =
+    make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
+            + "../../../resources/adaptive-test-out.txt",
+            + "../../../resources/adaptive-test-state.txt");
+
 
     shared_ptr<FsmPresentationLayer> pl1 =
     make_shared<FsmPresentationLayer>("../../../resources/adaptiveIn.txt",
@@ -753,6 +749,7 @@ int main(int argc, char* argv[])
     shared_ptr<Fsm> fsm1Iut = make_shared<Fsm>("../../../resources/adaptive-iut-fail.fsm",pl1,"adaptive-iut");
     fsm1Iut->toDot("../../../resources/adaptive-iut");
 
+    /*
     shared_ptr<Fsm> fsm1Product = Fsm::createProductMachine(fsm1, fsm1Iut, "");
     fsm1Product->toDot("../../../resources/adaptive-product");
 
@@ -762,6 +759,7 @@ int main(int argc, char* argv[])
 
     Fsm fsm1ProductMin = fsm1Product->minimise();
     fsm1ProductMin.toDot("../../../resources/adaptive-product-min");
+    */
 
     shared_ptr<FsmPresentationLayer> pl2 =
     make_shared<FsmPresentationLayer>("../../../resources/adaptive2In.txt",
@@ -770,95 +768,49 @@ int main(int argc, char* argv[])
     shared_ptr<Fsm> fsm2 = make_shared<Fsm>("../../../resources/adaptive2.fsm",pl2,"adaptive2");
     fsm2->toDot("../../../resources/adaptive2");
 
-
     int x = 1;
     if (x == 1)
     {
+
+        /*
         shared_ptr<Tree> detStateCover = fsm1->getDeterministicStateCover();
         IOListContainer testCases = detStateCover->getDeterministicTestCases();
         LOG(DEBUG) << "Deterministic test cases:\n" << testCases;
-
-        fsm1->calcRDistinguishableStates();
-        IOListContainer characterisationSet = fsm1->getCharacterisationSet();
-        LOG(DEBUG) << "characterisationSet:\n" << characterisationSet;
-        IOListContainer rCharacterisationSet = fsm1->getRCharacterisationSet();
-        LOG(DEBUG) << "rCharacterisationSet:\n" << rCharacterisationSet;
-        IOTreeContainer rAdaptiveCharacterisationSet = fsm1->getAdaptiveRCharacterisationSet();
-        LOG(DEBUG) << "Adaptive rCharacterisationSet:\n" << rAdaptiveCharacterisationSet;
-        IOListContainer adaptiveList = rAdaptiveCharacterisationSet.toIOList();
-        LOG(DEBUG) << "Adaptive rCharacterisationSet as input traces:\n" << adaptiveList;
-        vector<vector<shared_ptr<FsmNode>>> max = fsm1->getMaximalSetsOfRDistinguishableStates();
-        LOG(DEBUG) << "max:";
-        std::stringstream ss;
-        for (auto set  : max)
-        {
-            ss << "  {";
-            for (auto node : set)
-            {
-                ss << node->getName() << ",";
-            }
-            ss << " }";
-            LOG(DEBUG) << ss.str();
-            ss.str(std::string());
-        }
-
-        vector<shared_ptr<FsmNode>> dReachable = fsm1->getDReachableStates();
-        ss << "d-reachable nodes: ";
-        for (auto n : dReachable)
-        {
-            ss << n->getName() << ",";
-        }
-        LOG(DEBUG) << ss.str();
-        ss.str(std::string());
-
-        InputTrace testInput = InputTrace({0,0,1,1}, pl1);
-        vector<shared_ptr<OutputTrace>> producedOutputs;
-        vector<shared_ptr<FsmNode>> reached;
-
-        LOG(DEBUG) << "Input trace: " << testInput;
-        fsm1->getInitialState()->getPossibleOutputs(testInput, producedOutputs, reached);
-        LOG(DEBUG) << "produced Outputs:";
-        ss << "  ";
-        for (auto o : producedOutputs)
-        {
-            ss << *o << ", ";
-        }
-        LOG(DEBUG) << ss.str();
-        ss.str(std::string());
-        LOG(DEBUG) << "reached:";
-        ss << "  ";
-        for (auto n : reached)
-        {
-            ss << n->getName() << ",";
-        }
-        LOG(DEBUG) << ss.str();
-        ss.str(std::string());
-
-        vector<IOTraceContainer> vPrime = fsm1->getVPrime();
-        ss << "vPrime:\n";
-        ss << "{\n";
-        for (auto r : vPrime)
-        {
-            ss << "  " << r;
-        }
-        ss << "\n}";
-        LOG(DEBUG) << ss.str();
-        ss.str(std::string());
-
-        IOTrace io1 = IOTrace(InputTrace({1,0,1}, pl1), OutputTrace({1,0,0}, pl1));
-        IOTrace io2 = IOTrace(InputTrace({0,1,1,0}, pl1), OutputTrace({0,1,0,0}, pl1));
-        for (IOTraceContainer& cont : vPrime)
-        {
-            fsm1->rPlus(fsm1->getNodes().at(0), io1, io2, cont);
-        }
-
-        fsm1->getPossibleIOTraces(fsm1->getInitialState(), rAdaptiveCharacterisationSet.getList()->at(0));
 
         Fsm fsm1ProductComplete = fsm1ProductMin.makeComplete(ErrorState);
         fsm1ProductComplete.calcRDistinguishableStates();
         fsm1ProductComplete.toDot("../../../resources/adaptive-product-min-complete");
         IOTraceContainer observedTraces(fsm1ProductComplete.getPresentationLayer());
         fsm1ProductComplete.adaptiveStateCounting(7, observedTraces);
+        */
+
+        const size_t numFsm = 1;
+        LOG(INFO) << "Testing!";
+        TIMED_FUNC(timerObj);
+        for (size_t i = 0; i < numFsm; ++i)
+        {
+            TIMED_SCOPE(timerBlkObj, "heavy-iter");
+            LOG(INFO) << "i: " << i;
+            LOG(INFO) << "Creating FSM.";
+            shared_ptr<Fsm> fsm = Fsm::createRandomFsm("random" + i, 5, 5, 10, plTest, true);
+            fsm->toDot("../../../resources/adaptive-test-fsm");
+            LOG(INFO) << "Creating mutant.";
+            shared_ptr<Fsm> mutant = fsm->createMutant("mutant" + i, 1, 1);
+            mutant->toDot("../../../resources/adaptive-test-mutant");
+            LOG(INFO) << "Creating product.";
+            shared_ptr<Fsm> product = Fsm::createProductMachine(fsm, mutant, "_prod");
+            product->toDot("../../../resources/adaptive-test-product");
+            LOG(INFO) << "Minimizing.";
+            Fsm productMin = product->minimise();
+            productMin.toDot("../../../resources/adaptive-test-productMin");
+            LOG(INFO) << "Making complete.";
+            Fsm productComplete = productMin.makeComplete(ErrorState);
+            productComplete.toDot("../../../resources/adaptive-test-productComplete");
+            productComplete.calcRDistinguishableStates();
+            IOTraceContainer observedTraces(productComplete.getPresentationLayer());
+            productComplete.adaptiveStateCounting(productComplete.getMaxNodes(), observedTraces);
+        }
+        LOG(INFO) << "Ready!";
 
     //x = 2;
     }
