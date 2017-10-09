@@ -13,6 +13,14 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DENABLE_DEBUG_MACRO")
 add_definitions(-DAUTO_INITIALIZE_EASYLOGGINGPP)
 
 #####################################################################
+# Configure logger
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_definitions(-DELPP_FEATURE_PERFORMANCE_TRACKING)
+    add_definitions(-DELPP_LOGGING_FLAGS_FROM_ARG)
+endif()
+
+#####################################################################
 #enable warning for MSVC and gcc
 
 if (MSVC)
