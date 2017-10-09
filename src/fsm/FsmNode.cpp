@@ -251,6 +251,18 @@ vector<shared_ptr<OutputTrace>> FsmNode::getPossibleOutputs(const int x) const
     return result;
 }
 
+bool FsmNode::hasTransition(const int input, const int output) const
+{
+    for (shared_ptr<FsmTransition> trans : transitions)
+    {
+        if (trans->getLabel()->getInput() == input && trans->getLabel()->getOutput() == output)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool FsmNode::isPossibleOutput(const int x, const int y) const
 {
     for (auto transition : transitions)

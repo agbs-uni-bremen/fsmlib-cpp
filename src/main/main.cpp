@@ -148,7 +148,7 @@ void test3() {
     for ( size_t i = 0; i < 10; i++ ) {
         shared_ptr<FsmPresentationLayer> pl =
         make_shared<FsmPresentationLayer>();
-        shared_ptr<Fsm> fsm = Fsm::createRandomFsm("F",5,5,8,pl,i);
+        shared_ptr<Fsm> fsm = Fsm::createRandomFsm("F",5,5,8,pl,false,i);
         fsm->toDot("F");
         
         shared_ptr<Fsm> fsmMutant = fsm->createMutant("F_M",1,0);
@@ -232,7 +232,7 @@ void test4() {
     for (size_t i = 0; i < 2000; i++) {
         
         // Create a random FSM
-        std::shared_ptr<Fsm> f = Fsm::createRandomFsm("F",5,5,10,pl,i);
+        std::shared_ptr<Fsm> f = Fsm::createRandomFsm("F",5,5,10,pl,false,i);
         std::shared_ptr<Tree> sc = f->getStateCover();
         
         if ( sc->size() != (size_t)f->getMaxNodes() + 1 ) {

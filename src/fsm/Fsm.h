@@ -214,6 +214,7 @@ public:
      *               value needs to be supplied by the user, because
      *               otherwise the constructor will always produce the same FSM.
      *   @param maxState  Maximal value of the states in range 0..maxState
+     *   @param observable  When `true`, an observable FSM will be created.
      *   @return an FSM created at random according to these specifications.
      */
     static std::shared_ptr<Fsm>
@@ -223,6 +224,7 @@ public:
                     const int maxState,
                     const std::shared_ptr<FsmPresentationLayer>
                     presentationLayer,
+                    const bool observable = false,
                     const unsigned seed = 0);
 
     /**

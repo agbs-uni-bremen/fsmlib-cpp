@@ -2663,6 +2663,10 @@ Fsm::createRandomFsm(const string & fsmName,
         if ( whiteNode != nullptr ) {
             x0 = rand() % (maxInput+1);
             y0 = rand() % (maxOutput+1);
+            if (observable && srcNode->hasTransition(x0, y0))
+            {
+                continue;
+            }
             auto theTrans =
             make_shared<FsmTransition>(srcNode,whiteNode,
                                        make_shared<FsmLabel>(x0,y0,pl));
@@ -2687,6 +2691,10 @@ Fsm::createRandomFsm(const string & fsmName,
             for ( int t = 0; t <= numTrans; t++ ) {
                 // Which output do we want?
                 int y = rand() % (maxOutput+1);
+                if (observable && srcNode->hasTransition(x, y))
+                {
+                    continue;
+                }
                 // Which target node?
                 int tgtNodeId = rand() % (maxState+1);
                 auto tgtNode = lst[tgtNodeId];
