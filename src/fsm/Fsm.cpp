@@ -1196,13 +1196,13 @@ void Fsm::calcROneDistinguishableStates()
 
 void Fsm::calcRDistinguishableStates()
 {
-
+    VLOG(2) << "calcRDistinguishableStates():";
     calcROneDistinguishableStates();
 
     size_t limit = nodes.size() * (nodes.size() - 1) / 2;
     for (size_t l = 2; l <= limit; ++l)
     {
-        VLOG(1) << "################ l = " << l << " ################";
+        VLOG(2) << "################ l = " << l << " ################";
         for (size_t k = 0; k < nodes.size(); ++k)
         {
             nodes.at(k)->getRDistinguishability()->inheritDistinguishability(l);
@@ -1210,12 +1210,12 @@ void Fsm::calcRDistinguishableStates()
         for (size_t k = 0; k < nodes.size(); ++k)
         {
             shared_ptr<FsmNode> q1 = nodes.at(k);
-            VLOG(1) << "q1 = " << q1->getName() << ":";
+            VLOG(2) << "q1 = " << q1->getName() << ":";
             vector<shared_ptr<FsmNode>> notROneDist = q1->getRDistinguishability()->getNotRDistinguishableWith(l);
             for (auto it = notROneDist.begin(); it != notROneDist.end(); ++it)
             {
                 shared_ptr<FsmNode> q2 = *it;
-                VLOG(1) << "  q2 = " << q2->getName() << ":";
+                VLOG(2) << "  q2 = " << q2->getName() << ":";
                 for (int x = 0; x <= maxInput; ++ x)
                 {
                     vector<shared_ptr<OutputTrace>> intersection = getOutputIntersection(q1, q2, x);
@@ -1241,7 +1241,7 @@ void Fsm::calcRDistinguishableStates()
                         }
                         else
                         {
-                            VLOG(1) << "    x = " << presentationLayer->getInId(x) << ":    "
+                            VLOG(2) << "    x = " << presentationLayer->getInId(x) << ":    "
                             << afterNode1->getName() << " != " << afterNode2->getName()
                             << "  ->  " << q1->getName() << " != " << q2->getName();
 
@@ -1253,7 +1253,7 @@ void Fsm::calcRDistinguishableStates()
                             // Put breakpoint at following line and debug.
                             stringstream ss;
                             ss << "      childIO1(" << afterNode1->getName() << "," << afterNode2->getName() << "): " << *childTree1;
-                            VLOG(1) << ss.str();
+                            VLOG(2) << ss.str();
                             ss.str(std::string());
 
                             shared_ptr<AdaptiveTreeNode> childNode1 = static_pointer_cast<AdaptiveTreeNode>(childTree1->getRoot());
@@ -1263,7 +1263,7 @@ void Fsm::calcRDistinguishableStates()
                             //shared_ptr<TreeNode> target2 = make_shared<TreeNode>();
                             shared_ptr<InputOutputTree> childTree2 = afterNode2->getRDistinguishability()->getAdaptiveIOSequence(afterNode1);
                             ss << "      childIO2(" << afterNode2->getName() << "," << afterNode1->getName() << "): " << *childTree2 << endl;
-                            VLOG(1) << ss.str();
+                            VLOG(2) << ss.str();
                             shared_ptr<AdaptiveTreeNode> childNode2 = static_pointer_cast<AdaptiveTreeNode>(childTree2->getRoot());
                             shared_ptr<TreeEdge> edge2 = make_shared<TreeEdge>(y, childNode2);
                             q2Edges.push_back(edge2);
@@ -1328,10 +1328,10 @@ void Fsm::calcRDistinguishableStates()
 
                         stringstream ss;
                         ss << "    q1Tree: " << *q1Tree;
-                        VLOG(1) << ss.str();
+                        VLOG(2) << ss.str();
                         ss.str(std::string());
                         ss << "    q2Tree: " << *q2Tree;
-                        VLOG(1) << ss.str();
+                        VLOG(2) << ss.str();
 
                         q1->getRDistinguishability()->addAdaptiveIOSequence(q2, q1Tree);
                         q2->getRDistinguishability()->addAdaptiveIOSequence(q1, q2Tree);
