@@ -727,6 +727,7 @@ int main(int argc, char* argv[])
 #endif
     el::Loggers::reconfigureAllLoggers(logConfig);
 
+    LOG(INFO) << "############## Starting Application ##############";
     LOG(DEBUG) << "Dir " << getcwd();
 
     shared_ptr<FsmPresentationLayer> plTest =
@@ -785,27 +786,34 @@ int main(int argc, char* argv[])
         */
 
         const size_t numFsm = 1;
+        const int maxInput = 5;
+        const int maxOutput = 5;
+        const int maxStates = 5;
+        const unsigned createRandomFsmSeed = 3239270505;
+        const unsigned createMutantSeed = 2540866678;
         LOG(INFO) << "Testing!";
         TIMED_FUNC(timerObj);
         for (size_t i = 0; i < numFsm; ++i)
         {
             TIMED_SCOPE(timerBlkObj, "heavy-iter");
+            const string dotPrefix = "../../../resources/adaptive-test-" + to_string(i) + "-";
+            LOG(INFO) << "-----------------------------------------------------------";
             LOG(INFO) << "i: " << i;
             LOG(INFO) << "Creating FSM.";
-            shared_ptr<Fsm> fsm = Fsm::createRandomFsm("random" + i, 5, 5, 10, plTest, true);
-            fsm->toDot("../../../resources/adaptive-test-fsm");
+            shared_ptr<Fsm> fsm = Fsm::createRandomFsm("random" + i, maxInput, maxOutput, maxStates, plTest, true, createRandomFsmSeed);
+            fsm->toDot(dotPrefix + "fsm");
             LOG(INFO) << "Creating mutant.";
-            shared_ptr<Fsm> mutant = fsm->createMutant("mutant" + i, 1, 1);
-            mutant->toDot("../../../resources/adaptive-test-mutant");
+            shared_ptr<Fsm> mutant = fsm->createMutant("mutant" + i, 1, 1, createMutantSeed);
+            mutant->toDot(dotPrefix + "mutant");
             LOG(INFO) << "Creating product.";
             shared_ptr<Fsm> product = Fsm::createProductMachine(fsm, mutant, "_prod");
-            product->toDot("../../../resources/adaptive-test-product");
+            product->toDot(dotPrefix + "product");
             LOG(INFO) << "Minimizing.";
             Fsm productMin = product->minimise();
-            productMin.toDot("../../../resources/adaptive-test-productMin");
+            productMin.toDot(dotPrefix + "productMin");
             LOG(INFO) << "Making complete.";
             Fsm productComplete = productMin.makeComplete(ErrorState);
-            productComplete.toDot("../../../resources/adaptive-test-productComplete");
+            productComplete.toDot(dotPrefix + "productComplete");
             productComplete.calcRDistinguishableStates();
             IOTraceContainer observedTraces(productComplete.getPresentationLayer());
             productComplete.adaptiveStateCounting(productComplete.getMaxNodes(), observedTraces);
