@@ -2829,9 +2829,18 @@ shared_ptr<Fsm> Fsm::createProductMachine(shared_ptr<Fsm> reference, shared_ptr<
 
 shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                                   const size_t numOutputFaults,
-                                  const size_t numTransitionFaults){
+                                  const size_t numTransitionFaults,
+                                  const unsigned seed){
     
-    srand(getRandomSeed());
+    if ( seed == 0 ) {
+        unsigned int s = getRandomSeed();
+        srand(s);
+        LOG(DEBUG) << "createMutant seed: " << s;
+    }
+    else {
+        srand(seed);
+        LOG(DEBUG) << "createMutant seed: " << seed;
+    }
     
     // Create new nodes for the mutant.
     vector<shared_ptr<FsmNode> > lst;
@@ -2863,6 +2872,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
             newTgtNodeId = (newTgtNodeId+1) % (maxState+1);
         }
         lst[srcNodeId]->getTransitions()[trNo]->setTarget(lst[newTgtNodeId]);
+        LOG(INFO) << "Adding transition fault:" << lst[srcNodeId]->getTransitions()[trNo]->str();
     }
     
     // Now add output faults to the new machine
@@ -2907,6 +2917,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                                                 presentationLayer);
             
             tr->setLabel(newLbl);
+            LOG(INFO) << "Adding output fault:" << tr->str();
         }
     }
     

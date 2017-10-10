@@ -248,7 +248,8 @@ public:
      */
     std::shared_ptr<Fsm> createMutant(const std::string & fsmName,
                                       const size_t numOutputFaults,
-                                      const size_t numTransitionFaults);
+                                      const size_t numTransitionFaults,
+                                      const unsigned seed = 0);
     
     
     /**
