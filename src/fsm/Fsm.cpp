@@ -412,6 +412,7 @@ void Fsm::dumpFsm(ofstream & outputFile) const
 
 vector<shared_ptr<FsmNode>> Fsm::getDReachableStates()
 {
+    TIMED_FUNC(timerObj);
     resetColor();
     deque<shared_ptr<FsmNode>> bfsLst;
     vector<shared_ptr<FsmNode>> nodes;
@@ -640,6 +641,7 @@ Fsm Fsm::intersect(const Fsm & f)
 
 shared_ptr<Tree> Fsm::getDeterministicStateCover()
 {
+    TIMED_FUNC(timerObj);
 	resetColor();
 	deque<shared_ptr<FsmNode>> bfsLst;
 	unordered_map<shared_ptr<FsmNode>, shared_ptr<TreeNode>> f2t;
@@ -1590,6 +1592,7 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const vec
 
 vector<IOTraceContainer> Fsm::getVPrime()
 {
+    TIMED_FUNC(timerObj);
     vector<IOTraceContainer> result;
 
     shared_ptr<Tree> detStateCover = getDeterministicStateCover();
@@ -1817,7 +1820,7 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
         // If the FSM enters the error state, adaptive state counting terminates.
         for (shared_ptr<InputTrace> inputTrace : tC)
         {
-
+            TIMED_SCOPE(timerBlkObj, "adaptiveStateCounting-loop-1");
             VLOG(1) << "  inputTrace: " << *inputTrace;
             /**
              * Holds the produced output traces for the current input trace.
@@ -1923,6 +1926,7 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
         vector<shared_ptr<InputTrace>> newTC;;
         for (shared_ptr<InputTrace> inputTrace : tC)
         {
+            TIMED_SCOPE(timerBlkObj, "adaptiveStateCounting-loop-2");
             vector<shared_ptr<OutputTrace>>& producedOutputs = observedOutputsTCElements.at(inputTrace);
             for (shared_ptr<OutputTrace> outputTrace : producedOutputs)
             {
@@ -2091,6 +2095,7 @@ bool Fsm::rDistinguishes(shared_ptr<FsmNode> nodeA,
 
 IOTreeContainer Fsm::getAdaptiveRCharacterisationSet() const
 {
+    TIMED_FUNC(timerObj);
     IOTreeContainer result = IOTreeContainer(presentationLayer);
     for (shared_ptr<FsmNode> n : nodes)
     {
@@ -2105,6 +2110,7 @@ IOTreeContainer Fsm::getAdaptiveRCharacterisationSet() const
 
 vector<vector<shared_ptr<FsmNode>>> Fsm::getMaximalSetsOfRDistinguishableStates() const
 {
+    TIMED_FUNC(timerObj);
     vector<vector<shared_ptr<FsmNode>>> result;
     for (shared_ptr<FsmNode> node : nodes)
     {
