@@ -7,6 +7,7 @@
 #include <chrono>
 #include <deque>
 #include <algorithm>
+#include <regex>
 
 #include "fsm/Dfsm.h"
 #include "fsm/Fsm.h"
@@ -217,6 +218,122 @@ void Fsm::readFsmInitial (const string & fname)
     
 }
 
+void Fsm::readFsmFromDot (const string & fname)
+{
+
+    maxInput = 0;
+    maxOutput = 0;
+    maxState = 0;
+    initStateIdx = -1;
+    int nodeIdCount = 0;
+    map<int,shared_ptr<FsmNode>> existingNodes;
+    initStateIdx = -1;
+    presentationLayer = make_shared<FsmPresentationLayer>();
+
+    ifstream inputFile (fname);
+    if (inputFile.is_open())
+    {
+        string line;
+        regex regInitial("\\s*node\\s*\\[\\s*shape\\s*=\\s*doublecircle\\s*\\]\\s*");
+        regex regNode("\\s*(\\d)\\s*\\[\\s*label=\"(.*)\"\\s*\\]\\s*;");
+        bool nextIsInitial = false;
+        bool initialSet = false;
+        while (getline (inputFile, line))
+        {
+            if (!initialSet && !nextIsInitial && regex_match(line, regInitial))
+            {
+                nextIsInitial = true;
+                continue;
+            }
+            cmatch matches;
+            regex_match(line.c_str(), matches, regNode);
+            LOG(INFO) << "line:";
+            LOG(INFO) << "  " << line;
+            LOG(INFO) << "matches:";
+            for (unsigned i=0; i<matches.size(); ++i) {
+                LOG(INFO) << "  " << matches[i];
+            }
+            if (matches.size() == 3)
+            {
+                int nodeId = stoi(matches[1]);
+                string nodeName = matches[2];
+                if(existingNodes.find(nodeId) != existingNodes.end()) {
+                    LOG(FATAL) << "Error while parsing dot file. The node id " << nodeId << "has been assigned more than once.";
+                }
+                presentationLayer->addState2String(nodeName);
+                shared_ptr<FsmNode> node = make_shared<FsmNode>(nodeIdCount++, presentationLayer);
+                nodes.push_back(node);
+                existingNodes.insert(make_pair(nodeId, node));
+                maxState++;
+                if (nextIsInitial)
+                {
+                    initStateIdx = node->getId();
+                    node->markAsInitial();
+                    nextIsInitial = false;
+                    initialSet = true;
+                }
+            }
+        }
+        inputFile.close ();
+    }
+
+    inputFile.open(fname);
+    if (inputFile.is_open())
+    {
+        string line;
+        regex regTransition("\\s*(\\d)\\s*->\\s*(\\d)\\s*\\[\\s*label=\"(.+)/(.+)\"\\s*\\]\\s*;");
+        int inputCount = 0;
+        int outputCount = 0;
+        map<string, int> inputs;
+        map<string, int> outputs;
+        while (getline (inputFile, line))
+        {
+            cmatch matches;
+            regex_match(line.c_str(), matches, regTransition);
+            if (matches.size() == 5)
+            {
+                LOG(INFO) << matches[1] << " -" << matches[3] << "/" << matches[4] << "-> " << matches[2];
+                int sourceId = stoi(matches[1]);
+                int targetId = stoi(matches[2]);
+                string input = matches[3];
+                string output = matches[4];
+                int in;
+                int out;
+
+                if(inputs.find(input) == inputs.end()) {
+                    maxInput++;
+                    in = inputCount++;
+                    presentationLayer->addIn2String(input);
+                    inputs.insert(make_pair(input, in));
+                }
+                else
+                {
+                    in = inputs.at(input);
+                }
+                if(outputs.find(output) == outputs.end()) {
+                    maxOutput++;
+                    out = outputCount++;
+                    presentationLayer->addOut2String(output);
+                    outputs.insert(make_pair(output, out));
+                }
+                else
+                {
+                    out = outputs.at(output);
+                }
+
+                shared_ptr<FsmLabel> label = make_shared<FsmLabel>(in, out, presentationLayer);
+                shared_ptr<FsmTransition> trans = make_shared<FsmTransition>(existingNodes.at(sourceId), existingNodes.at(targetId), label);
+                existingNodes.at(sourceId)->addTransition(trans);
+            }
+        }
+    }
+    else
+    {
+        LOG(FATAL) << "Unable to open input file";
+    }
+
+}
+
 
 string Fsm::labelString(unordered_set<shared_ptr<FsmNode>>& lbl) const
 {
@@ -305,6 +422,12 @@ presentationLayer(presentationLayer)
     readFsm(fname);
     if ( initStateIdx >= 0 ) nodes[initStateIdx]->markAsInitial();
     
+}
+
+Fsm::Fsm(const std::string& dotFileName,
+    const std::string& fsmName)
+{
+    readFsmFromDot(dotFileName);
 }
 
 Fsm::Fsm(const string & fname,

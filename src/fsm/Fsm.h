@@ -105,6 +105,7 @@ protected:
     
     void parseLineInitial (const std::string & line);
     void readFsmInitial (const std::string & fname);
+    void readFsmFromDot (const std::string & fname);
     
     std::string labelString(std::unordered_set<std::shared_ptr<FsmNode>>& lbl) const;
     
@@ -168,6 +169,9 @@ public:
      */
     Fsm(const std::string& fname,
         const std::shared_ptr<FsmPresentationLayer> presentationLayer,
+        const std::string& fsmName);
+
+    Fsm(const std::string& dotFileName,
         const std::string& fsmName);
     
     
