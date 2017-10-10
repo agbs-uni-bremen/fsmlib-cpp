@@ -1036,7 +1036,9 @@ Dfsm Dfsm::minimise()
     calcPkTables();
     shared_ptr<PkTable> pMin = pktblLst[pktblLst.size()-1];
     
-    return pMin->toFsm(name, maxOutput);
+    auto dfsm = pMin->toFsm(name, maxOutput);
+    dfsm.calcPkTables();
+    return dfsm;
 }
 
 void Dfsm::printTables() const
