@@ -62,12 +62,8 @@ public:
                          const std::string & outputs,
                          const std::string & states);
 
-    void removeState2String(const int index)
-    {
-        if ( state2String.size() > index) {
-            state2String.erase(state2String.begin() + index);
-        }
-    }
+    void addState2String(std::string name);
+    void removeState2String(const int index);
 
 	/**
 	 * Getter for a particular input name
