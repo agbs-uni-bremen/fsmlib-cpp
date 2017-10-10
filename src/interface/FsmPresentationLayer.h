@@ -64,30 +64,11 @@ public:
 
     static std::shared_ptr<FsmPresentationLayer> mergeAlphabets(std::shared_ptr<const FsmPresentationLayer> plA, std::shared_ptr<const FsmPresentationLayer> plB);
 
-    void setState2String(std::vector<std::string> state2String)
-    {
-        this->state2String = state2String;
-    }
-
-    void addState2String(std::string name)
-    {
-        state2String.push_back(name);
-    }
-
-    void removeState2String(const int index)
-    {
-        if (index >= 0 && state2String.size() > static_cast<size_t>(index))
-        {
-            state2String.erase(state2String.begin() + index);
-        }
-    }
-
-    int addOut2String(std::string name)
-    {
-        out2String.push_back(name);
-        return static_cast<int>(out2String.size() - 1);
-    }
-
+    void setState2String(std::vector<std::string> state2String);
+    void addState2String(std::string name);
+    void removeState2String(const int index);
+    int addOut2String(std::string name);
+    int addIn2String(std::string name);
     void truncateState2String(const int index);
     void truncateIn2String(const int index);
     void truncateOut2String(const int index);
