@@ -940,7 +940,7 @@ Fsm Fsm::makeComplete(CompleteMode mode)
     }
     for (shared_ptr<FsmNode> node : newNodes)
     {
-        LOG(DEBUG) << "  State " << node->getName() << ": ";
+        VLOG(2) << "  State " << node->getName() << ": ";
         for (int x = 0; x <= maxInput; ++x)
         {
             std::stringstream ss;
@@ -966,7 +966,7 @@ Fsm Fsm::makeComplete(CompleteMode mode)
             {
                 ss << " is defined.";
             }
-            LOG(DEBUG) << ss.str();
+            VLOG(2) << ss.str();
         }
     }
     if (mode == ErrorState && newErrorState && addErrorState)
@@ -1758,6 +1758,7 @@ size_t Fsm::lowerBound(const IOTrace& base,
 bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces)
 {
     TIMED_FUNC(timerObj);
+    LOG(INFO) << "adaptiveStateCounting with " << getMaxNodes() << " states.";
     if (!isComplete())
     {
         LOG(FATAL) << "This FSM may not be completely specified.";
@@ -2824,6 +2825,7 @@ shared_ptr<Fsm> Fsm::createProductMachine(shared_ptr<Fsm> reference, shared_ptr<
                 make_pair(reference->getInitialState()->getId(),iut->getInitialState()->getId()))->getId();
 
     state2String.push_back("Fail");
+    VLOG(1) << "Creating product node: " << failState->getName() << "(" << failState->getId() << ")";
     nodes.push_back(failState);
     pl->setState2String(state2String);
     shared_ptr<Fsm> result = make_shared<Fsm>(fsmName, maxInput, maxOutput, nodes, initStateIdx, pl);

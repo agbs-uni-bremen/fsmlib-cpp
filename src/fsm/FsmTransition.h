@@ -90,5 +90,7 @@ public:
 	@return The standard output stream used, to allow user to cascade <<
 	*/
 	friend std::ostream & operator<<(std::ostream & out, FsmTransition & transition);
+
+    std::string str();
 };
 #endif //FSM_FSM_FSMTRANSITION_H_

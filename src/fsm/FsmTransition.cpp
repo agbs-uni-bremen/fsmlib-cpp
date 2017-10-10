@@ -58,8 +58,15 @@ shared_ptr<FsmLabel> FsmTransition::getLabel()
 
 ostream & operator<<(ostream& out, FsmTransition& transition)
 {
-	out << transition.getSource()->getId() << " -> " << transition.getTarget()->getId() << "[label=\" " << *transition.label << "   \"];";
-	return out;
+    out << transition.str();
+    return out;
+}
+
+string FsmTransition::str()
+{
+    stringstream out;
+    out << getSource()->getId() << " -> " << getTarget()->getId() << "[label=\"" << *label << "\"];";
+    return out.str();
 }
 
 void FsmTransition::accept(FsmVisitor &v) {
