@@ -885,12 +885,20 @@ Fsm Fsm::transformToObservableFSM() const
     unordered_set<shared_ptr<FsmNode>> theLabel;
     
     theLabel.insert(getInitialState());
+
+    vector<string> obsState2String;
+    shared_ptr<FsmPresentationLayer> obsPl =
+    make_shared<FsmPresentationLayer>(presentationLayer->getIn2String(),
+                                      presentationLayer->getOut2String(),
+                                      obsState2String);
     
     int id = 0;
-    shared_ptr<FsmNode> q0 = make_shared<FsmNode>(id ++, labelString(theLabel), presentationLayer);
+    string nodeName = labelString(theLabel);
+    shared_ptr<FsmNode> q0 = make_shared<FsmNode>(id ++, nodeName, obsPl);
     nodeLst.push_back(q0);
     bfsLst.push_back(q0);
     node2Label[q0] = theLabel;
+    obsPl->addState2String(nodeName);
     
     while (!bfsLst.empty())
     {
@@ -904,7 +912,7 @@ Fsm Fsm::transformToObservableFSM() const
             for (int y = 0; y <= maxOutput; ++ y)
             {
                 shared_ptr<FsmLabel> lbl =
-                make_shared<FsmLabel>(x, y, presentationLayer);
+                make_shared<FsmLabel>(x, y, obsPl);
                 theLabel.clear();
                 
                 for (shared_ptr<FsmNode> n : node2Label.at(q))
@@ -938,10 +946,12 @@ Fsm Fsm::transformToObservableFSM() const
                     /*We need to create a new node*/
                     if (tgtNode == nullptr)
                     {
-                        tgtNode = make_shared<FsmNode>(id ++, labelString(theLabel), presentationLayer);
+                        nodeName = labelString(theLabel);
+                        tgtNode = make_shared<FsmNode>(id ++, nodeName, obsPl);
                         nodeLst.push_back(tgtNode);
                         bfsLst.push_back(tgtNode);
                         node2Label[tgtNode] = theLabel;
+                        obsPl->addState2String(nodeName);
                     }
                     
                     /*Create the transition from q to tgtNode*/
@@ -951,7 +961,7 @@ Fsm Fsm::transformToObservableFSM() const
             }
         }
     }
-    return Fsm(name + "_O", maxInput, maxOutput, nodeLst, presentationLayer);
+    return Fsm(name + "_O", maxInput, maxOutput, nodeLst, obsPl);
 }
 
 bool Fsm::isObservable() const
