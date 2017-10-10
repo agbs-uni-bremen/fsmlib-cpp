@@ -879,6 +879,7 @@ void Fsm::apply(const InputTrace& input, vector<shared_ptr<OutputTrace>>& produc
 
 Fsm Fsm::transformToObservableFSM() const
 {
+    VLOG(1) << "transformToObservableFSM()";
     vector<shared_ptr<FsmNode>> nodeLst;
     vector<shared_ptr<FsmNode>> bfsLst;
     unordered_map<shared_ptr<FsmNode>, unordered_set<shared_ptr<FsmNode>>> node2Label;
@@ -895,6 +896,7 @@ Fsm Fsm::transformToObservableFSM() const
     int id = 0;
     string nodeName = labelString(theLabel);
     shared_ptr<FsmNode> q0 = make_shared<FsmNode>(id ++, nodeName, obsPl);
+    VLOG(1) << "Initial state: " << q0->getName();
     nodeLst.push_back(q0);
     bfsLst.push_back(q0);
     node2Label[q0] = theLabel;
@@ -939,6 +941,7 @@ Fsm Fsm::transformToObservableFSM() const
                         if (entry.second == theLabel)
                         {
                             tgtNode = entry.first;
+                            VLOG(1) << "Use existing node: " << tgtNode->getName() << ", id: " << tgtNode->getId();
                             break;
                         }
                     }
@@ -948,6 +951,7 @@ Fsm Fsm::transformToObservableFSM() const
                     {
                         nodeName = labelString(theLabel);
                         tgtNode = make_shared<FsmNode>(id ++, nodeName, obsPl);
+                        VLOG(1) << "New node: " << tgtNode->getName() << ", id: " << tgtNode->getId() << ", label " << labelString(theLabel);
                         nodeLst.push_back(tgtNode);
                         bfsLst.push_back(tgtNode);
                         node2Label[tgtNode] = theLabel;
@@ -2908,6 +2912,7 @@ shared_ptr<Fsm> Fsm::createProductMachine(shared_ptr<Fsm> reference, shared_ptr<
                     failState,
                     failLabel);
         failState->addTransition(failTransition);
+        VLOG(1) << "Creating fail self transition: " << failTransition->str();
     }
 
     for(auto it = productNodesToOriginalNodes.begin(); it != productNodesToOriginalNodes.end(); ++it)
@@ -2935,6 +2940,7 @@ shared_ptr<Fsm> Fsm::createProductMachine(shared_ptr<Fsm> reference, shared_ptr<
                                 failState,
                                 productLabel);
                     productNode->addTransition(productTransition);
+                    VLOG(1) << "Creating transition to fail state: " << productTransition->str();
                     continue;
                 }
                 for (shared_ptr<FsmNode> targetA : targetsA)
@@ -2947,6 +2953,7 @@ shared_ptr<Fsm> Fsm::createProductMachine(shared_ptr<Fsm> reference, shared_ptr<
                                     productTarget,
                                     productLabel);
                         productNode->addTransition(productTransition);
+                        VLOG(1) << "Creating normal product transition: " << productTransition->str();
                         //shared_ptr<FsmNode> originInProduct =
                     }
                 }
@@ -3013,7 +3020,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
             newTgtNodeId = (newTgtNodeId+1) % (maxState+1);
         }
         lst[srcNodeId]->getTransitions()[trNo]->setTarget(lst[newTgtNodeId]);
-        LOG(INFO) << "Adding transition fault:" << lst[srcNodeId]->getTransitions()[trNo]->str();
+        LOG(INFO) << "Adding transition fault: " << lst[srcNodeId]->getTransitions()[trNo]->str();
     }
     
     // Now add output faults to the new machine
@@ -3058,7 +3065,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                                                 presentationLayer);
             
             tr->setLabel(newLbl);
-            LOG(INFO) << "Adding output fault:" << tr->str();
+            LOG(INFO) << "Adding output fault: " << tr->str();
         }
     }
     
@@ -3156,7 +3163,7 @@ void Fsm::accept(FsmVisitor& v) {
 
 
 bool Fsm::removeUnreachableNodes(std::vector<shared_ptr<FsmNode>>& unreachableNodes) {
-    
+    VLOG(1) << "removeUnreachableNodes()";
     vector<shared_ptr<FsmNode>> newNodes;
     FsmVisitor v;
     
@@ -3171,6 +3178,7 @@ bool Fsm::removeUnreachableNodes(std::vector<shared_ptr<FsmNode>>& unreachableNo
     int subtractFromId = 0;
     for ( auto n : nodes ) {
         if ( not n->hasBeenVisited() ) {
+            VLOG(1) << "Removing node " << n->getName() << " (" << n->getId() << ", " << n << ").";
             unreachableNodes.push_back(n);
             presentationLayer->removeState2String(n->getId() - subtractFromId);
             ++subtractFromId;
