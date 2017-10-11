@@ -1564,6 +1564,7 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
                                           shared_ptr<InputOutputTree> tree,
                                           const bool cleanTrailingEmptyTraces) const
 {
+    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
     VLOG(2) << "(" << node->getName() << ") " << "getPossibleIOTraces()";
     VLOG(2) << "(" << node->getName() << ") " << "  node: " << node->getName();
     VLOG(2) << "(" << node->getName() << ") " << "  tree: " << tree->str() ;
@@ -1649,6 +1650,7 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
                                           const IOTreeContainer& treeContainer,
                                           const bool cleanTrailingEmptyTraces) const
 {
+    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(6));
     IOTraceContainer result = IOTraceContainer(presentationLayer);;
     for (shared_ptr<InputOutputTree> tree : *treeContainer.getList())
     {
@@ -1660,6 +1662,8 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
 
 IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const IOTrace& trace) const
 {
+    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
+    VLOG(7) << "bOmega() - adaptiveTestCases.size: " << adaptiveTestCases.size() << ", trace.size(): " << trace.size();
     IOTraceContainer result = IOTraceContainer(presentationLayer);
 
     shared_ptr<FsmNode> initialState = getInitialState();
@@ -1683,6 +1687,8 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const IOT
 
 IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const vector<shared_ptr<InputTrace>>& inputTraces) const
 {
+    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(6));
+    VLOG(6) << "bOmega() - adaptiveTestCases.size: " << adaptiveTestCases.size() << ", inputTraces.size(): " << inputTraces.size();
     IOTraceContainer result = IOTraceContainer(presentationLayer);
     shared_ptr<FsmNode> initialState = getInitialState();
     if (!initialState)
@@ -1705,7 +1711,7 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const vec
 
 vector<IOTraceContainer> Fsm::getVPrime()
 {
-    TIMED_FUNC(timerObj);
+    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(4));
     vector<IOTraceContainer> result;
 
     shared_ptr<Tree> detStateCover = getDeterministicStateCover();
@@ -1771,6 +1777,7 @@ IOTraceContainer Fsm::r(std::shared_ptr<FsmNode> node,
                    const IOTrace& base,
                    const IOTrace& suffix) const
 {
+    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
     VLOG(3) << "node: " << node->getName();
     VLOG(3) << "base: " << base;
     VLOG(3) << "suffix: " << suffix;
@@ -1826,6 +1833,7 @@ IOTraceContainer Fsm::rPlus(std::shared_ptr<FsmNode> node,
                    const IOTrace& suffix,
                    const IOTraceContainer& vDoublePrime) const
 {
+    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
     IOTraceContainer rResult = r(node, base, suffix);
     VLOG(2) << "rResult: " << rResult;
     if (node->isDReachable() && vDoublePrime.contains(*node->getDReachTrace()))
@@ -1845,6 +1853,7 @@ size_t Fsm::lowerBound(const IOTrace& base,
           const IOTraceContainer& vDoublePrime,
           const vector<shared_ptr<FsmNode>>& dReachableStates) const
 {
+    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(5));
     size_t result = 0;
 
     IOTraceContainer testTraces = bOmega(adaptiveTestCases, takenInputs);
@@ -2044,6 +2053,7 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
             vector<shared_ptr<OutputTrace>>& producedOutputs = observedOutputsTCElements.at(inputTrace);
             for (shared_ptr<OutputTrace> outputTrace : producedOutputs)
             {
+                TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1", VLOG_IS_ON(2));
                 if (cancel)
                 {
                     break;
@@ -2051,6 +2061,7 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
                 IOTrace currentTrace(*inputTrace, *outputTrace);
                 for (const IOTraceContainer& vDoublePrime : vPrime)
                 {
+                    TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-1", VLOG_IS_ON(3));
                     if (cancel)
                     {
                         break;
@@ -2058,6 +2069,7 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
                     IOTrace* maxPrefix = nullptr;
                     for (IOTrace& iOTrace : *vDoublePrime.getList())
                     {
+                        TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-2", VLOG_IS_ON(4));
                         if (currentTrace.isPrefix(iOTrace) && (!maxPrefix || iOTrace.size() > maxPrefix->size()))
                         {
                             maxPrefix = &iOTrace;
@@ -2069,12 +2081,14 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
                     }
                     for (const vector<shared_ptr<FsmNode>>& rDistStates : maximalSetsOfRDistinguishableStates)
                     {
+                        TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3", VLOG_IS_ON(4));
                         if (cancel)
                         {
                             break;
                         }
                         for (size_t i = 0; i < rDistStates.size() - 1; ++i)
                         {
+                            TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3-1", VLOG_IS_ON(5));
                             if (cancel)
                             {
                                 break;
@@ -2082,6 +2096,7 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
                             shared_ptr<FsmNode> s1 = rDistStates.at(i);
                             for (size_t j = i + 1; j < rDistStates.size(); ++j)
                             {
+                                TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3-1-1", VLOG_IS_ON(6));
                                 shared_ptr<FsmNode> s2 = rDistStates.at(j);
                                 if (s1 == s2)
                                 {
@@ -2095,12 +2110,14 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
 
                                 for (IOTrace& trace : *s1RPlus.getList())
                                 {
+                                    TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3-1-1-1", VLOG_IS_ON(7));
                                     unordered_set<shared_ptr<FsmNode>> reached = getInitialState()->after(trace);
                                     reached1.insert(reached.begin(), reached.end());
 
                                 }
                                 for (IOTrace& trace : *s2RPlus.getList())
                                 {
+                                    TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3-1-1-2", VLOG_IS_ON(7));
                                     unordered_set<shared_ptr<FsmNode>> reached = getInitialState()->after(trace);
                                     reached2.insert(reached.begin(), reached.end());
                                 }
@@ -2126,6 +2143,7 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
                 // Expanding sequences.
                 for (int x = 0; x <= maxInput; ++x)
                 {
+                    TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-2", VLOG_IS_ON(2));
                     shared_ptr<InputTrace> concat  = make_shared<InputTrace>(*inputTrace);
                     concat->add(x);
                     if (!InputTrace::contains(t, *concat) && !InputTrace::contains(newTC, *concat))
@@ -2150,6 +2168,7 @@ bool Fsm::rDistinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
                             std::vector<std::shared_ptr<FsmNode>>& nodesB,
                             const IOTreeContainer& adaptiveTestCases) const
 {
+    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
     for (size_t i = 0; i < nodesA.size(); ++i)
     {
         shared_ptr<FsmNode> nodeA = nodesA.at(i);

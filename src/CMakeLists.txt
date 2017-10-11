@@ -18,6 +18,7 @@ add_definitions(-DAUTO_INITIALIZE_EASYLOGGINGPP)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions(-DELPP_FEATURE_PERFORMANCE_TRACKING)
     add_definitions(-DELPP_LOGGING_FLAGS_FROM_ARG)
+    #add_definitions(-DELPP_PERFORMANCE_MICROSECONDS)
 endif()
 
 #####################################################################
