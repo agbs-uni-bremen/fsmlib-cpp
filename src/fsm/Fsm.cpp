@@ -1037,8 +1037,8 @@ Fsm Fsm::minimise()
 
 Fsm Fsm::makeComplete(CompleteMode mode)
 {
-    CLOG(DEBUG, logging::fsmConversion) << "makeComplete():";
     TIMED_FUNC(timerObj);
+    CLOG(DEBUG, logging::fsmConversion) << "makeComplete():";
     vector<shared_ptr<FsmNode>> newNodes = nodes;
     bool addErrorState = false;
     shared_ptr<FsmNode> errorNode;
@@ -2749,7 +2749,7 @@ Fsm::createRandomFsm(const string & fsmName,
                      const shared_ptr<FsmPresentationLayer> pl,
                      const bool observable,
                      const unsigned seed) {
-    
+    TIMED_FUNC(timerObj);
     // Initialisation of random number generation
     if ( seed == 0 ) {
         unsigned int s = getRandomSeed();
@@ -2915,6 +2915,8 @@ shared_ptr<Fsm> Fsm::createProductMachine(shared_ptr<Fsm> reference, shared_ptr<
         shared_ptr<FsmNode> productNode = it->first;
         shared_ptr<FsmNode> nodeA = it->second.first;
         shared_ptr<FsmNode> nodeB = it->second.second;
+        LOG(DEBUG) << "Creating transitions for productNode " << productNode->getName();
+        PERFORMANCE_CHECKPOINT(timerObj);
         for (size_t x = 0; x <= maxInput; ++x)
         {
             for (size_t y = 0; y <= maxOutput; ++y)
@@ -2974,7 +2976,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                                   const size_t numOutputFaults,
                                   const size_t numTransitionFaults,
                                   const unsigned seed){
-    
+    TIMED_FUNC(timerObj);
     if ( seed == 0 ) {
         unsigned int s = getRandomSeed();
         srand(s);

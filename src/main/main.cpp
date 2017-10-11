@@ -791,11 +791,18 @@ int main(int argc, char* argv[])
         */
 
         const size_t numFsm = 1;
-        const int maxInput = 5;
-        const int maxOutput = 5;
-        const int maxStates = 5;
-        const unsigned createRandomFsmSeed = 3239270505;
-        const unsigned createMutantSeed = 2540866678;
+        const int maxInput = 100;
+        const int maxOutput = 100;
+        const int maxStates = 50;
+        // State counting takes a while:
+        //const unsigned createRandomFsmSeed = 97295907;
+        //const unsigned createMutantSeed = 98228883;
+        const unsigned createRandomFsmSeed = 0;
+        const unsigned createMutantSeed = 0;
+        LOG(INFO) << "numFsm: " << numFsm;
+        LOG(INFO) << "maxInput: " << maxInput;
+        LOG(INFO) << "maxOutput: " << maxOutput;
+        LOG(INFO) << "maxStates: " << maxStates;
         LOG(INFO) << "Testing!";
         TIMED_FUNC(timerObj);
         for (size_t i = 0; i < numFsm; ++i)
