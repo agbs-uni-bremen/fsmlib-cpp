@@ -1,4 +1,5 @@
 #include "IOTreeContainer.h"
+#include "logging/easylogging++.h"
 
 using namespace std;
 
@@ -21,19 +22,49 @@ shared_ptr<vector<shared_ptr<InputOutputTree>>> IOTreeContainer::getList() const
 
 IOListContainer IOTreeContainer::toIOList() const
 {
+    VLOG(8) << "toIOList()";
     IOListContainer result = IOListContainer(presentationLayer);
+    bool containsEmpty = false;
     for (shared_ptr<InputOutputTree> tree : *list)
     {
+        VLOG(8) << "tree: " << tree->str();
         if (tree->isEmpty())
         {
-            result.addUnique((Trace({})));
+            VLOG(8) << "  Tree is empty.";
+            if (!containsEmpty)
+            {
+                VLOG(8) << "  Adding empty tree.";
+                result.addUnique((Trace({})));
+            }
             continue;
         }
         IOListContainer container = tree->getInputLists();
-        auto set = container.getIOLists();
-        for (auto trace : *set)
+        VLOG(8) << "  Tree as input list: " << container;
+        shared_ptr<vector<vector<int>>> set = container.getIOLists();
+        VLOG(8) << "  Tree as IO set: ";
+        for (vector<int> e : *set)
         {
+            stringstream ss;
+            ss << "[";
+            for (int i : e)
+            {
+                ss << i << ",";
+            }
+            ss << "]";
+            VLOG(8) << ss.str();
+        }
+        for (vector<int> trace : *set)
+        {
+            stringstream ss;
+            ss << "Adding trace: [";
+            for (int i : trace)
+            {
+                ss << i << ",";
+            }
+            ss << "]";
+            VLOG(8) << ss.str();
             result.addUniqueRemovePrefixes(Trace(trace, presentationLayer));
+            VLOG(8) << "  result: " << result;
         }
     }
     return result;

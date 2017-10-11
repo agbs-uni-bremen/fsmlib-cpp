@@ -143,8 +143,8 @@ bool IOTrace::isPrefixOf(const IOTrace& other) const
 
 shared_ptr<IOTrace> IOTrace::getEmptyTrace(shared_ptr<FsmPresentationLayer> pl)
 {
-    InputTrace i = InputTrace({-1}, pl);
-    OutputTrace o = OutputTrace({-1}, pl);
+    InputTrace i({-1}, pl);
+    OutputTrace o({-1}, pl);
     return make_shared<IOTrace>(i, o);
 }
 

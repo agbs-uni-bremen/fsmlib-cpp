@@ -42,7 +42,7 @@ private:
     std::shared_ptr<RDistinguishability> rDistinguishability;
     
     bool isInitialNode;
-    bool dReachable;
+    bool dReachable = false;
     std::shared_ptr<IOTrace> dReachTrace;
     
     /**
