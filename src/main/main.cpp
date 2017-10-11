@@ -23,6 +23,7 @@
 #include <trees/TestSuite.h>
 #include "json/json.h"
 #include "logging/easylogging++.h"
+#include "logging/LoggerIds.h"
 
 #include <unistd.h>
 #include <errno.h>
@@ -715,17 +716,21 @@ std::string getcwd() {
     return result;
 }
 
-
 int main(int argc, char* argv[])
 {
     START_EASYLOGGINGPP(argc, argv);
     const string loggerConfigDir = "../../../src/externals/easyloggingpp_v9.95.0";
+
+    el::Loggers::getLogger(logging::fsmConversion);
+
 #ifdef ENABLE_DEBUG_MACRO
-    el::Configurations logConfig(loggerConfigDir + "/Debug.cfg");
+    //el::Configurations logConfig(loggerConfigDir + "/Debug.cfg");
+    el::Loggers::configureFromGlobal((loggerConfigDir + "/Debug.cfg").c_str());
 #else
-    el::Configurations logConfig(loggerConfigDir + "/Release.cfg");
+    //el::Configurations logConfig(loggerConfigDir + "/Release.cfg");
+    el::Loggers::configureFromGlobal((loggerConfigDir + "/Release.cfg").c_str());
 #endif
-    el::Loggers::reconfigureAllLoggers(logConfig);
+    //el::Loggers::reconfigureAllLoggers(logConfig);
 
     LOG(INFO) << "############## Starting Application ##############";
     LOG(DEBUG) << "Dir " << getcwd();

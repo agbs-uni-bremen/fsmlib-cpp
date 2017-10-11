@@ -28,7 +28,7 @@
 #include "trees/InputOutputTree.h"
 #include "trees/AdaptiveTreeNode.h"
 #include "logging/easylogging++.h"
-
+#include "logging/LoggerIds.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -896,7 +896,7 @@ Fsm Fsm::transformToObservableFSM() const
     int id = 0;
     string nodeName = labelString(theLabel);
     shared_ptr<FsmNode> q0 = make_shared<FsmNode>(id ++, nodeName, obsPl);
-    VLOG(1) << "Initial state: " << q0->getName();
+    CVLOG(2, logging::fsmConversion) << "Initial state: " << q0->getName();
     nodeLst.push_back(q0);
     bfsLst.push_back(q0);
     node2Label[q0] = theLabel;
@@ -941,7 +941,7 @@ Fsm Fsm::transformToObservableFSM() const
                         if (entry.second == theLabel)
                         {
                             tgtNode = entry.first;
-                            VLOG(1) << "Use existing node: " << tgtNode->getName() << ", id: " << tgtNode->getId();
+                            CVLOG(4, logging::fsmConversion) << "Use existing node: " << tgtNode->getName() << ", id: " << tgtNode->getId();
                             break;
                         }
                     }
@@ -951,7 +951,7 @@ Fsm Fsm::transformToObservableFSM() const
                     {
                         nodeName = labelString(theLabel);
                         tgtNode = make_shared<FsmNode>(id ++, nodeName, obsPl);
-                        VLOG(1) << "New node: " << tgtNode->getName() << ", id: " << tgtNode->getId() << ", label " << labelString(theLabel);
+                        CVLOG(2, logging::fsmConversion) << "New node: " << tgtNode->getName() << ", id: " << tgtNode->getId() << ", label: " << labelString(theLabel);
                         nodeLst.push_back(tgtNode);
                         bfsLst.push_back(tgtNode);
                         node2Label[tgtNode] = theLabel;
@@ -1054,7 +1054,7 @@ Fsm Fsm::minimise()
 
 Fsm Fsm::makeComplete(CompleteMode mode)
 {
-    LOG(DEBUG) << "makeComplete():";
+    CLOG(DEBUG, logging::fsmConversion) << "makeComplete():";
     TIMED_FUNC(timerObj);
     vector<shared_ptr<FsmNode>> newNodes = nodes;
     bool addErrorState = false;
@@ -1077,7 +1077,7 @@ Fsm Fsm::makeComplete(CompleteMode mode)
     }
     for (shared_ptr<FsmNode> node : newNodes)
     {
-        VLOG(2) << "  State " << node->getName() << ": ";
+        CVLOG(2, logging::fsmConversion) << "  State " << node->getName() << ": ";
         for (int x = 0; x <= maxInput; ++x)
         {
             std::stringstream ss;
@@ -1103,7 +1103,7 @@ Fsm Fsm::makeComplete(CompleteMode mode)
             {
                 ss << " is defined.";
             }
-            VLOG(2) << ss.str();
+            CVLOG(2, logging::fsmConversion) << ss.str();
         }
     }
     if (mode == ErrorState && newErrorState && addErrorState)
@@ -1344,7 +1344,7 @@ void Fsm::calcRDistinguishableStates()
     size_t limit = nodes.size() * (nodes.size() - 1) / 2;
     for (size_t l = 2; l <= limit; ++l)
     {
-        VLOG(2) << "################ l = " << l << " ################";
+        VLOG(2) << "################ l = " << l << " (max " << limit << ") ################";
         for (size_t k = 0; k < nodes.size(); ++k)
         {
             nodes.at(k)->getRDistinguishability()->inheritDistinguishability(l);
@@ -1352,12 +1352,12 @@ void Fsm::calcRDistinguishableStates()
         for (size_t k = 0; k < nodes.size(); ++k)
         {
             shared_ptr<FsmNode> q1 = nodes.at(k);
-            VLOG(2) << "q1 = " << q1->getName() << ":";
+            VLOG(3) << "q1 = " << q1->getName() << ":";
             vector<shared_ptr<FsmNode>> notROneDist = q1->getRDistinguishability()->getNotRDistinguishableWith(l);
             for (auto it = notROneDist.begin(); it != notROneDist.end(); ++it)
             {
                 shared_ptr<FsmNode> q2 = *it;
-                VLOG(2) << "  q2 = " << q2->getName() << ":";
+                VLOG(3) << "  q2 = " << q2->getName() << ":";
                 for (int x = 0; x <= maxInput; ++ x)
                 {
                     vector<shared_ptr<OutputTrace>> intersection = getOutputIntersection(q1, q2, x);
@@ -1383,7 +1383,7 @@ void Fsm::calcRDistinguishableStates()
                         }
                         else
                         {
-                            VLOG(2) << "    x = " << presentationLayer->getInId(x) << ":    "
+                            VLOG(3) << "    x = " << presentationLayer->getInId(x) << ":    "
                             << afterNode1->getName() << " != " << afterNode2->getName()
                             << "  ->  " << q1->getName() << " != " << q2->getName();
 
@@ -1395,7 +1395,7 @@ void Fsm::calcRDistinguishableStates()
                             // Put breakpoint at following line and debug.
                             stringstream ss;
                             ss << "      childIO1(" << afterNode1->getName() << "," << afterNode2->getName() << "): " << *childTree1;
-                            VLOG(2) << ss.str();
+                            VLOG(3) << ss.str();
                             ss.str(std::string());
 
                             shared_ptr<AdaptiveTreeNode> childNode1 = static_pointer_cast<AdaptiveTreeNode>(childTree1->getRoot());
@@ -1405,7 +1405,7 @@ void Fsm::calcRDistinguishableStates()
                             //shared_ptr<TreeNode> target2 = make_shared<TreeNode>();
                             shared_ptr<InputOutputTree> childTree2 = afterNode2->getRDistinguishability()->getAdaptiveIOSequence(afterNode1);
                             ss << "      childIO2(" << afterNode2->getName() << "," << afterNode1->getName() << "): " << *childTree2 << endl;
-                            VLOG(2) << ss.str();
+                            VLOG(3) << ss.str();
                             shared_ptr<AdaptiveTreeNode> childNode2 = static_pointer_cast<AdaptiveTreeNode>(childTree2->getRoot());
                             shared_ptr<TreeEdge> edge2 = make_shared<TreeEdge>(y, childNode2);
                             q2Edges.push_back(edge2);
@@ -2965,9 +2965,9 @@ shared_ptr<Fsm> Fsm::createProductMachine(shared_ptr<Fsm> reference, shared_ptr<
                 make_pair(reference->getInitialState()->getId(),iut->getInitialState()->getId()))->getId();
 
     state2String.push_back("Fail");
-    VLOG(1) << "Creating product node: " << failState->getName() << "(" << failState->getId() << ")";
     nodes.push_back(failState);
     pl->setState2String(state2String);
+    VLOG(1) << "Creating fail node: " << failState->getName() << "(" << failState->getId() << ")";
     shared_ptr<Fsm> result = make_shared<Fsm>(fsmName, maxInput, maxOutput, nodes, initStateIdx, pl);
     result->failState = failState;
     return result;
