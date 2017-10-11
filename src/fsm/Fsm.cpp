@@ -1342,9 +1342,13 @@ void Fsm::calcRDistinguishableStates()
     calcROneDistinguishableStates();
 
     size_t limit = nodes.size() * (nodes.size() - 1) / 2;
-    for (size_t l = 2; l <= limit; ++l)
+    bool allRDistinguishable = false;
+    bool newDistinguishabilityCalculated = true;
+    for (size_t l = 2; !allRDistinguishable && newDistinguishabilityCalculated && l <= limit; ++l)
     {
         VLOG(2) << "################ l = " << l << " (max " << limit << ") ################";
+        allRDistinguishable = true;
+        newDistinguishabilityCalculated = false;
         for (size_t k = 0; k < nodes.size(); ++k)
         {
             nodes.at(k)->getRDistinguishability()->inheritDistinguishability(l);
@@ -1356,6 +1360,8 @@ void Fsm::calcRDistinguishableStates()
             vector<shared_ptr<FsmNode>> notROneDist = q1->getRDistinguishability()->getNotRDistinguishableWith(l);
             for (auto it = notROneDist.begin(); it != notROneDist.end(); ++it)
             {
+                // There are still nodes that can not be r-distuinguisehd from each other. Do one more iteration.
+                allRDistinguishable = false;
                 shared_ptr<FsmNode> q2 = *it;
                 VLOG(3) << "  q2 = " << q2->getName() << ":";
                 for (int x = 0; x <= maxInput; ++ x)
@@ -1483,6 +1489,7 @@ void Fsm::calcRDistinguishableStates()
                         q2->getRDistinguishability()->addDistinguishable(l, q1);
                         q1->getRDistinguishability()->removeNotDistinguishable(l, q2);
                         q2->getRDistinguishability()->removeNotDistinguishable(l, q1);
+                        newDistinguishabilityCalculated = true;
                         break;
                     }
                 }
