@@ -140,6 +140,18 @@ bool Trace::contains(const std::vector<std::shared_ptr<Trace>>& list, const Trac
     return false;
 }
 
+bool Trace::contains(const int io) const
+{
+    for (int i : trace)
+    {
+        if (i == io)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool operator==(Trace const & trace1, Trace const & trace2)
 {
 	if (trace1.get().size() != trace2.get().size())

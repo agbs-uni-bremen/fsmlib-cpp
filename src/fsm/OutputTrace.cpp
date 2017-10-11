@@ -29,6 +29,25 @@ bool OutputTrace::contains(const std::vector<std::shared_ptr<OutputTrace>>& list
     return false;
 }
 
+bool OutputTrace::contains(const std::vector<std::shared_ptr<OutputTrace>>& list, const int output)
+{
+    for (std::shared_ptr<OutputTrace> t : list)
+    {
+        if (t->contains(output))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+bool OutputTrace::contains(const int output) const
+{
+    return this->Trace::contains(output);
+}
+
+
 std::ostream & operator<<(std::ostream & out, const OutputTrace & trace)
 {
 	for (auto it = trace.cbegin(); it != trace.cend(); ++ it)

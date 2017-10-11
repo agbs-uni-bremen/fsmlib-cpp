@@ -114,6 +114,7 @@ public:
     std::vector<Trace> getPrefixes() const;
 
     static bool contains(const std::vector<std::shared_ptr<Trace>>& list, const Trace& trace);
+    bool contains(const int io) const;
 
 	/**
 	Check wheter or not, the 2 trace are the same

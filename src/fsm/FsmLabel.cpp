@@ -8,6 +8,7 @@
 const int FsmLabel::EPSILON_INPUT = -1;
 const int FsmLabel::EPSILON_OUTPUT = -1;
 const int FsmLabel::ERROR_OUTPUT = -2;
+const int FsmLabel::UNDEFINED_OUTPUT = -1000;
 
 FsmLabel::FsmLabel(const int input,
                    const int output,

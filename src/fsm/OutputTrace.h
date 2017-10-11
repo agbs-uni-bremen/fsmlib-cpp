@@ -29,6 +29,8 @@ public:
     OutputTrace(const std::vector<int>& trace, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 
     static bool contains(const std::vector<std::shared_ptr<OutputTrace>>& list, const OutputTrace& trace);
+    static bool contains(const std::vector<std::shared_ptr<OutputTrace>>& list, const int output);
+    bool contains(const int output) const;
 
 	/**
 	Output the OutputTrace to a standard output stream

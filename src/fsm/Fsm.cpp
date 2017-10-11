@@ -363,6 +363,7 @@ Fsm::Fsm(const Fsm& other) {
     maxInput = other.maxInput;
     maxOutput = other.maxOutput;
     maxState = other.maxState;
+    failOutput = other.failOutput;
     initStateIdx = other.initStateIdx;
     characterisationSet = nullptr;
     minimal = other.minimal;
@@ -965,7 +966,9 @@ Fsm Fsm::transformToObservableFSM() const
             }
         }
     }
-    return Fsm(name + "_O", maxInput, maxOutput, nodeLst, obsPl);
+    Fsm obsFsm(name + "_O", maxInput, maxOutput, nodeLst, obsPl);
+    obsFsm.failOutput = failOutput;
+    return obsFsm;
 }
 
 bool Fsm::isObservable() const
@@ -1014,27 +1017,7 @@ Fsm Fsm::minimiseObservableFSM()
     /*Create the minimised FSM from tbl and return it*/
     Fsm fsm = tbl->toFsm(name + "_MIN");
     fsm.minimal = True;
-
-    if (failState || errorState)
-    {
-        for (shared_ptr<FsmNode> node : fsm.nodes)
-        {
-            if (!fsm.failState && failState && node->getId() == tbl->getS2C().at(failState->getId()))
-            {
-                LOG(DEBUG) << "  Setting failState:" << node->getName() << "(" << node->getId() << ", " << node << ")";
-                fsm.failState = node;
-            }
-            if (!fsm.errorState && errorState && node->getId() == tbl->getS2C().at(errorState->getId()))
-            {
-                LOG(DEBUG) << "  Setting errorState:" << node->getName();
-                fsm.errorState = node;
-            }
-            if ((!failState || fsm.failState) && (!errorState || fsm.errorState))
-            {
-                break;
-            }
-        }
-    }
+    fsm.failOutput = failOutput;
     return fsm;
 }
 
@@ -1058,15 +1041,10 @@ Fsm Fsm::makeComplete(CompleteMode mode)
     TIMED_FUNC(timerObj);
     vector<shared_ptr<FsmNode>> newNodes = nodes;
     bool addErrorState = false;
-    bool newErrorState = false;
-    shared_ptr<FsmNode> errorNode = errorState;
+    shared_ptr<FsmNode> errorNode;
     if (mode == ErrorState)
     {
-        if (!errorNode)
-        {
-            errorNode = make_shared<FsmNode>(getMaxNodes() + 1, "Error", presentationLayer);
-            newErrorState = true;
-        }
+        errorNode = make_shared<FsmNode>(getMaxNodes() + 1, "Error", presentationLayer);
         presentationLayer->addState2String("Error");
         for (int x = 0; x <= maxInput; ++x)
         {
@@ -1106,28 +1084,19 @@ Fsm Fsm::makeComplete(CompleteMode mode)
             CVLOG(2, logging::fsmConversion) << ss.str();
         }
     }
-    if (mode == ErrorState && newErrorState && addErrorState)
+    if (mode == ErrorState && addErrorState)
     {
         newNodes.push_back(errorNode);
     }
     Fsm fsmComplete(name + "_COMPLETE", maxInput, maxOutput, newNodes, presentationLayer);
     fsmComplete.complete = true;
-    if (mode == ErrorState)
-    {
-        fsmComplete.errorState = errorNode;
-    }
-    fsmComplete.failState = failState;
+    fsmComplete.failOutput = failOutput;
     return fsmComplete;
 }
 
-shared_ptr<FsmNode> Fsm::getErrorState()
+int Fsm::getFailOutput() const
 {
-    return errorState;
-}
-
-shared_ptr<FsmNode> Fsm::getFailState()
-{
-    return failState;
+    return failOutput;
 }
 
 bool Fsm::isCharSet(const shared_ptr<Tree> w) const
@@ -1908,8 +1877,6 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
         LOG(FATAL) << "This FSM may not be completely specified.";
     }
 
-    const shared_ptr<FsmNode> failState = getFailState();
-
     /**
      * Adaptive test cases for this FSM (Ω).
      */
@@ -2001,7 +1968,8 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
             ss.str(std::string());
             observedOutputsTCElements.insert(make_pair(inputTrace, producedOutputs));
 
-            if(failState && std::find(reachedNodes.begin(), reachedNodes.end(), failState) != reachedNodes.end()) {
+            if (OutputTrace::contains(producedOutputs, failOutput))
+            {
                 // FSM entered the error state.
                 LOG(INFO) << "  Failure observed:";
                 LOG(INFO) << "    Input Trace: " << *inputTrace;
@@ -2054,7 +2022,8 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
                 observedTraces.addUnique(observedAdaptiveTraces);
                 for (IOTrace& trace : *observedAdaptiveTraces.getList())
                 {
-                    if(failState && trace.getTargetNode() == failState) {
+                    if (trace.getOutputTrace().contains(failOutput))
+                    {
                         // FSM entered the error state.
                         LOG(INFO) << "  Failure observed:";
                         LOG(INFO) << "    Input Trace: " << *inputTrace;
@@ -2886,7 +2855,7 @@ shared_ptr<Fsm> Fsm::createProductMachine(shared_ptr<Fsm> reference, shared_ptr<
     iut->getPresentationLayer()->truncateOut2String(reference->maxOutput + 1);
     iut->getPresentationLayer()->truncateState2String(reference->maxState + 1);
     shared_ptr<FsmPresentationLayer> pl = FsmPresentationLayer::mergeAlphabets(reference->getPresentationLayer(), iut->getPresentationLayer());
-    const size_t failOutput = static_cast<size_t>(pl->addOut2String("fail"));
+    const int failOutput = pl->addOut2String("fail");
     size_t maxInput = static_cast<size_t>(max(reference->maxInput, iut->maxInput));
     size_t maxOutput = static_cast<size_t>(max(reference->maxOutput, iut->maxOutput)) + 1;
     vector<string> state2String;
@@ -2931,7 +2900,7 @@ shared_ptr<Fsm> Fsm::createProductMachine(shared_ptr<Fsm> reference, shared_ptr<
         {
             for (size_t y = 0; y <= maxOutput; ++y)
             {
-                if (y == failOutput)
+                if (y == static_cast<size_t>(failOutput))
                 {
                     continue;
                 }
@@ -2976,7 +2945,7 @@ shared_ptr<Fsm> Fsm::createProductMachine(shared_ptr<Fsm> reference, shared_ptr<
     pl->setState2String(state2String);
     VLOG(1) << "Creating fail node: " << failState->getName() << "(" << failState->getId() << ")";
     shared_ptr<Fsm> result = make_shared<Fsm>(fsmName, maxInput, maxOutput, nodes, initStateIdx, pl);
-    result->failState = failState;
+    result->failOutput = failOutput;
     return result;
 }
 
@@ -3076,7 +3045,9 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
         }
     }
     
-    return make_shared<Fsm>(fsmName,maxInput,maxOutput,lst,presentationLayer);
+    shared_ptr<Fsm> result = make_shared<Fsm>(fsmName,maxInput,maxOutput,lst,presentationLayer);
+    result->failOutput = failOutput;
+    return result;
     
 }
 

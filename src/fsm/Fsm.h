@@ -17,6 +17,7 @@
 #include <map>
 
 #include "fsm/FsmVisitor.h"
+#include "fsm/FsmLabel.h"
 
 
 class Dfsm;
@@ -86,8 +87,7 @@ protected:
     /** Integer id of the initial state */
     int initStateIdx;
     
-    std::shared_ptr<FsmNode> errorState;
-    std::shared_ptr<FsmNode> failState;
+    int failOutput = FsmLabel::UNDEFINED_OUTPUT;
     std::shared_ptr<Tree> characterisationSet;
     Minimal minimal;
     bool complete;
@@ -382,12 +382,7 @@ public:
      */
     Fsm makeComplete(CompleteMode mode);
 
-    /**
-     * Returns the error state of this fsm.
-     * @return The error state
-     */
-    std::shared_ptr<FsmNode> getErrorState();
-    std::shared_ptr<FsmNode> getFailState();
+    int getFailOutput() const;
 
     bool isCharSet(const std::shared_ptr<Tree> w) const;
     void minimiseCharSet(const std::shared_ptr<Tree> w);
