@@ -107,7 +107,7 @@ bool RDistinguishability::isRDistinguishableWith(std::shared_ptr<FsmNode> node)
 
 bool RDistinguishability::isRDistinguishableWith(vector<shared_ptr<FsmNode>> nodes)
 {
-    for (auto node : nodes)
+    for (shared_ptr<FsmNode> node : nodes)
     {
         if (!isRDistinguishableWith(node))
         {

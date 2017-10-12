@@ -2244,13 +2244,16 @@ IOTreeContainer Fsm::getAdaptiveRCharacterisationSet() const
 vector<vector<shared_ptr<FsmNode>>> Fsm::getMaximalSetsOfRDistinguishableStates() const
 {
     TIMED_FUNC(timerObj);
+    VLOG(1) << "getMaximalSetsOfRDistinguishableStates()";
     vector<vector<shared_ptr<FsmNode>>> result;
     for (shared_ptr<FsmNode> node : nodes)
     {
+        PERFORMANCE_CHECKPOINT(timerObj);
+        VLOG(1) << "Looking for node " << node->getName();
         bool skip = false;
-        for (auto set : result)
+        for (vector<shared_ptr<FsmNode>>& set : result)
         {
-            for (auto n : set)
+            for (shared_ptr<FsmNode> n : set)
             {
                 if (n == node)
                 {
@@ -2268,8 +2271,10 @@ vector<vector<shared_ptr<FsmNode>>> Fsm::getMaximalSetsOfRDistinguishableStates(
             continue;
         }
         vector<shared_ptr<FsmNode>> set = {node};
+        VLOG(1) << "Creating set for node " << node->getName();
         for (shared_ptr<FsmNode> n : nodes)
         {
+            TIMED_SCOPE(timerBlkObj, "creating");
             if (node == n)
             {
                 continue;
@@ -3175,9 +3180,15 @@ bool Fsm::removeUnreachableNodes(std::vector<shared_ptr<FsmNode>>& unreachableNo
     // Pk-tables, the algorithms rely on the range of row numbers being
     // identical to the range of node ids of the reachable nodes.
     int subtractFromId = 0;
+
+    map<int,string> oldNames;
+    for ( auto n : nodes ) {
+        oldNames.insert(make_pair(n->getId(), n->getName()));
+    }
+
     for ( auto n : nodes ) {
         if ( not n->hasBeenVisited() ) {
-            VLOG(1) << "Removing node " << n->getName() << " (" << n->getId() << ", " << n << ").";
+            VLOG(1) << "Removing node " << oldNames.at(n->getId()) << " (" << n->getId() << ", " << n << ").";
             unreachableNodes.push_back(n);
             presentationLayer->removeState2String(n->getId() - subtractFromId);
             ++subtractFromId;
