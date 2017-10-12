@@ -791,14 +791,17 @@ int main(int argc, char* argv[])
         */
 
         const size_t numFsm = 1;
-        const int maxInput = 100;
-        const int maxOutput = 100;
-        const int maxStates = 50;
+        const int maxInput = 50;
+        const int maxOutput = 50;
+        const int maxStates = 25;
+
+        const int numOutputFaults = 10;
+        const int numTransitionFaults = 10;
         // State counting takes a while:
         //const unsigned createRandomFsmSeed = 97295907;
         //const unsigned createMutantSeed = 98228883;
-        const unsigned createRandomFsmSeed = 0;
-        const unsigned createMutantSeed = 0;
+        const unsigned createRandomFsmSeed = 404044307;
+        const unsigned createMutantSeed = 440103860;
         LOG(INFO) << "numFsm: " << numFsm;
         LOG(INFO) << "maxInput: " << maxInput;
         LOG(INFO) << "maxOutput: " << maxOutput;
@@ -815,7 +818,7 @@ int main(int argc, char* argv[])
             shared_ptr<Fsm> fsm = Fsm::createRandomFsm("random" + i, maxInput, maxOutput, maxStates, plTest, true, createRandomFsmSeed);
             fsm->toDot(dotPrefix + "fsm");
             LOG(INFO) << "Creating mutant.";
-            shared_ptr<Fsm> mutant = fsm->createMutant("mutant" + i, 1, 1, createMutantSeed);
+            shared_ptr<Fsm> mutant = fsm->createMutant("mutant" + i, numOutputFaults, numTransitionFaults, createMutantSeed);
             mutant->toDot(dotPrefix + "mutant");
             LOG(INFO) << "Creating product.";
             shared_ptr<Fsm> product = Fsm::createProductMachine(fsm, mutant, "_prod");
