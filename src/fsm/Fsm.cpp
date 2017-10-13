@@ -28,7 +28,7 @@
 #include "trees/InputOutputTree.h"
 #include "trees/AdaptiveTreeNode.h"
 #include "logging/easylogging++.h"
-#include "logging/LoggerIds.h"
+#include "logging/Logging.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -2249,7 +2249,7 @@ vector<vector<shared_ptr<FsmNode>>> Fsm::getMaximalSetsOfRDistinguishableStates(
     for (shared_ptr<FsmNode> node : nodes)
     {
         PERFORMANCE_CHECKPOINT(timerObj);
-        VLOG(1) << "Looking for node " << node->getName();
+        VLOG(3) << "Looking for node " << node->getName();
         bool skip = false;
         for (vector<shared_ptr<FsmNode>>& set : result)
         {
@@ -2268,25 +2268,27 @@ vector<vector<shared_ptr<FsmNode>>> Fsm::getMaximalSetsOfRDistinguishableStates(
         }
         if (skip)
         {
+            VLOG(3) << "Skipping node " << node->getName();
             continue;
         }
         vector<shared_ptr<FsmNode>> set = {node};
         VLOG(1) << "Creating set for node " << node->getName();
         for (shared_ptr<FsmNode> n : nodes)
         {
-            TIMED_SCOPE(timerBlkObj, "creating");
             if (node == n)
             {
                 continue;
             }
+            TIMED_SCOPE_IF(timerBlkObj, "Inserting node", VLOG_IS_ON(3));
             if (n->getRDistinguishability()->isRDistinguishableWith(set))
             {
                 set.push_back(n);
             }
         }
+        VLOG(1) << "Set size: " << set.size();
         result.push_back(set);
     }
-
+    VLOG(1) << "result size: " << result.size();
     return result;
 }
 

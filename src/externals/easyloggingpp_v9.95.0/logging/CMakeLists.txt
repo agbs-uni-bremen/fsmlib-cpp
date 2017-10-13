@@ -1,8 +1,8 @@
 set(EASYLOGGINGPP_SOURCES
     easylogging++.h
     easylogging++.cc
-    LoggerIds.h
-    LoggerIds.cpp
+    Logging.h
+    Logging.cpp
 )
 
 add_library( easyloggingpp ${EASYLOGGINGPP_SOURCES} )

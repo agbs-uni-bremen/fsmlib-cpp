@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 #include <memory>
 #include <stdlib.h>
 #include <interface/FsmPresentationLayer.h>
@@ -23,7 +24,7 @@
 #include <trees/TestSuite.h>
 #include "json/json.h"
 #include "logging/easylogging++.h"
-#include "logging/LoggerIds.h"
+#include "logging/Logging.h"
 
 #include <unistd.h>
 #include <errno.h>
@@ -716,21 +717,12 @@ std::string getcwd() {
     return result;
 }
 
+
+
 int main(int argc, char* argv[])
 {
     START_EASYLOGGINGPP(argc, argv);
-    const string loggerConfigDir = "../../../src/externals/easyloggingpp_v9.95.0";
-
-    el::Loggers::getLogger(logging::fsmConversion);
-
-#ifdef ENABLE_DEBUG_MACRO
-    //el::Configurations logConfig(loggerConfigDir + "/Debug.cfg");
-    el::Loggers::configureFromGlobal((loggerConfigDir + "/Debug.cfg").c_str());
-#else
-    //el::Configurations logConfig(loggerConfigDir + "/Release.cfg");
-    el::Loggers::configureFromGlobal((loggerConfigDir + "/Release.cfg").c_str());
-#endif
-    //el::Loggers::reconfigureAllLoggers(logConfig);
+    logging::initLogging();
 
     LOG(INFO) << "############## Starting Application ##############";
     LOG(DEBUG) << "Dir " << getcwd();
@@ -791,6 +783,7 @@ int main(int argc, char* argv[])
         */
 
         const size_t numFsm = 1;
+        const int numberDigits = ((numFsm <= 1)? 1 : log10(numFsm) + 1);
         const int maxInput = 50;
         const int maxOutput = 50;
         const int maxStates = 25;
@@ -810,10 +803,15 @@ int main(int argc, char* argv[])
         TIMED_FUNC(timerObj);
         for (size_t i = 0; i < numFsm; ++i)
         {
+            stringstream ss;
+            ss << setw(numberDigits) << setfill('0') << i;
+            string iteration = ss.str();
+            logging::setLogfileSuffix(iteration);
+
             TIMED_SCOPE(timerBlkObj, "heavy-iter");
             const string dotPrefix = "../../../resources/adaptive-test-" + to_string(i) + "-";
             LOG(INFO) << "-----------------------------------------------------------";
-            LOG(INFO) << "i: " << i;
+            LOG(INFO) << "i: " << iteration;
             LOG(INFO) << "Creating FSM.";
             shared_ptr<Fsm> fsm = Fsm::createRandomFsm("random" + i, maxInput, maxOutput, maxStates, plTest, true, createRandomFsmSeed);
             fsm->toDot(dotPrefix + "fsm");
