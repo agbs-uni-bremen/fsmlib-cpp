@@ -51,6 +51,19 @@ FsmPresentationLayer::FsmPresentationLayer(const std::string& inputs, const std:
 	}
 }
 
+void FsmPresentationLayer::addState2String(std::string name)
+{
+    state2String.push_back(name);
+}
+
+void FsmPresentationLayer::removeState2String(const int index)
+{
+    if (index >= 0 && state2String.size() > static_cast<size_t>(index))
+    {
+        state2String.erase(state2String.begin() + index);
+    }
+}
+
 std::string FsmPresentationLayer::getInId(const unsigned int id) const
 {
 	if (id >= in2String.size())
