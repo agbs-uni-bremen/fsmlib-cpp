@@ -53,5 +53,11 @@ public:
 	friend std::ostream & operator<<(std::ostream & out, const IOTrace & trace);
     
     std::string toRttString() const;
+    
+    /**
+     * Check equality of IOTraces
+     */
+    friend bool operator==(IOTrace const& trc1, IOTrace const& trc2);
+    
 };
 #endif //FSM_FSM_IOTRACE_H_

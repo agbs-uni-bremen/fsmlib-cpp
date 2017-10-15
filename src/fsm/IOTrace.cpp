@@ -58,3 +58,14 @@ string IOTrace::toRttString() const {
 }
 
 
+bool operator==(IOTrace const& trc1, IOTrace const& trc2) {
+    
+    return ( trc1.toRttString() == trc2.toRttString() );
+    
+    
+}
+
+
+
+
+

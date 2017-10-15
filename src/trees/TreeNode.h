@@ -125,10 +125,13 @@ public:
 	std::vector<int> getPath();
 
 	/**
-	Compare with an other three node to see if it is a super tree of this one or not
-	@param otherNode The other tree node to compare
-	@return true if the other tree node is a super tree of this one, false otherwise
-	*/
+	 * Compare with an other three node to see if it is a super tree of this one or not
+	 * @param otherNode The other tree node to compare
+	 * @return true if the other tree node is a super tree of this one, false otherwise
+     *
+     * @note This operation really checks trees for isomorphic structure. This is not
+     *       adequate when applied to output tree nodes resulting from non-observable FSMs.
+	 */
 	bool superTreeOf(const std::shared_ptr<TreeNode> otherNode) const;
 
 	/**
