@@ -8,12 +8,11 @@ class IOTraceContainer
 {
 private:
     std::shared_ptr<std::vector<IOTrace>> list;
-    const std::shared_ptr<FsmPresentationLayer> presentationLayer;
     void removeRealPrefixes(const IOTrace & trc);
 public:
-    IOTraceContainer(const std::shared_ptr<FsmPresentationLayer> presentationLayer);
-    IOTraceContainer(std::shared_ptr<std::vector<IOTrace>>& list, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
-    IOTraceContainer(std::shared_ptr<IOTrace> trace, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    IOTraceContainer();
+    IOTraceContainer(std::shared_ptr<std::vector<IOTrace>>& list);
+    IOTraceContainer(std::shared_ptr<IOTrace> trace);
     std::shared_ptr<std::vector<IOTrace>> getList() const;
     /**
      * Adds the given trace to the container, only if the container
@@ -83,6 +82,11 @@ public:
      * @param iOTrace The given input/output trace.
      */
     void concatenateToFront(IOTrace& iOTrace);
+
+    /**
+     * Clears this container.
+     */
+    void clear();
 
     /**
      * Removes all occurrences of the given trace from this container.

@@ -2,20 +2,20 @@
 
 using namespace std;
 
-IOTraceContainer::IOTraceContainer(const shared_ptr<FsmPresentationLayer> presentationLayer):
-    list(make_shared<std::vector<IOTrace>>()), presentationLayer(presentationLayer)
+IOTraceContainer::IOTraceContainer():
+    list(make_shared<std::vector<IOTrace>>())
 {
 
 }
 
-IOTraceContainer::IOTraceContainer(shared_ptr<vector<IOTrace>>& list, const shared_ptr<FsmPresentationLayer> presentationLayer):
-    list(list), presentationLayer(presentationLayer)
+IOTraceContainer::IOTraceContainer(shared_ptr<vector<IOTrace>>& list):
+    list(list)
 {
 
 }
 
-IOTraceContainer::IOTraceContainer(shared_ptr<IOTrace> trace, const std::shared_ptr<FsmPresentationLayer> presentationLayer):
-    list(make_shared<std::vector<IOTrace>>()), presentationLayer(presentationLayer)
+IOTraceContainer::IOTraceContainer(shared_ptr<IOTrace> trace):
+    list(make_shared<std::vector<IOTrace>>())
 {
     list->push_back(*trace);
 }
@@ -162,6 +162,11 @@ void IOTraceContainer::concatenateToFront(IOTrace& iOTrace)
     {
         iOT.prepend(iOTrace);
     }
+}
+
+void IOTraceContainer::clear()
+{
+    list = make_shared<std::vector<IOTrace>>();
 }
 
 void IOTraceContainer::remove (IOTrace& trace)

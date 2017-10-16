@@ -793,8 +793,10 @@ int main(int argc, char* argv[])
         // State counting takes a while:
         //const unsigned createRandomFsmSeed = 97295907;
         //const unsigned createMutantSeed = 98228883;
-        const unsigned createRandomFsmSeed = 404044307;
-        const unsigned createMutantSeed = 440103860;
+        //const unsigned createRandomFsmSeed = 404044307;
+        //const unsigned createMutantSeed = 440103860;
+        const unsigned createRandomFsmSeed = 0;
+        const unsigned createMutantSeed = 0;
         LOG(INFO) << "numFsm: " << numFsm;
         LOG(INFO) << "maxInput: " << maxInput;
         LOG(INFO) << "maxOutput: " << maxOutput;
@@ -814,22 +816,25 @@ int main(int argc, char* argv[])
             LOG(INFO) << "i: " << iteration;
             LOG(INFO) << "Creating FSM.";
             shared_ptr<Fsm> fsm = Fsm::createRandomFsm("random" + i, maxInput, maxOutput, maxStates, plTest, true, createRandomFsmSeed);
-            fsm->toDot(dotPrefix + "fsm");
+//            fsm->toDot(dotPrefix + "fsm");
             LOG(INFO) << "Creating mutant.";
             shared_ptr<Fsm> mutant = fsm->createMutant("mutant" + i, numOutputFaults, numTransitionFaults, createMutantSeed);
-            mutant->toDot(dotPrefix + "mutant");
-            LOG(INFO) << "Creating product.";
-            shared_ptr<Fsm> product = Fsm::createProductMachine(fsm, mutant, "_prod");
-            product->toDot(dotPrefix + "product");
-            LOG(INFO) << "Minimizing.";
-            Fsm productMin = product->minimise();
-            productMin.toDot(dotPrefix + "productMin");
-            LOG(INFO) << "Making complete.";
-            Fsm productComplete = productMin.makeComplete(ErrorState);
-            productComplete.toDot(dotPrefix + "productComplete");
-            productComplete.calcRDistinguishableStates();
-            IOTraceContainer observedTraces(productComplete.getPresentationLayer());
-            productComplete.adaptiveStateCounting(productComplete.getMaxNodes(), observedTraces);
+            IOTraceContainer observedTraces;
+            Fsm::adaptiveStateCounting(fsm, mutant, observedTraces);
+
+//            mutant->toDot(dotPrefix + "mutant");
+//            LOG(INFO) << "Creating product.";
+//            shared_ptr<Fsm> product = Fsm::createProductMachine(fsm, mutant, "_prod");
+//            product->toDot(dotPrefix + "product");
+//            LOG(INFO) << "Minimizing.";
+//            Fsm productMin = product->minimise();
+//            productMin.toDot(dotPrefix + "productMin");
+//            LOG(INFO) << "Making complete.";
+//            Fsm productComplete = productMin.makeComplete(ErrorState);
+//            productComplete.toDot(dotPrefix + "productComplete");
+//            productComplete.calcRDistinguishableStates();
+//            IOTraceContainer observedTraces(productComplete.getPresentationLayer());
+//            productComplete.adaptiveStateCounting(productComplete.getMaxNodes(), observedTraces);
         }
         LOG(INFO) << "Ready!";
 

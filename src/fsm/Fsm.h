@@ -240,7 +240,18 @@ public:
      * @param fsmName Name of the product machine to be created
      * @return The product machine
      */
-    static std::shared_ptr<Fsm> createProductMachine(std::shared_ptr<Fsm> reference, std::shared_ptr<Fsm> iut, const std::string & fsmName);
+    static std::shared_ptr<Fsm> createProductMachine(std::shared_ptr<Fsm> reference, std::shared_ptr<Fsm> iut, const std::string & fsmName = "_prod");
+
+    /**
+     * Creates the product machine for two given FSM.
+     * The product machine behaves like `iut` where it is consistent with
+     * `reference`. Otherwise it moves to the state `Fail` and stays there.
+     * @param reference The reference model
+     * @param iut The implementation under test
+     * @param fsmName Name of the product machine to be created
+     * @return The product machine
+     */
+    static std::shared_ptr<Fsm> createProductMachine(Fsm reference, Fsm iut, const std::string & fsmName = "_prod");
     
     
     /**
@@ -523,7 +534,37 @@ public:
               const IOTraceContainer& vDoublePrime,
               const std::vector<std::shared_ptr<FsmNode>>& dReachableStates) const;
 
+    /**
+     * Calculates a test suite that determines if an IUT is a reduction of the specification.
+     * This algorithm has to be called on a product machine, resulting from creating the
+     * product of the specification and the IUT.
+     *
+     * It is assumed that the IUT behaves like some unknown element of a fault domain
+     * of completely specified observable FSMs with the same input and output alphabets
+     * as the specification and at most `m` states.
+     * @param m The maximum number of states for the IUT.
+     * @param observedTraces Return parameter for the observed traces during the test
+     * suite creation.
+     * @return `true`, if no failure has been observed during the creation of the test suite,
+     * `false`, otherwise.
+     */
     bool adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces);
+
+    /**
+     * Calculates a test suite that determines if a given IUT is a reduction of the given
+     * specification..
+     *
+     * It is assumed that the IUT behaves like some unknown element of a fault domain
+     * of completely specified observable FSMs with the same input and output alphabets
+     * as the specification.
+     * @param spec The given specification
+     * @param iut The given IUT
+     * @param observedTraces Return parameter for the observed traces during the test
+     * suite creation.
+     * @return `true`, if no failure has been observed during the creation of the test suite,
+     * `false`, otherwise.
+     */
+    static bool adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> iut, IOTraceContainer& observedTraces);
 
     /**
      * Determines if the given adaptive test cases distinguish all states from

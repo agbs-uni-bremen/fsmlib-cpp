@@ -1573,9 +1573,9 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
         VLOG(2)  << "(" << node->getName() << ") " << "  tree is empty. returning.";
         std::shared_ptr<IOTrace> emptyTrace = IOTrace::getEmptyTrace(presentationLayer);
         emptyTrace->setTargetNode(node);
-        return IOTraceContainer(emptyTrace, presentationLayer);
+        return IOTraceContainer(emptyTrace);
     }
-    IOTraceContainer result = IOTraceContainer(presentationLayer);
+    IOTraceContainer result = IOTraceContainer();
 
     for (int y = 0; y <= maxOutput; ++y)
     {
@@ -1651,7 +1651,7 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
                                           const bool cleanTrailingEmptyTraces) const
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(6));
-    IOTraceContainer result = IOTraceContainer(presentationLayer);;
+    IOTraceContainer result = IOTraceContainer();
     for (shared_ptr<InputOutputTree> tree : *treeContainer.getList())
     {
         IOTraceContainer container = getPossibleIOTraces(node, tree, cleanTrailingEmptyTraces);
@@ -1664,7 +1664,7 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const IOT
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
     VLOG(7) << "bOmega() - adaptiveTestCases.size: " << adaptiveTestCases.size() << ", trace.size(): " << trace.size();
-    IOTraceContainer result = IOTraceContainer(presentationLayer);
+    IOTraceContainer result = IOTraceContainer();
 
     shared_ptr<FsmNode> initialState = getInitialState();
     if (!initialState)
@@ -1689,7 +1689,7 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const vec
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(6));
     VLOG(6) << "bOmega() - adaptiveTestCases.size: " << adaptiveTestCases.size() << ", inputTraces.size(): " << inputTraces.size();
-    IOTraceContainer result = IOTraceContainer(presentationLayer);
+    IOTraceContainer result = IOTraceContainer();
     shared_ptr<FsmNode> initialState = getInitialState();
     if (!initialState)
     {
@@ -1760,7 +1760,7 @@ vector<IOTraceContainer> Fsm::getVPrime()
 
     for (size_t j = 0; j < iterations; ++j)
     {
-        IOTraceContainer container = IOTraceContainer(presentationLayer);
+        IOTraceContainer container = IOTraceContainer();
         for (size_t i = 0; i < testCasesRaw->size(); ++i)
         {
             InputTrace input = InputTrace(testCasesRaw->at(i), presentationLayer);
@@ -1783,7 +1783,7 @@ IOTraceContainer Fsm::r(std::shared_ptr<FsmNode> node,
     VLOG(3) << "suffix: " << suffix;
 
 
-    IOTraceContainer result = IOTraceContainer(presentationLayer);
+    IOTraceContainer result = IOTraceContainer();
     vector<IOTrace> prefs = suffix.getPrefixes();
     vector<IOTrace> prefixes;
     // Remove empty sequences from prefixes.
@@ -1880,6 +1880,7 @@ size_t Fsm::lowerBound(const IOTrace& base,
 bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces)
 {
     TIMED_FUNC(timerObj);
+    observedTraces.clear();
     LOG(INFO) << "adaptiveStateCounting with " << getMaxNodes() << " states.";
     if (!isComplete())
     {
@@ -2162,6 +2163,31 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
     }
     VLOG(1) << "  RESULT: " << observedTraces;
     return true;
+}
+
+bool Fsm::adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> iut, IOTraceContainer& observedTraces)
+{
+    VLOG(2)<< "adaptiveStateCounting()";
+    Fsm specMin = spec->minimise();
+    Fsm iutMin = iut->minimise();
+    shared_ptr<Fsm> product = Fsm::createProductMachine(specMin, iutMin);
+    Fsm productMin = product->minimise();
+    Fsm productMinComplete = productMin.makeComplete(ErrorState);
+#ifdef ENABLE_DEBUG_MACRO
+    const string dotPrefix = "../../../resources/adaptive-test-spec-" + spec->getName() + "-";
+    spec->toDot(dotPrefix + "spec");
+    specMin.toDot(dotPrefix + "specMin");
+    iut->toDot(dotPrefix + "iut");
+    iutMin.toDot(dotPrefix + "iutMin");
+    product->toDot(dotPrefix + "product");
+    productMin.toDot(dotPrefix + "productMin");
+    productMinComplete.toDot(dotPrefix + "productMinComplete");
+#endif
+    productMinComplete.calcRDistinguishableStates();
+    bool ret = productMinComplete.adaptiveStateCounting(static_cast<size_t>(iut->getMaxNodes()), observedTraces);
+    VLOG_IF(ret, 2) << "IUT is a reduction of the specification.";
+    VLOG_IF(!ret, 2) << "IUT is not a reduction of the specification.";
+    return ret;
 }
 
 bool Fsm::rDistinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
@@ -2873,25 +2899,30 @@ Fsm::createRandomFsm(const string & fsmName,
 
 shared_ptr<Fsm> Fsm::createProductMachine(shared_ptr<Fsm> reference, shared_ptr<Fsm> iut, const string& fsmName)
 {
+    return createProductMachine(*reference, *iut, fsmName);
+}
+
+shared_ptr<Fsm> Fsm::createProductMachine(Fsm reference, Fsm iut, const std::string& fsmName)
+{
     TIMED_FUNC(timerObj);
-    reference->getPresentationLayer()->truncateIn2String(reference->maxInput + 1);
-    reference->getPresentationLayer()->truncateOut2String(reference->maxOutput + 1);
-    reference->getPresentationLayer()->truncateState2String(reference->maxState + 1);
-    iut->getPresentationLayer()->truncateIn2String(reference->maxInput + 1);
-    iut->getPresentationLayer()->truncateOut2String(reference->maxOutput + 1);
-    iut->getPresentationLayer()->truncateState2String(reference->maxState + 1);
-    shared_ptr<FsmPresentationLayer> pl = FsmPresentationLayer::mergeAlphabets(reference->getPresentationLayer(), iut->getPresentationLayer());
+    reference.getPresentationLayer()->truncateIn2String(reference.maxInput + 1);
+    reference.getPresentationLayer()->truncateOut2String(reference.maxOutput + 1);
+    reference.getPresentationLayer()->truncateState2String(reference.maxState + 1);
+    iut.getPresentationLayer()->truncateIn2String(reference.maxInput + 1);
+    iut.getPresentationLayer()->truncateOut2String(reference.maxOutput + 1);
+    iut.getPresentationLayer()->truncateState2String(reference.maxState + 1);
+    shared_ptr<FsmPresentationLayer> pl = FsmPresentationLayer::mergeAlphabets(reference.getPresentationLayer(), iut.getPresentationLayer());
     const int failOutput = pl->addOut2String("fail");
-    size_t maxInput = static_cast<size_t>(max(reference->maxInput, iut->maxInput));
-    size_t maxOutput = static_cast<size_t>(max(reference->maxOutput, iut->maxOutput)) + 1;
+    size_t maxInput = static_cast<size_t>(max(reference.maxInput, iut.maxInput));
+    size_t maxOutput = static_cast<size_t>(max(reference.maxOutput, iut.maxOutput)) + 1;
     vector<string> state2String;
     vector<shared_ptr<FsmNode>> nodes;
     map<shared_ptr<FsmNode>, pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> productNodesToOriginalNodes;
     map<pair<int, int>, shared_ptr<FsmNode>> originalNodeIdsToProductNode;
     int productNodeId = 0;
-    for(shared_ptr<FsmNode> nodeA : reference->getNodes())
+    for(shared_ptr<FsmNode> nodeA : reference.getNodes())
     {
-        for(shared_ptr<FsmNode> nodeB : iut->getNodes())
+        for(shared_ptr<FsmNode> nodeB : iut.getNodes())
         {
             shared_ptr<FsmNode> productNode = make_shared<FsmNode>(productNodeId, fsmName, pl);
             productNodesToOriginalNodes.insert(make_pair(productNode, make_pair(nodeA, nodeB)));
@@ -2966,7 +2997,7 @@ shared_ptr<Fsm> Fsm::createProductMachine(shared_ptr<Fsm> reference, shared_ptr<
     }
 
     int initStateIdx = originalNodeIdsToProductNode.at(
-                make_pair(reference->getInitialState()->getId(),iut->getInitialState()->getId()))->getId();
+                make_pair(reference.getInitialState()->getId(),iut.getInitialState()->getId()))->getId();
 
     state2String.push_back("Fail");
     nodes.push_back(failState);
