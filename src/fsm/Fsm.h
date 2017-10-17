@@ -421,17 +421,27 @@ public:
      * @return All outputs that may occur on <b>both</b> states with the given input.
      */
     std::vector<std::shared_ptr<OutputTrace>> getOutputIntersection(std::shared_ptr<FsmNode> q1, std::shared_ptr<FsmNode> q2, int x) const;
+
     /**
      * Calculates for every state the r(1)-distinguishable states.
-     * @return A map containing the r(1)-distinguishable states for every state.
      */
     void calcROneDistinguishableStates();
+
     /**
      * Calculates for every state the r-distinguishable states.
-     * @return A map containing the r-distinguishable states for every state.
      */
     void calcRDistinguishableStates();
 
+    /**
+     * Calculates the state characterisation set for a given state, based on the
+     * previsously calculated r-distinguishability.
+     *
+     * The state characterisation set distinguishes all r-distinguishable states
+     * from the given state, if the given state is r-distinguishable.
+     *
+     * @param node The given state
+     * @return The state characterisation set for the given state.
+     */
     IOListContainer getRStateCharacterisationSet(std::shared_ptr<FsmNode> node) const;
     IOTreeContainer getAdaptiveRStateCharacterisationSet(std::shared_ptr<FsmNode> node) const;
 

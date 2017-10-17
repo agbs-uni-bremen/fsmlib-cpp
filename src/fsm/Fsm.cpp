@@ -1511,6 +1511,10 @@ IOListContainer Fsm::getRStateCharacterisationSet(shared_ptr<FsmNode> node) cons
                 result.addUniqueRemovePrefixes(Trace(trace, presentationLayer));
             }
         }
+        else
+        {
+            VLOG(2) << "Nodes " << node->getName() << " and " << n->getName() << " are not r-distinguishable.";
+        }
     }
     VLOG(1) << "SCS(" << node->getName() << ") = " << result;
     return result;
@@ -2167,7 +2171,7 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
 
 bool Fsm::adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> iut, IOTraceContainer& observedTraces)
 {
-    VLOG(2)<< "adaptiveStateCounting()";
+    VLOG(1)<< "adaptiveStateCounting()";
     Fsm specMin = spec->minimise();
     Fsm iutMin = iut->minimise();
     shared_ptr<Fsm> product = Fsm::createProductMachine(specMin, iutMin);
@@ -2185,8 +2189,8 @@ bool Fsm::adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> 
 #endif
     productMinComplete.calcRDistinguishableStates();
     bool ret = productMinComplete.adaptiveStateCounting(static_cast<size_t>(iut->getMaxNodes()), observedTraces);
-    VLOG_IF(ret, 2) << "IUT is a reduction of the specification.";
-    VLOG_IF(!ret, 2) << "IUT is not a reduction of the specification.";
+    VLOG_IF(ret, 1) << "IUT is a reduction of the specification.";
+    VLOG_IF(!ret, 1 ) << "IUT is not a reduction of the specification.";
     return ret;
 }
 
