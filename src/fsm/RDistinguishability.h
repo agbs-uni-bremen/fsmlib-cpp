@@ -88,6 +88,11 @@ public:
      */
     std::vector<std::shared_ptr<FsmNode>> getRDistinguishableWith(size_t i);
 
+    /**
+     * Returns all states that are r-distinguishable from the state that corresponds to the
+     * `RDistinguishability` instance.
+     * @return All r-distinguishable states
+     */
     std::vector<std::shared_ptr<FsmNode>> getRDistinguishableWith();
 
     /**
@@ -126,10 +131,41 @@ public:
      * from the state that corresponds to the `RDistinguishability` instance, `false`, otherwise
      */
     bool isRDistinguishableWith(std::vector<std::shared_ptr<FsmNode>> nodes);
+    /**
+     * Determines if the state that corresponds to the `RDistinguishability` instance is
+     * r-distinguishable.
+     * @return `true`, if the state is r-distinguishable, `false`, otherwise.
+     */
     bool isNotRDistinguishable();
+
+    /**
+     * Returns an adaptive input sequence, that r-distinguishes a given state from the state
+     * that corresponds to the `RDistinguishability` instance.
+     * @param otherNode The given state
+     * @return An empty sequence, if the two states are not r-distinguishable, an adaptive
+     * input sequence that r-distinguishes them, otherwise.
+     */
     std::shared_ptr<InputOutputTree> getAdaptiveIOSequence(std::shared_ptr<FsmNode> otherNode);
+
+    /**
+     * Sets the r(i)-distinguishability and the non-r(i)-distinguishability sets for a given
+     * index `i` to the same values as the r(i-1)-distinguishability and the
+     * non-r(i-1)-distinguishability.
+     * @param i The given r(i)-distinguishability index
+     */
     void inheritDistinguishability(size_t i);
+
+    /**
+     * States wether the r-distinguishability has been calculated or not.
+     * @return `true`, if the r-distinguishability has been calculated, `false`,
+     * otherwise.
+     */
     bool hasBeenCalculated() const;
+
+    /**
+     * Sets the flag that states wether the r-distinguishability has been calculated or not.
+     * @param hasBeen The new flag value
+     */
     void hasBeenCalculated(bool hasBeen);
 
 };
