@@ -1228,10 +1228,10 @@ void Fsm::calcROneDistinguishableStates()
     {
         for (size_t j = i + 1; j < nodes.size(); ++j)
         {
-            nodes.at(i)->getRDistinguishability()->addNotDistinguishable(1, nodes.at(j));
+            nodes.at(i)->getRDistinguishability()->addNotRDistinguishable(1, nodes.at(j));
         }
     }
-    nodes.at(nodes.size() - 1)->getRDistinguishability()->addNotDistinguishable(1);
+    nodes.at(nodes.size() - 1)->getRDistinguishability()->addNotRDistinguishable(1);
 
     for (size_t k = 0; k < nodes.size(); ++k)
     {
@@ -1272,10 +1272,10 @@ void Fsm::calcROneDistinguishableStates()
                     q1->getRDistinguishability()->addAdaptiveIOSequence(q2, q1Tree);
                     q2->getRDistinguishability()->addAdaptiveIOSequence(q1, q2Tree);
 
-                    q1->getRDistinguishability()->addDistinguishable(1, q2);
-                    q2->getRDistinguishability()->addDistinguishable(1, q1);
+                    q1->getRDistinguishability()->addRDistinguishable(1, q2);
+                    q2->getRDistinguishability()->addRDistinguishable(1, q1);
 
-                    q1->getRDistinguishability()->removeNotDistinguishable(1, q2);
+                    q1->getRDistinguishability()->removeNotRDistinguishable(1, q2);
                     break;
                 }
             }
@@ -1313,8 +1313,10 @@ void Fsm::calcRDistinguishableStates()
     size_t limit = nodes.size() * (nodes.size() - 1) / 2;
     bool allRDistinguishable = false;
     bool newDistinguishabilityCalculated = true;
+    size_t maxL = 0;
     for (size_t l = 2; !allRDistinguishable && newDistinguishabilityCalculated && l <= limit; ++l)
     {
+        maxL = l;
         VLOG(2) << "################ l = " << l << " (max " << limit << ") ################";
         allRDistinguishable = true;
         newDistinguishabilityCalculated = false;
@@ -1454,10 +1456,10 @@ void Fsm::calcRDistinguishableStates()
                         q2->getRDistinguishability()->addAdaptiveIOSequence(q1, q2Tree);
 
 
-                        q1->getRDistinguishability()->addDistinguishable(l, q2);
-                        q2->getRDistinguishability()->addDistinguishable(l, q1);
-                        q1->getRDistinguishability()->removeNotDistinguishable(l, q2);
-                        q2->getRDistinguishability()->removeNotDistinguishable(l, q1);
+                        q1->getRDistinguishability()->addRDistinguishable(l, q2);
+                        q2->getRDistinguishability()->addRDistinguishable(l, q1);
+                        q1->getRDistinguishability()->removeNotRDistinguishable(l, q2);
+                        q2->getRDistinguishability()->removeNotRDistinguishable(l, q1);
                         newDistinguishabilityCalculated = true;
                         break;
                     }
@@ -1465,8 +1467,21 @@ void Fsm::calcRDistinguishableStates()
             }
         }
     }
+    // Deducing non-r-distinguishability from r-distinguishability.
     for (auto node : nodes)
     {
+        for (size_t l = 1; l <= maxL; ++l)
+        {
+            node->getRDistinguishability()->addNotRDistinguishable(l);
+            vector<shared_ptr<FsmNode>> dist = node->getRDistinguishability()->getRDistinguishableWith(l);
+            for (auto n : nodes)
+            {
+                if(node != n && find(dist.begin(), dist.end(), n) == dist.end()) {
+                    node->getRDistinguishability()->addNotRDistinguishable(l, n);
+                }
+            }
+        }
+        // Setting flag for every node.
         node->getRDistinguishability()->hasBeenCalculated(true);
     }
     for (auto node : nodes)
@@ -2178,7 +2193,7 @@ bool Fsm::adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> 
     Fsm productMin = product->minimise();
     Fsm productMinComplete = productMin.makeComplete(ErrorState);
 #ifdef ENABLE_DEBUG_MACRO
-    const string dotPrefix = "../../../resources/adaptive-test-spec-" + spec->getName() + "-";
+    const string dotPrefix = "../../../resources/adaptive-test-" + spec->getName() + "-";
     spec->toDot(dotPrefix + "spec");
     specMin.toDot(dotPrefix + "specMin");
     iut->toDot(dotPrefix + "iut");
@@ -2276,6 +2291,7 @@ vector<vector<shared_ptr<FsmNode>>> Fsm::getMaximalSetsOfRDistinguishableStates(
     TIMED_FUNC(timerObj);
     VLOG(1) << "getMaximalSetsOfRDistinguishableStates()";
     vector<vector<shared_ptr<FsmNode>>> result;
+    result.reserve(static_cast<size_t>(getMaxNodes()));
     for (shared_ptr<FsmNode> node : nodes)
     {
         PERFORMANCE_CHECKPOINT(timerObj);
@@ -2302,6 +2318,7 @@ vector<vector<shared_ptr<FsmNode>>> Fsm::getMaximalSetsOfRDistinguishableStates(
             continue;
         }
         vector<shared_ptr<FsmNode>> set = {node};
+        set.reserve(static_cast<size_t>(getMaxNodes()));
         VLOG(1) << "Creating set for node " << node->getName();
         for (shared_ptr<FsmNode> n : nodes)
         {
@@ -2316,9 +2333,11 @@ vector<vector<shared_ptr<FsmNode>>> Fsm::getMaximalSetsOfRDistinguishableStates(
             }
         }
         VLOG(1) << "Set size: " << set.size();
+        set.resize(set.size());
         result.push_back(set);
     }
     VLOG(1) << "result size: " << result.size();
+    result.resize(result.size());
     return result;
 }
 

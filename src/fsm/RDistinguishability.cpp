@@ -11,7 +11,7 @@ RDistinguishability::RDistinguishability(shared_ptr<FsmPresentationLayer> presen
     hBeenCalculated = false;
 }
 
-vector<shared_ptr<FsmNode>>::iterator RDistinguishability::removeNotDistinguishable(size_t i, std::shared_ptr<FsmNode> node)
+vector<shared_ptr<FsmNode>>::iterator RDistinguishability::removeNotRDistinguishable(size_t i, std::shared_ptr<FsmNode> node)
 {
     vector<shared_ptr<FsmNode>>& notDist = notRDistinguishableWith.at(i);
     for (vector<shared_ptr<FsmNode>>::iterator it = notDist.begin(); it != notDist.end(); ++it)
@@ -23,7 +23,7 @@ vector<shared_ptr<FsmNode>>::iterator RDistinguishability::removeNotDistinguisha
     return notDist.end();
 }
 
-void RDistinguishability::addDistinguishable(size_t i, std::shared_ptr<FsmNode> node)
+void RDistinguishability::addRDistinguishable(size_t i, std::shared_ptr<FsmNode> node)
 {
     auto it = rDistinguishableWith.find(i);
     if (it == rDistinguishableWith.end())
@@ -36,7 +36,7 @@ void RDistinguishability::addDistinguishable(size_t i, std::shared_ptr<FsmNode> 
     }
 }
 
-void RDistinguishability::addNotDistinguishable(size_t i, std::shared_ptr<FsmNode> node)
+void RDistinguishability::addNotRDistinguishable(size_t i, std::shared_ptr<FsmNode> node)
 {
     auto it = notRDistinguishableWith.find(i);
     if (it == notRDistinguishableWith.end())
@@ -49,9 +49,9 @@ void RDistinguishability::addNotDistinguishable(size_t i, std::shared_ptr<FsmNod
     }
 }
 
-void RDistinguishability::addNotDistinguishable(size_t i)
+void RDistinguishability::addNotRDistinguishable(size_t i)
 {
-    notRDistinguishableWith.insert(pair<size_t, std::vector<std::shared_ptr<FsmNode>>>(i, {}));
+    notRDistinguishableWith[i] = {};
 }
 
 void RDistinguishability::addAdaptiveIOSequence(std::shared_ptr<FsmNode> otherNode, std::shared_ptr<InputOutputTree> tree)
@@ -64,6 +64,19 @@ vector<shared_ptr<FsmNode>> RDistinguishability::getRDistinguishableWith(size_t 
     return rDistinguishableWith.at(i);
 }
 
+vector<shared_ptr<FsmNode>> RDistinguishability::getRDistinguishableWith()
+{
+    if (rDistinguishableWith.rbegin() != rDistinguishableWith.rend())
+    {
+        return rDistinguishableWith.rbegin()->second;
+    }
+    else
+    {
+        return vector<shared_ptr<FsmNode>>();
+    }
+
+}
+
 vector<shared_ptr<FsmNode>> RDistinguishability::getNotRDistinguishableWith(size_t i)
 {
     return notRDistinguishableWith.at(i);
@@ -71,7 +84,7 @@ vector<shared_ptr<FsmNode>> RDistinguishability::getNotRDistinguishableWith(size
 
 bool RDistinguishability::isNotRDistinguishable()
 {
-    return notRDistinguishableWith.end()->second.size() == 0;
+    return notRDistinguishableWith.rbegin()->second.size() != 0;
 }
 
 bool RDistinguishability::isRDistinguishableWith(size_t i, std::shared_ptr<FsmNode> node)

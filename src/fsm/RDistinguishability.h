@@ -48,7 +48,7 @@ public:
      * non-r(i)-distinguisability set, an iterator, pointing to the end of the non-r(i)-distinguisability set,
      * if the node has not beend found.
      */
-    std::vector<std::shared_ptr<FsmNode>>::iterator removeNotDistinguishable(size_t i, std::shared_ptr<FsmNode> node);
+    std::vector<std::shared_ptr<FsmNode>>::iterator removeNotRDistinguishable(size_t i, std::shared_ptr<FsmNode> node);
 
     /**
      * Adds a node to the set that holds the states that are r(i)-distinguishable
@@ -56,7 +56,7 @@ public:
      * @param i The given r(i)-distinguishability index
      * @param node The given node to be added
      */
-    void addDistinguishable(size_t i, std::shared_ptr<FsmNode> node);
+    void addRDistinguishable(size_t i, std::shared_ptr<FsmNode> node);
 
     /**
      * Adds a node to the set that holds the states that are not r(i)-distinguishable
@@ -64,13 +64,13 @@ public:
      * @param i The given non-r(i)-distinguishability index
      * @param node The given node to be added
      */
-    void addNotDistinguishable(size_t i, std::shared_ptr<FsmNode> node);
+    void addNotRDistinguishable(size_t i, std::shared_ptr<FsmNode> node);
 
     /**
      * Sets an empty set as non-r(i)-distinguishability set for a given index `i`.
      * @param i The given non-r(i)-distinguishability index
      */
-    void addNotDistinguishable(size_t i);
+    void addNotRDistinguishable(size_t i);
 
     /**
      * Sets the r-distinguishing adaptive input sequence for a given state.
@@ -87,6 +87,8 @@ public:
      * @return All r(i)-distinguishable states
      */
     std::vector<std::shared_ptr<FsmNode>> getRDistinguishableWith(size_t i);
+
+    std::vector<std::shared_ptr<FsmNode>> getRDistinguishableWith();
 
     /**
      * Returns all states that are non-r(i)-distinguishable for a given index `i` from the state

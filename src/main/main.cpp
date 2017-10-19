@@ -739,6 +739,8 @@ int main(int argc, char* argv[])
             + "../../../resources/adaptiveState.txt");
     shared_ptr<Fsm> fsm1 = make_shared<Fsm>("../../../resources/adaptive.fsm",pl1,"adaptive");
     fsm1->toDot("../../../resources/adaptive");
+//    fsm1->calcRDistinguishableStates();
+//    fsm1->getRCharacterisationSet();
 
     shared_ptr<FsmPresentationLayer> pl1Iut =
     make_shared<FsmPresentationLayer>("../../../resources/adaptive-iutIn.txt",
@@ -815,10 +817,10 @@ int main(int argc, char* argv[])
             LOG(INFO) << "-----------------------------------------------------------";
             LOG(INFO) << "i: " << iteration;
             LOG(INFO) << "Creating FSM.";
-            shared_ptr<Fsm> fsm = Fsm::createRandomFsm("random" + i, maxInput, maxOutput, maxStates, plTest, true, createRandomFsmSeed);
+            shared_ptr<Fsm> fsm = Fsm::createRandomFsm(to_string(i), maxInput, maxOutput, maxStates, plTest, true, createRandomFsmSeed);
 //            fsm->toDot(dotPrefix + "fsm");
             LOG(INFO) << "Creating mutant.";
-            shared_ptr<Fsm> mutant = fsm->createMutant("mutant" + i, numOutputFaults, numTransitionFaults, createMutantSeed);
+            shared_ptr<Fsm> mutant = fsm->createMutant("mutant" + to_string(i), numOutputFaults, numTransitionFaults, createMutantSeed);
             IOTraceContainer observedTraces;
             Fsm::adaptiveStateCounting(fsm, mutant, observedTraces);
 
