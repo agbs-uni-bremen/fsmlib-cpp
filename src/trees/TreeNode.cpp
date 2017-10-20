@@ -156,6 +156,7 @@ vector<int> TreeNode::getPath()
 
 bool TreeNode::superTreeOf(const shared_ptr<TreeNode> otherNode) const
 {
+    
     if (children->size() < otherNode->children->size())
     {
         return false;
