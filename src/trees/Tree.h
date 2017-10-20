@@ -118,6 +118,13 @@ public:
 	*/
 	IOListContainer getTestCases();
 
+    /**
+     * Calculates all test cases that are being represented by this tree.
+     * Prefixes are not being removed, since this is needed for deterministic
+     * state cover. Every d-reachable state has to be d-reached (not just visited)
+     * by some input sequence.
+     * @return Test cases in form of input sequences.
+     */
 	IOListContainer getDeterministicTestCases();
 
 	/**

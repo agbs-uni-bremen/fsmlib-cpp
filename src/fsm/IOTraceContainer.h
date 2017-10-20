@@ -21,7 +21,21 @@ public:
      */
     void addUnique(IOTrace& trc);
 
+    /**
+     * Adds the given trace to the container, only if the container
+     * does not already contain a trace with the given inputs and outputs.
+     * Additionally all real prefixes of `trc` are being removed from the container.
+     * @param trc The given trace.
+     */
     void addUniqueRemovePrefixes(const IOTrace& trc);
+
+    /**
+     * Adds every trace from the given container to the container, only if the container
+     * does not already contain a trace with the corresponding inputs and outputs.
+     * Additionally all real prefixes of every trace from `cont` are being removed
+     * from the container.
+     * @param cont The given container.
+     */
     void addUniqueRemovePrefixes(const IOTraceContainer& cont);
 
     /**
@@ -37,6 +51,12 @@ public:
      */
     void addUnique(IOTraceContainer& container);
 
+    /**
+     * Adds every trace that is being represented by the given tree to the container,
+     * only if the container dies not already contain a trace with the given inputs
+     * and outputs.
+     * @param tree The given tree.
+     */
     void addUnique(OutputTree& tree);
 
     /**
@@ -45,6 +65,10 @@ public:
      */
     void add(IOTraceContainer& container);
 
+    /**
+     * Adds every trace that is being represented by the given tree to this container.
+     * @param container The given tree.
+     */
     void add(OutputTree& tree);
 
     /**
@@ -112,6 +136,10 @@ public:
      */
     size_t size() const { return list->size(); }
 
+    /**
+     * Determines wether the container is empty.
+     * @return `true`, if the container is empty, `false`, otherwise.
+     */
     bool isEmpty() const {return size() == 0; }
 
     /**

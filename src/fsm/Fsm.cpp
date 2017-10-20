@@ -1958,7 +1958,7 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
 
         // Applying all input traces from T_c to this FSM.
         // All observed outputs are bein recorded.
-        // If the FSM enters the error state, adaptive state counting terminates.
+        // If the FSM observes a failure, adaptive state counting terminates.
         for (shared_ptr<InputTrace> inputTrace : tC)
         {
             TIMED_SCOPE(timerBlkObj, "adaptiveStateCounting-loop-1");
@@ -2010,7 +2010,7 @@ bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces
                     {
                         ss << ", ";
                     }
-                    // Adding observed traces for simple input traces only in case of error.
+                    // Adding observed traces for simple input traces only in case of failure.
                     // When no error is being observed, this traces are bein used later when
                     // concatenating them with the adaptive test cases.
                     IOTrace iOTrace(*inputTrace, *producedOutputs.at(i), reachedNodes.at(i));

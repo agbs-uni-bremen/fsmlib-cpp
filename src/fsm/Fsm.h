@@ -105,6 +105,10 @@ protected:
     
     void parseLineInitial (const std::string & line);
     void readFsmInitial (const std::string & fname);
+    /**
+     * Reads a dot file and creates an FSM according to the dot definitions.
+     * @param fname The path to the dot file.
+     */
     void readFsmFromDot (const std::string & fname);
     
     std::string labelString(std::unordered_set<std::shared_ptr<FsmNode>>& lbl) const;
@@ -171,6 +175,11 @@ public:
         const std::shared_ptr<FsmPresentationLayer> presentationLayer,
         const std::string& fsmName);
 
+    /**
+     * Constructs an FSM based on the specification from a dot file.
+     * @param dotFileName The path to the dot file.
+     * @param fsmName Name of the FSM.
+     */
     Fsm(const std::string& dotFileName,
         const std::string& fsmName);
     
@@ -305,8 +314,9 @@ public:
     Fsm intersect(const Fsm & f);
     
     /**
-	 * Generate the deterministic state cover of an arbitrary FSM
-	 */
+     * Generate the deterministic state cover.
+     * @return A tree representing the deterministic state cover of this FSM.
+     */
     std::shared_ptr<Tree> getDeterministicStateCover();
 
     /**
@@ -393,6 +403,11 @@ public:
      */
     Fsm makeComplete(CompleteMode mode);
 
+    /**
+     * Returns the output that is associated with "fail" (used for adaptive
+     * state counting).
+     * @return The output that is associated with "fail".
+     */
     int getFailOutput() const;
 
     bool isCharSet(const std::shared_ptr<Tree> w) const;
@@ -440,12 +455,36 @@ public:
      * from the given state, if the given state is r-distinguishable.
      *
      * @param node The given state
-     * @return The state characterisation set for the given state.
+     * @return The state characterisation set for the given state in the form of
+     * a list of input sequences.
      */
     IOListContainer getRStateCharacterisationSet(std::shared_ptr<FsmNode> node) const;
+
+    /**
+     * Calculates the adaptive state characterisation set for a given state, based on the
+     * previsously calculated r-distinguishability.
+     *
+     * The adaptive state characterisation set distinguishes all r-distinguishable states
+     * from the given state, if the given state is r-distinguishable.
+     *
+     * @param node The given state
+     * @return The adaptive state characterisation set for the given state in the form of
+     * a list of input sequences.
+     */
     IOTreeContainer getAdaptiveRStateCharacterisationSet(std::shared_ptr<FsmNode> node) const;
 
+    /**
+     * Calculates the state characterisation set that r-distinguishes all r-distinguishable
+     * states.
+     * @return The state characterisation set
+     */
     IOListContainer getRCharacterisationSet() const;
+
+    /**
+     * Calculates the adaptive state characterisation set that r-distinguishes all
+     * r-distinguishable states.
+     * @return The adaptive state characterisation set
+     */
     IOTreeContainer getAdaptiveRCharacterisationSet() const;
 
     /**
@@ -475,7 +514,7 @@ public:
     /**
      * Returns a set of input/output sequences that can be produced by this
      * FSM when applying each element of the given adaptive test cases to
-     * the state that gets reached by applying the given trace {@code trace}
+     * the state that gets reached by applying the given trace `trace`
      * to this FSM.
      * @param adaptiveTestCases The given adaptive test cases
      * @param trace The given trace
@@ -487,7 +526,7 @@ public:
      * Returns a set of input/output sequences that can be produced by this
      * FSM when applying each element of the given adaptive test cases to
      * each state that can be reached by applying each input trace from the given
-     * input traces {@code inputTraces} to this FSM.
+     * input traces `inputTraces` to this FSM.
      * @param adaptiveTestCases The given adaptive test cases
      * @param inputTraces The given input traces
      * @return A set of all input/output traces that can be produced
@@ -503,10 +542,27 @@ public:
      */
     std::vector<IOTraceContainer> getVPrime();
 
+    /**
+     * Calculates all prefixes of `base.suffix`, that reach the given node and that
+     * extend `base`.
+     * @param node The given node
+     * @param base Given base input output trace
+     * @param suffix Given suffix input output trace
+     * @return List of input output traces
+     */
     IOTraceContainer r(std::shared_ptr<FsmNode> node,
                        const IOTrace& base,
                        const IOTrace& suffix) const;
 
+    /**
+     * Calculates all prefixes of `base.suffix`, that reach the given node and that
+     * extend `base` plus the input output sequence from `vDoublePrime` that reaches
+     * the given node (if there is such a sequence).
+     * @param node The given node
+     * @param base Given base input output trace
+     * @param suffix Given suffix input output trace
+     * @return List of input output traces
+     */
     IOTraceContainer rPlus(std::shared_ptr<FsmNode> node,
                        const IOTrace& prefix,
                        const IOTrace& suffix,

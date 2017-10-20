@@ -28,8 +28,29 @@ public:
 	*/
     OutputTrace(const std::vector<int>& trace, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 
+    /**
+     * Determines wether a given list of output traces contains a given output trace.
+     * @param list The given list of output traces.
+     * @param trace The given trace.
+     * @return `true`, if `list` contains an element equal to `trace`, `false`, otherwise.
+     */
     static bool contains(const std::vector<std::shared_ptr<OutputTrace>>& list, const OutputTrace& trace);
+
+    /**
+     * Determines wether a given list of output traces contains an output trace that
+     * contains the given (single) output.
+     * @param list The given list of output traces.
+     * @param output The given output.
+     * @return `true`, if `list` contains an element that contains `output`,
+     * `false`, otherwise.
+     */
     static bool contains(const std::vector<std::shared_ptr<OutputTrace>>& list, const int output);
+
+    /**
+     * Determines wether this output trace contains a given (single) output.
+     * @param output The given output.
+     * @return `true`, if this output trace contains `output`, `false`, otherwise.
+     */
     bool contains(const int output) const;
 
 	/**
