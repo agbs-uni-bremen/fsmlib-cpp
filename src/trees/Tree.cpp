@@ -3,6 +3,7 @@
  * 
  * Licensed under the EUPL V.1.1
  */
+#include "fsm/FsmLabel.h"
 #include "trees/Tree.h"
 #include "logging/easylogging++.h"
 
