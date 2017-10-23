@@ -1328,18 +1328,39 @@ void Dfsm::toCsv(const std::string& fname) {
     out.close();
 }
 
-bool Dfsm::appendDistinguishingTraceIfExistsInTree(
-        shared_ptr<InputTrace> alpha,
-        shared_ptr<InputTrace> beta,
-        shared_ptr<Tree> iTree,
-        shared_ptr<Tree> prefixRelationTree)
+InputTrace Dfsm::calcDistinguishingTrace(
+        const shared_ptr<InputTrace> iAlpha,
+        const shared_ptr<InputTrace> iBeta,
+        const shared_ptr<Tree> tree)
+{
+    shared_ptr<FsmNode> s0 = getInitialState();
+    shared_ptr<FsmNode> s1 = *s0->after(*iAlpha).begin();
+    shared_ptr<FsmNode> s2 = *s0->after(*iBeta).begin();
+
+    InputTrace gamma = calcDistinguishingTraceInTree(iAlpha, iBeta, tree);
+    if (gamma.get().size() > 0)
+        return gamma;
+
+    InputTrace gamma2 = calcDistinguishingTraceAfterTree(iAlpha, iBeta, tree);
+    if (gamma2.get().size() > 0)
+        return gamma2;
+
+    return s1->calcDistinguishingTrace(s2,
+                                       pktblLst,
+                                       maxInput);
+}
+
+InputTrace Dfsm::calcDistinguishingTraceInTree(
+        const shared_ptr<InputTrace> alpha,
+        const shared_ptr<InputTrace> beta,
+        const shared_ptr<Tree> tree)
 {
 
     // Only one element in the set, since FSM is deterministic
     shared_ptr<FsmNode> s_i = *(getInitialState()->after(*alpha)).begin();
     shared_ptr<FsmNode> s_j = *(getInitialState()->after(*beta)).begin();
 
-    shared_ptr<TreeNode> root = prefixRelationTree->getRoot();
+    shared_ptr<TreeNode> root = tree->getRoot();
     shared_ptr<TreeNode> currentNode = root;
     std::deque<shared_ptr<InputTrace>> q1;
 
@@ -1363,13 +1384,7 @@ bool Dfsm::appendDistinguishingTraceIfExistsInTree(
                 make_shared<InputTrace>(alpha->get(),presentationLayer);
             alpha_gamma->append(itrc->get());
 
-            shared_ptr<InputTrace> beta_gamma =
-                make_shared<InputTrace>(beta->get(),presentationLayer);
-            beta_gamma->append(itrc->get());
-
-            iTree->addToRoot(alpha_gamma->get());
-            iTree->addToRoot(beta_gamma->get());
-            return true;
+            return *itrc;
         }
 
         currentNode = root->after(itrc->cbegin(), itrc->cend());
@@ -1383,19 +1398,19 @@ bool Dfsm::appendDistinguishingTraceIfExistsInTree(
             q1.push_back(itrcTmp);
         }
     }
-    return false;
+    return InputTrace(presentationLayer);
 }
 
-bool Dfsm::calcDistinguishingTraceAfterLeaf(shared_ptr<InputTrace> alpha,
-        shared_ptr<InputTrace> beta,
-        shared_ptr<Tree> iTree,
-        shared_ptr<Tree> prefixRelationTree)
+InputTrace Dfsm::calcDistinguishingTraceAfterTree(
+        const shared_ptr<InputTrace> alpha,
+        const shared_ptr<InputTrace> beta,
+        const shared_ptr<Tree> tree)
 {
     shared_ptr<FsmNode> s0 = getInitialState();
     shared_ptr<FsmNode> s_i = *(s0->after(*alpha)).begin();
     shared_ptr<FsmNode> s_j = *(s0->after(*beta)).begin();
 
-    vector<shared_ptr<TreeNode>> leaves = prefixRelationTree->getLeaves();
+    vector<shared_ptr<TreeNode>> leaves = tree->getLeaves();
     for(shared_ptr<TreeNode> leaf : leaves)
     {
         shared_ptr<InputTrace> itrc = make_shared<InputTrace>(leaf->getPath(), presentationLayer);
@@ -1409,19 +1424,9 @@ bool Dfsm::calcDistinguishingTraceAfterLeaf(shared_ptr<InputTrace> alpha,
 
         itrc->append(gamma.get());
 
-        shared_ptr<InputTrace> alpha_gamma =
-            make_shared<InputTrace>(alpha->get(),presentationLayer);
-        alpha_gamma->append(itrc->get());
-
-        shared_ptr<InputTrace> beta_gamma =
-            make_shared<InputTrace>(beta->get(),presentationLayer);
-        beta_gamma->append(itrc->get());
-
-        iTree->addToRoot(alpha_gamma->get());
-        iTree->addToRoot(beta_gamma->get());
-        return true;
+        return *itrc;
     }
-    return false;
+    return InputTrace(presentationLayer);
 }
 
 IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
@@ -1470,34 +1475,16 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
             shared_ptr<Tree> betaTree = iTree->getSubTree(beta);
             shared_ptr<Tree> prefixRelationTree = alphaTree->getPrefixRelationTree(betaTree);
 
-            bool distinguished = appendDistinguishingTraceIfExistsInTree(alpha, beta, iTree, prefixRelationTree);
+            InputTrace gamma = calcDistinguishingTrace(alpha, beta, prefixRelationTree);
 
-            if (distinguished) continue;
+            shared_ptr<InputTrace> iAlphaGamma = make_shared<InputTrace>(alpha->get(), presentationLayer);
+            iAlphaGamma->append(gamma.get());
 
-            distinguished = calcDistinguishingTraceAfterLeaf(alpha, beta, iTree, prefixRelationTree);
+            shared_ptr<InputTrace> iBetaGamma = make_shared<InputTrace>(beta->get(), presentationLayer);
+            iBetaGamma->append(gamma.get());
 
-            if (!distinguished)
-            {
-                // Only one element in the set, since FSM is deterministic
-                unordered_set<shared_ptr<FsmNode>> s_iSet = s0->after(*alpha);
-                shared_ptr<FsmNode> s_i = *s_iSet.begin();
-                unordered_set<shared_ptr<FsmNode>> s_jSet = s0->after(*beta);
-                shared_ptr<FsmNode> s_j = *s_jSet.begin();
-
-                InputTrace gamma =
-                    s_i->calcDistinguishingTrace(s_j,pktblLst,maxInput);
-
-                shared_ptr<InputTrace> alpha_gamma =
-                    make_shared<InputTrace>(alpha->get(),presentationLayer);
-                alpha_gamma->append(gamma.get());
-
-                shared_ptr<InputTrace> beta_gamma =
-                make_shared<InputTrace>(beta->get(),presentationLayer);
-                beta_gamma->append(gamma.get());
-
-                iTree->addToRoot(alpha_gamma->get());
-                iTree->addToRoot(beta_gamma->get());
-            }
+            iTree->addToRoot(iAlphaGamma->get());
+            iTree->addToRoot(iBetaGamma->get());
         }
         
     }
@@ -1539,28 +1526,16 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
                 shared_ptr<Tree> trAfterOmega = iTree->getSubTree(iOmega);
                 shared_ptr<Tree> prefixRelationTree = alphaBetaTree->getPrefixRelationTree(trAfterOmega);
 
-                bool distinguished = appendDistinguishingTraceIfExistsInTree(iAlphaBeta, iOmega, iTree, prefixRelationTree);
+                InputTrace gamma = calcDistinguishingTrace(iAlphaBeta, iOmega, prefixRelationTree);
 
-                if (distinguished) continue;
+                shared_ptr<InputTrace> iAlphaBetaGamma = make_shared<InputTrace>(iAlphaBeta->get(), presentationLayer);
+                iAlphaBetaGamma->append(gamma.get());
 
-                distinguished = calcDistinguishingTraceAfterLeaf(iAlphaBeta, iOmega, iTree, prefixRelationTree);
+                shared_ptr<InputTrace> iOmegaGamma = make_shared<InputTrace>(iOmega->get(), presentationLayer);
+                iOmegaGamma->append(gamma.get());
 
-                if (!distinguished)
-                {
-                    InputTrace gamma = s_alpha_beta->calcDistinguishingTrace(s_omega,
-                                                                             pktblLst,
-                                                                             maxInput);
-                    shared_ptr<InputTrace> iAlphaBetaGamma =
-                    make_shared<InputTrace>(iAlphaBeta->get(),presentationLayer);
-                    iAlphaBetaGamma->append(gamma.get());
-
-                    shared_ptr<InputTrace> iOmegaGamma =
-                    make_shared<InputTrace>(iOmega->get(),presentationLayer);
-                    iOmegaGamma->append(gamma.get());
-
-                    iTree->addToRoot(iAlphaBetaGamma->get());
-                    iTree->addToRoot(iOmegaGamma->get());
-                }
+                iTree->addToRoot(iAlphaBetaGamma->get());
+                iTree->addToRoot(iOmegaGamma->get());
             }
             
         }
@@ -1617,33 +1592,18 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
 
                     shared_ptr<Tree> afterAlphaBeta1Tree = iTree->getSubTree(iAlphaBeta_1);
                     shared_ptr<Tree> afterAlphaBeta2Tree = iTree->getSubTree(iAlphaBeta_2);
-                    shared_ptr<Tree> prefixIntersectionTree = afterAlphaBeta1Tree->getPrefixRelationTree(afterAlphaBeta2Tree);
+                    shared_ptr<Tree> prefixRelationTree = afterAlphaBeta1Tree->getPrefixRelationTree(afterAlphaBeta2Tree);
 
-                    bool distinguished = appendDistinguishingTraceIfExistsInTree(iAlphaBeta_1, iAlphaBeta_2, iTree, prefixIntersectionTree);
+                    InputTrace gamma = calcDistinguishingTrace(iAlphaBeta_1, iAlphaBeta_2, prefixRelationTree);
 
-                    if (distinguished) continue;
+                    shared_ptr<InputTrace> iAlphaBeta_1Gamma = make_shared<InputTrace>(iAlphaBeta_1->get(), presentationLayer);
+                    iAlphaBeta_1Gamma->append(gamma.get());
 
-                    distinguished = calcDistinguishingTraceAfterLeaf(iAlphaBeta_1, iAlphaBeta_2, iTree, prefixIntersectionTree);
+                    shared_ptr<InputTrace> iAlphaBeta_2Gamma = make_shared<InputTrace>(iAlphaBeta_2->get(), presentationLayer);
+                    iAlphaBeta_2Gamma->append(gamma.get());
 
-                    if (!distinguished)
-                    {
-                        InputTrace gamma = s1->calcDistinguishingTrace(s2,
-                                                                       pktblLst,
-                                                                       maxInput);
-
-                        shared_ptr<InputTrace> iAlphaBeta_1Gamma =
-                        make_shared<InputTrace>(iAlphaBeta_1->get(),
-                                                presentationLayer);
-                        iAlphaBeta_1Gamma->append(gamma.get());
-
-                        shared_ptr<InputTrace> iAlphaBeta_2Gamma =
-                        make_shared<InputTrace>(iAlphaBeta_2->get(),
-                                                presentationLayer);
-                        iAlphaBeta_2Gamma->append(gamma.get());
-
-                        iTree->addToRoot(iAlphaBeta_1Gamma->get());
-                        iTree->addToRoot(iAlphaBeta_2Gamma->get());
-                    }
+                    iTree->addToRoot(iAlphaBeta_1Gamma->get());
+                    iTree->addToRoot(iAlphaBeta_2Gamma->get());
                 }
             }
         
