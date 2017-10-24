@@ -69,6 +69,7 @@ resources/pls-example/plsautocnd_I_MUT.ods
 resources/pls-example/plsautocndMUT.csv
 resources/pls-example/plsautocndMUT.ods
 resources/pls-example/plsautocndOut.csv
+CMakeFiles
 
 src/CMakeLists.txt.user
 *.dot
