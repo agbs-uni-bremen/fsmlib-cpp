@@ -97,3 +97,5 @@ configure_file (../resources/fsmGillA7.in								window/fsmGillA7.in								COPY
 configure_file (../resources/fsmGillA7.out								window/fsmGillA7.out								COPYONLY)
 configure_file (../resources/fsmGillA7.state							window/fsmGillA7.state							COPYONLY)
 endif(gui)
+
+include(cppcheck.cmake)
