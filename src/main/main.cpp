@@ -38,14 +38,16 @@ using namespace Json;
 void assertInconclusive(string tc, string comment = "") {
     
     string sVerdict("INCONCLUSIVE");
-    cout << sVerdict << ": " << tc << " : " << comment <<  endl;
+    //TODO put into global logger
+    LOG(INFO) << sVerdict << ": " << tc << " : " << comment <<  endl;
     
 }
 
 void assert(string tc, bool verdict, string comment = "") {
     
     string sVerdict = (verdict) ? "PASS" : "FAIL";
-    cout << sVerdict << ": " << tc
+    //TODO put into global logger
+    LOG(INFO) << sVerdict << ": " << tc
     << " : "
     << comment <<  endl;
     
@@ -705,6 +707,50 @@ void wVersusT() {
     
 }
 
+void adaptiveTest01()
+{
+    LOG(INFO) << "############## Adaptive Test 01 ##############";
+    shared_ptr<FsmPresentationLayer> plTest =
+    make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
+            + "../../../resources/adaptive-test-out.txt",
+            + "../../../resources/adaptive-test-state.txt");
+    const size_t numFsm = 10;
+    const int numberDigits = ((numFsm <= 1)? 1 : static_cast<int>(log10(numFsm)) + 1);
+    const int maxInput = 5;
+    const int maxOutput = 5;
+    const int maxStates = 5;
+
+    const int numOutputFaults = 1;
+    const int numTransitionFaults = 1;
+    const unsigned createRandomFsmSeed = 0;
+    const unsigned createMutantSeed = 0;
+    LOG(INFO) << "numFsm: " << numFsm;
+    LOG(INFO) << "maxInput: " << maxInput;
+    LOG(INFO) << "maxOutput: " << maxOutput;
+    LOG(INFO) << "maxStates: " << maxStates;
+    LOG(INFO) << "Testing!";
+    TIMED_FUNC(timerObj);
+    for (size_t i = 0; i < numFsm; ++i)
+    {
+        stringstream ss;
+        ss << setw(numberDigits) << setfill('0') << i;
+        string iteration = ss.str();
+        logging::setLogfileSuffix(iteration);
+
+        TIMED_SCOPE(timerBlkObj, "heavy-iter");
+        const string dotPrefix = "../../../resources/adaptive-test-" + to_string(i) + "-";
+        LOG(INFO) << "-----------------------------------------------------------";
+        LOG(INFO) << "i: " << iteration;
+        LOG(INFO) << "Creating FSM.";
+        shared_ptr<Fsm> fsm = Fsm::createRandomFsm(to_string(i), maxInput, maxOutput, maxStates, plTest, true, createRandomFsmSeed);
+        LOG(INFO) << "Creating mutant.";
+        shared_ptr<Fsm> mutant = fsm->createMutant("mutant" + to_string(i), numOutputFaults, numTransitionFaults, createMutantSeed);
+        IOTraceContainer observedTraces;
+        bool result = Fsm::adaptiveStateCounting(fsm, mutant, observedTraces);
+        assert("TC-AT-0001", !result, "Na sowas");
+    }
+}
+
 std::string getcwd() {
     std::string result(1024,'\0');
     while( getcwd(&result[0], result.size()) == 0) {
@@ -725,180 +771,7 @@ int main(int argc, char* argv[])
     logging::initLogging();
 
     LOG(INFO) << "############## Starting Application ##############";
-    LOG(DEBUG) << "Dir " << getcwd();
-
-    shared_ptr<FsmPresentationLayer> plTest =
-    make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
-            + "../../../resources/adaptive-test-out.txt",
-            + "../../../resources/adaptive-test-state.txt");
-
-
-    shared_ptr<FsmPresentationLayer> pl1 =
-    make_shared<FsmPresentationLayer>("../../../resources/adaptiveIn.txt",
-            + "../../../resources/adaptiveOut.txt",
-            + "../../../resources/adaptiveState.txt");
-    shared_ptr<Fsm> fsm1 = make_shared<Fsm>("../../../resources/adaptive.fsm",pl1,"adaptive");
-    fsm1->toDot("../../../resources/adaptive");
-//    fsm1->calcRDistinguishableStates();
-//    fsm1->getRCharacterisationSet();
-
-    shared_ptr<FsmPresentationLayer> pl1Iut =
-    make_shared<FsmPresentationLayer>("../../../resources/adaptive-iutIn.txt",
-            + "../../../resources/adaptive-iutOut.txt",
-            + "../../../resources/adaptive-iutState.txt");
-    shared_ptr<Fsm> fsm1Iut = make_shared<Fsm>("../../../resources/adaptive-iut-fail.fsm",pl1,"adaptive-iut");
-    fsm1Iut->toDot("../../../resources/adaptive-iut");
-
-    /*
-    shared_ptr<Fsm> fsm1Product = Fsm::createProductMachine(fsm1, fsm1Iut, "");
-    fsm1Product->toDot("../../../resources/adaptive-product");
-
-    ofstream outFile("adaptive-product.fsm");
-    fsm1Product->dumpFsm(outFile);
-    outFile.close();
-
-    Fsm fsm1ProductMin = fsm1Product->minimise();
-    fsm1ProductMin.toDot("../../../resources/adaptive-product-min");
-    */
-
-    shared_ptr<FsmPresentationLayer> pl2 =
-    make_shared<FsmPresentationLayer>("../../../resources/adaptive2In.txt",
-            + "../../../resources/adaptive2Out.txt",
-            + "../../../resources/adaptive2State.txt");
-    shared_ptr<Fsm> fsm2 = make_shared<Fsm>("../../../resources/adaptive2.fsm",pl2,"adaptive2");
-    fsm2->toDot("../../../resources/adaptive2");
-
-    int x = 1;
-    if (x == 1)
-    {
-
-        /*
-        shared_ptr<Tree> detStateCover = fsm1->getDeterministicStateCover();
-        IOListContainer testCases = detStateCover->getDeterministicTestCases();
-        LOG(DEBUG) << "Deterministic test cases:\n" << testCases;
-
-        Fsm fsm1ProductComplete = fsm1ProductMin.makeComplete(ErrorState);
-        fsm1ProductComplete.calcRDistinguishableStates();
-        fsm1ProductComplete.toDot("../../../resources/adaptive-product-min-complete");
-        IOTraceContainer observedTraces(fsm1ProductComplete.getPresentationLayer());
-        fsm1ProductComplete.adaptiveStateCounting(7, observedTraces);
-        */
-
-        const size_t numFsm = 1;
-        const int numberDigits = ((numFsm <= 1)? 1 : log10(numFsm) + 1);
-        const int maxInput = 50;
-        const int maxOutput = 50;
-        const int maxStates = 25;
-
-        const int numOutputFaults = 10;
-        const int numTransitionFaults = 10;
-        // State counting takes a while:
-        //const unsigned createRandomFsmSeed = 97295907;
-        //const unsigned createMutantSeed = 98228883;
-        //const unsigned createRandomFsmSeed = 404044307;
-        //const unsigned createMutantSeed = 440103860;
-        const unsigned createRandomFsmSeed = 0;
-        const unsigned createMutantSeed = 0;
-        LOG(INFO) << "numFsm: " << numFsm;
-        LOG(INFO) << "maxInput: " << maxInput;
-        LOG(INFO) << "maxOutput: " << maxOutput;
-        LOG(INFO) << "maxStates: " << maxStates;
-        LOG(INFO) << "Testing!";
-        TIMED_FUNC(timerObj);
-        for (size_t i = 0; i < numFsm; ++i)
-        {
-            stringstream ss;
-            ss << setw(numberDigits) << setfill('0') << i;
-            string iteration = ss.str();
-            logging::setLogfileSuffix(iteration);
-
-            TIMED_SCOPE(timerBlkObj, "heavy-iter");
-            const string dotPrefix = "../../../resources/adaptive-test-" + to_string(i) + "-";
-            LOG(INFO) << "-----------------------------------------------------------";
-            LOG(INFO) << "i: " << iteration;
-            LOG(INFO) << "Creating FSM.";
-            shared_ptr<Fsm> fsm = Fsm::createRandomFsm(to_string(i), maxInput, maxOutput, maxStates, plTest, true, createRandomFsmSeed);
-//            fsm->toDot(dotPrefix + "fsm");
-            LOG(INFO) << "Creating mutant.";
-            shared_ptr<Fsm> mutant = fsm->createMutant("mutant" + to_string(i), numOutputFaults, numTransitionFaults, createMutantSeed);
-            IOTraceContainer observedTraces;
-            Fsm::adaptiveStateCounting(fsm, mutant, observedTraces);
-
-//            mutant->toDot(dotPrefix + "mutant");
-//            LOG(INFO) << "Creating product.";
-//            shared_ptr<Fsm> product = Fsm::createProductMachine(fsm, mutant, "_prod");
-//            product->toDot(dotPrefix + "product");
-//            LOG(INFO) << "Minimizing.";
-//            Fsm productMin = product->minimise();
-//            productMin.toDot(dotPrefix + "productMin");
-//            LOG(INFO) << "Making complete.";
-//            Fsm productComplete = productMin.makeComplete(ErrorState);
-//            productComplete.toDot(dotPrefix + "productComplete");
-//            productComplete.calcRDistinguishableStates();
-//            IOTraceContainer observedTraces(productComplete.getPresentationLayer());
-//            productComplete.adaptiveStateCounting(productComplete.getMaxNodes(), observedTraces);
-        }
-        LOG(INFO) << "Ready!";
-
-    //x = 2;
-    }
-    if (x == 2)
-    {
-        shared_ptr<Tree> detStateCover = fsm2->getDeterministicStateCover();
-        IOListContainer testCases = detStateCover->getDeterministicTestCases();
-        cout << "Deterministic test cases:\n" << testCases << endl;
-
-
-        fsm2->calcRDistinguishableStates();
-        IOListContainer characterisationSet = fsm2->getCharacterisationSet();
-        cout << "characterisationSet:\n" << characterisationSet << endl;
-        IOListContainer rCharacterisationSet = fsm2->getRCharacterisationSet();
-        cout << "rCharacterisationSet:\n" << rCharacterisationSet << endl;
-        IOTreeContainer rAdaptiveCharacterisationSet = fsm2->getAdaptiveRCharacterisationSet();
-        cout << "Adaptive rCharacterisationSet:\n" << rAdaptiveCharacterisationSet << endl;
-        IOListContainer adaptiveList = rAdaptiveCharacterisationSet.toIOList();
-        cout << "Adaptive rCharacterisationSet as input traces:\n" << adaptiveList << endl;
-
-        vector<vector<shared_ptr<FsmNode>>> max = fsm2->getMaximalSetsOfRDistinguishableStates();
-        cout << "max:" << endl;
-        for (auto set  : max)
-        {
-            cout << "  {";
-            for (auto node : set)
-            {
-                cout << node->getName() << ",";
-            }
-            cout << "}" << endl;
-        }
-
-        vector<shared_ptr<FsmNode>> dReachable = fsm2->getDReachableStates();
-        cout << "d-reachable nodes: ";
-        for (auto n : dReachable)
-        {
-            cout << n->getName() << ",";
-        }
-        cout << endl;
-
-        InputTrace testInput = InputTrace({0,0,1,1}, pl2);
-        vector<shared_ptr<OutputTrace>> producedOutputs;
-        vector<shared_ptr<FsmNode>> reached;
-
-        cout << "Input trace: " << testInput << endl;
-        fsm2->getInitialState()->getPossibleOutputs(testInput, producedOutputs, reached);
-        cout << "produced Outputs:" << endl;
-        for (auto o : producedOutputs)
-        {
-            cout << *o << ", ";
-        }
-        cout << endl;
-        cout << "reached:" << endl;
-        for (auto n : reached)
-        {
-            cout << n->getName() << ",";
-        }
-        cout << endl;
-        fsm2->getVPrime();
-    }
+    adaptiveTest01();
 	cout << endl << endl;
 
 
