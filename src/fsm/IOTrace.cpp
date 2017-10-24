@@ -8,20 +8,14 @@
 
 using namespace std;
 
-IOTrace::IOTrace(const InputTrace & i, const OutputTrace & o)
-	: inputTrace(i), outputTrace(o)
+IOTrace::IOTrace(const InputTrace & i, const OutputTrace & o, std::shared_ptr<FsmNode> targetNode)
+    : inputTrace(i), outputTrace(o), targetNode(targetNode)
 {
     if (i.get().size() != o.get().size())
     {
         cerr << "Input trace length and output trace length differ." << endl;
         exit(EXIT_FAILURE);
     }
-}
-
-IOTrace::IOTrace(const InputTrace & i, const OutputTrace & o, std::shared_ptr<FsmNode> targetNode)
-    : IOTrace(i, o)
-{
-    this->targetNode = targetNode;
 }
 
 IOTrace::IOTrace(const int i, const int o, shared_ptr<FsmPresentationLayer> pl):
@@ -42,17 +36,11 @@ inputTrace(ioTrace.inputTrace), outputTrace(ioTrace.outputTrace), targetNode(ioT
 
 }
 
-IOTrace::IOTrace(const IOTrace & ioTrace, int n):
-    inputTrace(ioTrace.getInputTrace()), outputTrace(ioTrace.getOutputTrace())
+IOTrace::IOTrace(const IOTrace & ioTrace, int n, std::shared_ptr<FsmNode> targetNode):
+    inputTrace(ioTrace.getInputTrace()), outputTrace(ioTrace.getOutputTrace()), targetNode(targetNode)
 {
     inputTrace.removeElements(n);
     outputTrace.removeElements(n);
-}
-
-IOTrace::IOTrace(const IOTrace & ioTrace, int n, std::shared_ptr<FsmNode> targetNode):
-    IOTrace(ioTrace, n)
-{
-    this->targetNode = targetNode;
 }
 
 IOTrace::IOTrace(std::shared_ptr<FsmPresentationLayer> pl):

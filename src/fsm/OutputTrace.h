@@ -19,14 +19,14 @@ public:
 	Create an empty output trace, with only one presentation layer
 	@param presentationLayer The presentation layer used by the trace
 	*/
-	OutputTrace(const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    OutputTrace(const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
 	/**
 	Create an output trace
 	@param trace The trace itself, represented by a list of int
 	@param presentationLayer The presentation layer used by the trace
 	*/
-    OutputTrace(const std::vector<int>& trace, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    OutputTrace(const std::vector<int>& trace, const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
     /**
      * Determines wether a given list of output traces contains a given output trace.

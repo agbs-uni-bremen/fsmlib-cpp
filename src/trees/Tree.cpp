@@ -15,7 +15,7 @@ void Tree::calcLeaves()
 	root->calcLeaves(leaves);
 }
 
-void Tree::remove(const shared_ptr<TreeNode> thisNode, const shared_ptr<TreeNode> otherNode)
+void Tree::remove(const shared_ptr<TreeNode>& thisNode, const shared_ptr<TreeNode>& otherNode)
 {
 	thisNode->deleteNode();
 
@@ -24,12 +24,12 @@ void Tree::remove(const shared_ptr<TreeNode> thisNode, const shared_ptr<TreeNode
 		shared_ptr<TreeEdge> eOther = otherNode->hasEdge(e);
 		if (eOther != nullptr)
 		{
-			remove(e->getTarget(), eOther->getTarget());
+            remove(e->getTarget(), eOther->getTarget());
 		}
 	}
 }
 
-void Tree::printChildren(ostream & out, const shared_ptr<TreeNode> top, const shared_ptr<int> idNode) const
+void Tree::printChildren(ostream & out, const shared_ptr<TreeNode>& top, const shared_ptr<int>& idNode) const
 {
 	int idNodeBase = *idNode;
 	for (shared_ptr<TreeEdge> edge : *top->getChildren())
@@ -53,7 +53,7 @@ bool Tree::inPrefixRelation(std::vector<int> aPath, std::vector<int> bPath)
     return true;
 }
 
-Tree::Tree(const shared_ptr<TreeNode> root, const shared_ptr<FsmPresentationLayer> presentationLayer)
+Tree::Tree(const shared_ptr<TreeNode>& root, const shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: root(root), presentationLayer(presentationLayer)
 {
 
@@ -82,7 +82,7 @@ shared_ptr<TreeNode> Tree::getRoot() const
 	return root;
 }
 
-std::shared_ptr<Tree> Tree::getSubTree(const shared_ptr<InputTrace> alpha)
+std::shared_ptr<Tree> Tree::getSubTree(const shared_ptr<InputTrace>& alpha)
 {
     shared_ptr<TreeNode> afterAlpha = getRoot()->after(alpha->cbegin(), alpha->cend());
     shared_ptr<TreeNode> cpyNode = afterAlpha->clone();
@@ -118,7 +118,7 @@ IOListContainer Tree::getIOListsWithPrefixes()
     return IOListContainer(ioll, presentationLayer);
 }
 
-void Tree::remove(const shared_ptr<Tree> otherTree)
+void Tree::remove(const shared_ptr<Tree>& otherTree)
 {
 	remove(getRoot(), otherTree->getRoot());
 }
@@ -175,7 +175,7 @@ void Tree::addToRoot(const vector<int> &lst)
     r->addToThisNode(lst);
 }
 
-void Tree::unionTree(const shared_ptr<Tree> otherTree)
+void Tree::unionTree(const shared_ptr<Tree>& otherTree)
 {
 	addToRoot(otherTree->getIOLists());
 }

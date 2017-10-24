@@ -31,7 +31,7 @@ public:
 	@param io The input or output of this tree edge
 	@param target The target of this tree edge
 	*/
-	TreeEdge(const int io, const std::shared_ptr<TreeNode> target);
+    TreeEdge(const int io, const std::shared_ptr<TreeNode>& target);
 
     /**
      * Create and return a copy of this Edge

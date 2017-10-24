@@ -38,9 +38,9 @@ TreeNode::TreeNode(const TreeNode* other):
     deleted = other->deleted;
 }
 
-void TreeNode::setParent(const weak_ptr<TreeNode> pparent)
+void TreeNode::setParent(const weak_ptr<TreeNode>& parent)
 {
-    parent = pparent;
+    this->parent = parent;
 }
 
 weak_ptr<TreeNode> TreeNode::getParent() const
@@ -86,7 +86,7 @@ shared_ptr<vector<shared_ptr<TreeEdge>>> TreeNode::getChildren() const
     return children;
 }
 
-void TreeNode::remove(const shared_ptr<TreeNode> node)
+void TreeNode::remove(const shared_ptr<TreeNode>& node)
 {
     for (shared_ptr<TreeEdge> e : *children)
     {
@@ -113,7 +113,7 @@ void TreeNode::calcLeaves(vector<shared_ptr<TreeNode>>& leaves)
     }
 }
 
-void TreeNode::add(const shared_ptr<TreeEdge> edge)
+void TreeNode::add(const shared_ptr<TreeEdge>& edge)
 {
     edge->getTarget()->setParent(shared_from_this());
     children->push_back(edge);
@@ -124,7 +124,7 @@ bool TreeNode::isLeaf() const
     return children->empty();
 }
 
-int TreeNode::getIO(const shared_ptr<TreeNode> node) const
+int TreeNode::getIO(const shared_ptr<TreeNode>& node) const
 {
     for (shared_ptr<TreeEdge> e : *children)
     {
@@ -136,7 +136,7 @@ int TreeNode::getIO(const shared_ptr<TreeNode> node) const
     exit(EXIT_FAILURE);
 }
 
-shared_ptr<TreeEdge> TreeNode::hasEdge(const shared_ptr<TreeEdge> edge) const
+shared_ptr<TreeEdge> TreeNode::hasEdge(const shared_ptr<TreeEdge>& edge) const
 {
     for (shared_ptr<TreeEdge> g : *children)
     {
@@ -165,7 +165,7 @@ vector<int> TreeNode::getPath()
     return path;
 }
 
-bool TreeNode::superTreeOf(const shared_ptr<TreeNode> otherNode) const
+bool TreeNode::superTreeOf(const shared_ptr<TreeNode>& otherNode) const
 {
     if (children->size() < otherNode->children->size())
     {

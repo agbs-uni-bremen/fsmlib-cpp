@@ -51,7 +51,7 @@ public:
      * @param iolLst The list of input traces
      * @param presentationLayer The presentation layer to use
      */
-    IOListContainer(const std::shared_ptr<std::vector<std::vector<int>>> iolLst, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    IOListContainer(const std::shared_ptr<std::vector<std::vector<int>>>& iolLst, const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
     
     /**
      * Create an IOListContainer with input traces from length minLength
@@ -66,9 +66,9 @@ public:
     IOListContainer(const int maxInput,
                     const int minLength,
                     const int maxLength,
-                    const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+                    const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
     
-    IOListContainer(const std::shared_ptr<FsmPresentationLayer>
+    IOListContainer(const std::shared_ptr<FsmPresentationLayer>&
                         presentationLayer);
     
     /**

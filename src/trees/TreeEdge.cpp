@@ -6,7 +6,7 @@
 #include "trees/TreeEdge.h"
 #include "trees/TreeNode.h"
 
-TreeEdge::TreeEdge(const int io, const std::shared_ptr<TreeNode> target)
+TreeEdge::TreeEdge(const int io, const std::shared_ptr<TreeNode>& target)
 	: io(io), target(target)
 {
 

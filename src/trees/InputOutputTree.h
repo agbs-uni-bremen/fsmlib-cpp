@@ -23,7 +23,7 @@ public:
      * @param root The given root.
      * @param presentationLayer The presentation layer.
      */
-    InputOutputTree(const std::shared_ptr<AdaptiveTreeNode> root, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    InputOutputTree(const std::shared_ptr<AdaptiveTreeNode>& root, const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
     /**
      * Determines wether the tree is empty (the tree has no root or the root is a leaf).

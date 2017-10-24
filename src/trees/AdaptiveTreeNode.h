@@ -57,7 +57,7 @@ public:
      * @return `true`, if this tree (node) is a super tree of the given tree (node),
      * `false`, otherwise.
      */
-    bool superTreeOf(const std::shared_ptr<AdaptiveTreeNode> otherNode) const;
+    bool superTreeOf(const std::shared_ptr<AdaptiveTreeNode>& otherNode) const;
 
     virtual AdaptiveTreeNode* _clone() const;
     std::shared_ptr<AdaptiveTreeNode> Clone() const;

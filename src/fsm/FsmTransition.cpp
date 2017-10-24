@@ -8,9 +8,9 @@
 
 using namespace std;
 
-FsmTransition::FsmTransition(const shared_ptr<FsmNode>  source,
-                             const shared_ptr<FsmNode>  target,
-                             const shared_ptr<FsmLabel> label)
+FsmTransition::FsmTransition(const shared_ptr<FsmNode>& source,
+                             const shared_ptr<FsmNode>& target,
+                             const shared_ptr<FsmLabel>& label)
 	: source(source), target(target), label(label)
 {
     

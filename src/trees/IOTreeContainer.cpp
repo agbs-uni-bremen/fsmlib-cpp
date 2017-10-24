@@ -3,12 +3,12 @@
 
 using namespace std;
 
-IOTreeContainer::IOTreeContainer(const std::shared_ptr<FsmPresentationLayer> presentationLayer):
+IOTreeContainer::IOTreeContainer(const std::shared_ptr<FsmPresentationLayer>& presentationLayer):
     list(make_shared<vector<shared_ptr<InputOutputTree>>>()), presentationLayer(presentationLayer)
 {
 }
 
-IOTreeContainer::IOTreeContainer(const std::shared_ptr<std::vector<std::shared_ptr<InputOutputTree>>> list, const std::shared_ptr<FsmPresentationLayer> presentationLayer):
+IOTreeContainer::IOTreeContainer(const std::shared_ptr<std::vector<std::shared_ptr<InputOutputTree>>>& list, const std::shared_ptr<FsmPresentationLayer>& presentationLayer):
     list(list), presentationLayer(presentationLayer)
 {
 

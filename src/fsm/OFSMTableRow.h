@@ -63,13 +63,13 @@ public:
 	represented by r has no emanating transition labelled with i/o or
 	vice versa.
 	*/
-	bool ioEquals(const std::shared_ptr<OFSMTableRow> r) const;
+    bool ioEquals(const std::shared_ptr<OFSMTableRow>& r) const;
 
 	/**
 	Return false if and only if this row represents a state that
 	is mapped to a post state by input/output i/o which is associated
 	with another equivalence class than the post state r.get(i,o).
 	*/
-	bool classEquals(const S2CMap & s2c, const std::shared_ptr<OFSMTableRow> r);
+    bool classEquals(const S2CMap & s2c, const std::shared_ptr<OFSMTableRow>& r);
 };
 #endif //FSM_FSM_OFSMTABLEROW_H_

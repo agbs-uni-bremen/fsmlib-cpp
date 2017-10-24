@@ -6,7 +6,7 @@
 #include "fsm/FsmNode.h"
 
 using namespace std;
-RDistinguishability::RDistinguishability(shared_ptr<FsmPresentationLayer> presentationLayer) : presentationLayer(presentationLayer)
+RDistinguishability::RDistinguishability(const shared_ptr<FsmPresentationLayer>& presentationLayer) : presentationLayer(presentationLayer)
 {
     hBeenCalculated = false;
 }

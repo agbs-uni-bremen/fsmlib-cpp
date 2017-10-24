@@ -28,7 +28,7 @@ public:
 	Create an empty trace, with only one presentation layer
 	@param presentationLayer The presentation layer used by the trace
 	*/
-	Trace(const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    Trace(const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
 	/**
 	Create a trace
@@ -36,7 +36,7 @@ public:
 	@param presentationLayer The presentation layer used by the trace
 	*/
 	Trace(const std::vector<int>& trace,
-          const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+          const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
     Trace(const Trace& other);
 	

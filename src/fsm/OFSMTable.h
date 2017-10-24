@@ -87,10 +87,10 @@ public:
 	@param maxOutput output alphabet is in range 0..maxOutput
 	@param presentationLayer The presentation layer used by the OFSMTable
 	*/
-	OFSMTable(const std::vector<std::shared_ptr<FsmNode>>& nodes, const int maxInput, const int maxOutput, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    OFSMTable(const std::vector<std::shared_ptr<FsmNode>>& nodes, const int maxInput, const int maxOutput, const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 	
 	//TODO
-	OFSMTable(const int numStates, const int maxInput, const int maxOutput, const std::vector<std::shared_ptr<OFSMTableRow>>& rows, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    OFSMTable(const int numStates, const int maxInput, const int maxOutput, const std::vector<std::shared_ptr<OFSMTableRow>>& rows, const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 	
 	//TODO
 	int getId();

@@ -52,7 +52,7 @@ public:
 	Set the node to this one parent
 	@param pparent The node which will be the parent of this one
 	*/
-    void setParent(const std::weak_ptr<TreeNode> parent);
+    void setParent(const std::weak_ptr<TreeNode>& parent);
 
 	/**
 	Getter for the parent
@@ -85,7 +85,7 @@ public:
 	Remove a tree node from this node's children target
 	@param node The target to remove
 	*/
-	void remove(const std::shared_ptr<TreeNode> node);
+    void remove(const std::shared_ptr<TreeNode>& node);
 
 	/**
 	Calc the list of leaves of this tree
@@ -97,7 +97,7 @@ public:
 	Add and edge to this node children
 	@param edge The edge to be added
 	*/
-	void add(const std::shared_ptr<TreeEdge> edge);
+    void add(const std::shared_ptr<TreeEdge>& edge);
 
 	/**
 	Check whether or not this tree node had any child or not
@@ -111,14 +111,14 @@ public:
 	@param node The node to be searched into the tree node's children target
 	@return The input needed to reach the tree node
 	*/
-	int getIO(const std::shared_ptr<TreeNode> node) const;
+    int getIO(const std::shared_ptr<TreeNode>& node) const;
 
 	/**
 	Check whether or not this tree node has a specific edge or not
 	@param edge The edge to be searched into the tree node's children
 	@return The tree edge if found, nullptr otherwise
 	*/
-	std::shared_ptr<TreeEdge> hasEdge(const std::shared_ptr<TreeEdge> edge) const;
+    std::shared_ptr<TreeEdge> hasEdge(const std::shared_ptr<TreeEdge>& edge) const;
 
 	/**
 	Get the inputs needed to reach this specific tree node
@@ -131,7 +131,7 @@ public:
 	@param otherNode The other tree node to compare
 	@return true if the other tree node is a super tree of this one, false otherwise
 	*/
-	bool superTreeOf(const std::shared_ptr<TreeNode> otherNode) const;
+    bool superTreeOf(const std::shared_ptr<TreeNode>& otherNode) const;
 
 	/**
 	Compare two tree node to check if they are the same or not

@@ -64,7 +64,7 @@ protected:
     /**
      *  Default constructors without effect - needed by sub-classes
      */
-    Fsm(const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    Fsm(const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
     Fsm();
     
     /** Name of the FSM -- appears in nodes when printing the FSM as a dot graph */
@@ -96,10 +96,10 @@ protected:
     std::vector<std::shared_ptr<OFSMTable>> ofsmTableLst;
     std::vector<std::shared_ptr<Tree>> stateIdentificationSets;
     std::shared_ptr<FsmPresentationLayer> presentationLayer;
-    std::shared_ptr<FsmNode> newNode(const int id, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p);
-    bool contains(const std::vector<std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>>& lst, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p);
-    bool contains(const std::vector<std::shared_ptr<FsmNode>>& lst, const std::shared_ptr<FsmNode> n);
-    std::shared_ptr<FsmNode> findp(const std::vector<std::shared_ptr<FsmNode>>& lst, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p);
+    std::shared_ptr<FsmNode> newNode(const int id, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>& p);
+    bool contains(const std::vector<std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>>& lst, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>& p);
+    bool contains(const std::vector<std::shared_ptr<FsmNode>>& lst, const std::shared_ptr<FsmNode>& n);
+    std::shared_ptr<FsmNode> findp(const std::vector<std::shared_ptr<FsmNode>>& lst, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>& p);
     void parseLine(const std::string & line);
     void readFsm(const std::string & fname);
     
@@ -144,7 +144,7 @@ public:
         const int maxNodes,
         const int maxInput,
         const int maxOutput,
-        const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+        const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
     
     /**
      *  Constructor creating an FSM specified in a file.
@@ -172,7 +172,7 @@ public:
      *
      */
     Fsm(const std::string& fname,
-        const std::shared_ptr<FsmPresentationLayer> presentationLayer,
+        const std::shared_ptr<FsmPresentationLayer>& presentationLayer,
         const std::string& fsmName);
 
     /**
@@ -196,15 +196,15 @@ public:
     Fsm(const std::string & fsmName,
         const int maxInput,
         const int maxOutput,
-        const std::vector<std::shared_ptr<FsmNode>> lst,
-        const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+        const std::vector<std::shared_ptr<FsmNode>>& lst,
+        const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
     Fsm(const std::string & fsmName,
         const int maxInput,
         const int maxOutput,
-        const std::vector<std::shared_ptr<FsmNode>> lst,
+        const std::vector<std::shared_ptr<FsmNode>>& lst,
         const int initStateIdx,
-        const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+        const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
     
     
     /**
@@ -235,7 +235,7 @@ public:
                     const int maxInput,
                     const int maxOutput,
                     const int maxState,
-                    const std::shared_ptr<FsmPresentationLayer>
+                    const std::shared_ptr<FsmPresentationLayer>&
                     presentationLayer,
                     const bool observable = false,
                     const unsigned seed = 0);
@@ -410,8 +410,8 @@ public:
      */
     int getFailOutput() const;
 
-    bool isCharSet(const std::shared_ptr<Tree> w) const;
-    void minimiseCharSet(const std::shared_ptr<Tree> w);
+    bool isCharSet(const std::shared_ptr<Tree>& w) const;
+    void minimiseCharSet(const std::shared_ptr<Tree>& w);
     
     /**
      Calculate the characterisation set W of a (possibly nondeterministic) FSM.
@@ -687,7 +687,7 @@ public:
     void calcStateIdentificationSets();
     void calcStateIdentificationSetsFast();
 
-    void appendStateIdentificationSets(const std::shared_ptr<Tree> Wp2) const;
+    void appendStateIdentificationSets(const std::shared_ptr<Tree>& Wp2) const;
     
     /**
      * Perform test generation by means of the W Method, as applicable
@@ -801,7 +801,7 @@ public:
     bool isDeterministic() const;
     
     
-    void setPresentationLayer(const std::shared_ptr<FsmPresentationLayer> ppresentationLayer);
+    void setPresentationLayer(const std::shared_ptr<FsmPresentationLayer>& ppresentationLayer);
     
     
     /** Return the number of states in this FSM */

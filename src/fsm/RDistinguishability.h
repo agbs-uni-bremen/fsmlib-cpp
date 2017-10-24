@@ -19,7 +19,7 @@ private:
     std::shared_ptr<FsmPresentationLayer> presentationLayer;
     bool hBeenCalculated;
 public:
-    RDistinguishability(const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    RDistinguishability(const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
 protected:
     /**

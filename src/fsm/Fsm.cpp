@@ -33,7 +33,7 @@
 using namespace std;
 using namespace std::chrono;
 
-shared_ptr<FsmNode> Fsm::newNode(const int id, const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> p)
+shared_ptr<FsmNode> Fsm::newNode(const int id, const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>& p)
 {
     string nodeName = string("(" + p->first->getName() + to_string(p->first->getId()) + ","
                              + p->second->getName() + to_string(p->second->getId()) + ")");
@@ -42,7 +42,7 @@ shared_ptr<FsmNode> Fsm::newNode(const int id, const shared_ptr<pair<shared_ptr<
     return n;
 }
 
-bool Fsm::contains(const vector<shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>>& lst, const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> p)
+bool Fsm::contains(const vector<shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>>& lst, const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>& p)
 {
     for (shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> pLst : lst)
     {
@@ -54,7 +54,7 @@ bool Fsm::contains(const vector<shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<
     return false;
 }
 
-bool Fsm::contains(const vector<shared_ptr<FsmNode>>& lst, const shared_ptr<FsmNode> n)
+bool Fsm::contains(const vector<shared_ptr<FsmNode>>& lst, const shared_ptr<FsmNode>& n)
 {
     for (shared_ptr<FsmNode> nLst : lst)
     {
@@ -66,7 +66,7 @@ bool Fsm::contains(const vector<shared_ptr<FsmNode>>& lst, const shared_ptr<FsmN
     return false;
 }
 
-shared_ptr<FsmNode> Fsm::findp(const vector<shared_ptr<FsmNode>>& lst, const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> p)
+shared_ptr<FsmNode> Fsm::findp(const vector<shared_ptr<FsmNode>>& lst, const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>& p)
 {
     for (shared_ptr<FsmNode> nLst : lst)
     {
@@ -356,18 +356,16 @@ string Fsm::labelString(unordered_set<shared_ptr<FsmNode>>& lbl) const
 
 Fsm::Fsm() { }
 
-Fsm::Fsm(const Fsm& other) {
+Fsm::Fsm(const Fsm& other):
+name(other.name), currentParsedNode(nullptr), characterisationSet(nullptr),
+presentationLayer(other.presentationLayer) {
     
-    name = other.name;
-    currentParsedNode = nullptr;
     maxInput = other.maxInput;
     maxOutput = other.maxOutput;
     maxState = other.maxState;
     failOutput = other.failOutput;
     initStateIdx = other.initStateIdx;
-    characterisationSet = nullptr;
     minimal = other.minimal;
-    presentationLayer = other.presentationLayer;
     
     for ( int n = 0; n <= maxState; n++ ) {
         nodes.push_back(make_shared<FsmNode>(n,name,presentationLayer));
@@ -392,7 +390,7 @@ Fsm::Fsm(const Fsm& other) {
     
 }
 
-Fsm::Fsm(const shared_ptr<FsmPresentationLayer> presentationLayer)
+Fsm::Fsm(const shared_ptr<FsmPresentationLayer>& presentationLayer)
 :
 name(""),
 currentParsedNode(nullptr),
@@ -408,7 +406,7 @@ presentationLayer(presentationLayer)
 }
 
 Fsm::Fsm(const string& fname,
-         const shared_ptr<FsmPresentationLayer> presentationLayer,
+         const shared_ptr<FsmPresentationLayer>& presentationLayer,
          const string& fsmName)
 :
 name(fsmName),
@@ -436,7 +434,7 @@ Fsm::Fsm(const string & fname,
          const int maxNodes,
          const int maxInput,
          const int maxOutput,
-         const shared_ptr<FsmPresentationLayer> presentationLayer)
+         const shared_ptr<FsmPresentationLayer>& presentationLayer)
 :
 name(fsmName),
 currentParsedNode(nullptr),
@@ -460,8 +458,8 @@ presentationLayer(presentationLayer)
 Fsm::Fsm(const string & fsmName,
          const int maxInput,
          const int maxOutput,
-         const vector<shared_ptr<FsmNode>> lst,
-         const shared_ptr<FsmPresentationLayer> presentationLayer)
+         const vector<shared_ptr<FsmNode>>& lst,
+         const shared_ptr<FsmPresentationLayer>& presentationLayer)
 :
 name(fsmName),
 currentParsedNode(nullptr),
@@ -488,9 +486,9 @@ presentationLayer(presentationLayer)
 Fsm::Fsm(const string & fsmName,
          const int maxInput,
          const int maxOutput,
-         const vector<shared_ptr<FsmNode>> lst,
+         const vector<shared_ptr<FsmNode>>& lst,
          const int initStateIdx,
-         const shared_ptr<FsmPresentationLayer> presentationLayer):
+         const shared_ptr<FsmPresentationLayer>& presentationLayer):
     name(fsmName),
     currentParsedNode(nullptr),
     maxInput(maxInput),
@@ -1099,7 +1097,7 @@ int Fsm::getFailOutput() const
     return failOutput;
 }
 
-bool Fsm::isCharSet(const shared_ptr<Tree> w) const
+bool Fsm::isCharSet(const shared_ptr<Tree>& w) const
 {
     for (unsigned int i = 0; i < nodes.size(); ++ i)
     {
@@ -1114,7 +1112,7 @@ bool Fsm::isCharSet(const shared_ptr<Tree> w) const
     return true;
 }
 
-void Fsm::minimiseCharSet(const shared_ptr<Tree> w)
+void Fsm::minimiseCharSet(const shared_ptr<Tree>& w)
 {
     IOListContainer wcnt = w->getIOLists();
     if (wcnt.size() <= 1)
@@ -2517,7 +2515,7 @@ void Fsm::calcStateIdentificationSetsFast()
 }
 
 
-void Fsm::appendStateIdentificationSets(const shared_ptr<Tree> Wp2) const
+void Fsm::appendStateIdentificationSets(const shared_ptr<Tree>& Wp2) const
 {
     IOListContainer cnt = Wp2->getIOLists();
     
@@ -2749,7 +2747,7 @@ bool Fsm::isDeterministic() const
     return true;
 }
 
-void Fsm::setPresentationLayer(const shared_ptr<FsmPresentationLayer> ppresentationLayer)
+void Fsm::setPresentationLayer(const shared_ptr<FsmPresentationLayer>& ppresentationLayer)
 {
     presentationLayer = ppresentationLayer;
 }
@@ -2802,7 +2800,7 @@ Fsm::createRandomFsm(const string & fsmName,
                      const int maxInput,
                      const int maxOutput,
                      const int maxState,
-                     const shared_ptr<FsmPresentationLayer> pl,
+                     const shared_ptr<FsmPresentationLayer>& pl,
                      const bool observable,
                      const unsigned seed) {
     TIMED_FUNC(timerObj);

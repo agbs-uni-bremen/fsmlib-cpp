@@ -54,7 +54,7 @@ shared_ptr<OFSMTable> OFSMTable::nextAfterZero()
 	return next;
 }
 
-OFSMTable::OFSMTable(const vector<shared_ptr<FsmNode>>& nodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer)
+OFSMTable::OFSMTable(const vector<shared_ptr<FsmNode>>& nodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: numStates(static_cast<int> (nodes.size())), maxInput(maxInput), maxOutput(maxOutput), tblId(0), s2c(numStates), presentationLayer(presentationLayer)
 {
 	for (int n = 0; n < numStates; ++ n)
@@ -76,7 +76,7 @@ OFSMTable::OFSMTable(const vector<shared_ptr<FsmNode>>& nodes, const int maxInpu
 	}
 }
 
-OFSMTable::OFSMTable(const int numStates, const int maxInput, const int maxOutput, const vector<shared_ptr<OFSMTableRow>>& rows, const shared_ptr<FsmPresentationLayer> presentationLayer)
+OFSMTable::OFSMTable(const int numStates, const int maxInput, const int maxOutput, const vector<shared_ptr<OFSMTableRow>>& rows, const shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: numStates(numStates), maxInput(maxInput), maxOutput(maxOutput), tblId(0), s2c(numStates), rows(rows), presentationLayer(presentationLayer)
 {
 

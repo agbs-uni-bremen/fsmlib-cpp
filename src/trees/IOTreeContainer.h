@@ -29,14 +29,14 @@ public:
      * Constructs an empty container, with no elements.
      * @param presentationLayer The presentation layer
      */
-    IOTreeContainer(const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    IOTreeContainer(const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
     /**
      * Constructs a container that acquires the elements of the given list.
      * @param list The given list
      * @param presentationLayer The presentation layer
      */
-    IOTreeContainer(const std::shared_ptr<std::vector<std::shared_ptr<InputOutputTree>>> list, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    IOTreeContainer(const std::shared_ptr<std::vector<std::shared_ptr<InputOutputTree>>>& list, const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
     /**
      * Returns the underlying list.

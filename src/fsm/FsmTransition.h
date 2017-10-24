@@ -43,9 +43,9 @@ public:
 	@param target The node where the transition go
 	@param label The label of this transition
 	*/
-	FsmTransition(const std::shared_ptr<FsmNode>  source,
-                  const std::shared_ptr<FsmNode>  target,
-                  const std::shared_ptr<FsmLabel> label);
+    FsmTransition(const std::shared_ptr<FsmNode>& source,
+                  const std::shared_ptr<FsmNode>& target,
+                  const std::shared_ptr<FsmLabel>& label);
 
 	/**
 	 * Getter for the source

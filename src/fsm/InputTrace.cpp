@@ -5,13 +5,13 @@
  */
 #include "fsm/InputTrace.h"
 
-InputTrace::InputTrace(const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+InputTrace::InputTrace(const std::shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: Trace(presentationLayer)
 {
 
 }
 
-InputTrace::InputTrace(const std::vector<int>& trace, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+InputTrace::InputTrace(const std::vector<int>& trace, const std::shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: Trace(trace, presentationLayer)
 {
 

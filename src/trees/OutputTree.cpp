@@ -7,7 +7,7 @@
 
 using namespace std;
 
-void OutputTree::printChildrenOutput(ostream & out, const shared_ptr<TreeNode> top, const shared_ptr<int> idNode, const int idInput) const
+void OutputTree::printChildrenOutput(ostream & out, const shared_ptr<TreeNode>& top, const shared_ptr<int>& idNode, const int idInput) const
 {
 	int idNodeBase = *idNode;
 	for (shared_ptr<TreeEdge> edge : *top->getChildren())
@@ -17,7 +17,7 @@ void OutputTree::printChildrenOutput(ostream & out, const shared_ptr<TreeNode> t
 	}
 }
 
-OutputTree::OutputTree(const shared_ptr<TreeNode> root, const InputTrace & inputTrace, const shared_ptr<FsmPresentationLayer> presentationLayer)
+OutputTree::OutputTree(const shared_ptr<TreeNode>& root, const InputTrace & inputTrace, const shared_ptr<FsmPresentationLayer>& presentationLayer)
     : Tree(root, presentationLayer), inputTrace(inputTrace)
 {
 

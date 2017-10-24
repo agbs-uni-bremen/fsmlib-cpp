@@ -49,13 +49,13 @@ std::vector<int> IOListContainer::nextLst(const int maxInput, const std::vector<
 	return nextl;
 }
 
-IOListContainer::IOListContainer(const std::shared_ptr<std::vector<std::vector<int>>> iolLst, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+IOListContainer::IOListContainer(const std::shared_ptr<std::vector<std::vector<int>>>& iolLst, const std::shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: iolLst(iolLst), presentationLayer(presentationLayer)
 {
 
 }
 
-IOListContainer::IOListContainer(const int maxInput, const int minLength, const int maxLenght, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+IOListContainer::IOListContainer(const int maxInput, const int minLength, const int maxLenght, const std::shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: iolLst(std::make_shared<std::vector<std::vector<int>>>()), presentationLayer(presentationLayer)
 {
 	for (int len = minLength; len <= maxLenght; ++ len)
@@ -75,7 +75,7 @@ IOListContainer::IOListContainer(const int maxInput, const int minLength, const 
 	}
 }
 
-IOListContainer::IOListContainer(const std::shared_ptr<FsmPresentationLayer>
+IOListContainer::IOListContainer(const std::shared_ptr<FsmPresentationLayer>&
                                  pl)
 : iolLst(std::make_shared<std::vector<std::vector<int>>>()),
     presentationLayer(pl) {

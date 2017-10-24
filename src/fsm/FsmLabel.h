@@ -43,7 +43,7 @@ public:
 	 */
 	FsmLabel(const int input,
              const int output,
-             const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+             const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
     
     /**
      * Copy constructor

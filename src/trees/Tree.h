@@ -42,7 +42,7 @@ protected:
 	void calcLeaves();
 
 	//TODO
-	void remove(const std::shared_ptr<TreeNode> thisNode, const std::shared_ptr<TreeNode> otherNode);
+    void remove(const std::shared_ptr<TreeNode>& thisNode, const std::shared_ptr<TreeNode>& otherNode);
 
 	/**
 	Print every childran of this tree to a dot format into a standard output stream
@@ -50,7 +50,7 @@ protected:
 	@param top The root of the tree
 	@param idNode The id of this node, used to differenciate node in dot format
 	*/
-	void printChildren(std::ostream & out, const std::shared_ptr<TreeNode> top, const std::shared_ptr<int> idNode) const;
+    void printChildren(std::ostream & out, const std::shared_ptr<TreeNode>& top, const std::shared_ptr<int>& idNode) const;
 
     /**
      *  @return true if one of the input traces is prefix of the other one, false otherwise.
@@ -62,8 +62,8 @@ public:
 	@param root  root of the tree
 	@param presentationLayer The presentation layer to use
 	*/
-	Tree(const std::shared_ptr<TreeNode> root,
-         const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    Tree(const std::shared_ptr<TreeNode>& root,
+         const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
 	/**
 	Calculate the leaves, then give the leaves back
@@ -104,7 +104,7 @@ public:
 	an edge in this tree, the corresponding source
 	node and target node in this tree are marked as deleted.
 	*/
-	void remove(const std::shared_ptr<Tree> otherTree);
+    void remove(const std::shared_ptr<Tree>& otherTree);
 
 	/**
 	Output this tree to a dot format, into a standard output stream
@@ -151,7 +151,7 @@ public:
 	Construct the union of this Tree and otherTree by adding
 	every maximal input trace of otherTree to this inputTree.
 	*/
-	void unionTree(const std::shared_ptr<Tree> otherTree);
+    void unionTree(const std::shared_ptr<Tree>& otherTree);
 
 	//TODO
 	void addAfter(const InputTrace & tr, const IOListContainer & cnt);
@@ -191,6 +191,6 @@ public:
      * @return Tree subtree with after-alpha as the new root node
      *         or null if no tree node could be found after applying alpha
      */
-    std::shared_ptr<Tree> getSubTree(const std::shared_ptr<InputTrace> alpha);
+    std::shared_ptr<Tree> getSubTree(const std::shared_ptr<InputTrace>& alpha);
 };
 #endif //FSM_TREES_TREE_H_

@@ -40,7 +40,7 @@ private:
     
     std::shared_ptr<FsmPresentationLayer> createPresentationLayerFromCsvFormat(const std::string& fname);
     
-    std::shared_ptr<FsmPresentationLayer> createPresentationLayerFromCsvFormat(const std::string& fname,const std::shared_ptr<FsmPresentationLayer> pl);
+    std::shared_ptr<FsmPresentationLayer> createPresentationLayerFromCsvFormat(const std::string& fname,const std::shared_ptr<FsmPresentationLayer>& pl);
     
     void createDfsmTransitionGraph(const std::string& fname);
     
@@ -63,7 +63,7 @@ public:
          const int maxNodes,
          const int maxInput,
          const int maxOutput,
-         const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+         const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
     
     /**
      Create a DFSM from a file description
@@ -75,7 +75,7 @@ public:
      are determined from the input file specifying the FSM.
      */
     Dfsm(const std::string & fname,
-         const std::shared_ptr<FsmPresentationLayer> presentationLayer,
+         const std::shared_ptr<FsmPresentationLayer>& presentationLayer,
          const std::string & fsmName);
 
     
@@ -98,7 +98,7 @@ public:
          const int maxNodes,
          const int maxInput,
          const int maxOutput,
-         const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+         const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
 	/**
 	Create a DFSM from a list of nodes
@@ -113,8 +113,8 @@ public:
 	Dfsm(const std::string & fsmName,
          const int maxInput,
          const int maxOutput,
-         const std::vector<std::shared_ptr<FsmNode>> lst,
-         const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+         const std::vector<std::shared_ptr<FsmNode>>& lst,
+         const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
 	/**
 	Create a DFSM from the equivalent deterministic FSM
@@ -161,7 +161,7 @@ public:
      */
     Dfsm(const std::string& fname,
          const std::string& fsmName,
-         const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+         const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
     
     
     /**
@@ -190,7 +190,7 @@ public:
      *  same inputs and outputs.
      */
     Dfsm(const Json::Value& jsonModel,
-         const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+         const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
 
 	/**

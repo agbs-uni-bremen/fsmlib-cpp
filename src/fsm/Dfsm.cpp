@@ -140,7 +140,7 @@ shared_ptr<FsmPresentationLayer> Dfsm::createPresentationLayerFromCsvFormat(cons
 
 shared_ptr<FsmPresentationLayer>
 Dfsm::createPresentationLayerFromCsvFormat(const std::string & fname,
-                                           const std::shared_ptr<FsmPresentationLayer> pl) {
+                                           const std::shared_ptr<FsmPresentationLayer>& pl) {
     
     // key comparator for usage in string sets
     class setCmp
@@ -395,8 +395,7 @@ void Dfsm::createDfsmTransitionGraph(const std::string& fname) {
 
 
 Dfsm::Dfsm(const std::string & fname,
-           const std::string & fsmName) : Fsm(nullptr)   {
-    dfsmTable = nullptr;
+           const std::string & fsmName) : Fsm(nullptr), dfsmTable(nullptr) {
     name = fsmName;
     presentationLayer = createPresentationLayerFromCsvFormat(fname);
     createDfsmTransitionGraph(fname);
@@ -405,9 +404,7 @@ Dfsm::Dfsm(const std::string & fname,
 
 Dfsm::Dfsm(const std::string & fname,
            const std::string & fsmName,
-           const std::shared_ptr<FsmPresentationLayer> pl) : Fsm(nullptr)   {
-    
-    dfsmTable = nullptr;
+           const std::shared_ptr<FsmPresentationLayer>& pl) : Fsm(nullptr), dfsmTable(nullptr) {
     name = fsmName;
     presentationLayer = createPresentationLayerFromCsvFormat(fname,pl);
     createDfsmTransitionGraph(fname);
@@ -475,21 +472,21 @@ shared_ptr<DFSMTable> Dfsm::toDFSMTable() const
     return tbl;
 }
 
-Dfsm::Dfsm(const string & fname, const string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer)
+Dfsm::Dfsm(const string & fname, const string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer>& presentationLayer)
 : Fsm(fname, fsmName, maxNodes, maxInput, maxOutput, presentationLayer)
 {
     dfsmTable = nullptr;
 }
 
 Dfsm::Dfsm(const string& fname,
-           const shared_ptr<FsmPresentationLayer> presentationLayer,
+           const shared_ptr<FsmPresentationLayer>& presentationLayer,
            const string & fsmName)
 : Fsm(fname,presentationLayer,fsmName)
 {
     dfsmTable = nullptr;
 }
 
-Dfsm::Dfsm(const string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer)
+Dfsm::Dfsm(const string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer>& presentationLayer)
 : Fsm(presentationLayer)
 {
     dfsmTable = nullptr;
@@ -505,16 +502,15 @@ Dfsm::Dfsm(const string & fsmName, const int maxNodes, const int maxInput, const
     out.close();
 }
 
-Dfsm::Dfsm(const string & fsmName, const int maxInput, const int maxOutput, const vector<shared_ptr<FsmNode>> lst, const shared_ptr<FsmPresentationLayer> presentationLayer)
+Dfsm::Dfsm(const string & fsmName, const int maxInput, const int maxOutput, const vector<shared_ptr<FsmNode>>& lst, const shared_ptr<FsmPresentationLayer>& presentationLayer)
 : Fsm(fsmName, maxInput, maxOutput, lst, presentationLayer)
 {
     dfsmTable = nullptr;
 }
 
 Dfsm::Dfsm(const Fsm & fsm)
-: Fsm (fsm.getName(), fsm.getMaxInput(), fsm.getMaxOutput(), fsm.getNodes(), fsm.getPresentationLayer())
+: Fsm (fsm.getName(), fsm.getMaxInput(), fsm.getMaxOutput(), fsm.getNodes(), fsm.getPresentationLayer()), dfsmTable(nullptr)
 {
-    dfsmTable = nullptr;
     initStateIdx = fsm.getInitStateIdx();;
     minimal = isMinimal();
     /*shared_ptr<FsmNode> currentParsedNode;
@@ -527,10 +523,9 @@ Dfsm::Dfsm(const Fsm & fsm)
 
 
 Dfsm::Dfsm(const Json::Value& fsmExport) :
-Fsm()
+Fsm(), dfsmTable(nullptr)
 {
-    
-    dfsmTable = nullptr;
+
     if (!fsmExport.isObject()) {
         cerr << endl << "File format is JSON but NOT FSM-lib file structure.";
         return;
@@ -760,11 +755,10 @@ Fsm()
 
 
 Dfsm::Dfsm(const Json::Value& fsmExport,
-           const std::shared_ptr<FsmPresentationLayer> pl) :
-Fsm()
+           const std::shared_ptr<FsmPresentationLayer>& pl) :
+Fsm(), dfsmTable(nullptr)
 {
-    
-    dfsmTable = nullptr;
+
     if (!fsmExport.isObject()) {
         cerr << endl << "File format is JSON but NOT FSM-lib file structure.";
         return;

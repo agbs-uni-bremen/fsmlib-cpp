@@ -49,7 +49,7 @@ void logging::initLogging()
     }
 }
 
-void logging::setLogfileSuffix(const std::string suffix)
+void logging::setLogfileSuffix(const std::string& suffix)
 {
     std::vector<std::string>* loggerIds = new std::vector<std::string>();
     el::Loggers::populateAllLoggerIds(loggerIds);

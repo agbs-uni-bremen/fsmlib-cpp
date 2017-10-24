@@ -37,13 +37,11 @@ public:
 	@param i The input trace contained into the iotrace
 	@param o The output trace contained into the iotrace
 	*/
-    IOTrace(const InputTrace & i, const OutputTrace & o);
-    IOTrace(const InputTrace & i, const OutputTrace & o, std::shared_ptr<FsmNode> targetNode);
+    IOTrace(const InputTrace & i, const OutputTrace & o, std::shared_ptr<FsmNode> targetNode = nullptr);
     IOTrace(const int i, const int o, std::shared_ptr<FsmPresentationLayer> pl);
     IOTrace(const int i, const int o, std::shared_ptr<FsmNode> targetNode, std::shared_ptr<FsmPresentationLayer> pl);
     IOTrace(const IOTrace & ioTrace);
-    IOTrace(const IOTrace & ioTrace, int n);
-    IOTrace(const IOTrace & ioTrace, int n, std::shared_ptr<FsmNode> targetNode);
+    IOTrace(const IOTrace & ioTrace, int n, std::shared_ptr<FsmNode> targetNode = nullptr);
     IOTrace(std::shared_ptr<FsmPresentationLayer> pl);
 
 	/**

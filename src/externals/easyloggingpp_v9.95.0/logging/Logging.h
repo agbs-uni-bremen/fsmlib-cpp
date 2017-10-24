@@ -7,7 +7,7 @@ namespace logging
 {
     extern const char* fsmConversion;
     void initLogging();
-    void setLogfileSuffix(const std::string suffix);
+    void setLogfileSuffix(const std::string& suffix);
 }
 
 #endif // LOGGING_H

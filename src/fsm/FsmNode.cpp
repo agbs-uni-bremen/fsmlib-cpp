@@ -24,7 +24,7 @@
 
 using namespace std;
 
-FsmNode::FsmNode(const int id, const shared_ptr<FsmPresentationLayer> presentationLayer)
+FsmNode::FsmNode(const int id, const shared_ptr<FsmPresentationLayer>& presentationLayer)
 : id(id),
 visited(false),
 color(white),
@@ -37,7 +37,7 @@ dReachTrace(nullptr)
 }
 
 FsmNode::FsmNode(const int id, const string & name,
-                 const shared_ptr<FsmPresentationLayer> presentationLayer)
+                 const shared_ptr<FsmPresentationLayer>& presentationLayer)
 : FsmNode(id, presentationLayer)
 {
     this->name = name;
@@ -98,17 +98,17 @@ void FsmNode::setNotDReachable() {
     dReachable = false;
 }
 
-void FsmNode::setPair(const shared_ptr<FsmNode> l, const shared_ptr<FsmNode> r)
+void FsmNode::setPair(const shared_ptr<FsmNode>& l, const shared_ptr<FsmNode>& r)
 {
     derivedFromPair = make_shared<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>(l, r);
 }
 
-void FsmNode::setPair(const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> p)
+void FsmNode::setPair(const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>& p)
 {
     derivedFromPair = p;
 }
 
-bool FsmNode::isDerivedFrom(const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> p) const
+bool FsmNode::isDerivedFrom(const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>& p) const
 {
     return derivedFromPair != nullptr && *derivedFromPair == *p;
 }
@@ -496,7 +496,7 @@ shared_ptr<DFSMTableRow> FsmNode::getDFSMTableRow(const int maxInput)
     return r;
 }
 
-bool FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, const vector<int>& iLst)
+bool FsmNode::distinguished(const shared_ptr<FsmNode>& otherNode, const vector<int>& iLst)
 {
     InputTrace itr = InputTrace(iLst, presentationLayer);
     OutputTree ot1 = apply(itr);
@@ -504,7 +504,7 @@ bool FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, const vector<in
     return !(ot1 == ot2);
 }
 
-shared_ptr<InputTrace> FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, shared_ptr<Tree> w)
+shared_ptr<InputTrace> FsmNode::distinguished(const shared_ptr<FsmNode>& otherNode, shared_ptr<Tree> w)
 {
     IOListContainer iolc = w->getIOLists();
     shared_ptr<vector<vector<int>>> inputLists = iolc.getIOLists();
@@ -519,7 +519,7 @@ shared_ptr<InputTrace> FsmNode::distinguished(const shared_ptr<FsmNode> otherNod
     return nullptr;
 }
 
-bool FsmNode::rDistinguished(const shared_ptr<FsmNode> otherNode, const vector<int>& iLst)
+bool FsmNode::rDistinguished(const shared_ptr<FsmNode>& otherNode, const vector<int>& iLst)
 {
     if (iLst.size() < 1)
     {
@@ -532,7 +532,7 @@ bool FsmNode::rDistinguished(const shared_ptr<FsmNode> otherNode, const vector<i
     return intersection.size() == 0;
 }
 
-shared_ptr<InputTrace> FsmNode::rDistinguished(const shared_ptr<FsmNode> otherNode, shared_ptr<Tree> w)
+shared_ptr<InputTrace> FsmNode::rDistinguished(const shared_ptr<FsmNode>& otherNode, shared_ptr<Tree> w)
 {
     IOListContainer iolc = w->getIOLists();
     shared_ptr<vector<vector<int>>> inputLists = iolc.getIOLists();
@@ -547,7 +547,7 @@ shared_ptr<InputTrace> FsmNode::rDistinguished(const shared_ptr<FsmNode> otherNo
     return nullptr;
 }
 
-InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
+InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode>& otherNode,
                                             const vector<shared_ptr<PkTable>>& pktblLst,
                                             const int maxInput)
 {
@@ -626,7 +626,7 @@ InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
     return itrc;
 }
 
-InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
+InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode>& otherNode,
                                             const vector<shared_ptr<OFSMTable>>& ofsmTblLst,
                                             const int maxInput,
                                             const int maxOutput)

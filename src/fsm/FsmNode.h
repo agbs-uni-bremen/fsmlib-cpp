@@ -56,10 +56,10 @@ public:
 	const static int black = 2;
 
     FsmNode(const int id,
-            const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+            const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 	FsmNode(const int id,
             const std::string & name,
-            const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+            const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
     
     /**
      * Add a transition to the node. If another transition with the same label and
@@ -77,9 +77,9 @@ public:
     void setUnvisited();
     void setDReachable(std::shared_ptr<IOTrace> trace);
     void setNotDReachable();
-	void setPair(const std::shared_ptr<FsmNode> l, const std::shared_ptr<FsmNode> r);
-	void setPair(const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p);
-	bool isDerivedFrom(const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p) const;
+    void setPair(const std::shared_ptr<FsmNode>& l, const std::shared_ptr<FsmNode>& r);
+    void setPair(const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>& p);
+    bool isDerivedFrom(const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>& p) const;
     bool isDReachable() const;
     std::shared_ptr<IOTrace> getDReachTrace() const;
 	std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> getPair() const;
@@ -171,10 +171,10 @@ public:
 	void setColor(const int color);
 	int getColor();
 	std::shared_ptr<DFSMTableRow> getDFSMTableRow(const int maxInput);
-	bool distinguished(const std::shared_ptr<FsmNode> otherNode, const std::vector<int>& iLst);
-	std::shared_ptr<InputTrace> distinguished(const std::shared_ptr<FsmNode> otherNode, std::shared_ptr<Tree> w);
-    bool rDistinguished(const std::shared_ptr<FsmNode> otherNode, const std::vector<int>& iLst);
-    std::shared_ptr<InputTrace> rDistinguished(const std::shared_ptr<FsmNode> otherNode, std::shared_ptr<Tree> w);
+    bool distinguished(const std::shared_ptr<FsmNode>& otherNode, const std::vector<int>& iLst);
+    std::shared_ptr<InputTrace> distinguished(const std::shared_ptr<FsmNode>& otherNode, std::shared_ptr<Tree> w);
+    bool rDistinguished(const std::shared_ptr<FsmNode>& otherNode, const std::vector<int>& iLst);
+    std::shared_ptr<InputTrace> rDistinguished(const std::shared_ptr<FsmNode>& otherNode, std::shared_ptr<Tree> w);
 
 	/**
 	Calculate a distinguishing input trace for a DFSM node. The algorithm is based
@@ -184,7 +184,7 @@ public:
 	@param maxInput  Maximal value of the input alphabet with range 0..maxInput
 	@return Distinguishing trace as instance of InputTrace
 	*/
-	InputTrace calcDistinguishingTrace(const std::shared_ptr<FsmNode> otherNode, const std::vector<std::shared_ptr<PkTable>>& pktblLst, const int maxInput);
+    InputTrace calcDistinguishingTrace(const std::shared_ptr<FsmNode>& otherNode, const std::vector<std::shared_ptr<PkTable>>& pktblLst, const int maxInput);
 
 	/**
 	Calculate a distinguishing input trace for a (potentially nondeterministic)
@@ -195,7 +195,7 @@ public:
 	@param maxOutput Maximal value of the output alphabet in range 0..maxOutput
 	@return Distinguishing trace as instance of InputTrace
 	*/
-    InputTrace calcDistinguishingTrace(const std::shared_ptr<FsmNode> otherNode, const std::vector<std::shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput);
+    InputTrace calcDistinguishingTrace(const std::shared_ptr<FsmNode>& otherNode, const std::vector<std::shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput);
 	bool isObservable() const;
 
 	/**
