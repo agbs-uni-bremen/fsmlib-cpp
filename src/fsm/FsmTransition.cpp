@@ -65,7 +65,8 @@ ostream & operator<<(ostream& out, FsmTransition& transition)
 string FsmTransition::str()
 {
     stringstream out;
-    out << getSource()->getId() << " -> " << getTarget()->getId() << "[label=\"" << *label << "\"];";
+    out << getSource()->getId() << " -> " << getTarget()->getId() << "[label=\"" << *label << "\"];"
+        << "  //" << getSource()->getName() << " -> " << getTarget()->getName();
     return out.str();
 }
 
