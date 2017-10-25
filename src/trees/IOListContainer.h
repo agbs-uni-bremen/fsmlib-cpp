@@ -96,6 +96,8 @@ public:
      * @return The size of the IOListContainer
      */
     int size() const;
+
+    static bool contains(const std::shared_ptr<std::vector<std::vector<int>>>& ioll, const std::vector<int>& trace);
     
     /**
      * Output the IOListContainer to a standard output stream

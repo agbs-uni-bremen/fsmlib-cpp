@@ -165,6 +165,30 @@ int IOListContainer::size() const
 	return static_cast<int> (iolLst->size());
 }
 
+bool IOListContainer::contains(const std::shared_ptr<std::vector<std::vector<int>>>& ioll, const std::vector<int>& trace)
+{
+    for (size_t i = 0; i < ioll->size(); ++i)
+    {
+        std::vector<int>& elem = ioll->at(i);
+        if (elem.size() != trace.size())
+        {
+            continue;
+        }
+        for (size_t j = 0; j < elem.size(); ++j)
+        {
+            if (elem.at(j) != trace.at(j))
+            {
+                break;
+            }
+            if (j == elem.size() - 1)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 std::ostream & operator<<(std::ostream & out, const IOListContainer & ot)
 {
 	out << "{ ";
