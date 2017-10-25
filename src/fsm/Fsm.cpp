@@ -595,82 +595,136 @@ OutputTree Fsm::apply(const InputTrace & itrc, bool markAsVisited)
 
 Fsm Fsm::transformToObservableFSM() const
 {
-    vector<shared_ptr<FsmNode>> nodeLst;
-    vector<shared_ptr<FsmNode>> bfsLst;
-    unordered_map<shared_ptr<FsmNode>, unordered_set<shared_ptr<FsmNode>>> node2Label;
-    unordered_set<shared_ptr<FsmNode>> theLabel;
     
-    theLabel.insert(getInitialState());
+    // List to be filled with the new states to be created
+    // for the observable FSM
+    vector<shared_ptr<FsmNode>> nodeLst;
+    
+    // Breadth first search list, containing the
+    // new FSM nodes, still to be processed by the algorithm
+    vector<shared_ptr<FsmNode>> bfsLst;
+    
+    // Map a newly created node to the set of nodes from the
+    // original FSM, comprised in the new FSM state
+    unordered_map<shared_ptr<FsmNode>, unordered_set<shared_ptr<FsmNode>>> node2NodeLabel;
+    
+    // Set of nodes from the original FSM, comprised in the
+    // current new node
+    unordered_set<shared_ptr<FsmNode>> theNodeLabel;
+    
+    // For the first step of the algorithm, the initial
+    // state of the original FSM is the only state comprised
+    // in the initial state of the new FSM
+    theNodeLabel.insert(getInitialState());
 
+    
+    // Create a new presentation layer which has
+    // the same names for the inputs and outputs as
+    // the old presentation layer, but still an EMPTY vector
+    // of node names.
     vector<string> obsState2String;
     shared_ptr<FsmPresentationLayer> obsPl =
     make_shared<FsmPresentationLayer>(presentationLayer->getIn2String(),
                                       presentationLayer->getOut2String(),
                                       obsState2String);
     
+    
+    // id to be taken for the next state of the new
+    // observable FSM to be created.
     int id = 0;
-    string nodeName = labelString(theLabel);
-    shared_ptr<FsmNode> q0 = make_shared<FsmNode>(id ++, nodeName, obsPl);
+    
+    // The initial state of the new FSM is labelled with
+    // the set containing just the initial state of the old FSM
+    string nodeName = labelString(theNodeLabel);
+    shared_ptr<FsmNode> q0 = make_shared<FsmNode>(id++, nodeName, obsPl);
     nodeLst.push_back(q0);
     bfsLst.push_back(q0);
-    node2Label[q0] = theLabel;
+    node2NodeLabel[q0] = theNodeLabel;
+    
+    // The node label is added to the presentation layer,
+    // as name of the initial state
     obsPl->addState2String(nodeName);
     
+    // Loop while there is at least one node in the BFS list.
+    // Initially, the list contains just the new initial state
+    // of the new FSM.
     while (!bfsLst.empty())
     {
+        // Pop the first node from the list
         shared_ptr<FsmNode> q = bfsLst.front();
         bfsLst.erase(bfsLst.begin());
         
-        q->setColor(FsmNode::black);
-        
+        // Nested loop over all input/output labels that
+        // might be associated with one or more outgoing transitions
         for (int x = 0; x <= maxInput; ++ x)
         {
             for (int y = 0; y <= maxOutput; ++ y)
             {
+                // This is the transition label currently processed
                 shared_ptr<FsmLabel> lbl =
                 make_shared<FsmLabel>(x, y, obsPl);
-                theLabel.clear();
                 
-                for (shared_ptr<FsmNode> n : node2Label.at(q))
+                // Clear the set of node labels that may
+                // serve as node name for the target node to be
+                // created (or already exists). This target node
+                // comprises all nodes of the original FSM that
+                // can be reached from q under a transition labelled
+                // with lbl
+                theNodeLabel.clear();
+                
+                // Loop over all nodes of the original FSM which
+                // are comprised by q
+                for (shared_ptr<FsmNode> n : node2NodeLabel.at(q))
                 {
+                    // For each node comprised by q, check
+                    // its outgoing transitions, whether they are
+                    // labelled by lbl
                     for (auto tr : n->getTransitions())
                     {
                         if (*tr->getLabel() == *lbl)
                         {
-                            theLabel.insert(tr->getTarget());
+                            // If so, insert the target node
+                            // into the node label set
+                            theNodeLabel.insert(tr->getTarget());
                         }
                     }
                 }
                 
-                if (!theLabel.empty())
+                // Process only non-empty label sets.
+                // An empty label set means that no transition labelled
+                // by lbl exists.
+                if (!theNodeLabel.empty())
                 {
-                    vector<pair<shared_ptr<FsmNode>, unordered_set<shared_ptr<FsmNode> > > > es;
-                    es.insert(es.end(), node2Label.begin(), node2Label.end());
                     
                     shared_ptr<FsmNode> tgtNode = nullptr;
                     
-                    /*Use existing node if it has the same label*/
-                    for (pair<shared_ptr<FsmNode>, unordered_set<shared_ptr<FsmNode> > > entry : es)
-                    {
-                        if (entry.second == theLabel)
-                        {
-                            tgtNode = entry.first;
+                    // Loop over the node-2-label map and check
+                    // if there exists already a node labelled
+                    // by theNodeLabel. If this is the case,
+                    // it will become the target node reached from q
+                    // under lbl
+                    for ( auto u : node2NodeLabel ) {
+                        
+                        if ( u.second == theNodeLabel ) {
+                            tgtNode = u.first;
                             break;
                         }
+                        
                     }
                     
-                    /*We need to create a new node*/
                     if (tgtNode == nullptr)
                     {
-                        nodeName = labelString(theLabel);
-                        tgtNode = make_shared<FsmNode>(id ++, nodeName, obsPl);
+                        // We need to create a new target node, to be reached
+                        // from q under lbl
+                        nodeName = labelString(theNodeLabel);
+                        tgtNode = make_shared<FsmNode>(id++, nodeName, obsPl);
                         nodeLst.push_back(tgtNode);
                         bfsLst.push_back(tgtNode);
-                        node2Label[tgtNode] = theLabel;
+                        node2NodeLabel[tgtNode] = theNodeLabel;
                         obsPl->addState2String(nodeName);
                     }
                     
-                    /*Create the transition from q to tgtNode*/
+                    // Create the transition from q to tgtNode
                     auto trNew = make_shared<FsmTransition>(q, tgtNode, lbl);
                     q->addTransition(trNew);
                 }

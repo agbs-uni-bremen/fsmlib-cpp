@@ -256,6 +256,7 @@ bool FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, const vector<in
     InputTrace itr = InputTrace(iLst, presentationLayer);
     OutputTree ot1 = apply(itr);
     OutputTree ot2 = otherNode->apply(itr);
+    
     return !(ot1 == ot2);
 }
 

@@ -67,6 +67,13 @@ public:
 	std::vector<int>::const_iterator cend() const;
     
     const std::shared_ptr<FsmPresentationLayer> getPresentationLayer() const { return presentationLayer; }
+    
+    
+    /**
+     *  Return the size of the trace
+     */
+    
+    size_t size() const { return trace.size(); }
 
 	/**
 	Check wheter or not, the 2 trace are the same

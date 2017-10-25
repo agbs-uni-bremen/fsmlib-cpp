@@ -10,7 +10,11 @@ using namespace std;
 IOTrace::IOTrace(const InputTrace & i, const OutputTrace & o)
 	: inputTrace(i), outputTrace(o)
 {
-
+    if ( inputTrace.size() != outputTrace.size() ) {
+        cerr << "IOTrace(): Non-matching sizes of input and output traces."
+        << endl << "In : " << inputTrace << endl << "Out: " << outputTrace <<
+        endl;
+    }
 }
 
 InputTrace IOTrace::getInputTrace() const
