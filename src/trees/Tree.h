@@ -192,5 +192,9 @@ public:
      *         or null if no tree node could be found after applying alpha
      */
     std::shared_ptr<Tree> getSubTree(const std::shared_ptr<InputTrace>& alpha);
+
+    friend std::ostream & operator<<(std::ostream & out, Tree & t);
+
+    std::string str();
 };
 #endif //FSM_TREES_TREE_H_

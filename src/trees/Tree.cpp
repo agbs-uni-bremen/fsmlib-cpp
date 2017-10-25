@@ -150,7 +150,11 @@ IOListContainer Tree::getDeterministicTestCases()
 	{
 		std::shared_ptr<TreeEdge> edge = (*edges)[i];
 		std::shared_ptr<TreeNode> node = edge->getTarget();
-		ioll->push_back(node->getPath());
+        const vector<int>& path = node->getPath();
+        if (!IOListContainer::contains(ioll, path))
+        {
+            ioll->push_back(path);
+        }
 		std::shared_ptr<std::vector<std::shared_ptr<TreeEdge>>> newEdges = node->getChildren();
 		std::copy (newEdges->begin(), newEdges->end(), std::back_inserter(*edges));
 	}
@@ -257,4 +261,37 @@ std::shared_ptr<Tree> Tree::getPrefixRelationTree(const std::shared_ptr<Tree> & 
     }
     return tree;
 
+}
+
+ostream & operator<<(ostream & out, Tree & t)
+{
+    out << t.str();
+    return out;
+}
+
+string Tree::str()
+{
+    string str;
+    calcLeaves();
+
+    for (size_t k = 0; k < leaves.size(); ++k)
+    {
+        shared_ptr<TreeNode> leave = leaves.at(k);
+        shared_ptr<TreeNode> l = static_pointer_cast<TreeNode>(leave);
+        vector<int> path = l->getPath();
+        for (size_t i = 0; i < path.size(); ++i)
+        {
+            if ( i > 0 )
+            {
+                str += ".";
+            }
+
+            str += "(" + presentationLayer->getInId(path.at(i)) + ")";
+        }
+        if (k != leaves.size() - 1)
+        {
+            str += ", ";
+        }
+    }
+    return str;
 }
