@@ -540,7 +540,7 @@ public:
      * @return List of possible combinations of input traces and output traces, based
      * on the deterministic state cover.
      */
-    std::vector<IOTraceContainer> getVPrime();
+    std::vector<IOTraceContainer> getVPrime(const std::shared_ptr<Tree>& detStateCover);
 
     /**
      * Calculates all prefixes of `base.suffix`, that reach the given node and that
@@ -592,29 +592,15 @@ public:
      * of the FSM if there has been no repetition in the states of the product
      * machine for a given input/output sequence.
      */
-    size_t lowerBound(const IOTrace& base,
-              const IOTrace& suffix,
-              const std::vector<std::shared_ptr<InputTrace>>& takenInputs,
-              const std::vector<std::shared_ptr<FsmNode>>& states,
-              const IOTreeContainer& adaptiveTestCases,
-              const IOTraceContainer& vDoublePrime,
-              const std::vector<std::shared_ptr<FsmNode>>& dReachableStates) const;
-
-    /**
-     * Calculates a test suite that determines if an IUT is a reduction of the specification.
-     * This algorithm has to be called on a product machine, resulting from creating the
-     * product of the specification and the IUT.
-     *
-     * It is assumed that the IUT behaves like some unknown element of a fault domain
-     * of completely specified observable FSMs with the same input and output alphabets
-     * as the specification and at most `m` states.
-     * @param m The maximum number of states for the IUT.
-     * @param observedTraces Return parameter for the observed traces during the test
-     * suite creation.
-     * @return `true`, if no failure has been observed during the creation of the test suite,
-     * `false`, otherwise.
-     */
-    bool adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces);
+    static size_t lowerBound(const IOTrace& base,
+                             const IOTrace& suffix,
+                             const std::vector<std::shared_ptr<InputTrace>>& takenInputs,
+                             const std::vector<std::shared_ptr<FsmNode>>& states,
+                             const IOTreeContainer& adaptiveTestCases,
+                             const IOTraceContainer& vDoublePrime,
+                             const std::vector<std::shared_ptr<FsmNode>>& dReachableStates,
+                             const Fsm& spec,
+                             const Fsm& iut);
 
     /**
      * Calculates a test suite that determines if a given IUT is a reduction of the given
@@ -630,7 +616,7 @@ public:
      * @return `true`, if no failure has been observed during the creation of the test suite,
      * `false`, otherwise.
      */
-    static bool adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> iut, IOTraceContainer& observedTraces);
+    static bool adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> iut, const size_t m, IOTraceContainer& observedTraces);
 
     /**
      * Determines if the given adaptive test cases distinguish all states from

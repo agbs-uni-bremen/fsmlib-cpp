@@ -38,19 +38,32 @@ using namespace Json;
 void assertInconclusive(string tc, string comment = "") {
     
     string sVerdict("INCONCLUSIVE");
-    //TODO put into global logger
-    LOG(INFO) << sVerdict << ": " << tc << " : " << comment <<  endl;
+    CLOG(INFO, logging::globalLogger) << sVerdict << ": " << tc << " : " << comment <<  endl;
     
 }
 
 void assert(string tc, bool verdict, string comment = "") {
     
     string sVerdict = (verdict) ? "PASS" : "FAIL";
-    //TODO put into global logger
-    LOG(INFO) << sVerdict << ": " << tc
+    CLOG(INFO, logging::globalLogger) << sVerdict << ": " << tc
     << " : "
     << comment <<  endl;
     
+}
+
+void assertOnFail(string tc, bool verdict, string comment = "") {
+
+    string sVerdict = (verdict) ? "PASS: " + tc : "FAIL: " + tc + ": " + comment;
+    if (verdict)
+    {
+        CLOG(INFO, logging::globalLogger) << sVerdict;
+    }
+    else
+    {
+        CLOG(ERROR, logging::globalLogger) << sVerdict;
+    }
+
+
 }
 
 void test1() {
@@ -709,12 +722,12 @@ void wVersusT() {
 
 void adaptiveTest01()
 {
-    LOG(INFO) << "############## Adaptive Test 01 ##############";
+    CLOG(INFO, logging::globalLogger) << "############## Adaptive Test 01 ##############";
     shared_ptr<FsmPresentationLayer> plTest =
     make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
             + "../../../resources/adaptive-test-out.txt",
             + "../../../resources/adaptive-test-state.txt");
-    const size_t numFsm = 10;
+    const size_t numFsm = 100;
     const int numberDigits = ((numFsm <= 1)? 1 : static_cast<int>(log10(numFsm)) + 1);
     const int maxInput = 5;
     const int maxOutput = 5;
@@ -724,11 +737,15 @@ void adaptiveTest01()
     const int numTransitionFaults = 1;
     const unsigned createRandomFsmSeed = 0;
     const unsigned createMutantSeed = 0;
-    LOG(INFO) << "numFsm: " << numFsm;
-    LOG(INFO) << "maxInput: " << maxInput;
-    LOG(INFO) << "maxOutput: " << maxOutput;
-    LOG(INFO) << "maxStates: " << maxStates;
-    LOG(INFO) << "Testing!";
+//    const unsigned createRandomFsmSeed = 2329749609;
+//    const unsigned createMutantSeed = 2329974306;
+//    const unsigned createRandomFsmSeed = 2118190291;
+//    const unsigned createMutantSeed = 2118432094;
+    CLOG(INFO, logging::globalLogger) << "numFsm: " << numFsm;
+    CLOG(INFO, logging::globalLogger) << "maxInput: " << maxInput;
+    CLOG(INFO, logging::globalLogger) << "maxOutput: " << maxOutput;
+    CLOG(INFO, logging::globalLogger) << "maxStates: " << maxStates;
+    CLOG(INFO, logging::globalLogger) << "Testing!";
     TIMED_FUNC(timerObj);
     for (size_t i = 0; i < numFsm; ++i)
     {
@@ -738,16 +755,15 @@ void adaptiveTest01()
         logging::setLogfileSuffix(iteration);
 
         TIMED_SCOPE(timerBlkObj, "heavy-iter");
-        const string dotPrefix = "../../../resources/adaptive-test-" + to_string(i) + "-";
-        LOG(INFO) << "-----------------------------------------------------------";
-        LOG(INFO) << "i: " << iteration;
-        LOG(INFO) << "Creating FSM.";
-        shared_ptr<Fsm> fsm = Fsm::createRandomFsm(to_string(i), maxInput, maxOutput, maxStates, plTest, true, createRandomFsmSeed);
-        LOG(INFO) << "Creating mutant.";
-        shared_ptr<Fsm> mutant = fsm->createMutant("mutant" + to_string(i), numOutputFaults, numTransitionFaults, createMutantSeed);
+        CLOG(INFO, logging::globalLogger) << "-----------------------------------------------------------";
+        CLOG(INFO, logging::globalLogger) << "i: " << iteration;
+        CLOG(INFO, logging::globalLogger) << "Creating FSM.";
+        shared_ptr<Fsm> fsm = Fsm::createRandomFsm(iteration, maxInput, maxOutput, maxStates, plTest, true, createRandomFsmSeed);
+        CLOG(INFO, logging::globalLogger) << "Creating mutant.";
+        shared_ptr<Fsm> mutant = fsm->createMutant("mutant" + iteration, numOutputFaults, numTransitionFaults, createMutantSeed);
         IOTraceContainer observedTraces;
-        bool result = Fsm::adaptiveStateCounting(fsm, mutant, observedTraces);
-        assert("TC-AT-0001", !result, "Na sowas");
+        bool result = Fsm::adaptiveStateCounting(fsm, mutant, maxStates + 1, observedTraces);
+        assertOnFail("TC-AT-0001", !result, "IUT should not be a reduction of reference.");
     }
 }
 
@@ -770,7 +786,7 @@ int main(int argc, char* argv[])
     START_EASYLOGGINGPP(argc, argv);
     logging::initLogging();
 
-    LOG(INFO) << "############## Starting Application ##############";
+    CLOG(INFO, logging::globalLogger) << "############## Starting Application ##############";
     adaptiveTest01();
 	cout << endl << endl;
 
