@@ -50,6 +50,8 @@ public:
      */
     std::vector<std::shared_ptr<FsmNode>>::iterator removeNotRDistinguishable(size_t i, std::shared_ptr<FsmNode> node);
 
+    void initRDistinguishable(size_t i);
+
     /**
      * Adds a node to the set that holds the states that are r(i)-distinguishable
      * for a given `i`.

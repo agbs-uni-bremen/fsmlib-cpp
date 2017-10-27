@@ -1224,6 +1224,7 @@ void Fsm::calcROneDistinguishableStates()
 {
     for (size_t i = 0; i < nodes.size(); ++i)
     {
+        nodes.at(i)->getRDistinguishability()->initRDistinguishable(1);
         for (size_t j = i + 1; j < nodes.size(); ++j)
         {
             nodes.at(i)->getRDistinguishability()->addNotRDistinguishable(1, nodes.at(j));

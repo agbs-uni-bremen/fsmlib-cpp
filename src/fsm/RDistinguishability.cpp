@@ -4,6 +4,7 @@
 #include "trees/InputOutputTree.h"
 #include "trees/AdaptiveTreeNode.h"
 #include "fsm/FsmNode.h"
+#include "logging/easylogging++.h"
 
 using namespace std;
 RDistinguishability::RDistinguishability(const shared_ptr<FsmPresentationLayer>& presentationLayer) : presentationLayer(presentationLayer)
@@ -21,6 +22,20 @@ vector<shared_ptr<FsmNode>>::iterator RDistinguishability::removeNotRDistinguish
         }
     }
     return notDist.end();
+}
+
+void RDistinguishability::initRDistinguishable(size_t i)
+{
+    auto it = rDistinguishableWith.find(i);
+    if (it == rDistinguishableWith.end())
+    {
+        rDistinguishableWith.insert(pair<size_t, std::vector<std::shared_ptr<FsmNode>>>(i, {}));
+    }
+    else
+    {
+        LOG(WARNING) << "Overwriting r-distinguishability.";
+        rDistinguishableWith[i] = {};
+    }
 }
 
 void RDistinguishability::addRDistinguishable(size_t i, std::shared_ptr<FsmNode> node)
