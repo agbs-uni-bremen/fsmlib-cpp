@@ -532,9 +532,10 @@ void Fsm::dumpFsm(ofstream & outputFile) const
     }
 }
 
-vector<shared_ptr<FsmNode>> Fsm::getDReachableStates()
+vector<shared_ptr<FsmNode>> Fsm::getDReachableStates(vector<std::shared_ptr<InputTrace>>& detStateCover)
 {
     TIMED_FUNC(timerObj);
+    VLOG(1) << "getDReachableStates()";
     resetColor();
     deque<shared_ptr<FsmNode>> bfsLst;
     vector<shared_ptr<FsmNode>> nodes;
@@ -545,6 +546,7 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates()
     bfsLst.push_back(initState);
     nodes.push_back(initState);
     shared_ptr<IOTrace> emptyTrace = IOTrace::getEmptyTrace(presentationLayer);
+    detStateCover.push_back(make_shared<InputTrace>(FsmLabel::EPSILON_INPUT, presentationLayer));
     emptyTrace->setTargetNode(initState);
     initState->setDReachable(emptyTrace);
     paths.insert(make_pair(initState, IOTrace::getEmptyTrace(presentationLayer)));
@@ -553,6 +555,7 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates()
     {
         shared_ptr<FsmNode> thisNode = bfsLst.front();
         bfsLst.pop_front();
+        VLOG(1) << "thisNode: " << thisNode->getName();
 
         shared_ptr<IOTrace> thisNodePath;
 
@@ -561,6 +564,7 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates()
             try
             {
                 thisNodePath = paths.at(thisNode);
+                VLOG(1) << "thisNodePath: " << *thisNodePath;
             }
             catch (out_of_range e)
             {
@@ -570,17 +574,45 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates()
 
         for (int x = 0; x <= maxInput; ++x)
         {
+            VLOG(1) << "x: " << presentationLayer->getInId(x);
             vector<int> producedOutputs;
             vector<shared_ptr<FsmNode>> successorNodes = thisNode->after(x, producedOutputs);
-            if (successorNodes.size() != 1)
+            VLOG(1) << "successorNodes:";
+            for (auto n : successorNodes)
             {
-                continue;
+                VLOG(1) << "  " << n->getName();
+            }
+            VLOG(1) << "producedOutputs:";
+            for (auto n : producedOutputs)
+            {
+                VLOG(1) << "  " << presentationLayer->getOutId(n);
+            }
+            if (successorNodes.size() > 1)
+            {
+                bool skip = false;
+                const shared_ptr<FsmNode>& n = successorNodes.at(0);
+                for (size_t i = 1; i < successorNodes.size(); ++i)
+                {
+                    const shared_ptr<FsmNode>& other  = successorNodes.at(i);
+                    if (n != other)
+                    {
+                        VLOG(1) << "Skipping.";
+                        skip = true;
+                        break;
+                    }
+                }
+                if (skip)
+                {
+                    continue;
+                }
             }
             shared_ptr<FsmNode> tgt = successorNodes.at(0);
+            VLOG(1) << "tgt:" << tgt->getName();
             try
             {
                 paths.at(tgt);
-                // Path alrteady exists. Do nothing.
+                // Path already exists. Do nothing.
+                VLOG(1) << "Path already exists. Do nothing.";
             }
             catch (out_of_range e)
             {
@@ -590,21 +622,25 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates()
                 {
                     newPath = make_shared<IOTrace>(*thisNodePath);
                     newPath->append(x, producedOutputs.at(0));
+                    VLOG(1) << "newPath (appended): " << *newPath;
                 }
                 else
                 {
                     InputTrace in = InputTrace({x}, presentationLayer);
                     OutputTrace out = OutputTrace({producedOutputs.at(0)}, presentationLayer);
                     newPath = make_shared<IOTrace>(in, out);
+                    VLOG(1) << "newPath (new): " << *newPath;
                 }
                 newPath->setTargetNode(tgt);
                 paths.insert(make_pair(tgt, newPath));
             }
             if (tgt->getColor() == FsmNode::white)
             {
+                VLOG(1) << "Target color is white. Setting grey, adding node, setting d-reach path.";
                 tgt->setColor(FsmNode::grey);
                 bfsLst.push_back(tgt);
                 nodes.push_back(tgt);
+                detStateCover.push_back(make_shared<InputTrace>(paths.at(tgt)->getInputTrace()));
                 tgt->setDReachable(paths.at(tgt));
             }
         }
@@ -766,6 +802,7 @@ Fsm Fsm::intersect(const Fsm & f)
 
 shared_ptr<Tree> Fsm::getDeterministicStateCover()
 {
+    VLOG(2) << "getDeterministicStateCover()";
     TIMED_FUNC(timerObj);
 	resetColor();
 	deque<shared_ptr<FsmNode>> bfsLst;
@@ -782,26 +819,31 @@ shared_ptr<Tree> Fsm::getDeterministicStateCover()
 	while (!bfsLst.empty())
 	{
 		shared_ptr<FsmNode> thisNode = bfsLst.front();
+        VLOG(2) << "thisNode: " << thisNode->getName();
 		bfsLst.pop_front();
 		shared_ptr<TreeNode> currentTreeNode = f2t[thisNode];
 
 		for (int x = 0; x <= maxInput; ++x)
 		{
+            VLOG(2) << "x: " << x;
 			vector<shared_ptr<FsmNode>> successorNodes = thisNode->after(x);
+            VLOG(2) << "successorNodes: ";
+            for (auto n : successorNodes)
+            {
+                VLOG(2) << "  " + n->getName();
+            }
 			if (successorNodes.size() != 1)
 			{
 				continue;
 			}
-			for (shared_ptr<FsmNode> tgt : successorNodes)
-			{
-				if (tgt->getColor() == FsmNode::white)
-				{
-					tgt->setColor(FsmNode::grey);
-					shared_ptr<TreeNode> itn = currentTreeNode->add(x);
-					bfsLst.push_back(tgt);
-					f2t[tgt] = itn;
-				}
-			}
+            shared_ptr<FsmNode>& tgt = successorNodes.at(0);
+            if (tgt->getColor() == FsmNode::white)
+            {
+                tgt->setColor(FsmNode::grey);
+                shared_ptr<TreeNode> itn = currentTreeNode->add(x);
+                bfsLst.push_back(tgt);
+                f2t[tgt] = itn;
+            }
 		}
 		thisNode->setColor(FsmNode::black);
 	}
@@ -1629,10 +1671,13 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
                 shared_ptr<AdaptiveTreeNode> nextTreeNode = static_pointer_cast<AdaptiveTreeNode>(treeRoot->after(y));
                 VLOG(2)  << "(" << node->getName() << ") " << "    nextTreeNode input: " << presentationLayer->getInId(nextTreeNode->getInput());
                 shared_ptr<InputOutputTree> nextTree = make_shared<InputOutputTree>(nextTreeNode, presentationLayer);
-                VLOG(2)  << "(" << node->getName() << ") " << "    nextTree: " << nextTree->str();
+                VLOG(2) << "(" << node->getName() << ") " << "    nextTree: " << nextTree->str();
+                VLOG(2) << "++ ENTERING RECURSION.";
                 IOTraceContainer iONext = getPossibleIOTraces(nextNode, nextTree);
+                VLOG(2) << "-- LEAVING RECURSION.";
                 VLOG(2)  << "(" << node->getName() << ") " << "    iONext: " << iONext;
                 IOTrace trace = IOTrace(x, y, nextNode, presentationLayer);
+                VLOG(2) << "trace: " << trace;
                 if (iONext.isEmpty())
                 {
                     iONext.add(trace);
@@ -1658,6 +1703,7 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
                     }
                     VLOG(2)  << "(" << node->getName() << ") " << "    iONext: " << iONext;
                 }
+                VLOG(2)  << "Adding " << iONext << " to result.";
                 result.addUnique(iONext);
             }
         }
@@ -1676,6 +1722,7 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
     for (shared_ptr<InputOutputTree> tree : *treeContainer.getList())
     {
         IOTraceContainer container = getPossibleIOTraces(node, tree, cleanTrailingEmptyTraces);
+        VLOG(2) << "getPossibleIOTraces container: " << container;
         result.addUnique(container);
     }
     return result;
@@ -1724,36 +1771,43 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const vec
         {
             IOTrace iOTrace = IOTrace(*inputTrace, *outputTrace);
             IOTraceContainer produced = bOmega(adaptiveTestCases, iOTrace);
+            VLOG(1) << "produced bOmega with " << iOTrace << ": " << produced;
             result.addUnique(produced);
         }
     }
     return result;
 }
 
-vector<IOTraceContainer> Fsm::getVPrime(const shared_ptr<Tree>& detStateCover)
+vector<IOTraceContainer> Fsm::getVPrime(const vector<shared_ptr<InputTrace>>& detStateCover)
 {
     VLOG(1) << "getVPrime()";
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(4));
     vector<IOTraceContainer> result;
 
-    VLOG(1) << "detStateCover: " << detStateCover->str();
+    VLOG(1) << "detStateCover:";
+    for (auto i : detStateCover)
+    {
+        VLOG(1) << "  " << *i;
+    }
+    /*
     IOListContainer testCases = detStateCover->getDeterministicTestCases();
     VLOG(1) << "testCases: " << testCases;
-    /* Get raw input sequences from the determinisitc state cover. */
+
     shared_ptr<vector<vector<int>>> testCasesRaw = testCases.getIOLists();
+    */
 
     vector<vector<shared_ptr<OutputTrace>>> allPossibleOutputTraces;
     size_t iterations = 1;
 
     /* Get all possible output traces generated by the determinisitc state cover. */
     VLOG(1) << "allPossibleOutputTraces:";
-    for (size_t i = 0; i < testCasesRaw->size(); ++i)
+    for (size_t i = 0; i < detStateCover.size(); ++i)
     {
-        vector<int> testCase = testCasesRaw->at(i);
-        InputTrace input = InputTrace(testCase, presentationLayer);
+        const shared_ptr<InputTrace>& input = detStateCover.at(i);
+        //InputTrace input = InputTrace(testCase, presentationLayer);
         vector<shared_ptr<OutputTrace>> producedOutputs;
         vector<shared_ptr<FsmNode>> reached;
-        getInitialState()->getPossibleOutputs(input, producedOutputs, reached);
+        getInitialState()->getPossibleOutputs(*input, producedOutputs, reached);
         iterations *= producedOutputs.size();
         for (auto v : producedOutputs)
         {
@@ -1767,7 +1821,7 @@ vector<IOTraceContainer> Fsm::getVPrime(const shared_ptr<Tree>& detStateCover)
 
     vector<vector<vector<int>>> ot;
     size_t repetitions = iterations / allPossibleOutputTraces.at(0).size();
-    for (size_t i = 0; i < testCasesRaw->size(); ++i)
+    for (size_t i = 0; i < detStateCover.size(); ++i)
     {
         vector<vector<int>> t;
         size_t blocks = iterations / repetitions;
@@ -1785,7 +1839,7 @@ vector<IOTraceContainer> Fsm::getVPrime(const shared_ptr<Tree>& detStateCover)
             outputIndex = (outputIndex + 1) % allPossibleOutputTraces.at(i).size();
         }
 
-        if (i+1 < testCasesRaw->size())
+        if (i+1 < detStateCover.size())
         {
             repetitions /= allPossibleOutputTraces.at(i+1).size();
         }
@@ -1795,11 +1849,11 @@ vector<IOTraceContainer> Fsm::getVPrime(const shared_ptr<Tree>& detStateCover)
     for (size_t j = 0; j < iterations; ++j)
     {
         IOTraceContainer container = IOTraceContainer();
-        for (size_t i = 0; i < testCasesRaw->size(); ++i)
+        for (size_t i = 0; i < detStateCover.size(); ++i)
         {
-            InputTrace input = InputTrace(testCasesRaw->at(i), presentationLayer);
+            const shared_ptr<InputTrace>& input = detStateCover.at(i);
             OutputTrace output = OutputTrace(ot.at(i).at(j), presentationLayer);
-            IOTrace iOTrace = IOTrace(input, output);
+            IOTrace iOTrace = IOTrace(*input, output);
             container.add(iOTrace);
         }
         result.push_back(container);
@@ -1868,13 +1922,17 @@ IOTraceContainer Fsm::rPlus(std::shared_ptr<FsmNode> node,
                    const IOTraceContainer& vDoublePrime) const
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
+    VLOG(1) << "rPlus()";
+    VLOG(1) << "node: " << node->getName();
+    VLOG(1) << "base: " << base;
+    VLOG(1) << "suffix: " << suffix;
     IOTraceContainer rResult = r(node, base, suffix);
-    VLOG(2) << "rResult: " << rResult;
+    VLOG(1) << "rResult: " << rResult;
     if (node->isDReachable() && vDoublePrime.contains(*node->getDReachTrace()))
     {
-        VLOG(2) << "  Adding: " << *node->getDReachTrace();
-        VLOG(2) << "  rResult: " << rResult;
+        VLOG(1) << "  Adding: " << *node->getDReachTrace();
         rResult.addUnique(*node->getDReachTrace());
+        VLOG(1) << "  rPlusResult: " << rResult;
     }
     return rResult;
 }
@@ -1890,9 +1948,30 @@ size_t Fsm::lowerBound(const IOTrace& base,
                        const Fsm& iut)
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(5));
+    VLOG(1) << "lowerBound()";
+    VLOG(1) << "base: " << base;
+    VLOG(1) << "suffix: " << suffix;
+    VLOG(1) << "takenInputs:";
+    for (auto i : takenInputs)
+    {
+        VLOG(1) << "  " << *i;
+    }
+    VLOG(1) << "states:";
+    for (auto s : states)
+    {
+        VLOG(1) << "  " << s->getName();
+    }
+    VLOG(1) << "adaptiveTestCases: " << adaptiveTestCases;
+    VLOG(1) << "vDoublePrime: " << vDoublePrime;
+    VLOG(1) << "dReachableStates: ";
+    for (auto s : dReachableStates)
+    {
+        VLOG(1) << "  " << s->getName();
+    }
     size_t result = 0;
 
     IOTraceContainer testTraces = iut.bOmega(adaptiveTestCases, takenInputs);
+    VLOG(1) << "bOmega testTraces: " << testTraces;
 
     for (shared_ptr<FsmNode> state : states)
     {
@@ -1910,15 +1989,9 @@ size_t Fsm::lowerBound(const IOTrace& base,
         }
     }
     result += testTraces.size();
+    VLOG(1) << "result: " << result;
     return result;
 }
-
-/*
-bool Fsm::adaptiveStateCounting(const size_t m, IOTraceContainer& observedTraces)
-{
-
-}
-*/
 
 bool Fsm::adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> iut, const size_t m, IOTraceContainer& observedTraces)
 {
@@ -1966,25 +2039,47 @@ bool Fsm::adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> 
         ss << "}";
         VLOG(1) << ss.str();
     }
-    shared_ptr<Tree> detStateCoverTree = specMin.getDeterministicStateCover();
-    IOListContainer detStateCoverRaw = detStateCoverTree->getDeterministicTestCases();
-    VLOG(1) << "detStateCoverRaw: " << detStateCoverRaw;
+
     vector<shared_ptr<InputTrace>> detStateCover;
-    for (vector<int> trace : *detStateCoverRaw.getIOLists())
-    {
-        detStateCover.push_back(make_shared<InputTrace>(trace, specMin.presentationLayer));
-    }
-    const vector<IOTraceContainer> vPrime = iutMin.getVPrime(detStateCoverTree);
-    VLOG(1) << "vPrime:";
-    for (auto v : vPrime)
-    {
-        VLOG(1) << v;
-    }
-    const vector<shared_ptr<FsmNode>>& dReachableStates = specMin.getDReachableStates();
+    const vector<shared_ptr<FsmNode>>& dReachableStates = specMin.getDReachableStates(detStateCover);
+
     VLOG(1) << "dReachableStates:";
     for (auto s : dReachableStates)
     {
         VLOG(1) << s->getName();
+    }
+    VLOG(1) << "detStateCover:";
+    for (auto t : detStateCover)
+    {
+        VLOG(1) << *t;
+    }
+
+
+    /*
+    shared_ptr<Tree> detStateCoverTree = specMin.getDeterministicStateCover();
+    IOListContainer detStateCoverRaw = detStateCoverTree->getDeterministicTestCases();
+    VLOG(1) << "detStateCoverRaw: " << detStateCoverRaw;
+    vector<shared_ptr<InputTrace>> detStateCover;
+    vector<shared_ptr<FsmNode>> dReachableStates;
+    for (vector<int> trace : *detStateCoverRaw.getIOLists())
+    {
+        shared_ptr<InputTrace> iTrace = make_shared<InputTrace>(trace, specMin.presentationLayer);
+        unordered_set<shared_ptr<FsmNode>> targets = specMin.getInitialState()->after(*iTrace);
+        const shared_ptr<FsmNode>& target = *targets.begin();
+        dReachableStates.push_back(target);
+        detStateCover.push_back(iTrace);
+    }
+    VLOG(1) << "dReachableStates:";
+    for (auto s : dReachableStates)
+    {
+        VLOG(1) << s->getName() << " (" << *s->getDReachTrace() << ")";
+    }
+    */
+    const vector<IOTraceContainer> vPrime = iutMin.getVPrime(detStateCover);
+    VLOG(1) << "vPrime:";
+    for (auto v : vPrime)
+    {
+        VLOG(1) << v;
     }
 
     /**
@@ -2022,6 +2117,7 @@ bool Fsm::adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> 
         for (shared_ptr<InputTrace> inputTrace : tC)
         {
             TIMED_SCOPE(timerBlkObj, "adaptiveStateCounting-loop-1");
+            VLOG(1) << "############################################################";
             VLOG(1) << "  inputTrace: " << *inputTrace;
             /**
              * Holds the produced output traces for the current input trace.
@@ -2127,25 +2223,39 @@ bool Fsm::adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> 
             }
         }
 
-        bool cancel = false;
+        VLOG(1) << "observedOutputsTCElements:";
+        for (auto e : observedOutputsTCElements)
+        {
+            VLOG(1) << "  " << *e.first << ":";
+            for (auto o : e.second)
+            {
+                VLOG(1) << "    " << *o;
+            }
+        }
+
+        bool criterionFulfilled = false;
         vector<shared_ptr<InputTrace>> newT = t;
         vector<shared_ptr<InputTrace>> newTC;
         for (shared_ptr<InputTrace> inputTrace : tC)
         {
             TIMED_SCOPE(timerBlkObj, "adaptiveStateCounting-loop-2");
+            VLOG(1) << "inputTrace:" << *inputTrace;
             vector<shared_ptr<OutputTrace>>& producedOutputs = observedOutputsTCElements.at(inputTrace);
             for (shared_ptr<OutputTrace> outputTrace : producedOutputs)
             {
                 TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1", VLOG_IS_ON(2));
-                if (cancel)
+                VLOG(1) << "outputTrace:" << *outputTrace;
+                if (criterionFulfilled)
                 {
                     break;
                 }
                 IOTrace currentTrace(*inputTrace, *outputTrace);
+                VLOG(1) << "currentTrace:" << currentTrace;
                 for (const IOTraceContainer& vDoublePrime : vPrime)
                 {
                     TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-1", VLOG_IS_ON(3));
-                    if (cancel)
+                    VLOG(1) << "vDoublePrime:" << vDoublePrime;
+                    if (criterionFulfilled)
                     {
                         break;
                     }
@@ -2158,35 +2268,48 @@ bool Fsm::adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> 
                             maxPrefix = &iOTrace;
                         }
                     }
+                    VLOG(1) << "maxPrefix: " << *maxPrefix;
                     if (!maxPrefix)
                     {
                         continue;
                     }
                     for (const vector<shared_ptr<FsmNode>>& rDistStates : maximalSetsOfRDistinguishableStates)
                     {
+                        VLOG(1) << "rDistStates:";
+                        for (auto r : rDistStates)
+                        {
+                            VLOG(1) << "  " << r->getName();
+                        }
                         TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3", VLOG_IS_ON(4));
-                        if (cancel)
+                        if (criterionFulfilled)
                         {
                             break;
                         }
                         for (size_t i = 0; i < rDistStates.size() - 1; ++i)
                         {
                             TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3-1", VLOG_IS_ON(5));
-                            if (cancel)
+                            if (criterionFulfilled)
                             {
                                 break;
                             }
                             shared_ptr<FsmNode> s1 = rDistStates.at(i);
+                            VLOG(1) << "############################################################";
+                            VLOG(1) << "s1:" << s1->getName();
                             for (size_t j = i + 1; j < rDistStates.size(); ++j)
                             {
                                 TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3-1-1", VLOG_IS_ON(6));
                                 shared_ptr<FsmNode> s2 = rDistStates.at(j);
+                                VLOG(1) << "----------------------------------------------------------";
+                                VLOG(1) << "s2:" << s2->getName();
                                 if (s1 == s2)
                                 {
                                     continue;
                                 }
                                 const IOTraceContainer& s1RPlus = specMin.rPlus(s1, *maxPrefix, currentTrace, vDoublePrime);
                                 const IOTraceContainer& s2RPlus = specMin.rPlus(s2, *maxPrefix, currentTrace, vDoublePrime);
+
+                                VLOG(1) << "s1RPlus:" << s1RPlus;
+                                VLOG(1) << "s2RPlus:" << s2RPlus;
 
                                 unordered_set<shared_ptr<FsmNode>> reached1;
                                 unordered_set<shared_ptr<FsmNode>> reached2;
@@ -2207,20 +2330,37 @@ bool Fsm::adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> 
                                 vector<shared_ptr<FsmNode>> reached1V(reached1.begin(), reached1.end());
                                 vector<shared_ptr<FsmNode>> reached2V(reached2.begin(), reached2.end());
 
+                                VLOG(1) << "reached1V:";
+                                for (auto r : reached1V)
+                                {
+                                    VLOG(1) << "  " << r->getName();
+                                }
+                                VLOG(1) << "reached2V:";
+                                for (auto r : reached2V)
+                                {
+                                    VLOG(1) << "  " << r->getName();
+                                }
+
                                 if (iutMin.rDistinguishesAllStates(reached1V, reached2V, adaptiveTestCases))
                                 {
+                                    VLOG(1) << "R-distinguishes all states.";
                                     if (Fsm::lowerBound(*maxPrefix, currentTrace, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, specMin, iutMin) > m)
                                     {
-                                        cancel = true;
+                                        criterionFulfilled = true;
+                                        VLOG(1) << "Going to remove input trace " << *inputTrace << " from T_C.";
                                         break;
                                     }
+                                }
+                                else
+                                {
+                                    VLOG(1) << "Does not r-distinguis all states.";
                                 }
                             }
                         }
                     }
                 }
             }
-            if (cancel)
+            if (criterionFulfilled)
             {
                 VLOG(1) << "Removing " << *inputTrace << " from T_C.";
             }
@@ -2234,6 +2374,13 @@ bool Fsm::adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> 
                 }
             }
         }
+        ss << "newTC: ";
+        for (auto w : newTC)
+        {
+            ss << *w << ", ";
+        }
+        VLOG(1) << ss.str();
+        ss.str(std::string());
         // Expanding sequences.
         vector<shared_ptr<InputTrace>> expandedTC;
         for (int x = 0; x <= spec->maxInput; ++x)
@@ -2252,6 +2399,18 @@ bool Fsm::adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> 
                     newT.push_back(concat);
                 }
             }
+        }
+        ss << "expandedTC: ";
+        for (auto w : expandedTC)
+        {
+            ss << *w << ", ";
+        }
+        VLOG(1) << ss.str();
+        ss.str(std::string());
+        ss << "newT: ";
+        for (auto w : newT)
+        {
+            ss << *w << ", ";
         }
         tC = expandedTC;
         t = newT;

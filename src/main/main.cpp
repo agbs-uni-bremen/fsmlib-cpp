@@ -727,18 +727,18 @@ void adaptiveTest01()
     make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
             + "../../../resources/adaptive-test-out.txt",
             + "../../../resources/adaptive-test-state.txt");
-    const size_t numFsm = 100;
+    const size_t numFsm = 1;
     const int numberDigits = ((numFsm <= 1)? 1 : static_cast<int>(log10(numFsm)) + 1);
-    const int maxInput = 5;
-    const int maxOutput = 5;
-    const int maxStates = 5;
+    const int maxInput = 2;
+    const int maxOutput = 2;
+    const int maxStates = 2;
 
     const int numOutputFaults = 1;
     const int numTransitionFaults = 1;
-    const unsigned createRandomFsmSeed = 0;
-    const unsigned createMutantSeed = 0;
-//    const unsigned createRandomFsmSeed = 2329749609;
-//    const unsigned createMutantSeed = 2329974306;
+//    const unsigned createRandomFsmSeed = 0;
+//    const unsigned createMutantSeed = 0;
+    const unsigned createRandomFsmSeed = 3471392562;
+    const unsigned createMutantSeed = 3471530493;
 //    const unsigned createRandomFsmSeed = 2118190291;
 //    const unsigned createMutantSeed = 2118432094;
     CLOG(INFO, logging::globalLogger) << "numFsm: " << numFsm;
@@ -763,7 +763,7 @@ void adaptiveTest01()
         shared_ptr<Fsm> mutant = fsm->createMutant("mutant" + iteration, numOutputFaults, numTransitionFaults, createMutantSeed);
         IOTraceContainer observedTraces;
         bool result = Fsm::adaptiveStateCounting(fsm, mutant, maxStates + 1, observedTraces);
-        assertOnFail("TC-AT-0001", !result, "IUT should not be a reduction of reference.");
+        assertOnFail("TC-AT-01-" + iteration, !result, "IUT should not be a reduction of reference.");
     }
 }
 

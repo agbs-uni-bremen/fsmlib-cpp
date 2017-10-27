@@ -28,6 +28,7 @@ public:
 	*/
 	InputTrace(const std::vector<int>& trace,
                const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
+    InputTrace(int x, const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
     InputTrace(const InputTrace& other, size_t n);
     InputTrace(const InputTrace& other);

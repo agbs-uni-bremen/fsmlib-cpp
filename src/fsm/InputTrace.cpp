@@ -17,6 +17,13 @@ InputTrace::InputTrace(const std::vector<int>& trace, const std::shared_ptr<FsmP
 
 }
 
+InputTrace::InputTrace(int x,
+           const std::shared_ptr<FsmPresentationLayer>& presentationLayer)
+    :Trace(std::vector<int>({x}), presentationLayer)
+{
+
+}
+
 InputTrace::InputTrace(const InputTrace& other, size_t n):
     Trace(other.getPresentationLayer())
 {

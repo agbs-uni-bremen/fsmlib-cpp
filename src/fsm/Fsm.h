@@ -289,7 +289,7 @@ public:
      * \item post-state is a number in range 0..(number of states -1)
      */
     void dumpFsm(std::ofstream & outputFile) const;
-    std::vector<std::shared_ptr<FsmNode>> getDReachableStates();
+    std::vector<std::shared_ptr<FsmNode>> getDReachableStates(std::vector<std::shared_ptr<InputTrace>>& detStateCover);
     std::shared_ptr<FsmNode> getInitialState() const;
     
     /**
@@ -540,7 +540,7 @@ public:
      * @return List of possible combinations of input traces and output traces, based
      * on the deterministic state cover.
      */
-    std::vector<IOTraceContainer> getVPrime(const std::shared_ptr<Tree>& detStateCover);
+    std::vector<IOTraceContainer> getVPrime(const std::vector<std::shared_ptr<InputTrace>>& detStateCover);
 
     /**
      * Calculates all prefixes of `base.suffix`, that reach the given node and that

@@ -408,6 +408,13 @@ unordered_set<shared_ptr<FsmNode>> FsmNode::after(const InputTrace & itrc)
 vector<shared_ptr<FsmNode>> FsmNode::after(const int x)
 {
     vector<shared_ptr<FsmNode> > lst;
+
+    if (x == FsmLabel::EPSILON_INPUT)
+    {
+        lst.push_back(shared_from_this());
+        return lst;
+    }
+
     for (auto tr : transitions)
     {
         if (tr->getLabel()->getInput() == x)
@@ -435,6 +442,12 @@ vector<shared_ptr<FsmNode>> FsmNode::after(const int x, std::vector<int>& produc
 unordered_set<shared_ptr<FsmNode>> FsmNode::afterAsSet(const int x)
 {
     unordered_set<shared_ptr<FsmNode>> nodeSet;
+
+    if (x == FsmLabel::EPSILON_INPUT)
+    {
+        nodeSet.insert(shared_from_this());
+        return nodeSet;
+    }
     
     for (auto tr : transitions)
     {
