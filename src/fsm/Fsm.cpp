@@ -544,7 +544,9 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates()
     initState->setColor(FsmNode::grey);
     bfsLst.push_back(initState);
     nodes.push_back(initState);
-    initState->setDReachable(IOTrace::getEmptyTrace(presentationLayer));
+    shared_ptr<IOTrace> emptyTrace = IOTrace::getEmptyTrace(presentationLayer);
+    emptyTrace->setTargetNode(initState);
+    initState->setDReachable(emptyTrace);
     paths.insert(make_pair(initState, IOTrace::getEmptyTrace(presentationLayer)));
 
     while (!bfsLst.empty())
@@ -583,19 +585,20 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates()
             catch (out_of_range e)
             {
                 // Create new path, since it doesn't exist.
+                shared_ptr<IOTrace> newPath;
                 if (thisNodePath)
                 {
-                    shared_ptr<IOTrace> newPath(thisNodePath);
+                    newPath = make_shared<IOTrace>(*thisNodePath);
                     newPath->append(x, producedOutputs.at(0));
-                    paths.insert(make_pair(tgt, newPath));
                 }
                 else
                 {
                     InputTrace in = InputTrace({x}, presentationLayer);
                     OutputTrace out = OutputTrace({producedOutputs.at(0)}, presentationLayer);
-                    shared_ptr<IOTrace> newPath = make_shared<IOTrace>(in, out);
-                    paths.insert(make_pair(tgt, newPath));
+                    newPath = make_shared<IOTrace>(in, out);
                 }
+                newPath->setTargetNode(tgt);
+                paths.insert(make_pair(tgt, newPath));
             }
             if (tgt->getColor() == FsmNode::white)
             {
@@ -1870,8 +1873,8 @@ IOTraceContainer Fsm::rPlus(std::shared_ptr<FsmNode> node,
     if (node->isDReachable() && vDoublePrime.contains(*node->getDReachTrace()))
     {
         VLOG(2) << "  Adding: " << *node->getDReachTrace();
-        rResult.add(*node->getDReachTrace());
         VLOG(2) << "  rResult: " << rResult;
+        rResult.addUnique(*node->getDReachTrace());
     }
     return rResult;
 }
@@ -2085,6 +2088,7 @@ bool Fsm::adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> 
                     }
                 }
                 LOG(INFO) << ss.str();
+                ss.str(std::string());
                 VLOG(1) << "IUT is not a reduction of the specification.";
                 return false;
             }
@@ -2192,7 +2196,6 @@ bool Fsm::adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> 
                                     TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3-1-1-1", VLOG_IS_ON(7));
                                     unordered_set<shared_ptr<FsmNode>> reached = iutMin.getInitialState()->after(trace);
                                     reached1.insert(reached.begin(), reached.end());
-
                                 }
                                 for (IOTrace& trace : *s2RPlus.getList())
                                 {
@@ -2219,16 +2222,16 @@ bool Fsm::adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> 
             }
             if (cancel)
             {
+                VLOG(1) << "Removing " << *inputTrace << " from T_C.";
+            }
+            else
+            {
                 // Keeping current input trace in T_C
+                VLOG(1) << "Keeping " << *inputTrace << " in T_C.";
                 if (!InputTrace::contains(newTC, *inputTrace))
                 {
-                    VLOG(1) << "Keeping " << *inputTrace << " in T_C.";
                     newTC.push_back(inputTrace);
                 }
-            }
-            if (!cancel)
-            {
-
             }
         }
         // Expanding sequences.
@@ -2242,21 +2245,11 @@ bool Fsm::adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> 
                 concat->add(x);
                 if (!InputTrace::contains(t, *concat) && !InputTrace::contains(expandedTC, *concat))
                 {
-                    VLOG(1) << "Keeping " << *concat << " in T_C.";
                     expandedTC.push_back(concat);
-                }
-                else
-                {
-                    VLOG(1) << "Removing " << *concat << " from T_C.";
                 }
                 if (!InputTrace::contains(newT, *concat))
                 {
-                    VLOG(1) << "Keeping " << *concat << " in T.";
                     newT.push_back(concat);
-                }
-                else
-                {
-                    VLOG(1) << "Removing " << *concat << " from T.";
                 }
             }
         }
