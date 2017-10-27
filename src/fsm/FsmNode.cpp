@@ -450,6 +450,12 @@ unordered_set<shared_ptr<FsmNode>> FsmNode::afterAsSet(const int x, const int y)
 {
     unordered_set<shared_ptr<FsmNode>> lst;
 
+    if (x == FsmLabel::EPSILON_INPUT && y == FsmLabel::EPSILON_OUTPUT)
+    {
+        lst.insert(shared_from_this());
+        return lst;
+    }
+
     for (auto tr : transitions)
     {
         if (tr->getLabel()->getInput() == x && tr->getLabel()->getOutput() == y)
