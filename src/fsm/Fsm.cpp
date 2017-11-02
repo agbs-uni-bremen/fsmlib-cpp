@@ -1878,8 +1878,8 @@ IOTraceContainer Fsm::r(std::shared_ptr<FsmNode> node,
     for (IOTrace& prefix : prefs)
     {
         if (prefix.size() != 1 ||
-                (prefix.getInputTrace().get().at(0) != -1 &&
-                prefix.getOutputTrace().get().at(0) != -1))
+                (prefix.getInputTrace().get().at(0) != FsmLabel::EPSILON_INPUT &&
+                prefix.getOutputTrace().get().at(0) != FsmLabel::EPSILON_OUTPUT))
         {
             prefixes.push_back(prefix);
         }
