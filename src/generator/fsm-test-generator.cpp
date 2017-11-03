@@ -379,7 +379,7 @@ static void readModelAbstraction(model_type_t mtp,
             break;
             
         case FSM_BASIC:
-            cerr << "ERROR. Model abstraction for SAFE WP METHOD may only be specified in CSV or JSON format - exit." << endl;
+            cerr << "ERROR. Model abstraction for SAFE W/WP/H METHOD may only be specified in CSV or JSON format - exit." << endl;
             exit(1);
             break;
     }
