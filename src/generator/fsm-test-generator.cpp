@@ -385,8 +385,8 @@ static void readModelAbstraction(model_type_t mtp,
     }
     
     if ( myDfsm != nullptr ) {
-        myDfsm->toDot(fsmName);
-        myDfsm->toCsv(fsmName);
+        myDfsm->toDot("ABS_"+fsmName);
+        myDfsm->toCsv("ABS_"+fsmName);
     }
 
 }
