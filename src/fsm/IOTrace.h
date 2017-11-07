@@ -56,7 +56,7 @@ public:
 	*/
 	OutputTrace getOutputTrace() const;
 
-    std::vector<IOTrace> getPrefixes() const;
+    std::vector<IOTrace> getPrefixes(bool proper = false) const;
 
     void setTargetNode(std::shared_ptr<FsmNode> target)
     {

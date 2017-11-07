@@ -114,12 +114,13 @@ std::vector<int>::const_iterator Trace::cend() const
 	return trace.cend();
 }
 
-std::vector<Trace> Trace::getPrefixes() const
+std::vector<Trace> Trace::getPrefixes(bool proper) const
 {
      std::vector<Trace> result;
-     if (trace.size() > 1)
+     size_t prefixIndex = proper ? 1 : 0;
+     if (trace.size() > prefixIndex)
      {
-         for (size_t i = 1; i < trace.size(); ++i)
+         for (size_t i = prefixIndex; i < trace.size(); ++i)
          {
              Trace prefix = Trace(std::vector<int>(trace.begin(), trace.end() - static_cast<std::vector<int>::difference_type>(i)), presentationLayer);
             result.push_back(prefix);

@@ -111,7 +111,7 @@ public:
     
     const std::shared_ptr<FsmPresentationLayer> getPresentationLayer() const { return presentationLayer; }
 
-    std::vector<Trace> getPrefixes() const;
+    std::vector<Trace> getPrefixes(bool proper = false) const;
 
     static bool contains(const std::vector<std::shared_ptr<Trace>>& list, const Trace& trace);
     bool contains(const int io) const;

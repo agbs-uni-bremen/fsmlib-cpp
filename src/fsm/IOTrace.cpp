@@ -59,7 +59,7 @@ OutputTrace IOTrace::getOutputTrace() const
 	return outputTrace;
 }
 
-vector<IOTrace> IOTrace::getPrefixes() const
+vector<IOTrace> IOTrace::getPrefixes(bool proper) const
 {
     vector<IOTrace> result;
     vector<int> inputRaw = inputTrace.get();
@@ -70,9 +70,8 @@ vector<IOTrace> IOTrace::getPrefixes() const
         exit(EXIT_FAILURE);
     }
 
-    //vector<InputTrace> inPrefixes = inputTrace.getPrefixes();
-
-    if (inputRaw.size() > 1) {
+    size_t prefixIndex = proper ? 1 : 0;
+    if (inputRaw.size() > prefixIndex) {
         vector<Trace> inPre = inputTrace.getPrefixes();
         vector<Trace> outPre = outputTrace.getPrefixes();
         for (size_t i = 0; i < inPre.size(); ++i)
