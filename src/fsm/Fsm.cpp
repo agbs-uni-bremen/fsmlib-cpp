@@ -1750,6 +1750,7 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const IOT
         LOG(FATAL) << "The FSM does not seem to be observable.";
     }
     shared_ptr<FsmNode> successorNode = *successorNodes.begin();
+    VLOG(1) << "bOmega successorNode with " << trace << ": " << successorNode->getName();
     return getPossibleIOTraces(successorNode, adaptiveTestCases);
 }
 
@@ -1866,6 +1867,7 @@ IOTraceContainer Fsm::r(std::shared_ptr<FsmNode> node,
                    const IOTrace& suffix) const
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
+    VLOG(3) << "r():";
     VLOG(3) << "node: " << node->getName();
     VLOG(3) << "base: " << base;
     VLOG(3) << "suffix: " << suffix;
@@ -1969,6 +1971,7 @@ size_t Fsm::lowerBound(const IOTrace& base,
         VLOG(1) << "  " << s->getName();
     }
     size_t result = 0;
+    VLOG(1) << "lb result: " << result;
 
     IOTraceContainer testTraces = iut.bOmega(adaptiveTestCases, takenInputs);
     VLOG(1) << "bOmega testTraces: " << testTraces;
@@ -1976,20 +1979,27 @@ size_t Fsm::lowerBound(const IOTrace& base,
     for (shared_ptr<FsmNode> state : states)
     {
         const IOTraceContainer& rResult = spec.r(state, base, suffix);
+        VLOG(1) << "--- state: " << state->getName();
+        VLOG(1) << "rResult: " << rResult;
         result += rResult.size();
+        VLOG(1) << "lb result: " << result;
         if(find(dReachableStates.begin(), dReachableStates.end(), state) != dReachableStates.end()) {
             ++result;
+            VLOG(1) << "State " << state->getName() << " is d-reachable. Incrementing.";
+            VLOG(1) << "lb result: " << result;
         }
 
         const IOTraceContainer rPlusResult = spec.rPlus(state, base, suffix, vDoublePrime);
         for (IOTrace& trace : *rPlusResult.getList())
         {
             IOTraceContainer traces = iut.bOmega(adaptiveTestCases, trace);
+            VLOG(1) << "Removing " << traces << " from testTraces.";
             testTraces.remove(traces);
+            VLOG(1) << "testTraces: " << testTraces;
         }
     }
     result += testTraces.size();
-    VLOG(1) << "result: " << result;
+    VLOG(1) << "lowerBound() result: " << result;
     return result;
 }
 
@@ -2091,6 +2101,8 @@ const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
         }
         VLOG(1) << ss.str();
         ss.str(std::string());
+        VLOG(1) << "adaptiveTestCases as input traces:";
+        VLOG(1) << adaptiveList;
         map<shared_ptr<InputTrace>, vector<shared_ptr<OutputTrace>>> observedOutputsTCElements;
 
         // Applying all input traces from T_c to this FSM.
