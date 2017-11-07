@@ -1896,13 +1896,13 @@ IOTraceContainer Fsm::r(std::shared_ptr<FsmNode> node,
         IOTrace baseCopy = base;
         baseCopy.append(prefix);
         VLOG(3) << "v = " << baseCopy << " reaches:";
-        unordered_set<shared_ptr<FsmNode>> nodes = node->after(prefix.getInputTrace(), prefix.getOutputTrace());
+        unordered_set<shared_ptr<FsmNode>> nodes = getInitialState()->after(baseCopy.getInputTrace(), baseCopy.getOutputTrace());
         for (shared_ptr<FsmNode> n : nodes)
         {
             if (n == node)
             {
                 VLOG(3) << "  " << n->getName() << " (adding " << baseCopy << " to result), ";
-                result.add(baseCopy);
+                result.addUnique(baseCopy);
             }
             else
             {
