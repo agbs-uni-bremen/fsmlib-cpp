@@ -758,11 +758,19 @@ void adaptiveTest01()
         CLOG(INFO, logging::globalLogger) << "-----------------------------------------------------------";
         CLOG(INFO, logging::globalLogger) << "i: " << iteration;
         CLOG(INFO, logging::globalLogger) << "Creating FSM.";
-        shared_ptr<Fsm> fsm = Fsm::createRandomFsm(iteration, maxInput, maxOutput, maxStates, plTest, true, createRandomFsmSeed);
+        shared_ptr<Fsm> spec = Fsm::createRandomFsm(iteration, maxInput, maxOutput, maxStates, plTest, true, createRandomFsmSeed);
         CLOG(INFO, logging::globalLogger) << "Creating mutant.";
-        shared_ptr<Fsm> mutant = fsm->createMutant("mutant" + iteration, numOutputFaults, numTransitionFaults, createMutantSeed);
+        shared_ptr<Fsm> iut = spec->createMutant("mutant" + iteration, numOutputFaults, numTransitionFaults, createMutantSeed);
+
+        const string dotPrefix = "../../../resources/adaptive-test-" + spec->getName() + "-";
+        spec->toDot(dotPrefix + "spec");
+        iut->toDot(dotPrefix + "iut");
+
+        Fsm specMin = spec->minimise();
+        Fsm iutMin = iut->minimise();
+
         IOTraceContainer observedTraces;
-        bool result = Fsm::adaptiveStateCounting(fsm, mutant, maxStates + 1, observedTraces);
+        bool result = Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes() + 1), observedTraces);
         assertOnFail("TC-AT-01-" + iteration, !result, "IUT should not be a reduction of reference.");
     }
 }

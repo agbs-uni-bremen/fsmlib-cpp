@@ -616,7 +616,7 @@ public:
      * @return `true`, if no failure has been observed during the creation of the test suite,
      * `false`, otherwise.
      */
-    static bool adaptiveStateCounting(std::shared_ptr<Fsm> spec, std::shared_ptr<Fsm> iut, const size_t m, IOTraceContainer& observedTraces);
+    static bool adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceContainer& observedTraces);
 
     /**
      * Determines if the given adaptive test cases distinguish all states from
