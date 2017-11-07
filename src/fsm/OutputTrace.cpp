@@ -17,6 +17,12 @@ OutputTrace::OutputTrace(const std::vector<int>& trace, const std::shared_ptr<Fs
 
 }
 
+OutputTrace::OutputTrace(const Trace& other):
+    Trace(other)
+{
+
+}
+
 bool OutputTrace::contains(const std::vector<std::shared_ptr<OutputTrace>>& list, const OutputTrace& trace)
 {
     for (std::shared_ptr<OutputTrace> t : list)

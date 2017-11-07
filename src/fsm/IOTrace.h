@@ -39,6 +39,7 @@ public:
 	*/
     IOTrace(const InputTrace & i, const OutputTrace & o, std::shared_ptr<FsmNode> targetNode = nullptr);
     IOTrace(const int i, const int o, std::shared_ptr<FsmPresentationLayer> pl);
+    IOTrace(const Trace& i, const Trace& o);
     IOTrace(const int i, const int o, std::shared_ptr<FsmNode> targetNode, std::shared_ptr<FsmPresentationLayer> pl);
     IOTrace(const IOTrace & ioTrace);
     IOTrace(const IOTrace & ioTrace, int n, std::shared_ptr<FsmNode> targetNode = nullptr);
@@ -105,6 +106,13 @@ public:
      * the given trace, {@code false}, otherwise.
      */
     bool isPrefixOf(const IOTrace& other) const;
+
+    /**
+     * Returns the remaining suffix of this trace after removing its prefix.
+     * @param prefix The given prefix
+     * @return  The remaining suffix.
+     */
+    IOTrace getSuffix(const IOTrace& prefix) const;
 
     static std::shared_ptr<IOTrace> getEmptyTrace(std::shared_ptr<FsmPresentationLayer> pl);
 

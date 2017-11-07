@@ -4,6 +4,7 @@
  * Licensed under the EUPL V.1.1
  */
 #include "fsm/Trace.h"
+#include "logging/easylogging++.h"
 
 Trace::Trace(const std::shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: presentationLayer(presentationLayer)
@@ -85,6 +86,16 @@ bool Trace::isSuffix(const Trace& other) const
 bool Trace::isPrefixOf(const Trace& other) const
 {
  return other.isPrefix(*this);
+}
+
+Trace Trace::getSuffix(const Trace& prefix) const
+{
+    if (!isPrefix(prefix))
+    {
+        LOG(FATAL) << "The given prefix is not a prefix of this trace.";
+    }
+    std::vector<int> newTrace(trace.begin() + static_cast<std::vector<int>::difference_type>(prefix.get().size()), trace.end());
+    return Trace(newTrace, presentationLayer);
 }
 
 void Trace::removeElements(int n)

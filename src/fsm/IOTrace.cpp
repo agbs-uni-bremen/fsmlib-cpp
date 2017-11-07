@@ -5,6 +5,8 @@
  */
 #include "fsm/IOTrace.h"
 #include "fsm/FsmNode.h"
+#include "fsm/FsmLabel.h"
+#include "logging/easylogging++.h"
 
 using namespace std;
 
@@ -20,6 +22,12 @@ IOTrace::IOTrace(const InputTrace & i, const OutputTrace & o, std::shared_ptr<Fs
 
 IOTrace::IOTrace(const int i, const int o, shared_ptr<FsmPresentationLayer> pl):
     inputTrace({i}, pl), outputTrace({o}, pl)
+{
+
+}
+
+IOTrace::IOTrace(const Trace& i, const Trace& o):
+    inputTrace(i), outputTrace(o)
 {
 
 }
@@ -126,6 +134,24 @@ bool IOTrace::isPrefixOf(const IOTrace& other) const
 {
     return inputTrace.isPrefixOf(other.inputTrace) &&
             outputTrace.isPrefixOf(other.outputTrace);
+}
+
+IOTrace IOTrace::getSuffix(const IOTrace& prefix) const
+{
+    if (!isPrefix(prefix))
+    {
+        LOG(FATAL) << "The given prefix is not a prefix of this trace.";
+    }
+    const Trace& in = inputTrace.getSuffix(prefix.getInputTrace());
+    const Trace& out = outputTrace.getSuffix(prefix.getOutputTrace());
+
+    if (in.get().size() == 0 && out.get().size() == 0)
+    {
+        return IOTrace(FsmLabel::EPSILON_INPUT, FsmLabel::EPSILON_OUTPUT, inputTrace.getPresentationLayer());
+    }
+    else{
+        return IOTrace(in, out);
+    }
 }
 
 shared_ptr<IOTrace> IOTrace::getEmptyTrace(shared_ptr<FsmPresentationLayer> pl)

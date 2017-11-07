@@ -89,6 +89,8 @@ public:
      */
     bool isPrefixOf(const Trace& other) const;
 
+    Trace getSuffix(const Trace& prefix) const;
+
     void removeElements(int n);
 
 	/**

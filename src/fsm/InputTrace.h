@@ -32,6 +32,7 @@ public:
 
     InputTrace(const InputTrace& other, size_t n);
     InputTrace(const InputTrace& other);
+    InputTrace(const Trace& other);
 
     static bool contains(const std::vector<std::shared_ptr<InputTrace>>& list, const InputTrace& trace);
 

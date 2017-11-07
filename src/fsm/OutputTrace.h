@@ -27,6 +27,7 @@ public:
 	@param presentationLayer The presentation layer used by the trace
 	*/
     OutputTrace(const std::vector<int>& trace, const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
+    OutputTrace(const Trace& other);
 
     /**
      * Determines wether a given list of output traces contains a given output trace.

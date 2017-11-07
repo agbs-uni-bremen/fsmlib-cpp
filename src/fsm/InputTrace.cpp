@@ -45,6 +45,12 @@ InputTrace::InputTrace(const InputTrace& other):
 
 }
 
+InputTrace::InputTrace(const Trace& other):
+    Trace(other)
+{
+
+}
+
 bool InputTrace::contains(const std::vector<std::shared_ptr<InputTrace>>& list, const InputTrace& trace)
 {
     for (std::shared_ptr<InputTrace> t : list)
