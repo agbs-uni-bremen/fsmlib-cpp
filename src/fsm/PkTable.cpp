@@ -53,63 +53,117 @@ int PkTable::maxClassId() const
 
 shared_ptr<PkTable> PkTable::getPkPlusOneTable() const
 {
-	shared_ptr<PkTable> pkp1 = make_shared<PkTable>(rows.size(), maxInput, rows, presentationLayer);
-
-	int thisClass = 0;
-	int thisNewClassId = maxClassId() + 1;
-	shared_ptr<PkTableRow> refRow;
-	shared_ptr<PkTableRow> newClassRefRow;
-	bool haveNewClasses = false;
-
-	do
-	{
-		refRow = nullptr;
-		for (unsigned int i = 0; i < rows.size(); ++i)
-		{
-			if (s2c.at(i) != thisClass)
-			{
-				continue;
-			}
-
-			if (pkp1->getClass(i) >= 0)
-			{
-				continue;
-			}
-
-			if (refRow == nullptr)
-			{
-				refRow = rows.at(i);
-				pkp1->setClass(i, thisClass);
-				continue;
-			}
-
-			if ( refRow->isEquivalent(*rows.at(i), s2c) )
-			{
-				pkp1->setClass(i, thisClass);
-			}
-			else
-			{
-				haveNewClasses = true;
-				newClassRefRow = rows.at(i);
-				pkp1->setClass(i, thisNewClassId);
-
-				for (unsigned int j = i + 1; j < rows.size(); ++j)
-				{
-					if ( s2c.at(j) == thisClass and
-                         newClassRefRow->isEquivalent(*rows.at(j), s2c) )
-					{
-						pkp1->setClass(j, thisNewClassId);
-					}
-				}
-
-				newClassRefRow = nullptr;
-				++thisNewClassId;
-			}
-		}
-		++thisClass;
-	} while (refRow != nullptr);
-
-	return haveNewClasses ? pkp1 : nullptr;
+    shared_ptr<PkTable> pkp1 = make_shared<PkTable>(rows.size(), maxInput, rows, presentationLayer);
+    
+    int thisClass = 0;
+    int thisNewClassId = maxClassId() + 1;
+    shared_ptr<PkTableRow> refRow;
+    shared_ptr<PkTableRow> newClassRefRow;
+    bool haveNewClasses = false;
+    
+    do
+    {
+        refRow = nullptr;
+        
+        // For each class thisClass, we loop over the number of rows
+        // which is the same for each Pk-table (= number if states)
+        for (unsigned int i = 0; i < rows.size(); ++i)
+        {
+            // We are only interested in rows that were assigned to thisClass
+            // in this Pk-table.
+            if (s2c.at(i) != thisClass)
+            {
+                continue;
+            }
+            
+            // In the new Pk-table pkp1 (P_(k+1)-table), we only want to
+            // assign class number to rows that do not have a class number yet.
+            // These rows are still marked with -1 ("undefined class number"),
+            // this initialisation is performed by the constructor of Int2intMap.
+            if (pkp1->getClass(i) >= 0)
+            {
+                continue;
+            }
+            
+            // We want to mark the first row associated in this Pk-table as reference row.
+            // refRow == nullptr indicates that we do not yet have a reference row.
+            // The reference row is the first row to be associated with class thisClass.
+            if (refRow == nullptr)
+            {
+                refRow = rows.at(i);
+                pkp1->setClass(i, thisClass);
+                
+                // We are done with this loop cycle, because the reference row
+                // has been found, and now rows with a greater index shall be
+                // investigated with respect to equivalence to the reference row.
+                continue;
+            }
+            
+            // Here, we handle the row rows.at(i) which comes AFTER the reference row.
+            // This means that index i is greater than the index of the reference row.
+            // We know already that rows.at(i) has been associated with thisClass in this Pk-table,
+            // but is not yet associated with a class in the new P_(k+1) table pkp1.
+            if ( refRow->isEquivalent(*rows.at(i), s2c) )
+            {
+                // The actual row rows.at(i) is also equivalent
+                // to the reference row in the new table pkp1.
+                // Therefore it gets the same class number as the reference row.
+                // Note that this is also the same class number it had been associated
+                // with in this Pk-table.
+                pkp1->setClass(i, thisClass);
+                
+                // We are done with row rows.at(i)
+                continue;
+            }
+            
+            
+            // rows.at(i) was in the same class as the reference row in this Pk-table,
+            // but has to be moved into a new class in the P_(k+1)-table.
+            // This new class must have a new number above 0..maxClassId(),
+            // because a row which is no longer equivalent to the othrs in thisClass
+            // will never be moved into a class from 0..maxClassId() which already existed in this
+            // Pk-table. The new class id to be used is stored in thisNewClassId.
+            haveNewClasses = true;
+            newClassRefRow = rows.at(i);
+            pkp1->setClass(i, thisNewClassId);
+            
+            // Now we check whether any other rows above rows.at(i), which were originally
+            // in the same class thisClass as rows.at(i), are equivalent to rows.at(i)
+            // in the new table php1. These rows get the same new class id as rows.at(i).
+            // After having run through this loop, there are no more rows which might be
+            // equivalent to rows.at(i).
+            for (unsigned int j = i + 1; j < rows.size(); ++j)
+            {
+                if ( s2c.at(j) == thisClass and
+                    pkp1->getClass(i) < 0 and
+                    newClassRefRow->isEquivalent(*rows.at(j), s2c) )
+                {
+                    pkp1->setClass(j, thisNewClassId);
+                }
+            }
+            
+            // We might find other rows above rows.at(i)
+            // that may have been equivalent to the reference row in this Pk-table,
+            // but are neither equivalent to the reference row nor to rows.at(i)
+            // in pkp1. These rows will be associated with the next new class id set here.
+            ++thisNewClassId;
+            
+        }
+        
+        // We are done with the original reference row that was used for
+        // the actual loop (unsigned int i = 0; i < rows.size(); ++i)
+        newClassRefRow = nullptr;
+        
+        // All rows that may still belong to thisClass in pkp1 have been identified now.
+        // We switch to the next class
+        ++thisClass;
+        
+        
+        // refRow == nullPtr means that all rows are already associated with a new class ID,
+        // so that we can terminate.
+    } while (refRow != nullptr);
+    
+    return haveNewClasses ? pkp1 : nullptr;
 }
 
 Dfsm PkTable::toFsm(string name, const int maxOutput)
