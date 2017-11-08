@@ -716,8 +716,36 @@ void wVersusT() {
     
     
     
+
     
-    
+}
+
+bool executeAdaptiveTest(const shared_ptr<Fsm>& spec, const shared_ptr<Fsm>& iut)
+{
+
+    Fsm specMin = spec->minimise();
+    Fsm iutMin = iut->minimise();
+
+#ifdef ENABLE_DEBUG_MACRO
+    const string dotPrefix = "../../../resources/adaptive-test/" + spec->getName() + "-";
+    spec->toDot(dotPrefix + "spec");
+    iut->toDot(dotPrefix + "iut");
+    specMin.toDot(dotPrefix + "specMin");
+    iutMin.toDot(dotPrefix + "iutMin");
+
+    shared_ptr<Fsm> product = Fsm::createProductMachine(spec, iut);
+    Fsm productMin = product->minimise();
+    //Fsm productMinComplete = productMin.makeComplete(ErrorState);
+
+    product->toDot(dotPrefix + "product");
+    productMin.toDot(dotPrefix + "productMin");
+    //productMinComplete.toDot(dotPrefix + "productMinComplete");
+#endif
+
+    bool isReduction = !productMin.hasFailState();
+
+    IOTraceContainer observedTraces;
+    return isReduction == Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes() + 1), observedTraces);
 }
 
 void adaptiveTest01()
@@ -727,18 +755,18 @@ void adaptiveTest01()
     make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
             + "../../../resources/adaptive-test-out.txt",
             + "../../../resources/adaptive-test-state.txt");
-    const size_t numFsm = 1;
+    const size_t numFsm = 1000;
     const int numberDigits = ((numFsm <= 1)? 1 : static_cast<int>(log10(numFsm)) + 1);
-    const int maxInput = 2;
-    const int maxOutput = 2;
-    const int maxStates = 2;
+    const int maxInput = 8;
+    const int maxOutput = 8;
+    const int maxStates = 8;
 
-    const int numOutputFaults = 1;
-    const int numTransitionFaults = 1;
-//    const unsigned createRandomFsmSeed = 0;
-//    const unsigned createMutantSeed = 0;
-    const unsigned createRandomFsmSeed = 3471392562;
-    const unsigned createMutantSeed = 3471530493;
+    const int numOutputFaults = 2;
+    const int numTransitionFaults = 3;
+    const unsigned createRandomFsmSeed = 0;
+    const unsigned createMutantSeed = 0;
+//    const unsigned createRandomFsmSeed = 1424695103;
+//    const unsigned createMutantSeed = 1424843680;
 //    const unsigned createRandomFsmSeed = 2118190291;
 //    const unsigned createMutantSeed = 2118432094;
     CLOG(INFO, logging::globalLogger) << "numFsm: " << numFsm;
@@ -747,6 +775,10 @@ void adaptiveTest01()
     CLOG(INFO, logging::globalLogger) << "maxStates: " << maxStates;
     CLOG(INFO, logging::globalLogger) << "Testing!";
     TIMED_FUNC(timerObj);
+
+    const int numTests = numFsm + 1;
+    int passed = 0;
+
     for (size_t i = 0; i < numFsm; ++i)
     {
         stringstream ss;
@@ -755,24 +787,28 @@ void adaptiveTest01()
         logging::setLogfileSuffix(iteration);
 
         TIMED_SCOPE(timerBlkObj, "heavy-iter");
-        CLOG(INFO, logging::globalLogger) << "-----------------------------------------------------------";
+        CLOG(INFO, logging::globalLogger) << "------------------------------------------------------------------";
         CLOG(INFO, logging::globalLogger) << "i: " << iteration;
         CLOG(INFO, logging::globalLogger) << "Creating FSM.";
         shared_ptr<Fsm> spec = Fsm::createRandomFsm(iteration, maxInput, maxOutput, maxStates, plTest, true, createRandomFsmSeed);
         CLOG(INFO, logging::globalLogger) << "Creating mutant.";
         shared_ptr<Fsm> iut = spec->createMutant("mutant" + iteration, numOutputFaults, numTransitionFaults, createMutantSeed);
 
-        const string dotPrefix = "../../../resources/adaptive-test-" + spec->getName() + "-";
-        spec->toDot(dotPrefix + "spec");
-        iut->toDot(dotPrefix + "iut");
+        bool result = executeAdaptiveTest(spec, iut);
 
-        Fsm specMin = spec->minimise();
-        Fsm iutMin = iut->minimise();
+        if (result)
+        {
+            ++passed;
+        }
 
-        IOTraceContainer observedTraces;
-        bool result = Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes() + 1), observedTraces);
-        assertOnFail("TC-AT-01-" + iteration, !result, "IUT should not be a reduction of reference.");
+        assertOnFail("TC-AT-01-" + iteration, result);
     }
+
+    LOG(INFO) << "#################### SUMMARY ####################";
+    LOG(INFO) << "# Total tests: " << numTests;
+    LOG(INFO) << "# Passed     : " << passed;
+    LOG(INFO) << "# Failed     : " << numTests - passed;
+    LOG(INFO) << "#################################################";
 }
 
 std::string getcwd() {

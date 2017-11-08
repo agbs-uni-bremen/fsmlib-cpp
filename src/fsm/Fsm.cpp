@@ -832,6 +832,8 @@ shared_ptr<Tree> Fsm::getDeterministicStateCover()
             {
                 VLOG(2) << "  " + n->getName();
             }
+            //BUG It is possible to have the same successor node with different input
+            // and different outputs.
 			if (successorNodes.size() != 1)
 			{
 				continue;
@@ -2029,15 +2031,9 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
         LOG(FATAL) << "Please ensure to minimize the specification before starting adaptive state counting.";
     }
 #ifdef ENABLE_DEBUG_MACRO
-    shared_ptr<Fsm> product = Fsm::createProductMachine(spec, iut);
-    Fsm productMin = product->minimise();
-    Fsm productMinComplete = productMin.makeComplete(ErrorState);
-    const string dotPrefix = "../../../resources/adaptive-test-" + spec.getName() + "-";
-    spec.toDot(dotPrefix + "spec");
-    iut.toDot(dotPrefix + "iut");
-    product->toDot(dotPrefix + "product");
-    productMin.toDot(dotPrefix + "productMin");
-    productMinComplete.toDot(dotPrefix + "productMinComplete");
+
+    const string dotPrefix = "../../../resources/adaptive-test/" + spec.getName() + "-";
+
 #endif
     spec.calcRDistinguishableStates();
 
@@ -2328,6 +2324,7 @@ const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
                     for (IOTrace& iOTrace : *vDoublePrime.getList())
                     {
                         TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-2", VLOG_IS_ON(4));
+                        //TODO e/e is prefix of everything.
                         if (currentTrace.isPrefix(iOTrace) && ( !maxPrefix || iOTrace.size() > maxPrefix->size()))
                         {
                             maxPrefix = &iOTrace;
