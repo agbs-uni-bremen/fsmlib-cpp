@@ -2313,10 +2313,11 @@ const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
                 IOTrace currentTrace(*inputTrace, *outputTrace);
                 VLOG(1) << "currentTrace (x_1/y_1): " << currentTrace;
                 bool maxPrefixFound = false;
+                bool exceededLowerBound = false;
                 for (const IOTraceContainer& vDoublePrime : vPrime)
                 {
                     TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-1", VLOG_IS_ON(3));
-                    if (discardInputTrace)
+                    if (discardInputTrace || exceededLowerBound)
                     {
                         break;
                     }
@@ -2340,14 +2341,16 @@ const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
                     maxPrefixFound = true;
                     IOTrace suffix = currentTrace.getSuffix(*maxPrefix);
                     VLOG(1) << "suffix (x/y): " << suffix;
-                    bool discardSet = false;
+                    bool discardSet;
                     for (const vector<shared_ptr<FsmNode>>& rDistStates : maximalSetsOfRDistinguishableStates)
                     {
-                        if (discardInputTrace)
+                        if (discardInputTrace || exceededLowerBound)
                         {
                             break;
                         }
                         discardSet = false;
+                        exceededLowerBound = false;
+                        bool isLastSet = rDistStates == maximalSetsOfRDistinguishableStates.back();
                         VLOG(1) << "rDistStates:";
                         for (auto r : rDistStates)
                         {
@@ -2428,11 +2431,25 @@ const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
                         }
                         if (!discardSet)
                         {
-                            if (Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut) <= m)
+                            if (Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut) > m)
                             {
-                                discardInputTrace = true;
-                                VLOG(1) << "Going to skip input trace " << *inputTrace << " and keep it in T_C.";
-                                break;
+                                exceededLowerBound = true;
+                                VLOG(1) << "Exceeded lower bound.";
+                            }
+                            else
+                            {
+                                if (isLastSet)
+                                {
+                                    discardInputTrace = true;
+                                    VLOG(1) << "Going to skip input trace " << *inputTrace << " and keep it in T_C.";
+                                    break;
+                                }
+                                VLOG(1) << "Going to skip rDistStates:";
+                                for (auto r : rDistStates)
+                                {
+                                    VLOG(1) << "  " << r->getName();
+                                }
+                                continue;
                             }
                         }
                     }
@@ -2473,8 +2490,17 @@ const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
             for (shared_ptr<InputTrace>& inputTrace : newTC)
             {
                 TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-expansion", VLOG_IS_ON(2));
-                shared_ptr<InputTrace> concat  = make_shared<InputTrace>(*inputTrace);
-                concat->add(x);
+
+                shared_ptr<InputTrace> concat;
+                if (inputTrace->isEmptyTrace())
+                {
+                    concat  = make_shared<InputTrace>(x, inputTrace->getPresentationLayer());
+                }
+                else
+                {
+                    concat  = make_shared<InputTrace>(*inputTrace);
+                    concat->add(x);
+                }
                 if (!InputTrace::contains(t, *concat) && !InputTrace::contains(expandedTC, *concat))
                 {
                     expandedTC.push_back(concat);

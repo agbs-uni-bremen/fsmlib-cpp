@@ -35,6 +35,7 @@ public:
     InputTrace(const Trace& other);
 
     static bool contains(const std::vector<std::shared_ptr<InputTrace>>& list, const InputTrace& trace);
+    bool isEmptyTrace() const;
 
 	/**
 	Output the InputTrace to a standard output stream
@@ -45,5 +46,6 @@ public:
 	friend std::ostream & operator<<(std::ostream & out,
                                      const InputTrace & trace);
     InputTrace& operator=(InputTrace&& other);
+
 };
 #endif //FSM_FSM_INPUTTRACE_H_

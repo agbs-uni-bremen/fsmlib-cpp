@@ -4,6 +4,7 @@
  * Licensed under the EUPL V.1.1
  */
 #include "fsm/InputTrace.h"
+#include "fsm/FsmLabel.h"
 
 InputTrace::InputTrace(const std::shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: Trace(presentationLayer)
@@ -61,6 +62,11 @@ bool InputTrace::contains(const std::vector<std::shared_ptr<InputTrace>>& list, 
         }
     }
     return false;
+}
+
+bool InputTrace::isEmptyTrace() const
+{
+    return trace.size() == 1 && trace.at(0) == FsmLabel::EPSILON_INPUT;
 }
 
 std::ostream & operator<<(std::ostream & out, const InputTrace & trace)
