@@ -44,36 +44,6 @@ private:
     
     void createDfsmTransitionGraph(const std::string& fname);
 
-    /**
-     *  Breadth-first search in a given Tree for a Trace that
-     *  distinguishes the states s_i=s0->after(alpha) and s_j=s0->after(beta)
-     *  of this DFSM. The distinguishing Trace is returned.
-     *  This method is used to avoid appending distinguishing traces
-     *  that widen the tree by creating new tree branches.
-     *
-     *  @param alpha InputTrace that leads to state s_i
-     *  @param beta InputTrace that leads to state s_j
-     *  @param tree Search in this Tree for a distinguishing Trace
-     *  @return distinguishing InputTrace for s_i and s_j.
-     *   returns an empty InputTrace if no distinguishing trace could be found
-     */
-    InputTrace calcDistinguishingTraceInTree(const std::shared_ptr<InputTrace> alpha, const std::shared_ptr<InputTrace> beta, const std::shared_ptr<Tree> tree);
-
-    /**
-     *  Calculate trace that distinguishes the states s_i=s0->after(alpha) and
-     *  s_j=s0->after(beta), starting with a leaf of tree.
-     *  The distinguishing trace is returned.
-     *  This method tries to lengthen an InputTrace in tree so that it
-     *  distinguishes s_i and s_j.
-     *  @param alpha InputTrace that leads to state s_i
-     *  @param beta InputTrace that leads to state s_j
-     *  @param tree Search in the leaves of this tree for a trace
-     *         that can be lenghtened to distinguish s_i and s_j.
-     *  @return distinguishing InputTrace for s_i and s_j.
-     *   returns an empty InputTrace if no distinguishing trace could be found
-     */
-    InputTrace calcDistinguishingTraceAfterTree(const std::shared_ptr<InputTrace> alpha, const std::shared_ptr<InputTrace> beta, const std::shared_ptr<Tree> tree);
-    
 public:
 	/**
 	Create a DFSM from a file description
@@ -391,6 +361,35 @@ public:
      */
     InputTrace calcDistinguishingTrace(const std::shared_ptr<InputTrace> iAlpha, const std::shared_ptr<InputTrace> iBeta, const std::shared_ptr<Tree> tree);
 
+    /**
+     *  Breadth-first search in a given Tree for a Trace that
+     *  distinguishes the states s_i=s0->after(alpha) and s_j=s0->after(beta)
+     *  of this DFSM. The distinguishing Trace is returned.
+     *  This method is used to avoid appending distinguishing traces
+     *  that widen the tree by creating new tree branches.
+     *
+     *  @param alpha InputTrace that leads to state s_i
+     *  @param beta InputTrace that leads to state s_j
+     *  @param tree Search in this Tree for a distinguishing Trace
+     *  @return distinguishing InputTrace for s_i and s_j.
+     *   returns an empty InputTrace if no distinguishing trace could be found
+     */
+    InputTrace calcDistinguishingTraceInTree(const std::shared_ptr<InputTrace> alpha, const std::shared_ptr<InputTrace> beta, const std::shared_ptr<Tree> tree);
+
+    /**
+     *  Calculate trace that distinguishes the states s_i=s0->after(alpha) and
+     *  s_j=s0->after(beta), starting with a leaf of tree.
+     *  The distinguishing trace is returned.
+     *  This method tries to lengthen an InputTrace in tree so that it
+     *  distinguishes s_i and s_j.
+     *  @param alpha InputTrace that leads to state s_i
+     *  @param beta InputTrace that leads to state s_j
+     *  @param tree Search in the leaves of this tree for a trace
+     *         that can be lenghtened to distinguish s_i and s_j.
+     *  @return distinguishing InputTrace for s_i and s_j.
+     *   returns an empty InputTrace if no distinguishing trace could be found
+     */
+    InputTrace calcDistinguishingTraceAfterTree(const std::shared_ptr<InputTrace> alpha, const std::shared_ptr<InputTrace> beta, const std::shared_ptr<Tree> tree);
 
     std::vector<std::shared_ptr<PkTable> > getPktblLst() const;
 };

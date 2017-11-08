@@ -56,5 +56,10 @@ public:
      *   Save test suite to file, using the forma of the << operator
      */
     void save(const std::string &name);
+
+    /**
+     * @return The sum of all test case sizes in this test suite
+     */
+    size_t totalLength() const;
 };
 #endif //FSM_TREES_TESTSUITE_H_

@@ -168,16 +168,37 @@ OutputTree FsmNode::apply(const InputTrace& itrc, bool markAsVisited)
     return ot;
 }
 
+unordered_set<shared_ptr<FsmNode>> FsmNode::after(const vector<int>& itrc)
+{
+    unordered_set<shared_ptr<FsmNode>> nodeSet;
+    nodeSet.insert(shared_from_this());
+
+    for (auto it = itrc.begin(); it != itrc.end(); ++it)
+    {
+        int x = *it;
+        unordered_set<shared_ptr<FsmNode>> newNodeSet;
+
+        for (shared_ptr<FsmNode> n : nodeSet)
+        {
+            unordered_set<shared_ptr<FsmNode>> ns = n->afterAsSet(x);
+            newNodeSet.insert(ns.begin(), ns.end());
+        }
+        nodeSet = newNodeSet;
+    }
+    return nodeSet;
+}
+
+
 unordered_set<shared_ptr<FsmNode>> FsmNode::after(const InputTrace& itrc)
 {
     unordered_set<shared_ptr<FsmNode>> nodeSet;
     nodeSet.insert(shared_from_this());
-    
+
     for (auto it = itrc.cbegin(); it != itrc.cend(); ++it)
     {
         int x = *it;
         unordered_set<shared_ptr<FsmNode>> newNodeSet;
-        
+
         for (shared_ptr<FsmNode> n : nodeSet)
         {
             unordered_set<shared_ptr<FsmNode>> ns = n->afterAsSet(x);

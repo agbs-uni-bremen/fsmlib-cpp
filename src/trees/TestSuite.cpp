@@ -87,3 +87,14 @@ void TestSuite::save(const std::string &name) {
     out.close();
     
 }
+
+size_t TestSuite::totalLength() const
+{
+    size_t length = 0;
+    for(unsigned i = 0; i < this->size(); ++i)
+    {
+        OutputTree o = this->at(i);
+        length += o.getInputTrace().get().size();
+    }
+    return length;
+}

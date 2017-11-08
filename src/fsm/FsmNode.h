@@ -84,6 +84,7 @@ public:
 	input trace itrc.
 	*/
 	std::unordered_set<std::shared_ptr<FsmNode>> after(const InputTrace & itrc);
+    std::unordered_set<std::shared_ptr<FsmNode>> after(const std::vector<int> & itrc);
 
 	/**
 	Return list of nodes that can be reached from this node

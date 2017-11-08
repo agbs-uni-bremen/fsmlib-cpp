@@ -25,6 +25,11 @@ OutputTree::OutputTree(const shared_ptr<TreeNode> root,
 
 }
 
+InputTrace OutputTree::getInputTrace() const
+{
+    return inputTrace;
+}
+
 bool OutputTree::contains(OutputTree& ot)
 {
     

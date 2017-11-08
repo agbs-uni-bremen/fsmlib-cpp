@@ -44,6 +44,8 @@ public:
                const InputTrace& inputTrace,
                const std::shared_ptr<FsmPresentationLayer> presentationLayer);
 
+    InputTrace getInputTrace() const;
+
 	/**
 	 * Check whether this OutputTree instance is a superset of the output traces
 	 * contained in the other instance ot.
