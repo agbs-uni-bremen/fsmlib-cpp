@@ -1728,6 +1728,19 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
     return result;
 }
 
+bool Fsm::hasFailState() const
+{
+    for (const shared_ptr<FsmNode>& node : nodes)
+    {
+        if (node->getName().find(FsmPresentationLayer::FAIL_STATE_NAME) != string::npos &&
+                node->isFailState())
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const IOTrace& trace) const
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));

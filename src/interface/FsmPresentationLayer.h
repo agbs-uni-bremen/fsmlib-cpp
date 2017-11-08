@@ -32,6 +32,8 @@ private:
 	 */
 	std::vector<std::string> state2String;
 public:
+    const static std::string FAIL_STATE_NAME;
+    const static std::string FAIL_OUTPUT;
 	/**
 	 * Create a new presentation layer containing nothing
 	 */

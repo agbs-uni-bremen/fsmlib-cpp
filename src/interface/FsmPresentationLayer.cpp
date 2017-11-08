@@ -6,6 +6,9 @@
 #include "interface/FsmPresentationLayer.h"
 #include <algorithm>
 
+const std::string FsmPresentationLayer::FAIL_STATE_NAME = "Fail";
+const std::string FsmPresentationLayer::FAIL_OUTPUT = "fail";
+
 FsmPresentationLayer::FsmPresentationLayer()
 {
 

@@ -123,6 +123,7 @@ public:
 
     bool hasTransition(const int input, const int output) const;
 
+    bool isFailState() const;
     bool isPossibleOutput(const int x, const int y) const;
     bool isPossibleInput(const int x) const;
 

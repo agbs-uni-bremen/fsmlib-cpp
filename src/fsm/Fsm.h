@@ -511,6 +511,8 @@ public:
                                          const IOTreeContainer& treeContainer,
                                          const bool cleanTrailingEmptyTraces = true) const;
 
+    bool hasFailState() const;
+
     /**
      * Returns a set of input/output sequences that can be produced by this
      * FSM when applying each element of the given adaptive test cases to
