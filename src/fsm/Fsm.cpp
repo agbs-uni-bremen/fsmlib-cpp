@@ -3257,7 +3257,7 @@ shared_ptr<Fsm> Fsm::createProductMachine(Fsm reference, Fsm iut, const std::str
     iut.getPresentationLayer()->truncateOut2String(reference.maxOutput + 1);
     iut.getPresentationLayer()->truncateState2String(reference.maxState + 1);
     shared_ptr<FsmPresentationLayer> pl = FsmPresentationLayer::mergeAlphabets(reference.getPresentationLayer(), iut.getPresentationLayer());
-    const int failOutput = pl->addOut2String("fail");
+    const int failOutput = pl->addOut2String(FsmPresentationLayer::FAIL_OUTPUT);
     size_t maxInput = static_cast<size_t>(max(reference.maxInput, iut.maxInput));
     size_t maxOutput = static_cast<size_t>(max(reference.maxOutput, iut.maxOutput)) + 1;
     vector<string> state2String;
@@ -3344,7 +3344,7 @@ shared_ptr<Fsm> Fsm::createProductMachine(Fsm reference, Fsm iut, const std::str
     int initStateIdx = originalNodeIdsToProductNode.at(
                 make_pair(reference.getInitialState()->getId(),iut.getInitialState()->getId()))->getId();
 
-    state2String.push_back("Fail");
+    state2String.push_back(FsmPresentationLayer::FAIL_STATE_NAME);
     nodes.push_back(failState);
     pl->setState2String(state2String);
     VLOG(1) << "Creating fail node: " << failState->getName() << "(" << failState->getId() << ")";
