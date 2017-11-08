@@ -3369,6 +3369,12 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
         srand(seed);
         LOG(DEBUG) << "createMutant seed: " << seed;
     }
+
+    vector<shared_ptr<FsmTransition>> cantTouchThis;
+    vector<shared_ptr<FsmTransition>> transitions;
+    vector<int> srcNodeIds;
+    vector<int> srcNodeIdsCpy;
+    vector<int> tgtNodeIdsCpy;
     
     // Create new nodes for the mutant.
     vector<shared_ptr<FsmNode> > lst;
@@ -3387,66 +3393,168 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
             shared_ptr<FsmTransition> newTr =
             make_shared<FsmTransition>(theNewFsmNodeSrc,lst[tgtId],newLbl);
             theNewFsmNodeSrc->addTransition(newTr);
+            srcNodeIds.push_back(n);
         }
     }
     
     // Now add transition faults to the new machine
-    for ( size_t tf = 0; tf < numTransitionFaults; tf++ ) {
-        int srcNodeId = rand() % (maxState+1);
-        int newTgtNodeId = rand() % (maxState+1);
-        int trNo = rand() % lst[srcNodeId]->getTransitions().size();
-        auto tr = lst[srcNodeId]->getTransitions()[trNo];
-        if ( tr->getTarget()->getId() == newTgtNodeId ) {
-            newTgtNodeId = (newTgtNodeId+1) % (maxState+1);
+    size_t createdTransitionFaults = 0;
+    bool addedFault = true;
+    while (createdTransitionFaults < numTransitionFaults && addedFault)
+    {
+        addedFault = false;
+        srcNodeIdsCpy = srcNodeIds;
+        while (srcNodeIdsCpy.size() > 0)
+        {
+            if (addedFault)
+            {
+                break;
+            }
+            std::vector<int>::iterator srcNodeIt = srcNodeIdsCpy.begin() + (rand() % srcNodeIdsCpy.size());
+            size_t srcNodeId = static_cast<size_t>(*srcNodeIt);
+            LOG(INFO) << "srcNodeId: " << srcNodeId;
+            srcNodeIdsCpy.erase(srcNodeIt);
+
+            tgtNodeIdsCpy = srcNodeIds;
+
+            while (tgtNodeIdsCpy.size() > 0)
+            {
+                if (addedFault)
+                {
+                    break;
+                }
+                std::vector<int>::iterator tgtNodeIt = tgtNodeIdsCpy.begin() + (rand() % tgtNodeIdsCpy.size());
+                size_t newTgtNodeId = static_cast<size_t>(*tgtNodeIt);
+                LOG(INFO) << "  newTgtNodeId: " << newTgtNodeId;
+                tgtNodeIdsCpy.erase(tgtNodeIt);
+
+
+                transitions = lst[srcNodeId]->getTransitions();
+                while (transitions.size() > 0)
+                {
+                    std::vector<shared_ptr<FsmTransition>>::iterator transitionIt = transitions.begin() + (rand() % transitions.size());
+                    shared_ptr<FsmTransition> tr = *transitionIt;
+                    LOG(INFO) << "    tr: " << tr->str();
+                    transitions.erase(transitionIt);
+
+                    if (find(cantTouchThis.begin(), cantTouchThis.end(), tr) != cantTouchThis.end())
+                    {
+                        LOG(INFO) << "(Transition fault) Won't touch transition " << tr->str();
+                        continue;
+                    }
+
+                    if (tr->getTarget()->getId() == static_cast<int>(newTgtNodeId)) {
+                        continue;
+                    }
+                    LOG(INFO) << "Adding transition fault:";
+                    LOG(INFO) << "  Old transition: " << tr->str();
+                    tr->setTarget(lst[newTgtNodeId]);
+                    LOG(INFO) << "  New transition: " << tr->str();
+                    ++createdTransitionFaults;
+                    cantTouchThis.push_back(tr);
+                    addedFault = true;
+                    break;
+                }
+            }
+
         }
-        lst[srcNodeId]->getTransitions()[trNo]->setTarget(lst[newTgtNodeId]);
-        LOG(INFO) << "Adding transition fault: " << lst[srcNodeId]->getTransitions()[trNo]->str();
+    }
+
+    if (createdTransitionFaults < numTransitionFaults)
+    {
+        LOG(FATAL) << "Could not create all requested transition faults.";
     }
     
     // Now add output faults to the new machine
-    for (size_t of = 0; of < numOutputFaults; of++ ) {
-        
-        int srcNodeId = rand() % (maxState+1);
-        int trNo = rand() % lst[srcNodeId]->getTransitions().size();
-        auto tr = lst[srcNodeId]->getTransitions()[trNo];
-        int theInput = tr->getLabel()->getInput();
-        int newOutVal = rand() % (maxOutput+1);
-        int originalNewOutVal = rand() % (maxOutput+1);
-        bool newOutValOk;
-        
-        // We don't want to modify this transition in such a way
-        // that another one with the same label and the same
-        // source/target nodes already exists.
-        do {
-            
-            newOutValOk = true;
-            
-            for ( auto trOther : lst[srcNodeId]->getTransitions() ) {
-                if ( tr == trOther ) continue;
-                if ( trOther->getTarget()->getId() != tr->getTarget()->getId() )
+    //for (size_t of = 0; of < numOutputFaults; of++ ) {
+    size_t createdOutputFaults = 0;
+
+    addedFault = true;
+    while (createdOutputFaults < numOutputFaults && addedFault)
+    {
+        addedFault = false;
+        srcNodeIdsCpy = srcNodeIds;
+        while (srcNodeIdsCpy.size() > 0)
+        {
+            if (addedFault)
+            {
+                break;
+            }
+            std::vector<int>::iterator srcNodeIt = srcNodeIdsCpy.begin() + (rand() % srcNodeIdsCpy.size());
+            size_t srcNodeId = static_cast<size_t>(*srcNodeIt);
+            srcNodeIdsCpy.erase(srcNodeIt);
+
+            transitions = lst[srcNodeId]->getTransitions();
+            while (transitions.size() > 0)
+            {
+                std::vector<shared_ptr<FsmTransition>>::iterator transitionIt = transitions.begin() + (rand() % transitions.size());
+                shared_ptr<FsmTransition> tr = *transitionIt;
+                transitions.erase(transitionIt);
+
+                if (find(cantTouchThis.begin(), cantTouchThis.end(), tr) != cantTouchThis.end())
+                {
+                    LOG(INFO) << "(Output fault) Won't touch transition " << tr->str();
                     continue;
-                if ( trOther->getLabel()->getInput() != theInput ) continue;
-                if ( trOther->getLabel()->getOutput() == newOutVal ) {
-                    newOutValOk = false;
+                }
+
+                int theInput = tr->getLabel()->getInput();
+                int newOutVal = rand() % (maxOutput+1);
+                int originalNewOutVal = newOutVal;
+                bool newOutValOk;
+
+                // We don't want to modify this transition in such a way
+                // that another one with the same label and the same
+                // source/target nodes already exists.
+                do {
+
+                    newOutValOk = true;
+
+                    if (lst[srcNodeId]->getTransitions().size() == 1)
+                    {
+                        newOutValOk = false;
+                    }
+                    else
+                    {
+                        for ( auto trOther : lst[srcNodeId]->getTransitions() ) {
+                            if ( tr == trOther ) continue;
+                            if ( trOther->getTarget()->getId() != tr->getTarget()->getId() )
+                                continue;
+                            if ( trOther->getLabel()->getInput() != theInput ) continue;
+                            if ( trOther->getLabel()->getOutput() == newOutVal ) {
+                                newOutValOk = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if ( not newOutValOk ) {
+                        newOutVal = (newOutVal+1) % (maxOutput+1);
+                    }
+
+                } while ( (not newOutValOk) and (originalNewOutVal != newOutVal) );
+
+                if ( newOutValOk ) {
+
+                    auto newLbl = make_shared<FsmLabel>(tr->getLabel()->getInput(),
+
+                                                        newOutVal,
+                                                        presentationLayer);
+
+                    LOG(INFO) << "Adding output fault:";
+                    LOG(INFO) << "  Old transition: " << tr->str();
+                    tr->setLabel(newLbl);
+                    LOG(INFO) << "  New transition: " << tr->str();
+                    ++createdOutputFaults;
+                    cantTouchThis.push_back(tr);
+                    addedFault = true;
+                    break;
                 }
             }
-            
-            if ( not newOutValOk ) {
-                newOutVal = (newOutVal+1) % (maxOutput+1);
-            }
-            
-        } while ( (not newOutValOk) and (originalNewOutVal != newOutVal) );
-        
-        if ( newOutValOk ) {
-            
-            auto newLbl = make_shared<FsmLabel>(tr->getLabel()->getInput(),
-                                                
-                                                newOutVal,
-                                                presentationLayer);
-            
-            tr->setLabel(newLbl);
-            LOG(INFO) << "Adding output fault: " << tr->str();
         }
+    }
+    if (createdOutputFaults < numOutputFaults)
+    {
+        LOG(FATAL) << "Could not create all requested output faults.";
     }
     
     shared_ptr<Fsm> result = make_shared<Fsm>(fsmName,maxInput,maxOutput,lst,presentationLayer);
