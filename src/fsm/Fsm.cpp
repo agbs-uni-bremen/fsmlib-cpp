@@ -1072,6 +1072,7 @@ Fsm Fsm::minimise()
     
     if (!isObservable())
     {
+        LOG(INFO) << "Fsm is not observable. Converting.";
         return transformToObservableFSM().minimiseObservableFSM();
     }
     
@@ -1763,7 +1764,7 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const IOT
         LOG(FATAL) << "The FSM does not seem to be observable.";
     }
     shared_ptr<FsmNode> successorNode = *successorNodes.begin();
-    VLOG(1) << "bOmega successorNode with " << trace << ": " << successorNode->getName();
+    VLOG(2) << "bOmega successorNode with " << trace << ": " << successorNode->getName();
     return getPossibleIOTraces(successorNode, adaptiveTestCases);
 }
 
@@ -1785,7 +1786,7 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const vec
         {
             IOTrace iOTrace = IOTrace(*inputTrace, *outputTrace);
             IOTraceContainer produced = bOmega(adaptiveTestCases, iOTrace);
-            VLOG(1) << "produced bOmega with " << iOTrace << ": " << produced;
+            VLOG(2) << "produced bOmega with " << iOTrace << ": " << produced;
             result.addUnique(produced);
         }
     }
@@ -1937,17 +1938,17 @@ IOTraceContainer Fsm::rPlus(std::shared_ptr<FsmNode> node,
                    const IOTraceContainer& vDoublePrime) const
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
-    VLOG(1) << "rPlus()";
-    VLOG(1) << "node: " << node->getName();
-    VLOG(1) << "base: " << base;
-    VLOG(1) << "suffix: " << suffix;
+    VLOG(2) << "rPlus()";
+    VLOG(2) << "node: " << node->getName();
+    VLOG(2) << "base: " << base;
+    VLOG(2) << "suffix: " << suffix;
     IOTraceContainer rResult = r(node, base, suffix);
-    VLOG(1) << "rResult: " << rResult;
+    VLOG(2) << "rResult: " << rResult;
     if (node->isDReachable() && vDoublePrime.contains(*node->getDReachTrace()))
     {
-        VLOG(1) << "  Adding: " << *node->getDReachTrace();
+        VLOG(2) << "  Adding: " << *node->getDReachTrace();
         rResult.addUnique(*node->getDReachTrace());
-        VLOG(1) << "  rPlusResult: " << rResult;
+        VLOG(2) << "  rPlusResult: " << rResult;
     }
     return rResult;
 }
@@ -1963,56 +1964,56 @@ size_t Fsm::lowerBound(const IOTrace& base,
                        const Fsm& iut)
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(5));
-    VLOG(1) << "lowerBound()";
-    VLOG(1) << "base: " << base;
-    VLOG(1) << "suffix: " << suffix;
-    VLOG(1) << "takenInputs:";
+    VLOG(2) << "lowerBound()";
+    VLOG(2) << "base: " << base;
+    VLOG(2) << "suffix: " << suffix;
+    VLOG(2) << "takenInputs:";
     for (auto i : takenInputs)
     {
-        VLOG(1) << "  " << *i;
+        VLOG(2) << "  " << *i;
     }
-    VLOG(1) << "states:";
+    VLOG(2) << "states:";
     for (auto s : states)
     {
-        VLOG(1) << "  " << s->getName();
+        VLOG(2) << "  " << s->getName();
     }
-    VLOG(1) << "adaptiveTestCases: " << adaptiveTestCases;
-    VLOG(1) << "vDoublePrime: " << vDoublePrime;
-    VLOG(1) << "dReachableStates: ";
+    VLOG(2) << "adaptiveTestCases: " << adaptiveTestCases;
+    VLOG(2) << "vDoublePrime: " << vDoublePrime;
+    VLOG(2) << "dReachableStates: ";
     for (auto s : dReachableStates)
     {
-        VLOG(1) << "  " << s->getName();
+        VLOG(2) << "  " << s->getName();
     }
     size_t result = 0;
-    VLOG(1) << "lb result: " << result;
+    VLOG(2) << "lb result: " << result;
 
     IOTraceContainer testTraces = iut.bOmega(adaptiveTestCases, takenInputs);
-    VLOG(1) << "bOmega testTraces: " << testTraces;
+    VLOG(2) << "bOmega testTraces: " << testTraces;
 
     for (shared_ptr<FsmNode> state : states)
     {
         const IOTraceContainer& rResult = spec.r(state, base, suffix);
-        VLOG(1) << "--- state: " << state->getName();
-        VLOG(1) << "rResult: " << rResult;
+        VLOG(2) << "--- state: " << state->getName();
+        VLOG(2) << "rResult: " << rResult;
         result += rResult.size();
-        VLOG(1) << "lb result: " << result;
+        VLOG(2) << "lb result: " << result;
         if(find(dReachableStates.begin(), dReachableStates.end(), state) != dReachableStates.end()) {
             ++result;
-            VLOG(1) << "State " << state->getName() << " is d-reachable. Incrementing.";
-            VLOG(1) << "lb result: " << result;
+            VLOG(2) << "State " << state->getName() << " is d-reachable. Incrementing.";
+            VLOG(2) << "lb result: " << result;
         }
 
         const IOTraceContainer rPlusResult = spec.rPlus(state, base, suffix, vDoublePrime);
         for (IOTrace& trace : *rPlusResult.getList())
         {
             IOTraceContainer traces = iut.bOmega(adaptiveTestCases, trace);
-            VLOG(1) << "Removing " << traces << " from testTraces.";
+            VLOG(2) << "Removing " << traces << " from testTraces.";
             testTraces.remove(traces);
-            VLOG(1) << "testTraces: " << testTraces;
+            VLOG(2) << "testTraces: " << testTraces;
         }
     }
     result += testTraces.size();
-    VLOG(1) << "lowerBound() result: " << result;
+    VLOG(2) << "lowerBound() result: " << result;
     return result;
 }
 
@@ -2305,11 +2306,11 @@ const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
             for (shared_ptr<OutputTrace> outputTrace : producedOutputs)
             {
                 TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1", VLOG_IS_ON(2));
-                VLOG(1) << "outputTrace: " << *outputTrace;
                 if (discardInputTrace)
                 {
                     break;
                 }
+                VLOG(1) << "outputTrace: " << *outputTrace;
                 IOTrace currentTrace(*inputTrace, *outputTrace);
                 VLOG(1) << "currentTrace (x_1/y_1): " << currentTrace;
                 bool maxPrefixFound = false;
@@ -2424,7 +2425,12 @@ const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
                                 else
                                 {
                                     discardSet = true;
-                                    VLOG(1) << "Does not r-distinguis all states.";
+                                    VLOG(1) << "rDistStates:";
+                                    for (auto r : rDistStates)
+                                    {
+                                        VLOG(1) << "  " << r->getName();
+                                    }
+                                    VLOG(1) << "Does not r-distinguish all states.";
                                     break;
                                 }
                             }
