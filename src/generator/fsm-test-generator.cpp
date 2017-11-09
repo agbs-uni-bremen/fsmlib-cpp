@@ -398,13 +398,11 @@ struct TCTraceHash
 {
     size_t operator() (const vector<int> & itrc) const
     {
-        string trace_string = "";
-        for (int i : itrc)
-        {
-            trace_string += to_string(i);
+        std::size_t seed = itrc.size();
+        for(auto& i : itrc) {
+            seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
         }
-
-        return trace_string.size() ? stoi(trace_string) : 0 ;
+        return seed;
     }
 };
 
@@ -711,7 +709,7 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
             shared_ptr<Tree> betaTree = iTreeSH->getSubTree(make_shared<InputTrace>(beta->get(),pl));
             shared_ptr<Tree> prefixRelationTree = getPrefixRelationTreeWithoutTrace(alphaTree, betaTree, gamma);
 
-            InputTrace newGamma = dfsmRefMin.calcDistinguishingTraceInTree(alpha, beta, prefixRelationTree);
+            InputTrace newGamma = dfsmRefMin.calcDistinguishingTrace(alpha, beta, prefixRelationTree);
             if (newGamma.size() > 0)
             {
                 // store newGamma for this pair
