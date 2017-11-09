@@ -2438,6 +2438,10 @@ const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
                                         VLOG(1) << "  " << r->getName();
                                     }
                                     VLOG(1) << "Does not r-distinguish all states.";
+                                    if (isLastSet)
+                                    {
+                                        discardInputTrace = true;
+                                    }
                                     break;
                                 }
                             }
@@ -2504,16 +2508,8 @@ const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
             {
                 TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-expansion", VLOG_IS_ON(2));
 
-                shared_ptr<InputTrace> concat;
-                if (inputTrace->isEmptyTrace())
-                {
-                    concat  = make_shared<InputTrace>(x, inputTrace->getPresentationLayer());
-                }
-                else
-                {
-                    concat  = make_shared<InputTrace>(*inputTrace);
-                    concat->add(x);
-                }
+                shared_ptr<InputTrace> concat = make_shared<InputTrace>(*inputTrace);
+                concat->add(x);
                 if (!InputTrace::contains(t, *concat) && !InputTrace::contains(expandedTC, *concat))
                 {
                     expandedTC.push_back(concat);
