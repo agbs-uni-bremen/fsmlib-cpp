@@ -3376,6 +3376,8 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
         LOG(DEBUG) << "createMutant seed: " << seed;
     }
 
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>(*presentationLayer);
+
     vector<shared_ptr<FsmTransition>> cantTouchThis;
     vector<shared_ptr<FsmTransition>> transitions;
     vector<int> srcNodeIds;
@@ -3385,7 +3387,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
     // Create new nodes for the mutant.
     vector<shared_ptr<FsmNode> > lst;
     for ( int n = 0; n <= maxState; n++ ) {
-        lst.push_back(make_shared<FsmNode>(n,fsmName,presentationLayer));
+        lst.push_back(make_shared<FsmNode>(n,fsmName,pl));
     }
     
     // Now add transitions that correspond exactly to the transitions in
@@ -3542,10 +3544,8 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                 if ( newOutValOk ) {
 
                     auto newLbl = make_shared<FsmLabel>(tr->getLabel()->getInput(),
-
                                                         newOutVal,
-                                                        presentationLayer);
-
+                                                        pl);
                     LOG(INFO) << "Adding output fault:";
                     LOG(INFO) << "  Old transition: " << tr->str();
                     tr->setLabel(newLbl);
@@ -3563,7 +3563,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
         LOG(FATAL) << "Could not create all requested output faults.";
     }
     
-    shared_ptr<Fsm> result = make_shared<Fsm>(fsmName,maxInput,maxOutput,lst,presentationLayer);
+    shared_ptr<Fsm> result = make_shared<Fsm>(fsmName,maxInput,maxOutput,lst,pl);
     result->failOutput = failOutput;
     return result;
     
