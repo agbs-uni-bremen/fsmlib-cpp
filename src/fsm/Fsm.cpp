@@ -1770,11 +1770,11 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const IOT
     return getPossibleIOTraces(successorNode, adaptiveTestCases);
 }
 
-IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const vector<shared_ptr<InputTrace>>& inputTraces) const
+vector<IOTraceContainer> Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const vector<shared_ptr<InputTrace>>& inputTraces) const
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(6));
     VLOG(6) << "bOmega() - adaptiveTestCases.size: " << adaptiveTestCases.size() << ", inputTraces.size(): " << inputTraces.size();
-    IOTraceContainer result = IOTraceContainer();
+    vector<IOTraceContainer> result;
     shared_ptr<FsmNode> initialState = getInitialState();
     if (!initialState)
     {
@@ -1789,7 +1789,7 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const vec
             IOTrace iOTrace = IOTrace(*inputTrace, *outputTrace);
             IOTraceContainer produced = bOmega(adaptiveTestCases, iOTrace);
             VLOG(2) << "produced bOmega with " << iOTrace << ": " << produced;
-            result.addUnique(produced);
+            IOTraceContainer::addUnique(result, produced);
         }
     }
     return result;
@@ -1989,8 +1989,12 @@ size_t Fsm::lowerBound(const IOTrace& base,
     size_t result = 0;
     VLOG(2) << "lb result: " << result;
 
-    IOTraceContainer testTraces = iut.bOmega(adaptiveTestCases, takenInputs);
-    VLOG(2) << "bOmega testTraces: " << testTraces;
+    vector<IOTraceContainer> testTraces = iut.bOmega(adaptiveTestCases, takenInputs);
+    VLOG(2) << "bOmega testTraces:";
+    for (const auto& cont : testTraces)
+    {
+        VLOG(2) << "  " << cont;
+    }
 
     for (shared_ptr<FsmNode> state : states)
     {
@@ -2010,8 +2014,14 @@ size_t Fsm::lowerBound(const IOTrace& base,
         {
             IOTraceContainer traces = iut.bOmega(adaptiveTestCases, trace);
             VLOG(2) << "Removing " << traces << " from testTraces.";
-            testTraces.remove(traces);
-            VLOG(2) << "testTraces: " << testTraces;
+
+            IOTraceContainer::remove(testTraces, traces);
+
+            VLOG(2) << "testTraces:";
+            for (const auto& cont : testTraces)
+            {
+                VLOG(2) << "  " << cont;
+            }
         }
     }
     result += testTraces.size();

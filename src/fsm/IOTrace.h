@@ -124,6 +124,10 @@ public:
 	*/
 	friend std::ostream & operator<<(std::ostream & out, const IOTrace & trace);
     friend bool operator==(IOTrace const & iOTrace1, IOTrace const & iOTrace2);
+    friend bool operator!=(IOTrace const & iOTrace1, IOTrace const & iOTrace2)
+    {
+        return !(iOTrace1 == iOTrace2);
+    }
     IOTrace& operator= (IOTrace&& other);
     std::string toRttString() const;
 };

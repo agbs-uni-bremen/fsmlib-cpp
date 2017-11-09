@@ -202,6 +202,33 @@ vector<OutputTrace> IOTraceContainer::getOutputTraces() const
     return result;
 }
 
+void IOTraceContainer::addUnique(std::vector<IOTraceContainer>& container, const IOTraceContainer& elem)
+{
+    for (const IOTraceContainer& cont : container)
+    {
+        if (cont == elem)
+        {
+            return;
+        }
+    }
+    container.push_back(elem);
+}
+
+void IOTraceContainer::remove(std::vector<IOTraceContainer>& container, const IOTraceContainer& elem)
+{
+    for (auto it = container.begin(); it != container.end();)
+    {
+        if (*it == elem)
+        {
+            it = container.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
+
 std::ostream & operator<<(std::ostream & out, const IOTraceContainer & iot)
 {
     out << "{\n";
@@ -219,4 +246,21 @@ std::ostream & operator<<(std::ostream & out, const IOTraceContainer & iot)
     }
     out << "\n}";
     return out;
+}
+
+bool operator==(IOTraceContainer const & cont1, IOTraceContainer const & cont2)
+{
+    if (cont1.size() != cont2.size())
+    {
+        return false;
+    }
+    for (size_t i = 0; i < cont1.size(); ++i)
+    {
+        shared_ptr<vector<IOTrace>> list = cont2.getList();
+        if (find(list->begin(), list->end(), cont1.getList()->at(i)) == list->end())
+        {
+            return false;
+        }
+    }
+    return true;
 }

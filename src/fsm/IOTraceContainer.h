@@ -143,12 +143,29 @@ public:
     bool isEmpty() const {return size() == 0; }
 
     /**
+     * Removes all occurrences of the given `elem` in the given `container`.
+     * @param container The given container, holding IOTraceContainers.
+     * @param elem The given `IOTraceContainer` to be removed.
+     */
+    static void remove(std::vector<IOTraceContainer>& container, const IOTraceContainer& elem);
+
+    /**
+     * Adds the given `elem` to the given `container`, if the `container` does not hold any
+     * other element equal to `elem`.
+     * @param container The given  container.
+     * @param elem The given element.
+     */
+    static void addUnique(std::vector<IOTraceContainer>& container, const IOTraceContainer& elem);
+
+    /**
      * Output the IOTraceContainer to a standard output stream
      * @param out The standard output stream to use
      * @param ot The IOTraceContainer to print
      * @return The standard output stream used, to allow user to cascade <<
      */
     friend std::ostream & operator<<(std::ostream & out, const IOTraceContainer & iot);
+
+    friend bool operator==(IOTraceContainer const & cont1, IOTraceContainer const & cont2);
 };
 
 #endif // IOTRACECONTAINER_H

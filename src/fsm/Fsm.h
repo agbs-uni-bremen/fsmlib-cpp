@@ -533,7 +533,7 @@ public:
      * @param inputTraces The given input traces
      * @return A set of all input/output traces that can be produced
      */
-    IOTraceContainer bOmega(const IOTreeContainer& adaptiveTestCases, const std::vector<std::shared_ptr<InputTrace>>& inputTraces) const;
+    std::vector<IOTraceContainer> bOmega(const IOTreeContainer& adaptiveTestCases, const std::vector<std::shared_ptr<InputTrace>>& inputTraces) const;
 
     /**
      * Calculates all possible output traces for the deterministic state cover of the
