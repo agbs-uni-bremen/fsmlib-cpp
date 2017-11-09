@@ -3269,7 +3269,6 @@ shared_ptr<Fsm> Fsm::createProductMachine(Fsm reference, Fsm iut, const std::str
     const int failOutput = pl->addOut2String(FsmPresentationLayer::FAIL_OUTPUT);
     size_t maxInput = static_cast<size_t>(max(reference.maxInput, iut.maxInput));
     size_t maxOutput = static_cast<size_t>(max(reference.maxOutput, iut.maxOutput)) + 1;
-    vector<string> state2String;
     vector<shared_ptr<FsmNode>> nodes;
     map<shared_ptr<FsmNode>, pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> productNodesToOriginalNodes;
     map<pair<int, int>, shared_ptr<FsmNode>> originalNodeIdsToProductNode;
@@ -3283,13 +3282,15 @@ shared_ptr<Fsm> Fsm::createProductMachine(Fsm reference, Fsm iut, const std::str
             originalNodeIdsToProductNode.insert(make_pair(make_pair(nodeA->getId(), nodeB->getId()), productNode));
             string nodeName = "(" + nodeA->getName() + "," + nodeB->getName() + ")";
             VLOG(1) << "Creating product node: " << nodeName << "(" << productNode->getId() << ")";
-            state2String.push_back(nodeName);
+            pl->addState2String(nodeName);
             nodes.push_back(productNode);
             productNodeId++;
         }
     }
+    pl->addState2String(FsmPresentationLayer::FAIL_STATE_NAME);
 
     shared_ptr<FsmNode> failState = make_shared<FsmNode>(productNodeId, fsmName, pl);
+    VLOG(1) << "Creating fail node: " << failState->getName() << "(" << failState->getId() << ")";
 
     for (size_t x = 0; x <= maxInput; ++x)
     {
@@ -3343,7 +3344,6 @@ shared_ptr<Fsm> Fsm::createProductMachine(Fsm reference, Fsm iut, const std::str
                                     productLabel);
                         productNode->addTransition(productTransition);
                         VLOG(1) << "Creating normal product transition: " << productTransition->str();
-                        //shared_ptr<FsmNode> originInProduct =
                     }
                 }
             }
@@ -3353,10 +3353,7 @@ shared_ptr<Fsm> Fsm::createProductMachine(Fsm reference, Fsm iut, const std::str
     int initStateIdx = originalNodeIdsToProductNode.at(
                 make_pair(reference.getInitialState()->getId(),iut.getInitialState()->getId()))->getId();
 
-    state2String.push_back(FsmPresentationLayer::FAIL_STATE_NAME);
     nodes.push_back(failState);
-    pl->setState2String(state2String);
-    VLOG(1) << "Creating fail node: " << failState->getName() << "(" << failState->getId() << ")";
     shared_ptr<Fsm> result = make_shared<Fsm>(fsmName, maxInput, maxOutput, nodes, initStateIdx, pl);
     result->failOutput = failOutput;
     return result;
