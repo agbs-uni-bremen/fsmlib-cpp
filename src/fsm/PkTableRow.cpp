@@ -27,7 +27,7 @@ int PkTableRow::get(const int x) const
 	return i2p.at(x);
 }
 
-bool PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c)
+bool PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c) const
 {
     for (unsigned int i = 0; i < i2p.size(); ++i)
     {

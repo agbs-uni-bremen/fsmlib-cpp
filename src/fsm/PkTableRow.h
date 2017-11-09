@@ -43,7 +43,7 @@ public:
      * the I2P-part of another row, modulo equivalence of states
      * as defined according to the current s2c-map
      */
-    bool isEquivalent(const PkTableRow &row, const S2CMap &s2c);
+    bool isEquivalent(const PkTableRow &row, const S2CMap &s2c) const;
     
     /**
      * Output the PkTableRow to a standard output stream, using 

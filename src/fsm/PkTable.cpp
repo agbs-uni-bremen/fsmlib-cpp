@@ -135,7 +135,7 @@ shared_ptr<PkTable> PkTable::getPkPlusOneTable() const
             for (unsigned int j = i + 1; j < rows.size(); ++j)
             {
                 if ( s2c.at(j) == thisClass and
-                    pkp1->getClass(i) < 0 and
+                    pkp1->getClass(j) < 0 and
                     newClassRefRow->isEquivalent(*rows.at(j), s2c) )
                 {
                     pkp1->setClass(j, thisNewClassId);
