@@ -3474,7 +3474,6 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
     }
     
     // Now add output faults to the new machine
-    //for (size_t of = 0; of < numOutputFaults; of++ ) {
     size_t createdOutputFaults = 0;
 
     addedFault = true;
@@ -3517,7 +3516,11 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
 
                     newOutValOk = true;
 
-                    if (lst[srcNodeId]->getTransitions().size() == 1)
+                    if (newOutVal == theInput)
+                    {
+                        newOutValOk = false;
+                    }
+                    else if (lst[srcNodeId]->getTransitions().size() == 1)
                     {
                         newOutValOk = false;
                     }
