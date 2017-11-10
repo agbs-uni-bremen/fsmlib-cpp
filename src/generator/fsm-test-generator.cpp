@@ -691,8 +691,9 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
     *  By adding a.g' and b.g' some existend test cases can be lengthened
     *  but no new test cases are added
     */
-    for (vector<int> testCase : testCases)
+    for (vector<int> testCase : tests)
     {
+
         bool betterGammaForAllPairs = true;
         Traces2GammaMap pair2NewGamma;
 
@@ -709,7 +710,14 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
             shared_ptr<Tree> betaTree = iTreeSH->getSubTree(make_shared<InputTrace>(beta->get(),pl));
             shared_ptr<Tree> prefixRelationTree = getPrefixRelationTreeWithoutTrace(alphaTree, betaTree, gamma);
 
-            InputTrace newGamma = dfsmRefMin.calcDistinguishingTrace(alpha, beta, prefixRelationTree);
+            if (prefixRelationTree->size() == 1)
+            {
+                // no chance to find a better gamma
+                betterGammaForAllPairs = false;
+                break;
+            }
+
+            InputTrace newGamma = dfsmRefMin.calcDistinguishingTraceInTree(alpha, beta, prefixRelationTree);
             if (newGamma.size() > 0)
             {
                 // store newGamma for this pair
@@ -720,23 +728,21 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
                 break;
             }
         }
-
         // if for this test case all trace pairs can have better gammas
         if (betterGammaForAllPairs)
         {
             // delete this test case
             shared_ptr<InputTrace> iTestCase = make_shared<InputTrace>(testCase, pl);
             shared_ptr<TreeNode> afterTC = iTreeSH->getRoot()->after(iTestCase->cbegin(), iTestCase->cend());
-            afterTC->deleteNode();
+            afterTC->deleteSingleNode();
 
-            // apply new gammas
+            // append new gammas to all TracePairs (a,b)
             auto range = tc2traces.equal_range(testCase);
             for (auto it = range.first; it != range.second; ++it)
             {
                 TracePair tracePair = it->second;
 
-                TracePair pair1 (tracePair.first, tracePair.second);
-                auto g = pair2NewGamma[pair1];
+                auto g = pair2NewGamma[tracePair];
 
                 auto iAlphaGamma = make_shared<InputTrace>(tracePair.first, pl);
                 iAlphaGamma->append(g);
@@ -747,7 +753,16 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
                 TC2Trace tc2trace2(iBetaGamma->get(), tracePair);
                 tc2traces.insert(tc2trace2);
                 tc2traces.insert(tc2trace1);
+
+                tracePair2gamma.erase(tracePair);
+                TracePair2Trace tracePair2NewGamma1(tracePair, g);
+                tracePair2gamma.insert(tracePair2NewGamma1);
+
+                iTreeSH->addToRoot(iAlphaGamma->get());
+                iTreeSH->addToRoot(iBetaGamma->get());
+
             }
+            tc2traces.erase(testCase);
         }
     }
 
@@ -1001,6 +1016,7 @@ static void generateTestSuite() {
     }
     
     cout << "Number of test cases: " << testSuite->size() << endl;
+    cout << "        total length: " << testSuite->totalLength() << endl;
     
 }
 
