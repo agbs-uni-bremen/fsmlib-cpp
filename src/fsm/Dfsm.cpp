@@ -1017,7 +1017,6 @@ void Dfsm::calcPkTables() {
     
 #if 0
     cout << "MINIMISE" << endl;
-    cout << *p1 << endl;
     for (auto p : pktblLst) {
         
         cout << *p << endl;
