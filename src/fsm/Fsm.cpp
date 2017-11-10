@@ -2087,7 +2087,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
         VLOG(1) << *t;
     }
 
-const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
+    const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
     VLOG(1) << "vPrime:";
     for (auto v : vPrime)
     {
@@ -2320,16 +2320,20 @@ const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
                 IOTrace currentTrace(*inputTrace, *outputTrace);
                 VLOG(1) << "currentTrace (x_1/y_1): " << currentTrace;
                 bool maxPrefixFound = false;
-                bool exceededLowerBound = false;
+                bool discardVDoublePrime = false;
+                bool inputTraceMeetsCriteria = false;
+                bool outputTraceMeetsCriteria = false;
                 for (const IOTraceContainer& vDoublePrime : vPrime)
                 {
                     TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-1", VLOG_IS_ON(3));
-                    if (discardInputTrace || exceededLowerBound)
+                    if (discardInputTrace || outputTraceMeetsCriteria || inputTraceMeetsCriteria)
                     {
                         break;
                     }
                     VLOG(1) << "vDoublePrime: " << vDoublePrime;
                     maxPrefixFound = false;
+                    discardVDoublePrime = false;
+                    bool isLastVDoublePrime = vDoublePrime == vPrime.back();
                     IOTrace* maxPrefix = nullptr;
                     for (IOTrace& iOTrace : *vDoublePrime.getList())
                     {
@@ -2352,12 +2356,11 @@ const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
                     bool discardSet;
                     for (const vector<shared_ptr<FsmNode>>& rDistStates : maximalSetsOfRDistinguishableStates)
                     {
-                        if (discardInputTrace || exceededLowerBound)
+                        if (discardVDoublePrime || outputTraceMeetsCriteria || inputTraceMeetsCriteria)
                         {
                             break;
                         }
                         discardSet = false;
-                        exceededLowerBound = false;
                         bool isLastSet = rDistStates == maximalSetsOfRDistinguishableStates.back();
                         VLOG(1) << "rDistStates:";
                         for (auto r : rDistStates)
@@ -2365,13 +2368,10 @@ const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
                             VLOG(1) << "  " << r->getName();
                         }
                         TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3", VLOG_IS_ON(4));
+                        bool isLastLowerBoundCheck = false;
                         for (size_t i = 0; i < rDistStates.size() - 1; ++i)
                         {
                             TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3-1", VLOG_IS_ON(5));
-                            if (discardSet)
-                            {
-                                break;
-                            }
                             shared_ptr<FsmNode> s1 = rDistStates.at(i);
                             VLOG(1) << "############################################################";
                             VLOG(1) << "s1:" << s1->getName();
@@ -2379,6 +2379,7 @@ const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
                             {
                                 TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3-1-1", VLOG_IS_ON(6));
                                 shared_ptr<FsmNode> s2 = rDistStates.at(j);
+                                isLastLowerBoundCheck = (i == rDistStates.size() - 2) && (j == rDistStates.size() - 1);
                                 VLOG(1) << "----------------------------------------------------------";
                                 VLOG(1) << "s2:" << s2->getName();
                                 if (s1 == s2)
@@ -2440,25 +2441,50 @@ const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
                                     VLOG(1) << "Does not r-distinguish all states.";
                                     if (isLastSet)
                                     {
-                                        discardInputTrace = true;
+                                        VLOG(1) << "isLastSet, discarding vDoublePrime: " << vDoublePrime;
+                                        discardVDoublePrime = true;
                                     }
                                     break;
                                 }
                             }
+                            if (discardSet)
+                            {
+                                break;
+                            }
+                        }
+                        if (discardVDoublePrime)
+                        {
+                            if (isLastVDoublePrime)
+                            {
+                                VLOG(1) << "isLastVDoublePrime, discarding input trace: " << inputTrace;
+                                discardInputTrace = true;
+                            }
+                            break;
                         }
                         if (!discardSet)
                         {
                             if (Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut) > m)
                             {
-                                exceededLowerBound = true;
                                 VLOG(1) << "Exceeded lower bound.";
+                                outputTraceMeetsCriteria = true;
+                                if (isLastLowerBoundCheck)
+                                {
+                                    VLOG(1) << "Input trace " << inputTrace << " meets all criteria.";
+                                    inputTraceMeetsCriteria = true;
+                                }
                             }
                             else
                             {
+                                VLOG(1) << "Lower bound not exceeded.";
                                 if (isLastSet)
                                 {
-                                    discardInputTrace = true;
-                                    VLOG(1) << "Going to skip input trace " << *inputTrace << " and keep it in T_C.";
+                                    discardVDoublePrime = true;
+                                    VLOG(1) << "isLastSet. Discarding vDoublePrime: " << vDoublePrime ;
+                                    if (isLastVDoublePrime)
+                                    {
+                                        VLOG(1) << "isLastVDoublePrime, discarding input trace: " << inputTrace;
+                                        discardInputTrace = true;
+                                    }
                                     break;
                                 }
                                 VLOG(1) << "Going to skip rDistStates:";
@@ -2474,6 +2500,7 @@ const vector<IOTraceContainer> vPrime = iut.getVPrime(detStateCover);
                 if (!maxPrefixFound)
                 {
                     discardInputTrace = true;
+                    VLOG(1) << "No max prefix found, discarding input trace: " << inputTrace;
                 }
             }
 
