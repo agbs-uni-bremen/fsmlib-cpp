@@ -5,7 +5,6 @@
  */
 
 #include <chrono>
-#include <deque>
 
 #include "fsm/Dfsm.h"
 #include "fsm/Fsm.h"
@@ -24,18 +23,18 @@
 using namespace std;
 using namespace std::chrono;
 
-shared_ptr<FsmNode> Fsm::newNode(const int id, const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> p)
+shared_ptr<FsmNode> Fsm::newNode(const int id, const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> p,
+                                 shared_ptr<FsmPresentationLayer> pl)
 {
-    string nodeName = string("(" + p->first->getName() + to_string(p->first->getId()) + ","
-                             + p->second->getName() + to_string(p->second->getId()) + ")");
-    shared_ptr<FsmNode> n = make_shared<FsmNode>(id, nodeName, presentationLayer);
+    shared_ptr<FsmNode> n = make_shared<FsmNode>(id, pl->getStateId(id,""), pl);
     n->setPair(p);
     return n;
 }
 
-bool Fsm::contains(const vector<shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>>& lst, const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> p)
+bool Fsm::contains(const deque<shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>>& lst,
+                   const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> p)
 {
-    for (shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> pLst : lst)
+    for (auto pLst : lst)
     {
         if (*pLst == *p)
         {
@@ -57,7 +56,8 @@ bool Fsm::contains(const vector<shared_ptr<FsmNode>>& lst, const shared_ptr<FsmN
     return false;
 }
 
-shared_ptr<FsmNode> Fsm::findp(const vector<shared_ptr<FsmNode>>& lst, const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> p)
+shared_ptr<FsmNode> Fsm::findp(const vector<shared_ptr<FsmNode>>& lst,
+                               const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> p)
 {
     for (shared_ptr<FsmNode> nLst : lst)
     {
@@ -436,87 +436,125 @@ void Fsm::toDot(const string & fname)
 
 Fsm Fsm::intersect(const Fsm & f)
 {
-    /*A list of node pairs which is used to control the breath-first search (BFS)*/
-    vector<shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>> nodeList;
+    // A list of node pairs which is used to
+    // control the breath-first search (BFS)
+    deque<shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>> nodeList;
     
-    /*A list of new FSM states, each state created from a pair of this-nodes
-     and f-nodes. At the end of this operation, the new FSM will be created from this list*/
+    // A list of new FSM states, each state created from a pair of
+    // this-nodes and f-nodes. At the end of this operation,
+    // the new FSM will be created from this list.
     vector<shared_ptr<FsmNode>> fsmInterNodes;
     int id = 0;
     
-    /*Initially, add the pair of initial this-node and f-node into the BFS list*/
+    // Initially, add the pair of initial this-node and f-node
+    // into the BFS list.
     nodeList.push_back(make_shared<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>(getInitialState(), f.getInitialState()));
     
-    /*This is the BFS loop, running over the (this,f)-node pairs*/
+    // We need a new presentation layer. It has the same inputs and
+    // outputs as this Fsm, but the state names will be pairs of
+    // state names from this FSM and f
+    vector<std::string> stateNames;
+    shared_ptr<FsmPresentationLayer> newPl =
+    make_shared<FsmPresentationLayer>(presentationLayer->getIn2String(),
+                                      presentationLayer->getOut2String(),
+                                      stateNames);
+    
+    // This is the BFS loop, running over the (this,f)-node pairs
     while (!nodeList.empty())
     {
-        /*Remove the head of the list and use p to refer to it
-         p refers to the SOURCE node pair, from where all outgoing transitions
-         are investigated in this loop cycle*/
-        shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> p = nodeList.front();
-        nodeList.erase(nodeList.begin());
+        // Remove the head of the list and use p to refer to it
+        // p refers to the SOURCE node pair, from where all
+        // outgoing transitions are investigated in this loop cycle
+        shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>
+            p = nodeList.front();
+        nodeList.pop_front();
         
-        /*current node of this FSM*/
+        // current node of this FSM
         shared_ptr<FsmNode> myCurrentNode = p->first;
         
-        /*current node of the f-FSM*/
+        // current node of the f-FSM
         shared_ptr<FsmNode> theirCurrentNode = p->second;
         
-        /*Do we already have an FSM state for the new FSM
-         stored in fsmInterNodes, which is associated with the current pair p?*/
+        // Do we already have an FSM state for the new FSM
+        // stored in fsmInterNodes, which is associated
+        // with the current pair p?
         shared_ptr<FsmNode> nSource = findp(fsmInterNodes, p);
         
         if (nSource == nullptr)
         {
-            /*We create the new FSM state associated with p:
-             nSource is created from the state pair (myCurrentNode,theirCurrentNode)
-             which is identified by p.*/
-            nSource = newNode(id ++, p);
+            
+            // Set the node name as pair of the individual node names
+            string newNodeName("(" + myCurrentNode->getName() + "," +
+                               theirCurrentNode->getName() + ")");
+            
+            // Register node name in new presentation layer
+            newPl->addState2String(newNodeName);
+            
+            // We create the new FSM state associated with p:
+            // nSource is created from the state
+            // pair(myCurrentNode,theirCurrentNode)
+            // which is identified by p.
+            nSource = newNode(id++, p, newPl);
             fsmInterNodes.push_back(nSource);
+            
         }
         
-        /*Mark this node: now all of its outgoing transitions are constructed*/
+        // Mark this node: now all of its outgoing transitions are constructed
         nSource->setVisited();
         
-        /*Loop over all transitions emanating from myCurrentNode*/
+        // Loop over all transitions emanating from myCurrentNode
         for (auto tr : myCurrentNode->getTransitions())
         {
-            /*Loop over all transitions emanating from theirCurrentNode*/
+            // Loop over all transitions emanating from theirCurrentNode
             for (auto trOther : theirCurrentNode->getTransitions())
             {
-                /*If tr and trOther have identical labels, we can create a transition
-                 for the new FSM to be created. The transition has source node
-                 (myCurrentNode,theirCurrentNode), label tr.getLabel() which is the same as
-                 the label associated with the other transition, and target node
-                 (tr.getTarget(),trOther.getTarget()), which is the pair of the target nodes
-                 of each transition.*/
+                /* If tr and trOther have identical labels, we can create a
+                   transition for the new FSM to be created.
+                   The transition has source node (myCurrentNode,theirCurrentNode)
+                   and label tr.getLabel(), which is the same as
+                   the label associated with the other transition,
+                   and target node (tr.getTarget(),trOther.getTarget()),
+                   which is the pair of the target nodes
+                   of each transition.*/
                 
                 if (*tr->getLabel() == *trOther->getLabel())
                 {
                     
-                    /*New target node represented as a pair (this-node,f-node)*/
+                    // New target node represented as a pair (this-node,f-node)
                     auto pTarget = make_shared<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>(tr->getTarget(), trOther->getTarget());
                     
-                    /*If the target node does not yet exist in the list of state for the new FSM,
-                     then create it now*/
+                    // If the target node does not yet exist in the list
+                    // of state for the new FSM, then create it now
                     shared_ptr<FsmNode> nTarget = findp(fsmInterNodes, pTarget);
                     if (nTarget == nullptr)
                     {
-                        nTarget = newNode(id ++, pTarget);
+                        // Set the node name as pair of the individual node names
+                        string newNodeName("(" + tr->getTarget()->getName() +
+                                           "," +
+                                           trOther->getTarget()->getName() + ")");
+                        
+                        // Register node name in new presentation layer
+                        newPl->addState2String(newNodeName);
+                        
+                        nTarget = newNode(id++, pTarget, newPl);
                         fsmInterNodes.push_back(nTarget);
                     }
                     
-                    /*Add transition from nSource to nTarget*/
+                    // Add transition from nSource to nTarget
                     auto newTr = make_shared<FsmTransition>(nSource,
                                                             nTarget,
                                                             tr->getLabel());
                     nSource->addTransition(newTr);
                     
-                    /*Conditions for insertion of the target pair into the nodeList:
-                     1. the target node corresponding to the pair has not yet been processed
-                     (that is,  nTarget.hasBeenVisited() == false)
-                     2. The target pair is not already entered into the nodeList*/
-                    if (!(nTarget->hasBeenVisited() || contains(nodeList, pTarget)))
+                    /* Conditions for insertion of the target pair
+                       into the nodeList:
+                     1. the target node corresponding to the pair
+                        has not yet been processed
+                        (that is,  nTarget.hasBeenVisited() == false)
+                     2. The target pair is not already entered into the nodeList
+                     */
+                    if (not (nTarget->hasBeenVisited() or
+                             contains(nodeList, pTarget)))
                     {
                         nodeList.push_back(pTarget);
                     }
@@ -525,7 +563,9 @@ Fsm Fsm::intersect(const Fsm & f)
         }
     }
     
-    return Fsm(f.getName(), maxInput, maxOutput, fsmInterNodes, presentationLayer);
+    newPl->dumpState(cout);
+    
+    return Fsm(f.getName(), maxInput, maxOutput, fsmInterNodes, newPl);
 }
 
 shared_ptr<Tree> Fsm::getStateCover()
