@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iomanip>
 #include <memory>
+#include <random>
 #include <stdlib.h>
 #include <interface/FsmPresentationLayer.h>
 #include <fsm/Dfsm.h>
@@ -720,8 +721,43 @@ void wVersusT() {
     
 }
 
-bool executeAdaptiveTest(const shared_ptr<Fsm>& spec, const shared_ptr<Fsm>& iut)
+//bool executeAdaptiveTest(const shared_ptr<Fsm>& spec, const shared_ptr<Fsm>& iut, bool& isReduction)
+bool executeAdaptiveTest(
+        const string prefix,
+        const int numStates,
+        const int numInput,
+        const int numOutput,
+        const size_t numOutFaults,
+        const size_t numTransFaults,
+        const unsigned int createRandomFsmSeed,
+        const unsigned int createMutantSeed,
+        const shared_ptr<FsmPresentationLayer>& pl,
+        bool& isReduction)
 {
+
+    shared_ptr<FsmPresentationLayer> plCopy = make_shared<FsmPresentationLayer>(*pl);
+
+    CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
+    CLOG(INFO, logging::globalLogger) << "numInput: " << numInput + 1;
+    CLOG(INFO, logging::globalLogger) << "numOutput: " << numOutput + 1;
+    CLOG(INFO, logging::globalLogger) << "numOutFaults: " << numOutFaults;
+    CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
+    CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed: " << createRandomFsmSeed;
+    CLOG(INFO, logging::globalLogger) << "createMutantSeed: " << createMutantSeed;
+
+    CLOG(INFO, logging::globalLogger) << "Creating FSM.";
+    shared_ptr<Fsm> spec = Fsm::createRandomFsm(prefix,
+                                                numInput,
+                                                numOutput,
+                                                numStates,
+                                                plCopy,
+                                                true,
+                                                createRandomFsmSeed);
+    CLOG(INFO, logging::globalLogger) << "Creating mutant.";
+    shared_ptr<Fsm> iut = spec->createMutant("mutant" + prefix,
+                                             numOutFaults,
+                                             numTransFaults,
+                                             createMutantSeed);
 
     Fsm specMin = spec->minimise();
     Fsm iutMin = iut->minimise();
@@ -742,73 +778,205 @@ bool executeAdaptiveTest(const shared_ptr<Fsm>& spec, const shared_ptr<Fsm>& iut
     //productMinComplete.toDot(dotPrefix + "productMinComplete");
 #endif
 
-    bool isReduction = !productMin.hasFailState();
+    isReduction = !productMin.hasFailState();
 
     IOTraceContainer observedTraces;
     return isReduction == Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes() + 1), observedTraces);
 }
 
-void adaptiveTest01()
+unsigned int getRandomSeed()
+{
+    std::random_device rd;
+    return rd();
+}
+
+int getRandom(const int min, const int max, std::mt19937& gen)
+{
+    std::uniform_int_distribution<int> dis(min, max);
+    return dis(gen);
+}
+
+int getRandom(const int max, std::mt19937& gen)
+{
+    return getRandom(0, max, gen);
+}
+
+int getRandom(std::mt19937& gen)
+{
+    std::uniform_int_distribution<int> dis;
+    return dis(gen);
+}
+
+struct AdaptiveTestConfigDebug
+{
+    string prefix = "DEBUG";
+    int numStates;
+    int numInput;
+    int numOutput;
+    size_t numOutFaults;
+    size_t numTransFaults;
+    unsigned int createRandomFsmSeed;
+    unsigned int createMutantSeed;
+};
+
+struct AdaptiveTestConfig
+{
+
+    // Required
+    int numFsm = -1;
+    int maxInput = -1;
+    int maxOutput = -1;
+    int maxStates = -1;
+    int maxOutFaults = -1;
+    int maxTransFaults = -1;
+
+    // Optional
+    int minStates = 2;
+    int minInput = 2;
+    int minOutput = 2;
+    int minOutFaults = 1;
+    int minTransFaults = 1;
+    unsigned int seed = 0;
+};
+
+void adaptiveTest01(AdaptiveTestConfig& config)
 {
     CLOG(INFO, logging::globalLogger) << "############## Adaptive Test 01 ##############";
+
     shared_ptr<FsmPresentationLayer> plTest =
     make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
             + "../../../resources/adaptive-test-out.txt",
             + "../../../resources/adaptive-test-state.txt");
-    const size_t numFsm = 1000;
-    const int numberDigits = ((numFsm <= 1)? 1 : static_cast<int>(log10(numFsm)) + 1);
-    const int maxInput = 8;
-    const int maxOutput = 8;
-    const int maxStates = 8;
 
-    const int numOutputFaults = 2;
-    const int numTransitionFaults = 3;
-    const unsigned createRandomFsmSeed = 0;
-    const unsigned createMutantSeed = 0;
-//    const unsigned createRandomFsmSeed = 1424695103;
-//    const unsigned createMutantSeed = 1424843680;
-//    const unsigned createRandomFsmSeed = 2118190291;
-//    const unsigned createMutantSeed = 2118432094;
-    CLOG(INFO, logging::globalLogger) << "numFsm: " << numFsm;
-    CLOG(INFO, logging::globalLogger) << "maxInput: " << maxInput;
-    CLOG(INFO, logging::globalLogger) << "maxOutput: " << maxOutput;
-    CLOG(INFO, logging::globalLogger) << "maxStates: " << maxStates;
-    CLOG(INFO, logging::globalLogger) << "Testing!";
-    TIMED_FUNC(timerObj);
-
-    const int numTests = numFsm + 1;
-    int passed = 0;
-
-    for (size_t i = 0; i < numFsm; ++i)
+    if (config.numFsm < 0 ||
+            config.maxInput < 0 ||
+            config.maxOutput < 0 ||
+            config.maxStates < 0 ||
+            config.maxOutFaults < 0 ||
+            config.maxTransFaults < 0)
     {
-        stringstream ss;
-        ss << setw(numberDigits) << setfill('0') << i;
-        string iteration = ss.str();
-        logging::setLogfileSuffix(iteration);
-
-        TIMED_SCOPE(timerBlkObj, "heavy-iter");
-        CLOG(INFO, logging::globalLogger) << "------------------------------------------------------------------";
-        CLOG(INFO, logging::globalLogger) << "i: " << iteration;
-        CLOG(INFO, logging::globalLogger) << "Creating FSM.";
-        shared_ptr<Fsm> spec = Fsm::createRandomFsm(iteration, maxInput, maxOutput, maxStates, plTest, true, createRandomFsmSeed);
-        CLOG(INFO, logging::globalLogger) << "Creating mutant.";
-        shared_ptr<Fsm> iut = spec->createMutant("mutant" + iteration, numOutputFaults, numTransitionFaults, createMutantSeed);
-
-        bool result = executeAdaptiveTest(spec, iut);
-
-        if (result)
-        {
-            ++passed;
-        }
-
-        assertOnFail("TC-AT-01-" + iteration, result);
+        CLOG(FATAL, logging::globalLogger) << "Please provide all required parameters.";
     }
 
-    LOG(INFO) << "#################### SUMMARY ####################";
-    LOG(INFO) << "# Total tests: " << numTests;
-    LOG(INFO) << "# Passed     : " << passed;
-    LOG(INFO) << "# Failed     : " << numTests - passed;
-    LOG(INFO) << "#################################################";
+    config.maxInput--;
+    config.maxOutput--;
+    config.maxStates--;
+    config.minStates--;
+    config.minInput--;
+    config.minOutput--;
+
+    if (config.seed == 0) {
+        config.seed = getRandomSeed();
+    }
+
+    CLOG(INFO, logging::globalLogger) << "Seed: " << config.seed;
+
+    std::mt19937 gen(config.seed);
+
+
+    const int numberDigits = ((config.numFsm <= 1)? 1 : static_cast<int>(log10(config.numFsm)) + 1);
+
+
+    const int diffInput = config.maxInput - config.minInput + 1;
+    const int diffOutput = config.maxOutput - config.minOutput + 1;
+    const int diffStates = config.maxStates - config.minStates + 1;
+
+    if (diffInput <= 0 || diffOutput <= 0 || diffStates <= 0)
+    {
+        CLOG(FATAL, logging::globalLogger) << "Please check the test parameters.";
+    }
+
+    const int subLoopIterations = (config.numFsm < diffStates) ? 1 : 1 + ((config.numFsm - 1) / diffStates);
+
+    CLOG(INFO, logging::globalLogger) << "numFsm: " << config.numFsm;
+    CLOG(INFO, logging::globalLogger) << "maxInput: " << config.maxInput + 1;
+    CLOG(INFO, logging::globalLogger) << "maxOutput: " << config.maxOutput + 1;
+    CLOG(INFO, logging::globalLogger) << "maxStates: " << config.maxStates + 1;
+
+    CLOG(INFO, logging::globalLogger) << "maxOutFaults: " << config.maxOutFaults;
+    CLOG(INFO, logging::globalLogger) << "maxTransFaults: " << config.maxTransFaults;
+    CLOG(INFO, logging::globalLogger) << "minOutFaults: " << config.minOutFaults;
+    CLOG(INFO, logging::globalLogger) << "minTransFaults: " << config.minTransFaults;
+    CLOG(INFO, logging::globalLogger) << "minInput: " << config.minInput + 1;
+    CLOG(INFO, logging::globalLogger) << "minOutput: " << config.minOutput + 1;
+    CLOG(INFO, logging::globalLogger) << "minStates: " << config.minStates + 1;
+    CLOG(INFO, logging::globalLogger) << "seed: " << config.seed;
+
+    CLOG(INFO, logging::globalLogger) << "diffStates: " << diffStates;
+    CLOG(INFO, logging::globalLogger) << "subLoopIterations: " << subLoopIterations;
+
+    TIMED_FUNC(timerObj);
+
+    int executed = 0;
+    int passed = 0;
+    int i = 0;
+    for (int numStates = config.minStates; numStates <= config.maxStates; ++numStates)
+    {
+        for (int j = 0; j < subLoopIterations; ++j)
+        {
+
+            shared_ptr<FsmPresentationLayer> plCopy = make_shared<FsmPresentationLayer>(*plTest);
+
+            stringstream ss;
+            ss << setw(numberDigits) << setfill('0') << i;
+            string iteration = ss.str();
+            logging::setLogfileSuffix(iteration);
+
+            int numInput = getRandom(config.minInput, config.maxInput, gen);
+            int numOutput = getRandom(config.minOutput, config.maxOutput, gen);
+            size_t numOutFaults = static_cast<size_t>(getRandom(config.minOutFaults, config.maxOutFaults, gen));
+            size_t numTransFaults = static_cast<size_t>(getRandom(config.minTransFaults, config.maxTransFaults, gen));
+
+            const unsigned int createRandomFsmSeed = static_cast<unsigned int>(getRandom(gen));
+            const unsigned int createMutantSeed = static_cast<unsigned int>(getRandom(gen));
+
+            TIMED_SCOPE(timerBlkObj, "heavy-iter");
+            CLOG(INFO, logging::globalLogger) << "------------------------------------------------------------------";
+            CLOG(INFO, logging::globalLogger) << "i: " << iteration;
+
+            bool isReduction;
+            bool result;
+            try {
+                result = executeAdaptiveTest(
+                            iteration,
+                            numStates,
+                            numInput,
+                            numOutput,
+                            numOutFaults,
+                            numTransFaults,
+                            createRandomFsmSeed,
+                            createMutantSeed,
+                            plTest,
+                            isReduction);
+            } catch (exception& e) {
+                CLOG(WARNING, logging::globalLogger) << "Could not create mutant. Skipping this test";
+                ++i;
+                continue;
+            }
+
+
+
+            if (result)
+            {
+                ++passed;
+            }
+
+            string message = "IUT is " + string((isReduction) ? "" : "NOT ") + "a reduction of the specification.";
+            CLOG(INFO, logging::globalLogger) << message;
+            assertOnFail("TC-AT-01-" + iteration, result);
+
+            ++executed;
+            ++i;
+        }
+    }
+
+    CLOG(INFO, logging::globalLogger) << "";
+    CLOG(INFO, logging::globalLogger) << "#################### SUMMARY ####################";
+    CLOG(INFO, logging::globalLogger) << "# Total tests  : " << executed;
+    CLOG(INFO, logging::globalLogger) << "# Passed       : " << passed;
+    CLOG(INFO, logging::globalLogger) << "# Failed       : " << executed - passed;
+    CLOG(INFO, logging::globalLogger) << "# Not executed : " << i - executed;
+    CLOG(INFO, logging::globalLogger) << "#################################################";
 }
 
 std::string getcwd() {
@@ -831,10 +999,68 @@ int main(int argc, char* argv[])
     logging::initLogging();
 
     CLOG(INFO, logging::globalLogger) << "############## Starting Application ##############";
-    adaptiveTest01();
+
+    AdaptiveTestConfig config;
+    config.numFsm = 1000;
+
+    config.minInput = 1;
+    config.maxInput = 10;
+
+    config.minOutput = 1;
+    config.maxOutput = 10;
+
+    config.minStates = 1;
+    config.maxStates = 20;
+
+    config.minTransFaults = 0;
+    config.maxTransFaults = 0;
+
+    config.minOutFaults = 0;
+    config.maxOutFaults = 0;
+
+    //config.seed = 2333653510;
+
+
+    bool debug = true;
+    if (debug)
+    {
+        CLOG(INFO, logging::globalLogger) << "############## Debugging ##############";
+
+        AdaptiveTestConfigDebug debugConfig;
+        debugConfig.numStates = 2;
+        debugConfig.numInput = 5;
+        debugConfig.numOutput = 3;
+        debugConfig.numOutFaults = 0;
+        debugConfig.numTransFaults = 0;
+        debugConfig.createRandomFsmSeed = 849295220;
+        debugConfig.createMutantSeed = 325047556;
+
+        shared_ptr<FsmPresentationLayer> plTest =
+        make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
+                + "../../../resources/adaptive-test-out.txt",
+                + "../../../resources/adaptive-test-state.txt");
+        bool isReduction;
+        bool result = executeAdaptiveTest(
+                    debugConfig.prefix,
+                    debugConfig.numStates - 1,
+                    debugConfig.numInput - 1,
+                    debugConfig.numOutput - 1,
+                    debugConfig.numOutFaults,
+                    debugConfig.numTransFaults,
+                    debugConfig.createRandomFsmSeed,
+                    debugConfig.createMutantSeed,
+                    plTest,
+                    isReduction);
+        string message = "IUT is " + string((isReduction) ? "" : "NOT ") + "a reduction of the specification.";
+        CLOG(INFO, logging::globalLogger) << message;
+        assertOnFail("TC-AT-DEBUG", result);
+    }
+    else
+    {
+        adaptiveTest01(config);
+    }
+
 	cout << endl << endl;
-
-
 }
 
 

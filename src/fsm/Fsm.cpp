@@ -3497,7 +3497,8 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
 
     if (createdTransitionFaults < numTransitionFaults)
     {
-        LOG(FATAL) << "Could not create all requested transition faults.";
+        LOG(ERROR) << "Could not create all requested transition faults.";
+        throw std::logic_error("Could not create all requested transition faults.");
     }
     
     // Now add output faults to the new machine
@@ -3590,7 +3591,8 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
     }
     if (createdOutputFaults < numOutputFaults)
     {
-        LOG(FATAL) << "Could not create all requested output faults.";
+        LOG(ERROR) << "Could not create all requested output faults.";
+        throw std::logic_error("Could not create all requested output faults.");
     }
     
     shared_ptr<Fsm> result = make_shared<Fsm>(fsmName,maxInput,maxOutput,lst,pl);
