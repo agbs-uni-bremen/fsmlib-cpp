@@ -127,9 +127,9 @@ shared_ptr<FsmPresentationLayer> Dfsm::createPresentationLayerFromCsvFormat(cons
         out2String.push_back(s);
     }
     
-    maxInput = in2String.size() - 1;
-    maxOutput = out2String.size() - 1;
-    maxState = state2String.size() - 1;
+    maxInput = (int)in2String.size() - 1;
+    maxOutput = (int)out2String.size() - 1;
+    maxState = (int)state2String.size() - 1;
     initStateIdx = 0;
     
     return make_shared<FsmPresentationLayer>(in2String,out2String,state2String);
@@ -257,9 +257,9 @@ Dfsm::createPresentationLayerFromCsvFormat(const std::string & fname,
         out2String.push_back(s);
     }
     
-    maxInput = in2String.size() - 1;
-    maxOutput = out2String.size() - 1;
-    maxState = state2String.size() - 1;
+    maxInput = (int)in2String.size() - 1;
+    maxOutput = (int)out2String.size() - 1;
+    maxState = (int)state2String.size() - 1;
     initStateIdx = 0;
     
     return make_shared<FsmPresentationLayer>(in2String,out2String,state2String);
@@ -592,7 +592,7 @@ Fsm()
     // Add a NOP output for the case where the FSM is incomplete
     if ( not haveNop ) {
         out2String.push_back("_nop");
-        theNopNo = out2String.size() - 1;
+        theNopNo = (int)out2String.size() - 1;
     }
     
     // iterate over all states, insert initial state at index 0
@@ -620,9 +620,9 @@ Fsm()
     // Define basic attributes
     name = "FSM";
     currentParsedNode = nullptr;
-    maxInput = in2String.size() - 1;
-    maxOutput = out2String.size() - 1;
-    maxState = state2String.size() - 1;
+    maxInput = (int)in2String.size() - 1;
+    maxOutput = (int)out2String.size() - 1;
+    maxState = (int)state2String.size() - 1;
     initStateIdx = 0;
     minimal = Maybe;
     
@@ -862,9 +862,9 @@ Fsm()
     // Define basic attributes
     name = "FSM";
     currentParsedNode = nullptr;
-    maxInput = in2String.size() - 1;
-    maxOutput = out2String.size() - 1;
-    maxState = state2String.size() - 1;
+    maxInput = (int)in2String.size() - 1;
+    maxOutput = (int)out2String.size() - 1;
+    maxState = (int)state2String.size() - 1;
     initStateIdx = 0;
     minimal = Maybe;
     

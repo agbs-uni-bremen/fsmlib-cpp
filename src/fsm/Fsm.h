@@ -14,6 +14,7 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <deque>
 
 #include "fsm/FsmVisitor.h"
 
@@ -70,8 +71,9 @@ protected:
     std::vector<std::shared_ptr<OFSMTable>> ofsmTableLst;
     std::vector<std::shared_ptr<Tree>> stateIdentificationSets;
     std::shared_ptr<FsmPresentationLayer> presentationLayer;
-    std::shared_ptr<FsmNode> newNode(const int id, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p);
-    bool contains(const std::vector<std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>>& lst, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p);
+    std::shared_ptr<FsmNode> newNode(const int id, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p,
+                                     std::shared_ptr<FsmPresentationLayer> pl);
+    bool contains(const std::deque<std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>>& lst, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p);
     bool contains(const std::vector<std::shared_ptr<FsmNode>>& lst, const std::shared_ptr<FsmNode> n);
     std::shared_ptr<FsmNode> findp(const std::vector<std::shared_ptr<FsmNode>>& lst, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p);
     void parseLine(const std::string & line);

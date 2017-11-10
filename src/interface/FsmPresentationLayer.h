@@ -82,8 +82,9 @@ public:
 	/**
 	 * Getter for a particular state name
 	 * @param id The id of the state
-	 * @param prefix If the prefix is not empty, it will be added at he beginning of the name before returning it
-	 * @return The name if this state
+	 * @param prefix If the prefix is not empty, it will be added
+     *               at he beginning of the name before returning it
+	 * @return The name of this state
 	 */
 	std::string getStateId(const unsigned int id, const std::string & prefix) const;
     
