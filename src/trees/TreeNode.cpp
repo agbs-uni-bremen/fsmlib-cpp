@@ -37,6 +37,24 @@ weak_ptr<TreeNode> TreeNode::getParent() const
     return parent;
 }
 
+void TreeNode::deleteSingleNode()
+{
+    deleted = true;
+
+    if (!isLeaf())
+    {
+        return;
+    }
+
+    shared_ptr<TreeNode> c = shared_from_this();
+    shared_ptr<TreeNode> t = parent.lock();
+
+    if (t != nullptr)
+    {
+        t->remove(c);
+    }
+}
+
 void TreeNode::deleteNode()
 {
     deleted = true;

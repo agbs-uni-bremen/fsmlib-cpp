@@ -67,6 +67,13 @@ public:
 	*/
 	void deleteNode();
 
+    /**
+    Mark this node as deleted.
+    If this is a leaf node, remove it from the parent's list
+    of children.
+    */
+    void deleteSingleNode();
+
 	/**
 	Check whether or not this node is deleted
 	@return true if this node have been deleted, false otherwise
@@ -197,5 +204,6 @@ public:
                   std::shared_ptr<std::vector<std::vector<int>>> ioll);
     
     
+
 };
 #endif //FSM_TREES_TREENODE_H_
