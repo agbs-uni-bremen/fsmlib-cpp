@@ -55,6 +55,7 @@ void logging::setLogfileSuffix(const std::string& suffix, const string& loggerId
 {
     std::vector<std::string>* loggerIds = new std::vector<std::string>();
     el::Loggers::populateAllLoggerIds(loggerIds);
+    el::base::LogStreamsReferenceMap* streams = el::base::elStorage->registeredLoggers()->logStreamsReference();
 
     for (string id : *loggerIds)
     {
@@ -76,7 +77,18 @@ void logging::setLogfileSuffix(const std::string& suffix, const string& loggerId
             }
         }
         fileName += "##" + suffix + ".log";
-        logger->configurations()->set(el::Level::Global, el::ConfigurationType::Filename, fileName);
-        logger->reconfigure();
+
+        el::Configurations newConf;
+        newConf.set(el::Level::Global, el::ConfigurationType::Filename, fileName);
+        logger->configure(newConf);
+
+        for (auto it = streams->begin(); it != streams->end(); ++it)
+        {
+            if (it->first == fileName)
+            {
+                streams->erase(it);
+                break;
+            }
+        }
     }
 }

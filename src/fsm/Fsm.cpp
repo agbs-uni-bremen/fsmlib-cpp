@@ -2580,7 +2580,7 @@ bool Fsm::rDistinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
             shared_ptr<FsmNode> nodeB = nodesB.at(j);
             if (nodeA == nodeB)
             {
-                LOG(DEBUG) << nodeA->getName() << " == " << nodeB->getName() << ". This should not happen.";
+                LOG(DEBUG) << nodeA->getName() << " == " << nodeB->getName();
                 return false;
             }
             if (!rDistinguishes(nodeA, nodeB, adaptiveTestCases))
