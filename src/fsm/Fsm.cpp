@@ -2320,6 +2320,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             }
         }
 
+        long numberToCheck = 0;
         VLOG(1) << "observedOutputsTCElements:";
         for (auto e : observedOutputsTCElements)
         {
@@ -2327,22 +2328,28 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             for (auto o : e.second)
             {
                 VLOG(1) << "    " << *o;
+                ++numberToCheck;
             }
         }
+        VLOG(1) << "Number of input/output combinations: " << numberToCheck;
         bool discardInputTrace = false;
         vector<shared_ptr<InputTrace>> newT = t;
         vector<shared_ptr<InputTrace>> newTC;
+        long inputTraceCount = 0;
+        size_t numberInputTraces = tC.size();
         for (shared_ptr<InputTrace> inputTrace : tC)
         {
             discardInputTrace = false;
             TIMED_SCOPE(timerBlkObj, "adaptiveStateCounting-loop-2");
-            VLOG(1) << "check inputTrace: " << *inputTrace;
+            VLOG(1) << "check inputTrace: " << *inputTrace << " (" << ++inputTraceCount << " of " << numberInputTraces << ")";
             vector<shared_ptr<OutputTrace>>& producedOutputs = observedOutputsTCElements.at(inputTrace);
             VLOG(1) << "producedOutputs:";
             for (shared_ptr<OutputTrace> outputTrace : producedOutputs)
             {
                 VLOG(1) << "  " << *outputTrace;
             }
+            long outputTraceCount = 0;
+            size_t numberOutputTraces = producedOutputs.size();
             for (shared_ptr<OutputTrace> outputTrace : producedOutputs)
             {
                 TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1", VLOG_IS_ON(2));
@@ -2350,7 +2357,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 {
                     break;
                 }
-                VLOG(1) << "outputTrace: " << *outputTrace;
+                VLOG(1) << "outputTrace: " << " (" << ++outputTraceCount << " of " << numberOutputTraces << ")";
                 IOTrace currentTrace(*inputTrace, *outputTrace);
                 VLOG(1) << "currentTrace (x_1/y_1): " << currentTrace;
                 bool maxPrefixFound = false;
@@ -2490,20 +2497,22 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                         {
                             if (isLastVDoublePrime)
                             {
-                                VLOG(1) << "isLastVDoublePrime, discarding input trace: " << inputTrace;
+                                VLOG(1) << "isLastVDoublePrime, discarding input trace: " << *inputTrace;
                                 discardInputTrace = true;
                             }
                             break;
                         }
                         if (!discardSet)
                         {
-                            if (Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut) > m)
+                            size_t lB = Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
+                            VLOG(1) << "lB: " << lB;
+                            if (lB > m)
                             {
-                                VLOG(1) << "Exceeded lower bound.";
+                                VLOG(1) << "Exceeded lower bound";
                                 outputTraceMeetsCriteria = true;
                                 if (isLastLowerBoundCheck)
                                 {
-                                    VLOG(1) << "Input trace " << inputTrace << " meets all criteria.";
+                                    VLOG(1) << "Input trace " << *inputTrace << " meets all criteria.";
                                     inputTraceMeetsCriteria = true;
                                 }
                             }
@@ -2516,7 +2525,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                                     VLOG(1) << "isLastSet. Discarding vDoublePrime: " << vDoublePrime ;
                                     if (isLastVDoublePrime)
                                     {
-                                        VLOG(1) << "isLastVDoublePrime, discarding input trace: " << inputTrace;
+                                        VLOG(1) << "isLastVDoublePrime, discarding input trace: " << *inputTrace;
                                         discardInputTrace = true;
                                     }
                                     break;
@@ -2534,7 +2543,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 if (!maxPrefixFound)
                 {
                     discardInputTrace = true;
-                    VLOG(1) << "No max prefix found, discarding input trace: " << inputTrace;
+                    VLOG(1) << "No max prefix found, discarding input trace: " << *inputTrace;
                 }
             }
 

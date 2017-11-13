@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <chrono>
 #include <memory>
 #include <random>
 #include <stdlib.h>
@@ -737,15 +738,7 @@ bool executeAdaptiveTest(
 
     shared_ptr<FsmPresentationLayer> plCopy = make_shared<FsmPresentationLayer>(*pl);
 
-    CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
-    CLOG(INFO, logging::globalLogger) << "numInput: " << numInput + 1;
-    CLOG(INFO, logging::globalLogger) << "numOutput: " << numOutput + 1;
-    CLOG(INFO, logging::globalLogger) << "numOutFaults: " << numOutFaults;
-    CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
-    CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed: " << createRandomFsmSeed;
-    CLOG(INFO, logging::globalLogger) << "createMutantSeed: " << createMutantSeed;
-
-    CLOG(INFO, logging::globalLogger) << "Creating FSM.";
+    CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Creating FSM.";
     shared_ptr<Fsm> spec = Fsm::createRandomFsm(prefix,
                                                 numInput,
                                                 numOutput,
@@ -753,11 +746,25 @@ bool executeAdaptiveTest(
                                                 plCopy,
                                                 true,
                                                 createRandomFsmSeed);
-    CLOG(INFO, logging::globalLogger) << "Creating mutant.";
-    shared_ptr<Fsm> iut = spec->createMutant("mutant" + prefix,
-                                             numOutFaults,
-                                             numTransFaults,
-                                             createMutantSeed);
+    CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Creating mutant.";
+
+    shared_ptr<Fsm> iut;
+    try {
+        iut = spec->createMutant("mutant" + prefix,
+                                 numOutFaults,
+                                 numTransFaults,
+                                 createMutantSeed);
+    } catch (exception& e) {
+        throw(e);
+    }
+
+    CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
+    CLOG(INFO, logging::globalLogger) << "numInput: " << numInput + 1;
+    CLOG(INFO, logging::globalLogger) << "numOutput: " << numOutput + 1;
+    CLOG(INFO, logging::globalLogger) << "numOutFaults: " << numOutFaults;
+    CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
+    CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed: " << createRandomFsmSeed;
+    CLOG(INFO, logging::globalLogger) << "createMutantSeed: " << createMutantSeed;
 
     Fsm specMin = spec->minimise();
     Fsm iutMin = iut->minimise();
@@ -779,8 +786,12 @@ bool executeAdaptiveTest(
 
     isReduction = !product.hasFailure();
 
+    CLOG(INFO, logging::globalLogger) << "IUT is " + string((isReduction) ? "" : "NOT ") +
+                                         "a reduction of the specification.";
+    CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Testing.";
+
     IOTraceContainer observedTraces;
-    return isReduction == Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes() + 1), observedTraces);
+    return isReduction == Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces);
 }
 
 unsigned int getRandomSeed()
@@ -935,34 +946,72 @@ void adaptiveTest01(AdaptiveTestConfig& config)
 
             bool isReduction;
             bool result;
-            try {
-                result = executeAdaptiveTest(
-                            iteration,
-                            numStates,
-                            numInput,
-                            numOutput,
-                            numOutFaults,
-                            numTransFaults,
-                            createRandomFsmSeed,
-                            createMutantSeed,
-                            plTest,
-                            isReduction);
-            } catch (exception& e) {
-                CLOG(WARNING, logging::globalLogger) << "Could not create mutant. Skipping this test";
+
+            long durationMS;
+            long durationMin;
+
+            bool couldCreateMutant = false;
+            while (!couldCreateMutant)
+            {
+                try {
+                    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+                    result = executeAdaptiveTest(
+                                iteration,
+                                numStates,
+                                numInput,
+                                numOutput,
+                                numOutFaults,
+                                numTransFaults,
+                                createRandomFsmSeed,
+                                createMutantSeed,
+                                plTest,
+                                isReduction);
+                    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+                    durationMS = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+                    durationMin = std::chrono::duration_cast<std::chrono::minutes>(end - start).count();
+                    couldCreateMutant = true;
+                } catch (exception& e) {
+                    CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Could not create mutant. Decreasing faults.";
+                    int random = getRandom(0, 1, gen);
+                    if (random == 0 && numOutFaults > 0)
+                    {
+                        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing output faults.";
+                        --numOutFaults;
+                        continue;
+                    }
+                    else if (numTransFaults > 0)
+                    {
+                        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing transition faults.";
+                        --numTransFaults;
+                        continue;
+                    }
+                    else
+                    {
+                        CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
+                        CLOG(INFO, logging::globalLogger) << "numInput: " << numInput + 1;
+                        CLOG(INFO, logging::globalLogger) << "numOutput: " << numOutput + 1;
+                        CLOG(INFO, logging::globalLogger) << "numOutFaults: " << numOutFaults;
+                        CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
+                        CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed: " << createRandomFsmSeed;
+                        CLOG(INFO, logging::globalLogger) << "createMutantSeed: " << createMutantSeed;
+                        CLOG(WARNING, logging::globalLogger) << "Could not create mutant. Skipping.";
+                        break;
+                    }
+                }
+            }
+            if (!couldCreateMutant)
+            {
                 ++i;
                 continue;
             }
-
-
 
             if (result)
             {
                 ++passed;
             }
 
-            string message = "IUT is " + string((isReduction) ? "" : "NOT ") + "a reduction of the specification.";
-            CLOG(INFO, logging::globalLogger) << message;
             assertOnFail("TC-AT-01-" + iteration, result);
+            CLOG(INFO, logging::globalLogger) << "Calculation took " << durationMS << " ms (" << durationMin << " minutes).";
 
             ++executed;
             ++i;
@@ -1009,15 +1058,15 @@ int main(int argc, char* argv[])
     config.maxOutput = 10;
 
     config.minStates = 1;
-    config.maxStates = 20;
+    config.maxStates = 10;
 
     config.minTransFaults = 0;
-    config.maxTransFaults = 0;
+    config.maxTransFaults = 5;
 
     config.minOutFaults = 0;
-    config.maxOutFaults = 0;
+    config.maxOutFaults = 5;
 
-    //config.seed = 2333653510;
+    config.seed = 4240152224;
 
 
     bool debug = true;
@@ -1028,11 +1077,11 @@ int main(int argc, char* argv[])
         AdaptiveTestConfigDebug debugConfig;
         debugConfig.numStates = 2;
         debugConfig.numInput = 5;
-        debugConfig.numOutput = 3;
-        debugConfig.numOutFaults = 0;
+        debugConfig.numOutput = 5;
+        debugConfig.numOutFaults = 1;
         debugConfig.numTransFaults = 0;
-        debugConfig.createRandomFsmSeed = 849295220;
-        debugConfig.createMutantSeed = 325047556;
+        debugConfig.createRandomFsmSeed = 430243142;
+        debugConfig.createMutantSeed = 1425131424;
 
         shared_ptr<FsmPresentationLayer> plTest =
         make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
@@ -1050,8 +1099,6 @@ int main(int argc, char* argv[])
                     debugConfig.createMutantSeed,
                     plTest,
                     isReduction);
-        string message = "IUT is " + string((isReduction) ? "" : "NOT ") + "a reduction of the specification.";
-        CLOG(INFO, logging::globalLogger) << message;
         assertOnFail("TC-AT-DEBUG", result);
     }
     else
