@@ -3468,7 +3468,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
 
                     newOutValOk = true;
 
-                    if (newOutVal == theInput)
+                    if (newOutVal == originalNewOutVal)
                     {
                         newOutValOk = false;
                     }
