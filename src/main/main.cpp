@@ -769,16 +769,15 @@ bool executeAdaptiveTest(
     specMin.toDot(dotPrefix + "specMin");
     iutMin.toDot(dotPrefix + "iutMin");
 
-    shared_ptr<Fsm> product = Fsm::createProductMachine(spec, iut);
-    Fsm productMin = product->minimise();
-    //Fsm productMinComplete = productMin.makeComplete(ErrorState);
+    Fsm intersect = spec->intersect(*iut);
+    intersect.toDot(dotPrefix + "intersect");
 
-    product->toDot(dotPrefix + "product");
-    productMin.toDot(dotPrefix + "productMin");
-    //productMinComplete.toDot(dotPrefix + "productMinComplete");
+    Fsm product = spec->intersect(*iut);
+
+    product.toDot(dotPrefix + "product");
 #endif
 
-    isReduction = !productMin.hasFailState();
+    isReduction = !product.hasFailure();
 
     IOTraceContainer observedTraces;
     return isReduction == Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes() + 1), observedTraces);

@@ -239,29 +239,6 @@ public:
                     presentationLayer,
                     const bool observable = false,
                     const unsigned seed = 0);
-
-    /**
-     * Creates the product machine for two given FSM.
-     * The product machine behaves like `iut` where it is consistent with
-     * `reference`. Otherwise it moves to the state `Fail` and stays there.
-     * @param reference The reference model
-     * @param iut The implementation under test
-     * @param fsmName Name of the product machine to be created
-     * @return The product machine
-     */
-    static std::shared_ptr<Fsm> createProductMachine(std::shared_ptr<Fsm> reference, std::shared_ptr<Fsm> iut, const std::string & fsmName = "_prod");
-
-    /**
-     * Creates the product machine for two given FSM.
-     * The product machine behaves like `iut` where it is consistent with
-     * `reference`. Otherwise it moves to the state `Fail` and stays there.
-     * @param reference The reference model
-     * @param iut The implementation under test
-     * @param fsmName Name of the product machine to be created
-     * @return The product machine
-     */
-    static std::shared_ptr<Fsm> createProductMachine(Fsm reference, Fsm iut, const std::string & fsmName = "_prod");
-    
     
     /**
      *  Create a mutant of the FSM, producing output faults
@@ -511,7 +488,7 @@ public:
                                          const IOTreeContainer& treeContainer,
                                          const bool cleanTrailingEmptyTraces = true) const;
 
-    bool hasFailState() const;
+    bool hasFailure() const;
 
     /**
      * Returns a set of input/output sequences that can be produced by this

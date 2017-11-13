@@ -263,19 +263,6 @@ bool FsmNode::hasTransition(const int input, const int output) const
     return false;
 }
 
-bool FsmNode::isFailState() const
-{
-    for (const shared_ptr<FsmTransition>& transition : transitions)
-    {
-        unsigned int output = static_cast<unsigned int>(transition->getLabel()->getOutput());
-        if (presentationLayer->getOutId(output) != FsmPresentationLayer::FAIL_OUTPUT)
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
 bool FsmNode::isPossibleOutput(const int x, const int y) const
 {
     for (auto transition : transitions)

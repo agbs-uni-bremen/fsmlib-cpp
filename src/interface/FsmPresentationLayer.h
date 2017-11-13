@@ -32,9 +32,7 @@ private:
 	 */
 	std::vector<std::string> state2String;
 public:
-    const static std::string FAIL_STATE_NAME;
-    const static std::string FAIL_OUTPUT;
-	/**
+    /**
 	 * Create a new presentation layer containing nothing
 	 */
 	FsmPresentationLayer();
@@ -63,8 +61,6 @@ public:
 	FsmPresentationLayer(const std::string & inputs,
                          const std::string & outputs,
                          const std::string & states);
-
-    static std::shared_ptr<FsmPresentationLayer> mergeAlphabets(std::shared_ptr<const FsmPresentationLayer> plA, std::shared_ptr<const FsmPresentationLayer> plB);
 
     void setState2String(std::vector<std::string> state2String);
     void addState2String(std::string name);

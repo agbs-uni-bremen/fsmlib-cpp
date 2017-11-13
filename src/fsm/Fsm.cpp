@@ -1741,14 +1741,36 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
     return result;
 }
 
-bool Fsm::hasFailState() const
+bool Fsm::hasFailure() const
 {
     for (const shared_ptr<FsmNode>& node : nodes)
     {
-        if (node->getName().find(FsmPresentationLayer::FAIL_STATE_NAME) != string::npos &&
-                node->isFailState())
+
+        shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> pair = node->getPair();
+        if (pair == nullptr)
         {
-            return true;
+            LOG(FATAL) << "This FSM does not seem to be a valid intersection.";
+        }
+
+        const shared_ptr<FsmNode>& specNode = pair->first;
+        const shared_ptr<FsmNode>& otherNode = pair->second;
+
+        for (const shared_ptr<FsmTransition>& otherTrans : otherNode->getTransitions())
+        {
+            bool foundTransition = false;
+            for (const shared_ptr<FsmTransition>& specTrans : specNode->getTransitions())
+            {
+                if (*otherTrans->getLabel() == *specTrans->getLabel())
+                {
+                    foundTransition = true;
+                    break;
+                }
+            }
+            if (!foundTransition)
+            {
+                VLOG(1) << "The IUT has transition " << otherTrans->str() << " in state " << otherNode->getName() << " but it is missing in the specification's state " << specNode->getName() << ".";
+                return true;
+            }
         }
     }
     return false;
@@ -3287,116 +3309,6 @@ Fsm::createRandomFsm(const string & fsmName,
     return make_shared<Fsm>(fsmName,maxInput,maxOutput,lst,pl);
     
 }
-
-shared_ptr<Fsm> Fsm::createProductMachine(shared_ptr<Fsm> reference, shared_ptr<Fsm> iut, const string& fsmName)
-{
-    return createProductMachine(*reference, *iut, fsmName);
-}
-
-shared_ptr<Fsm> Fsm::createProductMachine(Fsm reference, Fsm iut, const std::string& fsmName)
-{
-    TIMED_FUNC(timerObj);
-    reference.getPresentationLayer()->truncateIn2String(reference.maxInput + 1);
-    reference.getPresentationLayer()->truncateOut2String(reference.maxOutput + 1);
-    reference.getPresentationLayer()->truncateState2String(reference.maxState + 1);
-    iut.getPresentationLayer()->truncateIn2String(reference.maxInput + 1);
-    iut.getPresentationLayer()->truncateOut2String(reference.maxOutput + 1);
-    iut.getPresentationLayer()->truncateState2String(reference.maxState + 1);
-    shared_ptr<FsmPresentationLayer> pl = FsmPresentationLayer::mergeAlphabets(reference.getPresentationLayer(), iut.getPresentationLayer());
-    const int failOutput = pl->addOut2String(FsmPresentationLayer::FAIL_OUTPUT);
-    size_t maxInput = static_cast<size_t>(max(reference.maxInput, iut.maxInput));
-    size_t maxOutput = static_cast<size_t>(max(reference.maxOutput, iut.maxOutput)) + 1;
-    vector<shared_ptr<FsmNode>> nodes;
-    map<shared_ptr<FsmNode>, pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> productNodesToOriginalNodes;
-    map<pair<int, int>, shared_ptr<FsmNode>> originalNodeIdsToProductNode;
-    int productNodeId = 0;
-    for(shared_ptr<FsmNode> nodeA : reference.getNodes())
-    {
-        for(shared_ptr<FsmNode> nodeB : iut.getNodes())
-        {
-            shared_ptr<FsmNode> productNode = make_shared<FsmNode>(productNodeId, fsmName, pl);
-            productNodesToOriginalNodes.insert(make_pair(productNode, make_pair(nodeA, nodeB)));
-            originalNodeIdsToProductNode.insert(make_pair(make_pair(nodeA->getId(), nodeB->getId()), productNode));
-            string nodeName = "(" + nodeA->getName() + "," + nodeB->getName() + ")";
-            VLOG(1) << "Creating product node: " << nodeName << "(" << productNode->getId() << ")";
-            pl->addState2String(nodeName);
-            nodes.push_back(productNode);
-            productNodeId++;
-        }
-    }
-    pl->addState2String(FsmPresentationLayer::FAIL_STATE_NAME);
-
-    shared_ptr<FsmNode> failState = make_shared<FsmNode>(productNodeId, fsmName, pl);
-    VLOG(1) << "Creating fail node: " << failState->getName() << "(" << failState->getId() << ")";
-
-    for (size_t x = 0; x <= maxInput; ++x)
-    {
-        shared_ptr<FsmLabel> failLabel = make_shared<FsmLabel>(x, failOutput, pl);
-        shared_ptr<FsmTransition> failTransition = make_shared<FsmTransition>(
-                    failState,
-                    failState,
-                    failLabel);
-        failState->addTransition(failTransition);
-        VLOG(1) << "Creating fail self transition: " << failTransition->str();
-    }
-
-    for(auto it = productNodesToOriginalNodes.begin(); it != productNodesToOriginalNodes.end(); ++it)
-    {
-        shared_ptr<FsmNode> productNode = it->first;
-        shared_ptr<FsmNode> nodeA = it->second.first;
-        shared_ptr<FsmNode> nodeB = it->second.second;
-        LOG(DEBUG) << "Creating transitions for productNode " << productNode->getName();
-        PERFORMANCE_CHECKPOINT(timerObj);
-        for (size_t x = 0; x <= maxInput; ++x)
-        {
-            for (size_t y = 0; y <= maxOutput; ++y)
-            {
-                if (y == static_cast<size_t>(failOutput))
-                {
-                    continue;
-                }
-                shared_ptr<FsmLabel> productLabel = make_shared<FsmLabel>(x, y, pl);
-                unordered_set<shared_ptr<FsmNode>> targetsA = nodeA->afterAsSet(static_cast<int>(x), static_cast<int>(y));
-                unordered_set<shared_ptr<FsmNode>> targetsB = nodeB->afterAsSet(static_cast<int>(x), static_cast<int>(y));
-                if (targetsB.size() > 0 && targetsA.size() == 0)
-                {
-                    // The transition with input x and output y is defined for the IUT, but it isn't for the reference.
-                    // Therefore, the product machine will lead to the fail state.
-                    shared_ptr<FsmTransition> productTransition = make_shared<FsmTransition>(
-                                productNode,
-                                failState,
-                                productLabel);
-                    productNode->addTransition(productTransition);
-                    VLOG(1) << "Creating transition to fail state: " << productTransition->str();
-                    continue;
-                }
-                for (shared_ptr<FsmNode> targetA : targetsA)
-                {
-                    for (shared_ptr<FsmNode> targetB : targetsB)
-                    {
-                        shared_ptr<FsmNode> productTarget = originalNodeIdsToProductNode.at(make_pair(targetA->getId(), targetB->getId()));
-                        shared_ptr<FsmTransition> productTransition = make_shared<FsmTransition>(
-                                    productNode,
-                                    productTarget,
-                                    productLabel);
-                        productNode->addTransition(productTransition);
-                        VLOG(1) << "Creating normal product transition: " << productTransition->str();
-                    }
-                }
-            }
-        }
-    }
-
-    int initStateIdx = originalNodeIdsToProductNode.at(
-                make_pair(reference.getInitialState()->getId(),iut.getInitialState()->getId()))->getId();
-
-    nodes.push_back(failState);
-    shared_ptr<Fsm> result = make_shared<Fsm>(fsmName, maxInput, maxOutput, nodes, initStateIdx, pl);
-    result->failOutput = failOutput;
-    return result;
-}
-
-
 
 shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                                   const size_t numOutputFaults,
