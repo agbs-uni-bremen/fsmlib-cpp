@@ -117,10 +117,28 @@ int FsmPresentationLayer::addOut2String(std::string name)
     return static_cast<int>(out2String.size() - 1);
 }
 
+int FsmPresentationLayer::addOut2String(const int i, std::string name)
+{
+    if (static_cast<int>(out2String.size()) <= i)
+    {
+        return addOut2String(name);
+    }
+    return static_cast<int>(i);
+}
+
 int FsmPresentationLayer::addIn2String(std::string name)
 {
     in2String.push_back(name);
     return static_cast<int>(in2String.size() - 1);
+}
+
+int FsmPresentationLayer::addIn2String(const int i, std::string name)
+{
+    if (static_cast<int>(in2String.size()) <= i)
+    {
+        return addIn2String(name);
+    }
+    return static_cast<int>(i);
 }
 
 void FsmPresentationLayer::truncateState2String(const int index)

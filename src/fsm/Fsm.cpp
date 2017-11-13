@@ -33,11 +33,11 @@
 using namespace std;
 using namespace std::chrono;
 
-shared_ptr<FsmNode> Fsm::newNode(const int id, const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>& p)
+shared_ptr<FsmNode> Fsm::newNode(const int id, const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>& p, const shared_ptr<FsmPresentationLayer>& pl)
 {
     string nodeName = string("(" + p->first->getName() + to_string(p->first->getId()) + ","
                              + p->second->getName() + to_string(p->second->getId()) + ")");
-    shared_ptr<FsmNode> n = make_shared<FsmNode>(id, nodeName, presentationLayer);
+    shared_ptr<FsmNode> n = make_shared<FsmNode>(id, nodeName, pl);
     n->setPair(p);
     return n;
 }
@@ -718,6 +718,8 @@ Fsm Fsm::intersect(const Fsm & f)
     
     /*Initially, add the pair of initial this-node and f-node into the BFS list*/
     nodeList.push_back(make_shared<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>(getInitialState(), f.getInitialState()));
+
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
     
     /*This is the BFS loop, running over the (this,f)-node pairs*/
     while (!nodeList.empty())
@@ -743,7 +745,9 @@ Fsm Fsm::intersect(const Fsm & f)
             /*We create the new FSM state associated with p:
              nSource is created from the state pair (myCurrentNode,theirCurrentNode)
              which is identified by p.*/
-            nSource = newNode(id ++, p);
+            nSource = newNode(id ++, p, pl);
+            string nodeName = string("(" + p->first->getName() + "," + p->second->getName() + ")");
+            pl->addState2String(nodeName);
             fsmInterNodes.push_back(nSource);
         }
         
@@ -765,7 +769,7 @@ Fsm Fsm::intersect(const Fsm & f)
                 
                 if (*tr->getLabel() == *trOther->getLabel())
                 {
-                    
+
                     /*New target node represented as a pair (this-node,f-node)*/
                     auto pTarget = make_shared<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>(tr->getTarget(), trOther->getTarget());
                     
@@ -774,7 +778,9 @@ Fsm Fsm::intersect(const Fsm & f)
                     shared_ptr<FsmNode> nTarget = findp(fsmInterNodes, pTarget);
                     if (nTarget == nullptr)
                     {
-                        nTarget = newNode(id ++, pTarget);
+                        nTarget = newNode(id ++, pTarget, pl);
+                        string nodeName = string("(" + pTarget->first->getName() + "," + pTarget->second->getName() + ")");
+                        pl->addState2String(nodeName);
                         fsmInterNodes.push_back(nTarget);
                     }
                     
@@ -782,6 +788,10 @@ Fsm Fsm::intersect(const Fsm & f)
                     auto newTr = make_shared<FsmTransition>(nSource,
                                                             nTarget,
                                                             tr->getLabel());
+
+                    pl->addIn2String(newTr->getLabel()->getInput(), presentationLayer->getInId(newTr->getLabel()->getInput()));
+                    pl->addOut2String(newTr->getLabel()->getOutput(), presentationLayer->getOutId(newTr->getLabel()->getOutput()));
+
                     nSource->addTransition(newTr);
                     
                     /*Conditions for insertion of the target pair into the nodeList:
@@ -796,8 +806,8 @@ Fsm Fsm::intersect(const Fsm & f)
             }
         }
     }
-    
-    return Fsm(f.getName(), maxInput, maxOutput, fsmInterNodes, presentationLayer);
+
+    return Fsm(f.getName(), maxInput, maxOutput, fsmInterNodes, pl);
 }
 
 shared_ptr<Tree> Fsm::getDeterministicStateCover()

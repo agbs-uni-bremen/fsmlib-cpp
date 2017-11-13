@@ -70,7 +70,9 @@ public:
     void addState2String(std::string name);
     void removeState2String(const int index);
     int addOut2String(std::string name);
+    int addOut2String(const int i, std::string name);
     int addIn2String(std::string name);
+    int addIn2String(const int i, std::string name);
     void truncateState2String(const int index);
     void truncateIn2String(const int index);
     void truncateOut2String(const int index);
