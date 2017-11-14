@@ -1838,12 +1838,6 @@ vector<IOTraceContainer> Fsm::getVPrime(const vector<shared_ptr<InputTrace>>& de
     {
         VLOG(1) << "  " << *i;
     }
-    /*
-    IOListContainer testCases = detStateCover->getDeterministicTestCases();
-    VLOG(1) << "testCases: " << testCases;
-
-    shared_ptr<vector<vector<int>>> testCasesRaw = testCases.getIOLists();
-    */
 
     vector<vector<shared_ptr<OutputTrace>>> allPossibleOutputTraces;
     size_t iterations = 1;
