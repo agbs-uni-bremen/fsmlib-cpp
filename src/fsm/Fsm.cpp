@@ -1996,66 +1996,68 @@ size_t Fsm::lowerBound(const IOTrace& base,
                        const Fsm& iut)
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(5));
-    VLOG(2) << "lowerBound()";
-    VLOG(2) << "base: " << base;
-    VLOG(2) << "suffix: " << suffix;
-    VLOG(2) << "takenInputs:";
+    VLOG(1) << "lowerBound()";
+    VLOG(1) << "base: " << base;
+    VLOG(1) << "suffix: " << suffix;
+    VLOG(1) << "takenInputs:";
     for (auto i : takenInputs)
     {
-        VLOG(2) << "  " << *i;
+        VLOG(1) << "  " << *i;
     }
-    VLOG(2) << "states:";
+    VLOG(1) << "states:";
     for (auto s : states)
     {
-        VLOG(2) << "  " << s->getName();
+        VLOG(1) << "  " << s->getName();
     }
-    VLOG(2) << "adaptiveTestCases: " << adaptiveTestCases;
-    VLOG(2) << "vDoublePrime: " << vDoublePrime;
-    VLOG(2) << "dReachableStates: ";
+    VLOG(1) << "adaptiveTestCases: " << adaptiveTestCases;
+    VLOG(1) << "vDoublePrime: " << vDoublePrime;
+    VLOG(1) << "dReachableStates: ";
     for (auto s : dReachableStates)
     {
-        VLOG(2) << "  " << s->getName();
+        VLOG(1) << "  " << s->getName();
     }
     size_t result = 0;
-    VLOG(2) << "lb result: " << result;
+    VLOG(1) << "lb result: " << result;
 
     vector<IOTraceContainer> testTraces = iut.bOmega(adaptiveTestCases, takenInputs);
-    VLOG(2) << "bOmega testTraces:";
+    VLOG(1) << "bOmega testTraces:";
     for (const auto& cont : testTraces)
     {
-        VLOG(2) << "  " << cont;
+        VLOG(1) << "  " << cont;
     }
 
     for (shared_ptr<FsmNode> state : states)
     {
         const IOTraceContainer& rResult = spec.r(state, base, suffix);
-        VLOG(2) << "--- state: " << state->getName();
-        VLOG(2) << "rResult: " << rResult;
+        VLOG(1) << "--- state: " << state->getName();
+        VLOG(1) << "rResult: " << rResult;
         result += rResult.size();
-        VLOG(2) << "lb result: " << result;
+        VLOG(1) << "lb result: " << result;
         if(find(dReachableStates.begin(), dReachableStates.end(), state) != dReachableStates.end()) {
             ++result;
-            VLOG(2) << "State " << state->getName() << " is d-reachable. Incrementing.";
-            VLOG(2) << "lb result: " << result;
+            VLOG(1) << "State " << state->getName() << " is d-reachable. Incrementing.";
+            VLOG(1) << "lb result: " << result;
         }
 
+        //TODO no need to calculate rResult again, as it has already been calculated above.
         const IOTraceContainer rPlusResult = spec.rPlus(state, base, suffix, vDoublePrime);
+        VLOG(1) << "rPlusResult: " << rPlusResult;
         for (IOTrace& trace : *rPlusResult.getList())
         {
             IOTraceContainer traces = iut.bOmega(adaptiveTestCases, trace);
-            VLOG(2) << "Removing " << traces << " from testTraces.";
+            VLOG(1) << "Removing " << traces << " from testTraces.";
 
             IOTraceContainer::remove(testTraces, traces);
 
-            VLOG(2) << "testTraces:";
+            VLOG(1) << "testTraces:";
             for (const auto& cont : testTraces)
             {
-                VLOG(2) << "  " << cont;
+                VLOG(1) << "  " << cont;
             }
         }
     }
     result += testTraces.size();
-    VLOG(2) << "lowerBound() result: " << result;
+    VLOG(1) << "lowerBound() result: " << result;
     return result;
 }
 
@@ -2371,6 +2373,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                         break;
                     }
                     VLOG(1) << "vDoublePrime: " << vDoublePrime;
+                    VLOG(1) << "Looking for the maximum prefix of " << currentTrace;
                     maxPrefixFound = false;
                     discardVDoublePrime = false;
                     bool isLastVDoublePrime = vDoublePrime == vPrime.back();
