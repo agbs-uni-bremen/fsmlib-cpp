@@ -1048,6 +1048,25 @@ int main(int argc, char* argv[])
 
     CLOG(INFO, logging::globalLogger) << "############## Starting Application ##############";
 
+    shared_ptr<FsmPresentationLayer> plKaput =
+    make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
+            + "../../../resources/adaptive-test-out.txt",
+            + "../../../resources/adaptive-test-state.txt");
+
+    Fsm spec = Fsm("../../../resources/adaptive-kaput-spec.fsm", plKaput, "spec");
+    Fsm iut = Fsm("../../../resources/adaptive-kaput-iut.fsm", plKaput, "iut");
+
+    Fsm specMin = spec.minimise();
+    Fsm iutMin = iut.minimise();
+
+    IOTraceContainer observedTraces;
+    bool isReduction = Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces);
+
+    CLOG(INFO, logging::globalLogger) << "isReduction: " << isReduction;
+
+    return 0;
+
+
     AdaptiveTestConfig config;
     config.numFsm = 1000;
 
