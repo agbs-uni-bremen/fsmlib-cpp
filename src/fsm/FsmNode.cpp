@@ -138,9 +138,9 @@ vector<shared_ptr<FsmNode>> FsmNode::getPossibleOutputs(const int x, vector<shar
     outputs = vector<shared_ptr<OutputTrace>>();
     vector<shared_ptr<FsmNode>> result;
 
-    if (x == FsmLabel::EPSILON_INPUT)
+    if (x == FsmLabel::EPSILON)
     {
-        vector<int> traceRaw({FsmLabel::EPSILON_OUTPUT});
+        vector<int> traceRaw({FsmLabel::EPSILON});
         shared_ptr<OutputTrace> oT = make_shared<OutputTrace>(traceRaw, presentationLayer);
         outputs.push_back(oT);
         result.push_back(static_pointer_cast<FsmNode>(const_pointer_cast<FsmNode>(shared_from_this())));
@@ -409,7 +409,7 @@ vector<shared_ptr<FsmNode>> FsmNode::after(const int x)
 {
     vector<shared_ptr<FsmNode> > lst;
 
-    if (x == FsmLabel::EPSILON_INPUT)
+    if (x == FsmLabel::EPSILON)
     {
         lst.push_back(shared_from_this());
         return lst;
@@ -443,7 +443,7 @@ unordered_set<shared_ptr<FsmNode>> FsmNode::afterAsSet(const int x)
 {
     unordered_set<shared_ptr<FsmNode>> nodeSet;
 
-    if (x == FsmLabel::EPSILON_INPUT)
+    if (x == FsmLabel::EPSILON)
     {
         nodeSet.insert(shared_from_this());
         return nodeSet;
@@ -463,7 +463,7 @@ unordered_set<shared_ptr<FsmNode>> FsmNode::afterAsSet(const int x, const int y)
 {
     unordered_set<shared_ptr<FsmNode>> lst;
 
-    if (x == FsmLabel::EPSILON_INPUT && y == FsmLabel::EPSILON_OUTPUT)
+    if (x == FsmLabel::EPSILON && y == FsmLabel::EPSILON)
     {
         lst.insert(shared_from_this());
         return lst;

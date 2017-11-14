@@ -74,10 +74,18 @@ public:
     /**
      * Checks if the container contains the given trace .
      * @param trace The given trace
-     * @return {@code true}, if the container contains the given trace,
-     * {@code false}, otherwise.
+     * @return `true`, if the container contains the given trace, `false`, otherwise.
      */
     bool contains(IOTrace& trace) const;
+
+    /**
+     * Checks if the container contains a trace with the input component being
+     * the given input trace and returns an iterator to the whole trace.
+     * @param inputTrace The given input trace
+     * @return Iterator to the corresponding trace, if the container contains such trace,
+     * iterator to the end of the list, otherwise.
+     */
+    std::vector<IOTrace>::iterator get(const InputTrace& inputTrace) const;
 
     /**
      * Concatenates a given trace with each element of this container.
@@ -142,6 +150,8 @@ public:
      */
     bool isEmpty() const {return size() == 0; }
 
+    bool isEnd(const std::vector<IOTrace>::iterator& it) const { return it == list->end(); }
+
     /**
      * Removes all occurrences of the given `elem` in the given `container`.
      * @param container The given container, holding IOTraceContainers.
@@ -166,6 +176,7 @@ public:
     friend std::ostream & operator<<(std::ostream & out, const IOTraceContainer & iot);
 
     friend bool operator==(IOTraceContainer const & cont1, IOTraceContainer const & cont2);
+    friend bool operator!=(IOTraceContainer const & cont1, IOTraceContainer const & cont2);
 };
 
 #endif // IOTRACECONTAINER_H

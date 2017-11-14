@@ -5,6 +5,7 @@
  */
 #include "fsm/Trace.h"
 #include "logging/easylogging++.h"
+#include "fsm/FsmLabel.h"
 
 Trace::Trace(const std::shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: presentationLayer(presentationLayer)
@@ -49,15 +50,58 @@ void Trace::prepend(const Trace& traceToPrepend) {
     prepend(traceToPrepend.get());
 }
 
-bool Trace::isPrefix(const Trace& other) const
+Trace Trace::removeEpsilon() const
 {
-    if (other.get().size() > trace.size())
+    Trace result = Trace(presentationLayer);
+    for (int symbol : trace)
+    {
+        if (symbol != FsmLabel::EPSILON)
+        {
+            result.add(symbol);
+        }
+    }
+    return result;
+}
+
+bool Trace::isEmptyTrace() const
+{
+    for (int symbol : trace)
+    {
+        if (symbol != FsmLabel::EPSILON)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Trace::isPrefix(const Trace& other, bool proper, bool allowEmpty) const
+{
+    if (allowEmpty && other.isEmptyTrace())
+    {
+        return true;
+    }
+
+    if (!allowEmpty && other.isEmptyTrace())
     {
         return false;
     }
-    for (size_t i = 0; i < other.get().size(); ++i)
+
+    const Trace& thisCopy = removeEpsilon();
+    const Trace& otherCopy = other.removeEpsilon();
+
+    if (proper && thisCopy == otherCopy)
     {
-        if (other.get().at(i) != trace.at(i))
+        return false;
+    }
+
+    if (otherCopy.get().size() > thisCopy.get().size())
+    {
+        return false;
+    }
+    for (size_t i = 0; i < otherCopy.get().size(); ++i)
+    {
+        if (otherCopy.get().at(i) != thisCopy.get().at(i))
         {
             return false;
         }
@@ -94,7 +138,11 @@ Trace Trace::getSuffix(const Trace& prefix) const
     {
         LOG(FATAL) << "The given prefix is not a prefix of this trace.";
     }
-    std::vector<int> newTrace(trace.begin() + static_cast<std::vector<int>::difference_type>(prefix.get().size()), trace.end());
+
+    const Trace& thisCopy = removeEpsilon();
+    const Trace& prefixCopy = prefix.removeEpsilon();
+
+    std::vector<int> newTrace(thisCopy.cbegin() + static_cast<std::vector<int>::difference_type>(prefixCopy.get().size()), thisCopy.cend());
     return Trace(newTrace, presentationLayer);
 }
 

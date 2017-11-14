@@ -118,10 +118,15 @@ void IOTrace::append(int input, int output)
     outputTrace.add(output);
 }
 
-bool IOTrace::isPrefix(const IOTrace& other) const
+bool IOTrace::isEmptyTrace() const
 {
-    return inputTrace.isPrefix(other.inputTrace) &&
-            outputTrace.isPrefix(other.outputTrace);
+    return inputTrace.isEmptyTrace() && outputTrace.isEmptyTrace();
+}
+
+bool IOTrace::isPrefix(const IOTrace& other, bool proper, bool allowEmpty) const
+{
+    return inputTrace.isPrefix(other.inputTrace, proper, allowEmpty) &&
+            outputTrace.isPrefix(other.outputTrace, proper, allowEmpty);
 }
 
 bool IOTrace::isSuffix(const IOTrace& other) const
@@ -147,7 +152,7 @@ IOTrace IOTrace::getSuffix(const IOTrace& prefix) const
 
     if (in.get().size() == 0 && out.get().size() == 0)
     {
-        return IOTrace(FsmLabel::EPSILON_INPUT, FsmLabel::EPSILON_OUTPUT, inputTrace.getPresentationLayer());
+        return IOTrace(FsmLabel::EPSILON, FsmLabel::EPSILON, inputTrace.getPresentationLayer());
     }
     else{
         return IOTrace(in, out);
@@ -156,8 +161,8 @@ IOTrace IOTrace::getSuffix(const IOTrace& prefix) const
 
 shared_ptr<IOTrace> IOTrace::getEmptyTrace(shared_ptr<FsmPresentationLayer> pl)
 {
-    InputTrace i({FsmLabel::EPSILON_INPUT}, pl);
-    OutputTrace o({FsmLabel::EPSILON_OUTPUT}, pl);
+    InputTrace i({FsmLabel::EPSILON}, pl);
+    OutputTrace o({FsmLabel::EPSILON}, pl);
     return make_shared<IOTrace>(i, o);
 }
 

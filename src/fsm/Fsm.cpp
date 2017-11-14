@@ -546,7 +546,7 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates(vector<std::shared_ptr<Inpu
     bfsLst.push_back(initState);
     nodes.push_back(initState);
     shared_ptr<IOTrace> emptyTrace = IOTrace::getEmptyTrace(presentationLayer);
-    detStateCover.push_back(make_shared<InputTrace>(FsmLabel::EPSILON_INPUT, presentationLayer));
+    detStateCover.push_back(make_shared<InputTrace>(FsmLabel::EPSILON, presentationLayer));
     emptyTrace->setTargetNode(initState);
     initState->setDReachable(emptyTrace);
     paths.insert(make_pair(initState, IOTrace::getEmptyTrace(presentationLayer)));
@@ -1104,7 +1104,7 @@ Fsm Fsm::makeComplete(CompleteMode mode)
         presentationLayer->addState2String("Error");
         for (int x = 0; x <= maxInput; ++x)
         {
-            shared_ptr<FsmLabel> label = make_shared<FsmLabel>(x, FsmLabel::EPSILON_OUTPUT, presentationLayer);
+            shared_ptr<FsmLabel> label = make_shared<FsmLabel>(x, FsmLabel::EPSILON, presentationLayer);
             shared_ptr<FsmTransition> transition = make_shared<FsmTransition>(errorNode, errorNode, label);
             errorNode->addTransition(transition);
         }
@@ -1128,7 +1128,7 @@ Fsm Fsm::makeComplete(CompleteMode mode)
                 }
                 else if (mode == SelfLoop)
                 {
-                    shared_ptr<FsmLabel> label = make_shared<FsmLabel>(x, FsmLabel::EPSILON_OUTPUT, presentationLayer);
+                    shared_ptr<FsmLabel> label = make_shared<FsmLabel>(x, FsmLabel::EPSILON, presentationLayer);
                     shared_ptr<FsmTransition> transition = make_shared<FsmTransition>(node, node, label);
                     node->addTransition(transition);
                 }
@@ -1928,8 +1928,8 @@ IOTraceContainer Fsm::r(std::shared_ptr<FsmNode> node,
     for (IOTrace& prefix : prefs)
     {
         if (prefix.size() != 1 ||
-                (prefix.getInputTrace().get().at(0) != FsmLabel::EPSILON_INPUT &&
-                prefix.getOutputTrace().get().at(0) != FsmLabel::EPSILON_OUTPUT))
+                (prefix.getInputTrace().get().at(0) != FsmLabel::EPSILON &&
+                prefix.getOutputTrace().get().at(0) != FsmLabel::EPSILON))
         {
             prefixes.push_back(prefix);
         }
@@ -1978,11 +1978,15 @@ IOTraceContainer Fsm::rPlus(std::shared_ptr<FsmNode> node,
     VLOG(2) << "suffix: " << suffix;
     IOTraceContainer rResult = r(node, base, suffix);
     VLOG(2) << "rResult: " << rResult;
-    if (node->isDReachable() && vDoublePrime.contains(*node->getDReachTrace()))
+    if (node->isDReachable())
     {
-        VLOG(2) << "  Adding: " << *node->getDReachTrace();
-        rResult.addUnique(*node->getDReachTrace());
-        VLOG(2) << "  rPlusResult: " << rResult;
+        vector<IOTrace>::iterator vDoublePrimeElement = vDoublePrime.get(node->getDReachTrace()->getInputTrace());
+        if (!vDoublePrime.isEnd(vDoublePrimeElement))
+        {
+            VLOG(2) << "  Adding: " << *vDoublePrimeElement;
+            rResult.addUnique(*vDoublePrimeElement);
+            VLOG(2) << "  rPlusResult: " << rResult;
+        }
     }
     return rResult;
 }
@@ -2357,9 +2361,10 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 {
                     break;
                 }
-                VLOG(1) << "outputTrace: " << " (" << ++outputTraceCount << " of " << numberOutputTraces << ")";
+                VLOG(1) << "outputTrace: " << *outputTrace << " (" << ++outputTraceCount << " of " << numberOutputTraces << ")";
                 IOTrace currentTrace(*inputTrace, *outputTrace);
                 VLOG(1) << "currentTrace (x_1/y_1): " << currentTrace;
+                bool isLastOutputTrace = outputTrace == producedOutputs.back();
                 bool maxPrefixFound = false;
                 bool discardVDoublePrime = false;
                 bool inputTraceMeetsCriteria = false;
@@ -2379,15 +2384,15 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                     for (IOTrace& iOTrace : *vDoublePrime.getList())
                     {
                         TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-2", VLOG_IS_ON(4));
-                        //TODO e/e is prefix of everything.
-                        if (currentTrace.isPrefix(iOTrace) && ( !maxPrefix || iOTrace.size() > maxPrefix->size()))
+                        if (currentTrace.isPrefix(iOTrace, false, true) &&
+                                ( !maxPrefix || maxPrefix->isEmptyTrace() || iOTrace.size() > maxPrefix->size()))
                         {
                             maxPrefix = &iOTrace;
                         }
                     }
                     if (!maxPrefix)
                     {
-                        VLOG(1) << "No maxPrefix (v/v')";
+                        LOG(ERROR) << "No maxPrefix (v/v'). This should not happen.";
                         continue;
                     }
                     VLOG(1) << "maxPrefix (v/v'): " << *maxPrefix;
@@ -2409,7 +2414,6 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                             VLOG(1) << "  " << r->getName();
                         }
                         TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3", VLOG_IS_ON(4));
-                        bool isLastLowerBoundCheck = false;
                         for (size_t i = 0; i < rDistStates.size() - 1; ++i)
                         {
                             TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3-1", VLOG_IS_ON(5));
@@ -2420,7 +2424,6 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                             {
                                 TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3-1-1", VLOG_IS_ON(6));
                                 shared_ptr<FsmNode> s2 = rDistStates.at(j);
-                                isLastLowerBoundCheck = (i == rDistStates.size() - 2) && (j == rDistStates.size() - 1);
                                 VLOG(1) << "----------------------------------------------------------";
                                 VLOG(1) << "s2:" << s2->getName();
                                 if (s1 == s2)
@@ -2464,12 +2467,11 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                                     VLOG(1) << "  " << r->getName();
                                 }
 
-                                if (iut.rDistinguishesAllStates(reached1V, reached2V, adaptiveTestCases))
+                                if (iut.distinguishesAllStates(reached1V, reached2V, adaptiveTestCases))
                                 {
                                     VLOG(1) << "Omega ( " << adaptiveList << ") distinguishes every state of the IUT reached by an IO sequence"
                                             << " from rPlus(s1, v/v', x/y, V'') (" << s1RPlus << ") from every state of the IUT reached by an IO sequence"
                                             << " from rPlus(s2, v/v', x/y, V'') (" << s2RPlus << ").";
-                                               //s1 (" << s1->getName();
                                 }
                                 else
                                 {
@@ -2508,9 +2510,9 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                             VLOG(1) << "lB: " << lB;
                             if (lB > m)
                             {
-                                VLOG(1) << "Exceeded lower bound";
+                                VLOG(1) << "Exceeded lower bound. Output trace " << *outputTrace << " meets criteria.";
                                 outputTraceMeetsCriteria = true;
-                                if (isLastLowerBoundCheck)
+                                if (isLastOutputTrace)
                                 {
                                     VLOG(1) << "Input trace " << *inputTrace << " meets all criteria.";
                                     inputTraceMeetsCriteria = true;
@@ -2635,6 +2637,31 @@ bool Fsm::rDistinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
     return true;
 }
 
+bool Fsm::distinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
+                            std::vector<std::shared_ptr<FsmNode>>& nodesB,
+                            const IOTreeContainer& adaptiveTestCases) const
+{
+    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
+    for (size_t i = 0; i < nodesA.size(); ++i)
+    {
+        shared_ptr<FsmNode> nodeA = nodesA.at(i);
+        for (size_t j = i + 1; j < nodesB.size(); ++j)
+        {
+            shared_ptr<FsmNode> nodeB = nodesB.at(j);
+            if (nodeA == nodeB)
+            {
+                LOG(DEBUG) << nodeA->getName() << " == " << nodeB->getName();
+                return false;
+            }
+            if (!distinguishes(nodeA, nodeB, adaptiveTestCases))
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 bool Fsm::rDistinguishes(shared_ptr<FsmNode> nodeA,
                          shared_ptr<FsmNode> nodeB,
                          const IOTreeContainer& adaptiveTestCases) const
@@ -2642,6 +2669,20 @@ bool Fsm::rDistinguishes(shared_ptr<FsmNode> nodeA,
     for (shared_ptr<InputOutputTree> tree : *adaptiveTestCases.getList())
     {
         if (rDistinguishes(nodeA, nodeB, tree))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Fsm::distinguishes(shared_ptr<FsmNode> nodeA,
+                         shared_ptr<FsmNode> nodeB,
+                         const IOTreeContainer& adaptiveTestCases) const
+{
+    for (shared_ptr<InputOutputTree> tree : *adaptiveTestCases.getList())
+    {
+        if (distinguishes(nodeA, nodeB, tree))
         {
             return true;
         }
@@ -2669,6 +2710,16 @@ bool Fsm::rDistinguishes(shared_ptr<FsmNode> nodeA,
         }
     }
     return true;
+}
+
+bool Fsm::distinguishes(shared_ptr<FsmNode> nodeA,
+                         shared_ptr<FsmNode> nodeB,
+                         shared_ptr<InputOutputTree> adaptiveTestCase) const
+{
+    IOTraceContainer containerA = getPossibleIOTraces(nodeA, adaptiveTestCase);
+    IOTraceContainer containerB = getPossibleIOTraces(nodeB, adaptiveTestCase);
+
+    return containerA != containerB;
 }
 
 

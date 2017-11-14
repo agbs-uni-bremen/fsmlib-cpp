@@ -66,7 +66,7 @@ bool InputTrace::contains(const std::vector<std::shared_ptr<InputTrace>>& list, 
 
 bool InputTrace::isEmptyTrace() const
 {
-    return trace.size() == 1 && trace.at(0) == FsmLabel::EPSILON_INPUT;
+    return trace.size() == 1 && trace.at(0) == FsmLabel::EPSILON;
 }
 
 std::ostream & operator<<(std::ostream & out, const InputTrace & trace)

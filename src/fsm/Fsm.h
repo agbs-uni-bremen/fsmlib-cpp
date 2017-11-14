@@ -611,6 +611,19 @@ public:
                                 const IOTreeContainer& adaptiveTestCases) const;
 
     /**
+     * Determines if the given adaptive test cases distinguish all states from
+     * {@code nodesA} from all states from `nodeB`.
+     * @param nodesA First set of states
+     * @param nodesB Second set of states
+     * @param adaptiveTestCases The adaptive test cases that will be used
+     * @return `true`, if 'adaptiveTestCases` distuinguishes all states
+     * from `nodesA` from all states from `nodesB`; `false`, otherwise
+     */
+    bool distinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
+                                std::vector<std::shared_ptr<FsmNode>>& nodesB,
+                                const IOTreeContainer& adaptiveTestCases) const;
+
+    /**
      * Determines if the given adaptive test cases distinguish state {@code nodesA}
      * from state {@code nodeB}.
      * @param nodeA First state
@@ -624,6 +637,19 @@ public:
                       const IOTreeContainer& adaptiveTestCases) const;
 
     /**
+     * Determines if the given adaptive test cases distinguish state `nodesA`
+     * from state `nodeB`.
+     * @param nodeA First state
+     * @param nodesB Second state
+     * @param adaptiveTestCases The adaptive test cases that will be used
+     * @return `true`, if `adaptiveTestCases` distuinguishes state
+     * `nodeA` from state `nodeB`; `false`, otherwise
+     */
+    bool distinguishes(std::shared_ptr<FsmNode> nodeA,
+                      std::shared_ptr<FsmNode> nodeB,
+                      const IOTreeContainer& adaptiveTestCases) const;
+
+    /**
      * Determines if the given adaptive test case distinguish state {@code nodesA}
      * from state {@code nodeB}.
      * @param nodeA First state
@@ -633,6 +659,19 @@ public:
      * {@code nodeA} from state {@code nodeB}; {@code false}, otherwise
      */
     bool rDistinguishes(std::shared_ptr<FsmNode> nodeA,
+                      std::shared_ptr<FsmNode> nodeB,
+                      std::shared_ptr<InputOutputTree> adaptiveTestCase) const;
+
+    /**
+     * Determines if the given adaptive test case distinguishes state `nodesA`
+     * from state `nodeB`.
+     * @param nodeA First state
+     * @param nodesB Second state
+     * @param adaptiveTestCase The adaptive test case that will be used
+     * @return `true`, if `adaptiveTestCase` distuinguishes state
+     * `nodeA` from state `nodeB`; `false`, otherwise
+     */
+    bool distinguishes(std::shared_ptr<FsmNode> nodeA,
                       std::shared_ptr<FsmNode> nodeB,
                       std::shared_ptr<InputOutputTree> adaptiveTestCase) const;
 

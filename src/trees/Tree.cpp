@@ -143,7 +143,7 @@ IOListContainer Tree::getDeterministicTestCases()
     TIMED_FUNC(timerObj);
 	std::shared_ptr<std::vector<std::vector<int>>> ioll = std::make_shared<std::vector<std::vector<int>>>();
 	std::shared_ptr<TreeNode> currentNode = root;
-    ioll->push_back({FsmLabel::EPSILON_INPUT});
+    ioll->push_back({FsmLabel::EPSILON});
 	std::shared_ptr<std::vector<std::shared_ptr<TreeEdge>>> edges = currentNode->getChildren();
 
 	for (size_t i=0; i < edges->size(); ++i)

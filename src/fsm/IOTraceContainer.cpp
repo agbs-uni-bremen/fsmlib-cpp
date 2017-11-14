@@ -131,6 +131,18 @@ bool IOTraceContainer::contains(IOTrace& trace) const
     return false;
 }
 
+vector<IOTrace>::iterator IOTraceContainer::get(const InputTrace& inputTrace) const
+{
+    for (auto it = list->begin(); it != list->end(); ++it)
+    {
+        if (it->getInputTrace() == inputTrace)
+        {
+            return it;
+        }
+    }
+    return list->end();
+}
+
 void IOTraceContainer::concatenate(IOTrace& trace)
 {
     for (IOTrace& t : *list)
@@ -263,4 +275,9 @@ bool operator==(IOTraceContainer const & cont1, IOTraceContainer const & cont2)
         }
     }
     return true;
+}
+
+bool operator!=(IOTraceContainer const & cont1, IOTraceContainer const & cont2)
+{
+    return !(cont1 == cont2);
 }

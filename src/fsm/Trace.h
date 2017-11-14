@@ -66,13 +66,17 @@ public:
      */
     void prepend(const Trace& traceToPrepend);
 
+    bool isEmptyTrace() const;
+
     /**
      * Determines if the given trace is a prefix of this trace.
      * @param other The given trace
      * @return {@code true}, if the given trace is a prefix of
      * this trace, {@code false}, otherwise.
      */
-    bool isPrefix(const Trace& other) const;
+    bool isPrefix(const Trace& other, bool proper = false, bool allowEmpty = true) const;
+
+    Trace removeEpsilon() const;
 
     /**
      * Determines if the given trace is a suffix of this trace.
