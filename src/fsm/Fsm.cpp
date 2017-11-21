@@ -2286,12 +2286,28 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             for (size_t i = 0; i< producedOutputsIut.size(); ++i)
             {
                 //TODO Reached nodes should be unknown to the algorithm (due to black box);
-                shared_ptr<FsmNode> nodeIut = reachedNodesIut.at(i);
-                shared_ptr<FsmNode> nodeSpec = reachedNodesSpec.at(i);
+                //shared_ptr<FsmNode> nodeIut = reachedNodesIut.at(i);
+                //shared_ptr<FsmNode> nodeSpec = reachedNodesSpec.at(i);
                 shared_ptr<OutputTrace> outputTrace = producedOutputsIut.at(i);
                 VLOG(1) << "----------------- Getting adaptive traces -----------------";
-                IOTraceContainer observedAdaptiveTracesIut = iut.getPossibleIOTraces(nodeIut, adaptiveTestCases);
-                IOTraceContainer observedAdaptiveTracesSpec = spec.getPossibleIOTraces(nodeSpec, adaptiveTestCases);
+                IOTraceContainer observedAdaptiveTracesIut;
+                IOTraceContainer observedAdaptiveTracesSpec;
+                for (const shared_ptr<FsmNode>& nodeIut : reachedNodesIut)
+                {
+                    VLOG(1) << "  nodeIut: " << nodeIut->getName();
+                    IOTraceContainer observedAdaptiveIut = iut.getPossibleIOTraces(nodeIut, adaptiveTestCases);
+                    VLOG(1) << "  observedAdaptiveIut: " << observedAdaptiveIut;
+                    observedAdaptiveTracesIut.addUnique(observedAdaptiveIut);
+                }
+
+                for (const shared_ptr<FsmNode>& nodeSpec : reachedNodesSpec)
+                {
+                    VLOG(1) << "  nodeSpec: " << nodeSpec->getName();
+                    IOTraceContainer observedAdaptiveSpec = iut.getPossibleIOTraces(nodeSpec, adaptiveTestCases);
+                    VLOG(1) << "  observedAdaptiveSpec: " << observedAdaptiveSpec;
+                    observedAdaptiveTracesSpec.addUnique(observedAdaptiveSpec);
+                }
+
                 VLOG(1) << "  observedAdaptiveTracesIut: " << observedAdaptiveTracesIut;
                 VLOG(1) << "  observedAdaptiveTracesSpec: " << observedAdaptiveTracesSpec;
                 bool failure = false;
