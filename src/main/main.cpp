@@ -1049,15 +1049,28 @@ int main(int argc, char* argv[])
     CLOG(INFO, logging::globalLogger) << "############## Starting Application ##############";
 
     shared_ptr<FsmPresentationLayer> plKaput =
-    make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
-            + "../../../resources/adaptive-test-out.txt",
-            + "../../../resources/adaptive-test-state.txt");
+    make_shared<FsmPresentationLayer>("../../../resources/adaptiveIn.txt",
+            + "../../../resources/adaptiveOut.txt",
+            + "../../../resources/adaptiveState.txt");
 
-    Fsm spec = Fsm("../../../resources/adaptive-kaput-spec.fsm", plKaput, "spec");
-    Fsm iut = Fsm("../../../resources/adaptive-kaput-iut.fsm", plKaput, "iut");
+    Fsm spec = Fsm("../../../resources/adaptive.fsm", plKaput, "spec");
+    Fsm iut = Fsm("../../../resources/adaptive-iut.fsm", plKaput, "iut");
 
     Fsm specMin = spec.minimise();
     Fsm iutMin = iut.minimise();
+
+    const string dotPrefix = "../../../resources/adaptive-test/";
+    spec.toDot(dotPrefix + "spec");
+    iut.toDot(dotPrefix + "iut");
+    specMin.toDot(dotPrefix + "specMin");
+    iutMin.toDot(dotPrefix + "iutMin");
+
+    Fsm intersect = spec.intersect(iut);
+    intersect.toDot(dotPrefix + "intersect");
+
+    Fsm product = spec.intersect(iut);
+
+    product.toDot(dotPrefix + "product");
 
     IOTraceContainer observedTraces;
     bool isReduction = Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces);
