@@ -535,7 +535,7 @@ void Fsm::dumpFsm(ofstream & outputFile) const
 vector<shared_ptr<FsmNode>> Fsm::getDReachableStates(vector<std::shared_ptr<InputTrace>>& detStateCover)
 {
     TIMED_FUNC(timerObj);
-    VLOG(1) << "getDReachableStates()";
+    VLOG(2) << "getDReachableStates()";
     resetColor();
     deque<shared_ptr<FsmNode>> bfsLst;
     vector<shared_ptr<FsmNode>> nodes;
@@ -555,7 +555,7 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates(vector<std::shared_ptr<Inpu
     {
         shared_ptr<FsmNode> thisNode = bfsLst.front();
         bfsLst.pop_front();
-        VLOG(1) << "thisNode: " << thisNode->getName();
+        VLOG(2) << "thisNode: " << thisNode->getName();
 
         shared_ptr<IOTrace> thisNodePath;
 
@@ -564,7 +564,7 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates(vector<std::shared_ptr<Inpu
             try
             {
                 thisNodePath = paths.at(thisNode);
-                VLOG(1) << "thisNodePath: " << *thisNodePath;
+                VLOG(2) << "thisNodePath: " << *thisNodePath;
             }
             catch (out_of_range e)
             {
@@ -574,18 +574,18 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates(vector<std::shared_ptr<Inpu
 
         for (int x = 0; x <= maxInput; ++x)
         {
-            VLOG(1) << "x: " << presentationLayer->getInId(x);
+            VLOG(2) << "x: " << presentationLayer->getInId(x);
             vector<int> producedOutputs;
             vector<shared_ptr<FsmNode>> successorNodes = thisNode->after(x, producedOutputs);
-            VLOG(1) << "successorNodes:";
+            VLOG(2) << "successorNodes:";
             for (auto n : successorNodes)
             {
-                VLOG(1) << "  " << n->getName();
+                VLOG(2) << "  " << n->getName();
             }
-            VLOG(1) << "producedOutputs:";
+            VLOG(2) << "producedOutputs:";
             for (auto n : producedOutputs)
             {
-                VLOG(1) << "  " << presentationLayer->getOutId(n);
+                VLOG(2) << "  " << presentationLayer->getOutId(n);
             }
             if (successorNodes.size() > 1)
             {
@@ -596,7 +596,7 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates(vector<std::shared_ptr<Inpu
                     const shared_ptr<FsmNode>& other  = successorNodes.at(i);
                     if (n != other)
                     {
-                        VLOG(1) << "Skipping.";
+                        VLOG(2) << "Skipping.";
                         skip = true;
                         break;
                     }
@@ -607,12 +607,12 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates(vector<std::shared_ptr<Inpu
                 }
             }
             shared_ptr<FsmNode> tgt = successorNodes.at(0);
-            VLOG(1) << "tgt:" << tgt->getName();
+            VLOG(2) << "tgt:" << tgt->getName();
             try
             {
                 paths.at(tgt);
                 // Path already exists. Do nothing.
-                VLOG(1) << "Path already exists. Do nothing.";
+                VLOG(2) << "Path already exists. Do nothing.";
             }
             catch (out_of_range e)
             {
@@ -622,21 +622,21 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates(vector<std::shared_ptr<Inpu
                 {
                     newPath = make_shared<IOTrace>(*thisNodePath);
                     newPath->append(x, producedOutputs.at(0));
-                    VLOG(1) << "newPath (appended): " << *newPath;
+                    VLOG(2) << "newPath (appended): " << *newPath;
                 }
                 else
                 {
                     InputTrace in = InputTrace({x}, presentationLayer);
                     OutputTrace out = OutputTrace({producedOutputs.at(0)}, presentationLayer);
                     newPath = make_shared<IOTrace>(in, out);
-                    VLOG(1) << "newPath (new): " << *newPath;
+                    VLOG(2) << "newPath (new): " << *newPath;
                 }
                 newPath->setTargetNode(tgt);
                 paths.insert(make_pair(tgt, newPath));
             }
             if (tgt->getColor() == FsmNode::white)
             {
-                VLOG(1) << "Target color is white. Setting grey, adding node, setting d-reach path.";
+                VLOG(2) << "Target color is white. Setting grey, adding node, setting d-reach path.";
                 tgt->setColor(FsmNode::grey);
                 bfsLst.push_back(tgt);
                 nodes.push_back(tgt);
@@ -2244,7 +2244,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                     // IUT produced an output that can not be produced by the specification.
                     LOG(INFO) << "  Failure observed:";
                     LOG(INFO) << "    Input Trace: " << *inputTrace;
-                    ss << "    Produced Outputs: ";
+                    ss << "    Produced Outputs Iut: ";
                     for (size_t i = 0; i < producedOutputsIut.size(); ++i)
                     {
                         ss << *producedOutputsIut.at(i);
@@ -2260,6 +2260,15 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                     }
                     LOG(INFO) << ss.str();
                     ss.str(std::string());
+                    ss << "    Produced Outputs Spec: ";
+                    for (size_t i = 0; i < producedOutputsSpec.size(); ++i)
+                    {
+                        ss << *producedOutputsSpec.at(i);
+                        if (i != producedOutputsSpec.size() - 1)
+                        {
+                            ss << ", ";
+                        }
+                    }
                     ss << "    Reached nodes: ";
                     for (size_t i = 0; i < reachedNodesIut.size(); ++i)
                     {
@@ -2315,6 +2324,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 {
                     if (!observedAdaptiveTracesSpec.contains(trace))
                     {
+                        LOG(INFO) << "  Specification does not contain " << trace;
                         failure = true;
                         break;
                     }
@@ -2784,7 +2794,7 @@ vector<vector<shared_ptr<FsmNode>>> Fsm::getMaximalSetsOfRDistinguishableStates(
         }
         vector<shared_ptr<FsmNode>> set = {node};
         set.reserve(static_cast<size_t>(getMaxNodes()));
-        VLOG(1) << "Creating set for node " << node->getName();
+        VLOG(2) << "Creating set for node " << node->getName();
         for (shared_ptr<FsmNode> n : nodes)
         {
             if (node == n)
@@ -2797,11 +2807,11 @@ vector<vector<shared_ptr<FsmNode>>> Fsm::getMaximalSetsOfRDistinguishableStates(
                 set.push_back(n);
             }
         }
-        VLOG(1) << "Set size: " << set.size();
+        VLOG(2) << "Set size: " << set.size();
         set.resize(set.size());
         result.push_back(set);
     }
-    VLOG(1) << "result size: " << result.size();
+    VLOG(2) << "result size: " << result.size();
     result.resize(result.size());
     return result;
 }
@@ -3541,6 +3551,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
 
                     newOutValOk = true;
 
+                    //BUG This is always true in the first iteration.
                     if (newOutVal == originalNewOutVal)
                     {
                         newOutValOk = false;
@@ -3688,7 +3699,7 @@ void Fsm::accept(FsmVisitor& v) {
 
 
 bool Fsm::removeUnreachableNodes(std::vector<shared_ptr<FsmNode>>& unreachableNodes) {
-    VLOG(1) << "removeUnreachableNodes()";
+    VLOG(2) << "removeUnreachableNodes()";
     vector<shared_ptr<FsmNode>> newNodes;
     FsmVisitor v;
     
