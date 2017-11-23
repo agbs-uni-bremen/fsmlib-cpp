@@ -1048,13 +1048,14 @@ int main(int argc, char* argv[])
 
     CLOG(INFO, logging::globalLogger) << "############## Starting Application ##############";
 
+    /*
     shared_ptr<FsmPresentationLayer> plKaput =
     make_shared<FsmPresentationLayer>("../../../resources/adaptiveIn.txt",
             + "../../../resources/adaptiveOut.txt",
             + "../../../resources/adaptiveState.txt");
 
-    Fsm spec = Fsm("../../../resources/adaptive.fsm", plKaput, "spec");
-    Fsm iut = Fsm("../../../resources/adaptive-iut.fsm", plKaput, "iut");
+    Fsm spec = Fsm("../../../resources/adaptive-kaput-spec.fsm", plKaput, "spec");
+    Fsm iut = Fsm("../../../resources/adaptive-kaput-iut.fsm", plKaput, "iut");
 
     Fsm specMin = spec.minimise();
     Fsm iutMin = iut.minimise();
@@ -1078,7 +1079,7 @@ int main(int argc, char* argv[])
     CLOG(INFO, logging::globalLogger) << "isReduction: " << isReduction;
 
     return 0;
-
+*/
 
     AdaptiveTestConfig config;
     config.numFsm = 1000;
@@ -1107,13 +1108,13 @@ int main(int argc, char* argv[])
         CLOG(INFO, logging::globalLogger) << "############## Debugging ##############";
 
         AdaptiveTestConfigDebug debugConfig;
-        debugConfig.numStates = 3;
-        debugConfig.numInput = 2;
-        debugConfig.numOutput = 8;
-        debugConfig.numOutFaults = 1;
-        debugConfig.numTransFaults = 1;
-        debugConfig.createRandomFsmSeed = 682959042;
-        debugConfig.createMutantSeed = 153866274;
+        debugConfig.numStates = 7;
+        debugConfig.numInput = 3;
+        debugConfig.numOutput = 7;
+        debugConfig.numOutFaults = 0;
+        debugConfig.numTransFaults = 0;
+        debugConfig.createRandomFsmSeed = 1939155069;
+        debugConfig.createMutantSeed = 248407645;
 
         shared_ptr<FsmPresentationLayer> plTest =
         make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
