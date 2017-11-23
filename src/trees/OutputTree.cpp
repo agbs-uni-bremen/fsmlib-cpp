@@ -113,6 +113,16 @@ void OutputTree::toIOTrace(vector<IOTrace> &iotrVec) {
     
 }
 
+void OutputTree::toIOTrace(vector<shared_ptr<IOTrace>> &iotrVec) {
+    vector<vector<int>> lli = *getIOLists().getIOLists();
+    for (vector<int> lst : lli)
+    {
+        OutputTrace otrc(lst,presentationLayer);
+        shared_ptr<IOTrace> iotrc = make_shared<IOTrace>(inputTrace, otrc);
+        iotrVec.push_back(iotrc);
+    }
+}
+
 OutputTree* OutputTree::_clone() const
 {
     return new OutputTree( this );

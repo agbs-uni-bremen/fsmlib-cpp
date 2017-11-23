@@ -69,6 +69,8 @@ public:
     
     void toIOTrace(std::vector<IOTrace>& iotrVec);
 
+    void toIOTrace(std::vector<std::shared_ptr<IOTrace>>& iotrVec);
+
     virtual OutputTree* _clone() const;
     std::shared_ptr<OutputTree> Clone() const;
 

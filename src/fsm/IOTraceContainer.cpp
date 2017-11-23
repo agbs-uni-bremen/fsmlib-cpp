@@ -1,73 +1,51 @@
 #include "IOTraceContainer.h"
+#include "logging/easylogging++.h"
 
 using namespace std;
 
-IOTraceContainer::IOTraceContainer():
-    list(make_shared<std::vector<IOTrace>>())
+IOTraceContainer::IOTraceContainer()
 {
 
 }
 
-IOTraceContainer::IOTraceContainer(shared_ptr<vector<IOTrace>>& list):
+IOTraceContainer::IOTraceContainer(unordered_set<shared_ptr<IOTrace>>& list):
     list(list)
 {
 
 }
 
-IOTraceContainer::IOTraceContainer(shared_ptr<IOTrace> trace):
-    list(make_shared<std::vector<IOTrace>>())
+IOTraceContainer::IOTraceContainer(shared_ptr<IOTrace> trace)
 {
-    list->push_back(*trace);
+    list.insert(trace);
 }
 
-
-shared_ptr<vector<IOTrace>> IOTraceContainer::getList() const
+void IOTraceContainer::add(const shared_ptr<IOTrace>& trc)
 {
-    return list;
+    list.insert(trc);
 }
 
-void IOTraceContainer::addUnique(IOTrace& trc)
+void IOTraceContainer::addRemovePrefixes(const shared_ptr<IOTrace>& trc)
 {
-    for(auto inLst : *list)
+    removePrefixes(trc);
+    add(trc);
+}
+
+void IOTraceContainer::addRemovePrefixes(const IOTraceContainer& cont)
+{
+    for (auto it = cont.cbegin(); it != cont.cend(); ++it)
     {
-        if (trc == inLst){
-            return;
-        }
+        addRemovePrefixes(*it);
     }
-    list->push_back(trc);
 }
 
-void IOTraceContainer::addUniqueRemovePrefixes(const IOTrace& trc)
+void IOTraceContainer::removePrefixes(const shared_ptr<IOTrace>& trc)
 {
-    removeRealPrefixes(trc);
-    for (IOTrace& trace : *list)
+    auto it = list.begin();
+    while (it != list.end())
     {
-        if (trc == trace || trace.isPrefix(trc))
+        if ((*it)->isPrefixOf(*trc))
         {
-            // The list contains either the trace itself or the trace as prefix of another trace.
-            return;
-        }
-    }
-    // No other trace has been found that contains the trace as prefix.
-    list->push_back(trc);
-}
-
-void IOTraceContainer::addUniqueRemovePrefixes(const IOTraceContainer& cont)
-{
-    for (IOTrace& trc : *cont.getList())
-    {
-        addUniqueRemovePrefixes(trc);
-    }
-}
-
-void IOTraceContainer::removeRealPrefixes(const IOTrace & trc)
-{
-    auto it = list->begin();
-    while (it  != list->end())
-    {
-        if (it->isPrefixOf(trc))
-        {
-            it = list->erase(it);
+            it = list.erase(it);
         }
         else
         {
@@ -77,54 +55,30 @@ void IOTraceContainer::removeRealPrefixes(const IOTrace & trc)
 
 }
 
-
-void IOTraceContainer::add(IOTrace& trc)
-{
-    list->push_back(trc);
-}
-
-void IOTraceContainer::addUnique(IOTraceContainer& container)
-{
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(1));
-    for (IOTrace& trace : *container.getList())
-    {
-        addUnique(trace);
-    }
-}
-
-void IOTraceContainer::addUnique(OutputTree& tree)
-{
-    std::vector<IOTrace> iOTraces;
-    tree.toIOTrace(iOTraces);
-    for (IOTrace& trace : iOTraces)
-    {
-        addUnique(trace);
-    }
-}
-
 void IOTraceContainer::add(IOTraceContainer& container)
 {
-    for (IOTrace& trace : *container.getList())
+    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(1));
+    for (auto it = container.cbegin(); it != container.cend(); ++it)
     {
-        add(trace);
+        add(*it);
     }
 }
 
 void IOTraceContainer::add(OutputTree& tree)
 {
-    std::vector<IOTrace> iOTraces;
+    std::vector<shared_ptr<IOTrace>> iOTraces;
     tree.toIOTrace(iOTraces);
-    for (IOTrace& trace : iOTraces)
+    for (const shared_ptr<IOTrace>& trace : iOTraces)
     {
         add(trace);
     }
 }
 
-bool IOTraceContainer::contains(IOTrace& trace) const
+bool IOTraceContainer::contains(const shared_ptr<IOTrace>& trace) const
 {
-    for (IOTrace& t : *list)
+    for (const shared_ptr<IOTrace>& t : list)
     {
-        if (t == trace)
+        if (*t == *trace)
         {
             return true;
         }
@@ -132,64 +86,64 @@ bool IOTraceContainer::contains(IOTrace& trace) const
     return false;
 }
 
-vector<IOTrace>::iterator IOTraceContainer::get(const InputTrace& inputTrace) const
+unordered_set<shared_ptr<IOTrace>>::const_iterator IOTraceContainer::get(const InputTrace& inputTrace) const
 {
-    for (auto it = list->begin(); it != list->end(); ++it)
+    for (auto it = list.cbegin(); it != list.cend(); ++it)
     {
-        if (it->getInputTrace() == inputTrace)
+        if ((*it)->getInputTrace() == inputTrace)
         {
             return it;
         }
     }
-    return list->end();
+    return list.cend();
 }
 
 void IOTraceContainer::concatenate(IOTrace& trace)
 {
-    for (IOTrace& t : *list)
+    for (const shared_ptr<IOTrace>& t : list)
     {
-        t.append(trace);
+        t->append(trace);
     }
 }
 
 void IOTraceContainer::concatenate(IOTraceContainer& container)
 {
-    for (IOTrace& thisTrace : *list)
+    for (const shared_ptr<IOTrace>& thisTrace : list)
     {
-        for (IOTrace& otherTrace : *container.getList())
+        for (auto it = container.cbegin(); it != container.cend(); ++it)
         {
-            thisTrace.append(otherTrace);
+            thisTrace->append(**it);
         }
     }
 }
 
-void IOTraceContainer::concatenateToFront(InputTrace& inputTrace, OutputTrace outputTrace)
+void IOTraceContainer::concatenateToFront(const shared_ptr<InputTrace>& inputTrace, const shared_ptr<OutputTrace>& outputTrace)
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(1));
-    IOTrace newIOTrace(inputTrace, outputTrace);
+    shared_ptr<IOTrace> newIOTrace = make_shared<IOTrace>(*inputTrace, *outputTrace);
     concatenateToFront(newIOTrace);
 }
 
-void IOTraceContainer::concatenateToFront(IOTrace& iOTrace)
+void IOTraceContainer::concatenateToFront(const shared_ptr<IOTrace>& iOTrace)
 {
-    for (IOTrace& iOT : *list)
+    for (const shared_ptr<IOTrace>& iOT : list)
     {
-        iOT.prepend(iOTrace);
+        iOT->prepend(*iOTrace);
     }
 }
 
 void IOTraceContainer::clear()
 {
-    list = make_shared<std::vector<IOTrace>>();
+    list = std::unordered_set<shared_ptr<IOTrace>>();
 }
 
 void IOTraceContainer::remove (IOTrace& trace)
 {
-    for (auto it = list->begin(); it != list->end();)
+    for (auto it = list.cbegin(); it != list.cend();)
     {
-        if (*it == trace)
+        if (**it == trace)
         {
-            it = list->erase(it);
+            it = list.erase(it);
         }
         else
         {
@@ -200,18 +154,18 @@ void IOTraceContainer::remove (IOTrace& trace)
 
 void IOTraceContainer::remove (IOTraceContainer& container)
 {
-    for (IOTrace& trace : *container.getList())
+    for (auto it = container.cbegin(); it != container.cend(); ++it)
     {
-        remove(trace);
+        remove(**it);
     }
 }
 
 vector<OutputTrace> IOTraceContainer::getOutputTraces() const
 {
     vector<OutputTrace> result;
-    for (IOTrace& iOTrace : *list)
+    for (const shared_ptr<IOTrace>& iOTrace : list)
     {
-        result.push_back(iOTrace.getOutputTrace());
+        result.push_back(iOTrace->getOutputTrace());
     }
     return result;
 }
@@ -248,14 +202,14 @@ std::ostream & operator<<(std::ostream & out, const IOTraceContainer & iot)
     out << "{\n";
 
     bool isFirst = true;
-    for (IOTrace& trace : *iot.list)
+    for (const shared_ptr<IOTrace>& trace : iot.list)
     {
         if (!isFirst)
         {
             out << ",\n";
         }
 
-        out << "  " << trace;
+        out << "  " << *trace;
         isFirst = false;
     }
     out << "\n}";
@@ -264,19 +218,7 @@ std::ostream & operator<<(std::ostream & out, const IOTraceContainer & iot)
 
 bool operator==(IOTraceContainer const & cont1, IOTraceContainer const & cont2)
 {
-    if (cont1.size() != cont2.size())
-    {
-        return false;
-    }
-    for (size_t i = 0; i < cont1.size(); ++i)
-    {
-        shared_ptr<vector<IOTrace>> list = cont2.getList();
-        if (find(list->begin(), list->end(), cont1.getList()->at(i)) == list->end())
-        {
-            return false;
-        }
-    }
-    return true;
+    return cont1.list == cont2.list;
 }
 
 bool operator!=(IOTraceContainer const & cont1, IOTraceContainer const & cont2)

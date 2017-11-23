@@ -1,25 +1,26 @@
 #ifndef IOTRACECONTAINER_H
 #define IOTRACECONTAINER_H
 
+#include <unordered_set>
 #include "fsm/IOTrace.h"
 #include "trees/OutputTree.h"
 
 class IOTraceContainer
 {
 private:
-    std::shared_ptr<std::vector<IOTrace>> list;
-    void removeRealPrefixes(const IOTrace & trc);
+    std::unordered_set<std::shared_ptr<IOTrace>> list;
+    void removePrefixes(const std::shared_ptr<IOTrace>& trc);
 public:
     IOTraceContainer();
-    IOTraceContainer(std::shared_ptr<std::vector<IOTrace>>& list);
+    IOTraceContainer(std::unordered_set<std::shared_ptr<IOTrace>>& list);
     IOTraceContainer(std::shared_ptr<IOTrace> trace);
-    std::shared_ptr<std::vector<IOTrace>> getList() const;
+
     /**
      * Adds the given trace to the container, only if the container
      * does not already contain a trace with the given inputs and outputs.
      * @param trc The given trace
      */
-    void addUnique(IOTrace& trc);
+    void add(const std::shared_ptr<IOTrace>& trc);
 
     /**
      * Adds the given trace to the container, only if the container
@@ -27,7 +28,7 @@ public:
      * Additionally all real prefixes of `trc` are being removed from the container.
      * @param trc The given trace.
      */
-    void addUniqueRemovePrefixes(const IOTrace& trc);
+    void addRemovePrefixes(const std::shared_ptr<IOTrace>& trc);
 
     /**
      * Adds every trace from the given container to the container, only if the container
@@ -36,38 +37,20 @@ public:
      * from the container.
      * @param cont The given container.
      */
-    void addUniqueRemovePrefixes(const IOTraceContainer& cont);
-
-    /**
-     * Adds the given trace to the container.
-     * @param trc The given trace
-     */
-    void add(IOTrace& trc);
+    void addRemovePrefixes(const IOTraceContainer& cont);
 
     /**
      * Every trace from the given container that is not already being held by
      * this container gets added to this container.
      * @param trc The given container
      */
-    void addUnique(IOTraceContainer& container);
+    void add(IOTraceContainer& container);
 
     /**
      * Adds every trace that is being represented by the given tree to the container,
      * only if the container dies not already contain a trace with the given inputs
      * and outputs.
      * @param tree The given tree.
-     */
-    void addUnique(OutputTree& tree);
-
-    /**
-     * Adds every trace from the given container to this container.
-     * @param container The given container.
-     */
-    void add(IOTraceContainer& container);
-
-    /**
-     * Adds every trace that is being represented by the given tree to this container.
-     * @param container The given tree.
      */
     void add(OutputTree& tree);
 
@@ -76,7 +59,7 @@ public:
      * @param trace The given trace
      * @return `true`, if the container contains the given trace, `false`, otherwise.
      */
-    bool contains(IOTrace& trace) const;
+    bool contains(const std::shared_ptr<IOTrace>& trace) const;
 
     /**
      * Checks if the container contains a trace with the input component being
@@ -85,7 +68,7 @@ public:
      * @return Iterator to the corresponding trace, if the container contains such trace,
      * iterator to the end of the list, otherwise.
      */
-    std::vector<IOTrace>::iterator get(const InputTrace& inputTrace) const;
+    std::unordered_set<std::shared_ptr<IOTrace>>::const_iterator get(const InputTrace& inputTrace) const;
 
     /**
      * Concatenates a given trace with each element of this container.
@@ -107,13 +90,13 @@ public:
      * @param inputTrace The given input trace
      * @param outputTrace The given output trace
      */
-    void concatenateToFront(InputTrace& inputTrace, OutputTrace outputTrace);
+    void concatenateToFront(const std::shared_ptr<InputTrace>& inputTrace, const std::shared_ptr<OutputTrace>& outputTrace);
 
     /**
       Concatenates the given input/output trace to the front of each trace in this container.
      * @param iOTrace The given input/output trace.
      */
-    void concatenateToFront(IOTrace& iOTrace);
+    void concatenateToFront(const std::shared_ptr<IOTrace>& iOTrace);
 
     /**
      * Clears this container.
@@ -142,7 +125,7 @@ public:
      * Returns the size of the conteiner.
      * @return The size of the container
      */
-    size_t size() const { return list->size(); }
+    size_t size() const { return list.size(); }
 
     /**
      * Determines wether the container is empty.
@@ -150,8 +133,15 @@ public:
      */
     bool isEmpty() const {return size() == 0; }
 
-    bool isEnd(const std::vector<IOTrace>::iterator& it) const { return it == list->end(); }
+    /*
+    bool isEnd(const std::unordered_set<std::shared_ptr<IOTrace>>::const_iterator& it) const { return it == list.end(); }
+    */
 
+    const std::unordered_set<std::shared_ptr<IOTrace>>::const_iterator cbegin() const { return list.cbegin(); }
+    const std::unordered_set<std::shared_ptr<IOTrace>>::const_iterator cend() const { return list.cend(); }
+
+    const std::unordered_set<std::shared_ptr<IOTrace>>::iterator begin() { return list.begin(); }
+    const std::unordered_set<std::shared_ptr<IOTrace>>::iterator end() { return list.end(); }
     /**
      * Removes all occurrences of the given `elem` in the given `container`.
      * @param container The given container, holding IOTraceContainers.
