@@ -85,6 +85,7 @@ void IOTraceContainer::add(IOTrace& trc)
 
 void IOTraceContainer::addUnique(IOTraceContainer& container)
 {
+    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(1));
     for (IOTrace& trace : *container.getList())
     {
         addUnique(trace);
@@ -164,6 +165,7 @@ void IOTraceContainer::concatenate(IOTraceContainer& container)
 
 void IOTraceContainer::concatenateToFront(InputTrace& inputTrace, OutputTrace outputTrace)
 {
+    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(1));
     IOTrace newIOTrace(inputTrace, outputTrace);
     concatenateToFront(newIOTrace);
 }

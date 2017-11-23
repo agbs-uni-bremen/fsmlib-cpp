@@ -930,6 +930,7 @@ OutputTree Fsm::apply(const InputTrace & itrc, bool markAsVisited)
 
 void Fsm::apply(const InputTrace& input, vector<shared_ptr<OutputTrace>>& producedOutputs, vector<shared_ptr<FsmNode>>& reachedNodes) const
 {
+    TIMED_FUNC(timerObj);
     return getInitialState()->getPossibleOutputs(input, producedOutputs, reachedNodes);
 }
 
@@ -1730,7 +1731,7 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
                                           const IOTreeContainer& treeContainer,
                                           const bool cleanTrailingEmptyTraces) const
 {
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(6));
+    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(1));
     IOTraceContainer result = IOTraceContainer();
     for (shared_ptr<InputOutputTree> tree : *treeContainer.getList())
     {
@@ -2233,7 +2234,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
         // If the FSM observes a failure, adaptive state counting terminates.
         for (shared_ptr<InputTrace> inputTrace : tC)
         {
-            TIMED_SCOPE(timerBlkObj, "adaptiveStateCounting-loop-1");
+            TIMED_SCOPE(timerBlkObj, "apply inputTrace");
             VLOG(1) << "############################################################";
             VLOG(1) << "  inputTrace: " << *inputTrace;
             /**
@@ -2299,6 +2300,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             //Chek if the IUT has produced any output that can not be produced by the specification.
             for (size_t i = 0; i < producedOutputsIut.size(); ++i)
             {
+                TIMED_SCOPE_IF(timerBlkObj, "Check produced output for failure", VLOG_IS_ON(1));
                 const shared_ptr<OutputTrace>& outIut = producedOutputsIut.at(i);
                 bool allowed = false;
                 for (size_t j = 0; j < producedOutputsSpec.size(); ++j)
@@ -2365,6 +2367,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             // Applying adaptive test cases to every node reached by the current input trace.
             for (size_t i = 0; i< producedOutputsIut.size(); ++i)
             {
+                TIMED_SCOPE_IF(timerBlkObj, "Apply adaptive test cases", VLOG_IS_ON(1));
                 //TODO Reached nodes should be unknown to the algorithm (due to black box);
                 //shared_ptr<FsmNode> nodeIut = reachedNodesIut.at(i);
                 //shared_ptr<FsmNode> nodeSpec = reachedNodesSpec.at(i);
@@ -2437,7 +2440,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
         for (shared_ptr<InputTrace> inputTrace : tC)
         {
             discardInputTrace = false;
-            TIMED_SCOPE(timerBlkObj, "adaptiveStateCounting-loop-2");
+            TIMED_SCOPE(timerBlkObj, "Check input trace");
             VLOG(1) << "check inputTrace: " << *inputTrace << " (" << ++inputTraceCount << " of " << numberInputTraces << ")";
             vector<shared_ptr<OutputTrace>>& producedOutputs = observedOutputsTCElements.at(inputTrace);
             VLOG(1) << "producedOutputs:";
@@ -2449,7 +2452,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             size_t numberOutputTraces = producedOutputs.size();
             for (shared_ptr<OutputTrace> outputTrace : producedOutputs)
             {
-                TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1", VLOG_IS_ON(2));
+                TIMED_SCOPE_IF(timerBlkObj, "Check output trace", VLOG_IS_ON(1));
                 if (discardInputTrace)
                 {
                     break;
@@ -2464,7 +2467,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 bool outputTraceMeetsCriteria = false;
                 for (const IOTraceContainer& vDoublePrime : vPrime)
                 {
-                    TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-1", VLOG_IS_ON(3));
+                    TIMED_SCOPE_IF(timerBlkObj, "Check vDoublePrime", VLOG_IS_ON(1));
                     if (discardInputTrace || outputTraceMeetsCriteria || inputTraceMeetsCriteria)
                     {
                         break;
