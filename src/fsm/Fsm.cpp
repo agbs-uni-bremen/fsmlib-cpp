@@ -2297,8 +2297,9 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             }
             VLOG(1) << ss.str();
             ss.str(std::string());
-
+            PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "apply inputTrace before insertion");
             observedOutputsTCElements.insert(make_pair(inputTrace, producedOutputsIut));
+            PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "apply inputTrace after insertion");
 
             //Chek if the IUT has produced any output that can not be produced by the specification.
             for (size_t i = 0; i < producedOutputsIut.size(); ++i)

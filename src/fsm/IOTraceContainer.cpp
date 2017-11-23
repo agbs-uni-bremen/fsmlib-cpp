@@ -57,7 +57,7 @@ void IOTraceContainer::removePrefixes(const shared_ptr<IOTrace>& trc)
 
 void IOTraceContainer::add(IOTraceContainer& container)
 {
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(1));
+    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(6));
     for (auto it = container.cbegin(); it != container.cend(); ++it)
     {
         add(*it);
