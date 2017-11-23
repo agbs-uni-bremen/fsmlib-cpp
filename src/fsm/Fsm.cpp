@@ -1985,6 +1985,77 @@ IOTraceContainer Fsm::rPlus(std::shared_ptr<FsmNode> node,
     return rResult;
 }
 
+bool Fsm::exceedsBound(const size_t m,
+                       const IOTrace& base,
+                       const IOTrace& suffix,
+                       const vector<shared_ptr<InputTrace>>& takenInputs,
+                       const vector<shared_ptr<FsmNode>>& states,
+                       const IOTreeContainer& adaptiveTestCases,
+                       const IOTraceContainer& vDoublePrime,
+                       const vector<shared_ptr<FsmNode>>& dReachableStates,
+                       const Fsm& spec,
+                       const Fsm& iut,
+                       const bool useErroneousImplementation)
+{
+    if (useErroneousImplementation)
+    {
+        size_t lB = Fsm::lowerBound(base, suffix, takenInputs, states, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
+        VLOG(1) << "lB: " << lB;
+        return lB > m;
+    }
+    else
+    {
+        VLOG(1) << "lowerBound()";
+        VLOG(1) << "base: " << base;
+        VLOG(1) << "suffix: " << suffix;
+        VLOG(1) << "takenInputs:";
+        for (auto i : takenInputs)
+        {
+            VLOG(1) << "  " << *i;
+        }
+        VLOG(1) << "states:";
+        for (auto s : states)
+        {
+            VLOG(1) << "  " << s->getName();
+        }
+        VLOG(1) << "adaptiveTestCases: " << adaptiveTestCases;
+        VLOG(1) << "vDoublePrime: " << vDoublePrime;
+        VLOG(1) << "dReachableStates: ";
+        for (auto s : dReachableStates)
+        {
+            VLOG(1) << "  " << s->getName();
+        }
+        unordered_set<shared_ptr<FsmNode>> baseSuccessors = spec.getInitialState()->after(base);
+        if (baseSuccessors.size() != 1)
+        {
+            LOG(FATAL) << "The Specification does not seem to be observable.";
+        }
+        const shared_ptr<FsmNode>& node = *baseSuccessors.begin();
+
+        vector<shared_ptr<FsmNode>> traversedStates = node->getTraversedStates(suffix);
+        size_t traversedCount = 0;
+        size_t numDReach = 0;
+        for (const shared_ptr<FsmNode>& n : states)
+        {
+            if (n->isDReachable())
+            {
+                ++numDReach;
+            }
+        }
+        for (const shared_ptr<FsmNode>& n : traversedStates)
+        {
+            if(find(states.begin(), states.end(), n) != states.end())
+            {
+                ++traversedCount;
+            }
+        }
+        size_t limit = m - numDReach + 1;
+        VLOG(1) << "lBlimit " << limit;
+        VLOG(1) << "traversedCount: " << traversedCount;
+        return traversedCount > limit;
+    }
+}
+
 size_t Fsm::lowerBound(const IOTrace& base,
                        const IOTrace& suffix,
                        const vector<shared_ptr<InputTrace>>& takenInputs,
@@ -2529,9 +2600,11 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                         }
                         if (!discardSet)
                         {
-                            size_t lB = Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
-                            VLOG(1) << "lB: " << lB;
-                            if (lB > m)
+                            //size_t lB = Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
+                            //VLOG(1) << "lB: " << lB;
+                            bool exceedsBound = Fsm::exceedsBound(m, *maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
+                            VLOG(1) << "exceedsBound: " << exceedsBound;
+                            if (exceedsBound)
                             {
                                 VLOG(1) << "Exceeded lower bound. Output trace " << *outputTrace << " meets criteria.";
                                 outputTraceMeetsCriteria = true;

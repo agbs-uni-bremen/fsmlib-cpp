@@ -581,6 +581,18 @@ public:
                              const Fsm& spec,
                              const Fsm& iut);
 
+    static bool exceedsBound(const size_t m,
+                             const IOTrace& base,
+                             const IOTrace& suffix,
+                             const std::vector<std::shared_ptr<InputTrace>>& takenInputs,
+                             const std::vector<std::shared_ptr<FsmNode>>& states,
+                             const IOTreeContainer& adaptiveTestCases,
+                             const IOTraceContainer& vDoublePrime,
+                             const std::vector<std::shared_ptr<FsmNode>>& dReachableStates,
+                             const Fsm& spec,
+                             const Fsm& iut,
+                             const bool useErroneousImplementation = false);
+
     /**
      * Calculates a test suite that determines if a given IUT is a reduction of the given
      * specification..

@@ -121,6 +121,8 @@ public:
      */
     std::vector<std::shared_ptr<OutputTrace>> getPossibleOutputs(const int x) const;
 
+    std::vector<std::shared_ptr<FsmNode>> getTraversedStates(const IOTrace& trace);
+
     bool hasTransition(const int input, const int output) const;
 
     bool isPossibleOutput(const int x, const int y) const;
