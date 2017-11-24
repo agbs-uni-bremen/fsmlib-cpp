@@ -733,7 +733,8 @@ bool executeAdaptiveTest(
         const unsigned int createRandomFsmSeed,
         const unsigned int createMutantSeed,
         const shared_ptr<FsmPresentationLayer>& pl,
-        bool& isReduction)
+        bool& isReduction,
+        bool useErroneousImplementation = false)
 {
 
     shared_ptr<FsmPresentationLayer> plCopy = make_shared<FsmPresentationLayer>(*pl);
@@ -791,7 +792,7 @@ bool executeAdaptiveTest(
     CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Testing.";
 
     IOTraceContainer observedTraces;
-    return isReduction == Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces);
+    return isReduction == Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces, useErroneousImplementation);
 }
 
 unsigned int getRandomSeed()
@@ -847,6 +848,7 @@ struct AdaptiveTestConfig
     int minOutFaults = 1;
     int minTransFaults = 1;
     unsigned int seed = 0;
+    bool useErroneousImplementation = false;
 };
 
 void adaptiveTest01(AdaptiveTestConfig& config)
@@ -965,7 +967,8 @@ void adaptiveTest01(AdaptiveTestConfig& config)
                                 createRandomFsmSeed,
                                 createMutantSeed,
                                 plTest,
-                                isReduction);
+                                isReduction,
+                                config.useErroneousImplementation);
                     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
                     durationMS = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
                     durationMin = std::chrono::duration_cast<std::chrono::minutes>(end - start).count();

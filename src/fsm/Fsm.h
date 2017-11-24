@@ -595,7 +595,7 @@ public:
      * @return `true`, if no failure has been observed during the creation of the test suite,
      * `false`, otherwise.
      */
-    static bool adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceContainer& observedTraces);
+    static bool adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceContainer& observedTraces, bool useErroneousImplementation = false);
 
     /**
      * Determines if the given adaptive test cases distinguish all states from

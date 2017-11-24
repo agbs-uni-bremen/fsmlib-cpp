@@ -2134,7 +2134,7 @@ size_t Fsm::lowerBound(const IOTrace& base,
     return result;
 }
 
-bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceContainer& observedTraces)
+bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceContainer& observedTraces, bool useErroneousImplementation)
 {
     VLOG(1)<< "adaptiveStateCounting()";
     if (spec.isMinimal() != True)
@@ -2610,7 +2610,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                         {
                             //size_t lB = Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
                             //VLOG(1) << "lB: " << lB;
-                            bool exceedsBound = Fsm::exceedsBound(m, *maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
+                            bool exceedsBound = Fsm::exceedsBound(m, *maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut, useErroneousImplementation);
                             VLOG(1) << "exceedsBound: " << exceedsBound;
                             if (exceedsBound)
                             {
