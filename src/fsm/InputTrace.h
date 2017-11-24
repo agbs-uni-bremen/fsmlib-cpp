@@ -48,4 +48,16 @@ public:
     InputTrace& operator=(InputTrace&& other);
 
 };
+
+namespace std {
+  template <> struct hash<InputTrace>
+  {
+    size_t operator()(const InputTrace& trace) const
+    {
+        const Trace& t = static_cast<Trace>(trace);
+        return std::hash<Trace>()(t);
+    }
+  };
+}
+
 #endif //FSM_FSM_INPUTTRACE_H_

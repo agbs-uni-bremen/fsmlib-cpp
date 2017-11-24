@@ -44,6 +44,21 @@ inputTrace(ioTrace.inputTrace), outputTrace(ioTrace.outputTrace), targetNode(ioT
 
 }
 
+IOTrace::IOTrace(const IOTrace& ioTrace, const IOTrace& append, bool prepend):
+    inputTrace(ioTrace.inputTrace), outputTrace(ioTrace.outputTrace), targetNode(ioTrace.targetNode)
+{
+    if (prepend)
+    {
+        inputTrace.prepend(append.getInputTrace());
+        outputTrace.prepend(append.getOutputTrace());
+    }
+    else
+    {
+        inputTrace.append(append.getInputTrace());
+        outputTrace.append(append.getOutputTrace());
+    }
+}
+
 IOTrace::IOTrace(const IOTrace & ioTrace, int n, std::shared_ptr<FsmNode> targetNode):
     inputTrace(ioTrace.getInputTrace()), outputTrace(ioTrace.getOutputTrace()), targetNode(targetNode)
 {
@@ -179,6 +194,48 @@ ostream & operator<<(ostream & out, const IOTrace & trace)
 bool operator==(IOTrace const & iOTrace1, IOTrace const & iOTrace2)
 {
     return iOTrace1.getInputTrace() == iOTrace2.getInputTrace() && iOTrace1.getOutputTrace() == iOTrace2.getOutputTrace();
+}
+
+bool operator<=(IOTrace const & trace1, IOTrace const & trace2)
+{
+    if (trace1.size() < trace2.size())
+    {
+        return true;
+    }
+    else if (trace1.size() > trace2.size())
+    {
+        return false;
+    }
+    else
+    {
+        vector<int> comp1 = trace1.getInputTrace().get();
+        vector<int> comp2 = trace2.getInputTrace().get();
+        for (size_t i = 0; i < comp1.size(); ++i)
+        {
+            if (comp1.at(i) < comp2.at(i))
+            {
+                return true;
+            }
+            else if (comp1.at(i) > comp2.at(i))
+            {
+                return false;
+            }
+        }
+        comp1 = trace1.getOutputTrace().get();
+        comp2 = trace2.getOutputTrace().get();
+        for (size_t i = 0; i < comp1.size(); ++i)
+        {
+            if (comp1.at(i) < comp2.at(i))
+            {
+                return true;
+            }
+            else if (comp1.at(i) > comp2.at(i))
+            {
+                return false;
+            }
+        }
+    }
+    return false;
 }
 
 IOTrace& IOTrace::operator= (IOTrace&& other)

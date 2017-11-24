@@ -5,22 +5,40 @@
 #include "fsm/IOTrace.h"
 #include "trees/OutputTree.h"
 
+struct IOTraceHash {
+    size_t operator() (const std::shared_ptr<const IOTrace>& a) const {
+        return std::hash<IOTrace>()(*a);
+    }
+};
+
+struct IOTracePrep {
+    size_t operator() (const std::shared_ptr<const IOTrace>& a, const std::shared_ptr<const IOTrace>& b) const {
+        if (a == b)
+        {
+            return true;
+        }
+        return *a == *b;
+    }
+};
+
+typedef std::unordered_set<std::shared_ptr<const IOTrace>, IOTraceHash, IOTracePrep> IOTraceCont;
+
 class IOTraceContainer
 {
 private:
-    std::unordered_set<std::shared_ptr<IOTrace>> list;
-    void removePrefixes(const std::shared_ptr<IOTrace>& trc);
+    IOTraceCont list;
+    void removePrefixes(const std::shared_ptr<const IOTrace>& trc);
 public:
     IOTraceContainer();
-    IOTraceContainer(std::unordered_set<std::shared_ptr<IOTrace>>& list);
-    IOTraceContainer(std::shared_ptr<IOTrace> trace);
+    IOTraceContainer(const std::shared_ptr<IOTraceCont>& list);
+    IOTraceContainer(const std::shared_ptr<IOTrace>& trace);
 
     /**
      * Adds the given trace to the container, only if the container
      * does not already contain a trace with the given inputs and outputs.
      * @param trc The given trace
      */
-    void add(const std::shared_ptr<IOTrace>& trc);
+    void add(const std::shared_ptr<const IOTrace>& trc);
 
     /**
      * Adds the given trace to the container, only if the container
@@ -28,7 +46,7 @@ public:
      * Additionally all real prefixes of `trc` are being removed from the container.
      * @param trc The given trace.
      */
-    void addRemovePrefixes(const std::shared_ptr<IOTrace>& trc);
+    void addRemovePrefixes(const std::shared_ptr<const IOTrace>& trc);
 
     /**
      * Adds every trace from the given container to the container, only if the container
@@ -59,7 +77,7 @@ public:
      * @param trace The given trace
      * @return `true`, if the container contains the given trace, `false`, otherwise.
      */
-    bool contains(const std::shared_ptr<IOTrace>& trace) const;
+    bool contains(const std::shared_ptr<const IOTrace>& trace) const;
 
     /**
      * Checks if the container contains a trace with the input component being
@@ -68,7 +86,7 @@ public:
      * @return Iterator to the corresponding trace, if the container contains such trace,
      * iterator to the end of the list, otherwise.
      */
-    std::unordered_set<std::shared_ptr<IOTrace>>::const_iterator get(const InputTrace& inputTrace) const;
+    IOTraceCont::const_iterator get(const InputTrace& inputTrace) const;
 
     /**
      * Concatenates a given trace with each element of this container.
@@ -103,17 +121,7 @@ public:
      */
     void clear();
 
-    /**
-     * Removes all occurrences of the given trace from this container.
-     * @param trace The given trace
-     */
-    void remove (IOTrace& trace);
-
-    /**
-     * Removes all occurrebces of the traces in the given container from this container.
-     * @param container The given container of traces that will be removed.
-     */
-    void remove (IOTraceContainer& container);
+    bool remove(const std::shared_ptr<const IOTrace>& trace);
 
     /**
      * Returns all output traces.
@@ -133,15 +141,11 @@ public:
      */
     bool isEmpty() const {return size() == 0; }
 
-    /*
-    bool isEnd(const std::unordered_set<std::shared_ptr<IOTrace>>::const_iterator& it) const { return it == list.end(); }
-    */
+    const IOTraceCont::const_iterator cbegin() const { return list.cbegin(); }
+    const IOTraceCont::const_iterator cend() const { return list.cend(); }
 
-    const std::unordered_set<std::shared_ptr<IOTrace>>::const_iterator cbegin() const { return list.cbegin(); }
-    const std::unordered_set<std::shared_ptr<IOTrace>>::const_iterator cend() const { return list.cend(); }
-
-    const std::unordered_set<std::shared_ptr<IOTrace>>::iterator begin() { return list.begin(); }
-    const std::unordered_set<std::shared_ptr<IOTrace>>::iterator end() { return list.end(); }
+    const IOTraceCont::iterator begin() { return list.begin(); }
+    const IOTraceCont::iterator end() { return list.end(); }
     /**
      * Removes all occurrences of the given `elem` in the given `container`.
      * @param container The given container, holding IOTraceContainers.

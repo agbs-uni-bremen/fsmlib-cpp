@@ -42,6 +42,7 @@ public:
     IOTrace(const Trace& i, const Trace& o);
     IOTrace(const int i, const int o, std::shared_ptr<FsmNode> targetNode, std::shared_ptr<FsmPresentationLayer> pl);
     IOTrace(const IOTrace & ioTrace);
+    IOTrace(const IOTrace& ioTrace, const IOTrace& append, bool prepend = false);
     IOTrace(const IOTrace & ioTrace, int n, std::shared_ptr<FsmNode> targetNode = nullptr);
     IOTrace(std::shared_ptr<FsmPresentationLayer> pl);
 
@@ -64,7 +65,7 @@ public:
         targetNode = target;
     }
 
-    std::shared_ptr<FsmNode> getTargetNode()
+    std::shared_ptr<FsmNode> getTargetNode() const
     {
         return targetNode;
     }
@@ -76,6 +77,7 @@ public:
      * @param other The given trace
      */
     void append(IOTrace& other);
+
     /**
      * Prepends the given trace to this trace.
      * @param other The given trace
@@ -130,7 +132,29 @@ public:
     {
         return !(iOTrace1 == iOTrace2);
     }
+    friend bool operator<=(IOTrace const & iOTrace1, IOTrace const & iOTrace2);
     IOTrace& operator= (IOTrace&& other);
     std::string toRttString() const;
 };
+
+namespace std {
+  template <> struct hash<IOTrace>
+  {
+    size_t operator()(const IOTrace& trace) const
+    {
+
+        size_t seed = 0;
+        std::hash<size_t> hasher;
+
+        size_t iH = hash<InputTrace>()(trace.getInputTrace());
+        size_t oH = hash<OutputTrace>()(trace.getOutputTrace());
+
+        seed ^= hasher(iH) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+        seed ^= hasher(oH) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+
+        return seed;
+    }
+  };
+}
+
 #endif //FSM_FSM_IOTRACE_H_

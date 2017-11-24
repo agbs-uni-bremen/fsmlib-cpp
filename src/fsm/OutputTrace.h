@@ -62,4 +62,16 @@ public:
 	*/
     friend std::ostream & operator<<(std::ostream & out, const OutputTrace & trace);
 };
+
+namespace std {
+  template <> struct hash<OutputTrace>
+  {
+    size_t operator()(const OutputTrace& trace) const
+    {
+        const Trace& t = static_cast<Trace>(trace);
+        return std::hash<Trace>()(t);
+    }
+  };
+}
+
 #endif //FSM_FSM_OUTPUTTRACE_H_
