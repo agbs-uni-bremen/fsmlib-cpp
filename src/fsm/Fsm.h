@@ -464,29 +464,17 @@ public:
      */
     IOTreeContainer getAdaptiveRCharacterisationSet() const;
 
-    /**
-     * Returns all possible input/output sequences that can be produced and all
-     * nodes that can be reached when applying a given adaptive test case tree
-     * to a given state.
-     * @param node The given state
-     * @param tree The given adaptive test case
-     * @return All input/output traces that can be produced
-     */
-    IOTraceContainer getPossibleIOTraces(std::shared_ptr<FsmNode> node,
-                                         std::shared_ptr<InputOutputTree> tree,
-                                         const bool cleanTrailingEmptyTraces = true) const;
 
-    /**
-     * Returns all possible input/output sequences that can be produced and all nodes
-     * that can be reached when applying each element of a given adaptive test case
-     * tree container to a given state.
-     * @param node The given state
-     * @param treeContainer The given container with adaptive test cases
-     * @return All input/output traces that can be produced
-     */
-    IOTraceContainer getPossibleIOTraces(std::shared_ptr<FsmNode> node,
-                                         const IOTreeContainer& treeContainer,
-                                         const bool cleanTrailingEmptyTraces = true) const;
+    void addPossibleIOTraces(std::shared_ptr<FsmNode> node,
+                             std::shared_ptr<InputOutputTree> tree,
+                             IOTraceContainer& iOTraceContainer,
+                             const bool cleanTrailingEmptyTraces = true) const;
+
+
+    void addPossibleIOTraces(std::shared_ptr<FsmNode> node,
+                             const IOTreeContainer& treeContainer,
+                             IOTraceContainer& iOTraceContainer,
+                             const bool cleanTrailingEmptyTraces = true) const;
 
     bool hasFailure() const;
 

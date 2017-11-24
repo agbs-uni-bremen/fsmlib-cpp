@@ -1637,9 +1637,11 @@ IOListContainer Fsm::getRCharacterisationSet() const
     return result;
 }
 
-IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
-                                          shared_ptr<InputOutputTree> tree,
-                                          const bool cleanTrailingEmptyTraces) const
+
+void Fsm::addPossibleIOTraces(shared_ptr<FsmNode> node,
+                              shared_ptr<InputOutputTree> tree,
+                              IOTraceContainer& iOTraceContainer,
+                              const bool cleanTrailingEmptyTraces) const
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
     VLOG(2) << "(" << node->getName() << ") " << "getPossibleIOTraces()";
@@ -1650,9 +1652,7 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
         VLOG(2)  << "(" << node->getName() << ") " << "  tree is empty. returning.";
         std::shared_ptr<IOTrace> emptyTrace = IOTrace::getEmptyTrace(presentationLayer);
         emptyTrace->setTargetNode(node);
-        return IOTraceContainer(emptyTrace);
     }
-    IOTraceContainer result = IOTraceContainer();
 
     for (int y = 0; y <= maxOutput; ++y)
     {
@@ -1676,7 +1676,7 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
             {
                 shared_ptr<IOTrace> trace = make_shared<IOTrace>(x, y, nextNode, presentationLayer);
                 VLOG(2)  << "(" << node->getName() << ") " << "  tree is NOT defined. Adding " << *trace;
-                result.add(trace);
+                iOTraceContainer.add(trace);
             }
             else if (tree->isDefined(y))
             {
@@ -1687,7 +1687,8 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
                 shared_ptr<InputOutputTree> nextTree = make_shared<InputOutputTree>(nextTreeNode, presentationLayer);
                 VLOG(2) << "(" << node->getName() << ") " << "    nextTree: " << nextTree->str();
                 VLOG(2) << "++ ENTERING RECURSION.";
-                IOTraceContainer iONext = getPossibleIOTraces(nextNode, nextTree);
+                IOTraceContainer iONext;
+                addPossibleIOTraces(nextNode, nextTree, iONext);
                 VLOG(2) << "-- LEAVING RECURSION.";
                 VLOG(2)  << "(" << node->getName() << ") " << "    iONext: " << iONext;
                 shared_ptr<IOTrace> trace = make_shared<IOTrace>(x, y, nextNode, presentationLayer);
@@ -1720,28 +1721,24 @@ IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
                     VLOG(2)  << "(" << node->getName() << ") " << "    iONext: " << iONext;
                 }
                 VLOG(2)  << "Adding " << iONext << " to result.";
-                result.add(iONext);
+                iOTraceContainer.add(iONext);
             }
         }
         VLOG(2)  << "(" << node->getName() << ") " << "#####################################";
     }
-    VLOG(2)  << "(" << node->getName() << ") " << "--- result: " << result;
-    return result;
+    VLOG(2)  << "(" << node->getName() << ") " << "--- result: " << iOTraceContainer;
 }
 
-IOTraceContainer Fsm::getPossibleIOTraces(shared_ptr<FsmNode> node,
-                                          const IOTreeContainer& treeContainer,
-                                          const bool cleanTrailingEmptyTraces) const
+void Fsm::addPossibleIOTraces(std::shared_ptr<FsmNode> node,
+                         const IOTreeContainer& treeContainer,
+                         IOTraceContainer& iOTraceContainer,
+                         const bool cleanTrailingEmptyTraces) const
 {
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(1));
-    IOTraceContainer result = IOTraceContainer();
+    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(2));
     for (shared_ptr<InputOutputTree> tree : *treeContainer.getList())
     {
-        IOTraceContainer container = getPossibleIOTraces(node, tree, cleanTrailingEmptyTraces);
-        VLOG(2) << "getPossibleIOTraces container: " << container;
-        result.add(container);
+        addPossibleIOTraces(node, tree, iOTraceContainer, cleanTrailingEmptyTraces);
     }
-    return result;
 }
 
 bool Fsm::hasFailure() const
@@ -1783,7 +1780,7 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const IOT
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
     VLOG(7) << "bOmega() - adaptiveTestCases.size: " << adaptiveTestCases.size() << ", trace.size(): " << trace.size();
-    IOTraceContainer result = IOTraceContainer();
+    IOTraceContainer result;
 
     shared_ptr<FsmNode> initialState = getInitialState();
     if (!initialState)
@@ -1802,7 +1799,8 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const IOT
     }
     shared_ptr<FsmNode> successorNode = *successorNodes.begin();
     VLOG(2) << "bOmega successorNode with " << trace << ": " << successorNode->getName();
-    return getPossibleIOTraces(successorNode, adaptiveTestCases);
+    addPossibleIOTraces(successorNode, adaptiveTestCases, result);
+    return result;
 }
 
 vector<IOTraceContainer> Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const vector<shared_ptr<InputTrace>>& inputTraces) const
@@ -2382,18 +2380,14 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 for (const shared_ptr<FsmNode>& nodeIut : reachedNodesIut)
                 {
                     VLOG(1) << "  nodeIut: " << nodeIut->getName();
-                    IOTraceContainer observedAdaptiveIut = iut.getPossibleIOTraces(nodeIut, adaptiveTestCases);
-                    VLOG(1) << "  observedAdaptiveIut: " << observedAdaptiveIut;
-                    observedAdaptiveTracesIut.add(observedAdaptiveIut);
+                    iut.addPossibleIOTraces(nodeIut, adaptiveTestCases, observedAdaptiveTracesIut);
                 }
                 PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "after reachedNodesIut loop");
 
                 for (const shared_ptr<FsmNode>& nodeSpec : reachedNodesSpec)
                 {
                     VLOG(1) << "  nodeSpec: " << nodeSpec->getName();
-                    IOTraceContainer observedAdaptiveSpec = iut.getPossibleIOTraces(nodeSpec, adaptiveTestCases);
-                    VLOG(1) << "  observedAdaptiveSpec: " << observedAdaptiveSpec;
-                    observedAdaptiveTracesSpec.add(observedAdaptiveSpec);
+                    spec.addPossibleIOTraces(nodeSpec, adaptiveTestCases, observedAdaptiveTracesSpec);
                 }
                 PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "after reachedNodesSpec loop");
 
@@ -2403,7 +2397,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 for (auto traceIt = observedAdaptiveTracesIut.cbegin(); traceIt != observedAdaptiveTracesIut.cend(); ++traceIt)
                 {
                     const shared_ptr<const IOTrace>& trace = *traceIt;
-                    if (!observedAdaptiveTracesSpec.remove(trace))
+                    if (!observedAdaptiveTracesSpec.contains(trace))
                     {
                         LOG(INFO) << "  Specification does not contain " << *trace;
                         failure = true;
@@ -2804,8 +2798,10 @@ bool Fsm::rDistinguishes(shared_ptr<FsmNode> nodeA,
                          shared_ptr<FsmNode> nodeB,
                          shared_ptr<InputOutputTree> adaptiveTestCase) const
 {
-    IOTraceContainer containerA = getPossibleIOTraces(nodeA, adaptiveTestCase);
-    IOTraceContainer containerB = getPossibleIOTraces(nodeB, adaptiveTestCase);
+    IOTraceContainer containerA;
+    addPossibleIOTraces(nodeA, adaptiveTestCase, containerA);
+    IOTraceContainer containerB;
+    addPossibleIOTraces(nodeB, adaptiveTestCase, containerB);
     vector<OutputTrace> outputsA = containerA.getOutputTraces();
     vector<OutputTrace> outputsB = containerB.getOutputTraces();
 
@@ -2826,8 +2822,10 @@ bool Fsm::distinguishes(shared_ptr<FsmNode> nodeA,
                          shared_ptr<FsmNode> nodeB,
                          shared_ptr<InputOutputTree> adaptiveTestCase) const
 {
-    IOTraceContainer containerA = getPossibleIOTraces(nodeA, adaptiveTestCase);
-    IOTraceContainer containerB = getPossibleIOTraces(nodeB, adaptiveTestCase);
+    IOTraceContainer containerA;
+    addPossibleIOTraces(nodeA, adaptiveTestCase, containerA);
+    IOTraceContainer containerB;
+    addPossibleIOTraces(nodeB, adaptiveTestCase, containerB);
 
     return containerA != containerB;
 }
