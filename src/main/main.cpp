@@ -1082,27 +1082,27 @@ int main(int argc, char* argv[])
 */
 
     AdaptiveTestConfig config;
-    config.numFsm = 1000;
+    config.numFsm = 100000;
 
     config.minInput = 1;
-    config.maxInput = 10;
+    config.maxInput = 15;
 
     config.minOutput = 1;
-    config.maxOutput = 10;
+    config.maxOutput = 15;
 
     config.minStates = 1;
-    config.maxStates = 10;
+    config.maxStates = 20;
 
-    config.minTransFaults = 0;
+    config.minTransFaults = 1;
     config.maxTransFaults = 5;
 
-    config.minOutFaults = 0;
+    config.minOutFaults = 1;
     config.maxOutFaults = 5;
 
     config.seed = 4240152224;
 
 
-    bool debug = true;
+    bool debug = false;
     if (debug)
     {
         CLOG(INFO, logging::globalLogger) << "############## Debugging ##############";
