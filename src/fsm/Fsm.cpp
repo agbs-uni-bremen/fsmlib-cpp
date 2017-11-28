@@ -2704,7 +2704,16 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             {
                 TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-expansion", VLOG_IS_ON(2));
 
-                shared_ptr<InputTrace> concat = make_shared<InputTrace>(*inputTrace);
+                shared_ptr<InputTrace> concat;
+                if (inputTrace->isEmptyTrace())
+                {
+                    concat = make_shared<InputTrace>(inputTrace->getPresentationLayer());
+                }
+                else
+                {
+                    concat = make_shared<InputTrace>(*inputTrace);
+                }
+
                 concat->add(x);
                 if (!InputTrace::contains(t, *concat) && !InputTrace::contains(expandedTC, *concat))
                 {
