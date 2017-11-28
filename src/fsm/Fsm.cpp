@@ -1684,7 +1684,6 @@ void Fsm::addPossibleIOTraces(shared_ptr<FsmNode> node,
                 VLOG(2)  << "(" << node->getName() << ") " << "  tree is defined.";
                 VLOG(2)  << "(" << node->getName() << ") " << "    nextNode: " << nextNode->getName();
                 shared_ptr<AdaptiveTreeNode> nextTreeNode = static_pointer_cast<AdaptiveTreeNode>(treeRoot->after(y));
-                VLOG(2)  << "(" << node->getName() << ") " << "    nextTreeNode input: " << presentationLayer->getInId(nextTreeNode->getInput());
                 shared_ptr<InputOutputTree> nextTree = make_shared<InputOutputTree>(nextTreeNode, presentationLayer);
                 VLOG(2) << "(" << node->getName() << ") " << "    nextTree: " << nextTree->str();
                 VLOG(2) << "++ ENTERING RECURSION.";
@@ -2033,6 +2032,7 @@ bool Fsm::exceedsBound(const size_t m,
             LOG(FATAL) << "The Specification does not seem to be observable.";
         }
         const shared_ptr<FsmNode>& node = *baseSuccessors.begin();
+        VLOG(1) << "base node: " << node->getName();
 
         vector<shared_ptr<FsmNode>> traversedStates = node->getTraversedStates(suffix);
         size_t traversedCount = 0;
@@ -2044,8 +2044,10 @@ bool Fsm::exceedsBound(const size_t m,
                 ++numDReach;
             }
         }
+        VLOG(1) << "traversedStates:";
         for (const shared_ptr<FsmNode>& n : traversedStates)
         {
+            VLOG(1) << "  " << n->getName();
             if(find(states.begin(), states.end(), n) != states.end())
             {
                 ++traversedCount;
@@ -2694,7 +2696,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
         {
             ss << *w << ", ";
         }
-        VLOG(1) << ss.str();
+        VLOG(1) << ss.str() << endl;
         ss.str(std::string());
         // Expanding sequences.
         vector<shared_ptr<InputTrace>> expandedTC;
@@ -2730,13 +2732,15 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
         {
             ss << *w << ", ";
         }
-        VLOG(1) << ss.str();
+        VLOG(1) << ss.str() << endl;
         ss.str(std::string());
         ss << "newT: ";
         for (auto w : newT)
         {
             ss << *w << ", ";
         }
+        VLOG(1) << ss.str() << endl;
+        ss.str(std::string());
         tC = expandedTC;
         t = newT;
     }
