@@ -1652,6 +1652,7 @@ void Fsm::addPossibleIOTraces(shared_ptr<FsmNode> node,
         VLOG(2)  << "(" << node->getName() << ") " << "  tree is empty. returning.";
         std::shared_ptr<IOTrace> emptyTrace = IOTrace::getEmptyTrace(presentationLayer);
         emptyTrace->setTargetNode(node);
+        return;
     }
 
     for (int y = 0; y <= maxOutput; ++y)
