@@ -30,12 +30,15 @@ public:
                const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
     InputTrace(int x, const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
-    InputTrace(const InputTrace& other, size_t n);
+    InputTrace(const InputTrace& other, size_t n, bool defaultToEmpty = false);
     InputTrace(const InputTrace& other);
     InputTrace(const Trace& other);
 
     static bool contains(const std::vector<std::shared_ptr<InputTrace>>& list, const InputTrace& trace);
     bool isEmptyTrace() const;
+
+    InputTrace removeEpsilon() const { return InputTrace(static_cast<Trace>(*this).removeEpsilon()); }
+    InputTrace removeLeadingEpsilons() const { return InputTrace(static_cast<Trace>(*this).removeLeadingEpsilons()); }
 
 	/**
 	Output the InputTrace to a standard output stream
@@ -45,6 +48,7 @@ public:
 	*/
 	friend std::ostream & operator<<(std::ostream & out,
                                      const InputTrace & trace);
+    InputTrace& operator=(InputTrace& other);
     InputTrace& operator=(InputTrace&& other);
 
 };

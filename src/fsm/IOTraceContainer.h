@@ -12,7 +12,7 @@ struct IOTraceHash {
 };
 
 struct IOTracePrep {
-    size_t operator() (const std::shared_ptr<const IOTrace>& a, const std::shared_ptr<const IOTrace>& b) const {
+    bool operator() (const std::shared_ptr<const IOTrace>& a, const std::shared_ptr<const IOTrace>& b) const {
         if (a == b)
         {
             return true;
@@ -172,5 +172,9 @@ public:
     friend bool operator==(IOTraceContainer const & cont1, IOTraceContainer const & cont2);
     friend bool operator!=(IOTraceContainer const & cont1, IOTraceContainer const & cont2);
 };
+
+namespace std {
+    bool operator==(IOTraceCont const& x, IOTraceCont const& y);
+}
 
 #endif // IOTRACECONTAINER_H

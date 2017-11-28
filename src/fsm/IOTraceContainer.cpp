@@ -201,6 +201,22 @@ bool operator==(IOTraceContainer const & cont1, IOTraceContainer const & cont2)
     return cont1.list == cont2.list;
 }
 
+bool std::operator==(IOTraceCont const& x, IOTraceCont const& y)
+{
+    if (x.size() != y.size())
+    {
+        return false;
+    }
+    for (auto e : x)
+    {
+        if (y.find(e) == y.end())
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool operator!=(IOTraceContainer const & cont1, IOTraceContainer const & cont2)
 {
     return !(cont1 == cont2);

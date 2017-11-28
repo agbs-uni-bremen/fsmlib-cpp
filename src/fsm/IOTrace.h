@@ -45,6 +45,7 @@ public:
     IOTrace(const IOTrace& ioTrace, const IOTrace& append, bool prepend = false);
     IOTrace(const IOTrace & ioTrace, int n, std::shared_ptr<FsmNode> targetNode = nullptr);
     IOTrace(std::shared_ptr<FsmPresentationLayer> pl);
+    IOTrace(const IOTrace& other, size_t n, bool defaultToEmpty = false);
 
 	/**
 	Getter for the input trace
@@ -120,6 +121,9 @@ public:
 
     static std::shared_ptr<IOTrace> getEmptyTrace(std::shared_ptr<FsmPresentationLayer> pl);
 
+    IOTrace removeEpsilon() const { return IOTrace(inputTrace.removeEpsilon(), outputTrace.removeEpsilon(), targetNode); }
+    IOTrace removeLeadingEpsilons() const { return IOTrace(inputTrace.removeLeadingEpsilons(), outputTrace.removeLeadingEpsilons(), targetNode); }
+
 	/**
 	Output the IOTrace to a standard output stream
 	@param out The standard output stream to use
@@ -133,6 +137,7 @@ public:
         return !(iOTrace1 == iOTrace2);
     }
     friend bool operator<=(IOTrace const & iOTrace1, IOTrace const & iOTrace2);
+    IOTrace& operator= (IOTrace& other);
     IOTrace& operator= (IOTrace&& other);
     std::string toRttString() const;
 };

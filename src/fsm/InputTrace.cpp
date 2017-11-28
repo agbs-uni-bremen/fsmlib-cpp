@@ -25,19 +25,10 @@ InputTrace::InputTrace(int x,
 
 }
 
-InputTrace::InputTrace(const InputTrace& other, size_t n):
-    Trace(other.getPresentationLayer())
+InputTrace::InputTrace(const InputTrace& other, size_t n, bool defaultToEmpty):
+    Trace(other, n, defaultToEmpty)
 {
-    std::vector<int> otherTrace = other.get();
-    if (n > otherTrace.size() - 1)
-    {
-        n = otherTrace.size() - 1;
-    }
 
-    if (n > 0)
-    {
-        trace = std::vector<int>(otherTrace.begin() + static_cast<std::vector<int>::difference_type>(n), otherTrace.end());
-    }
 }
 
 InputTrace::InputTrace(const InputTrace& other):
@@ -87,6 +78,15 @@ std::ostream & operator<<(std::ostream & out, const InputTrace & trace)
         }
 	}
 	return out;
+}
+
+InputTrace& InputTrace::operator=(InputTrace& other)
+{
+    if (this != &other)
+    {
+        trace = other.trace;
+    }
+    return *this;
 }
 
 InputTrace& InputTrace::operator=(InputTrace&& other)

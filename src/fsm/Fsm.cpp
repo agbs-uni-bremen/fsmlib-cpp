@@ -2312,6 +2312,45 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                     if (*outIut == *outSpec)
                     {
                         allowed = true;
+                        // Applying adaptive test cases to every node reached by the current input/output trace.
+                        VLOG(1) << "----------------- Getting adaptive traces -----------------";
+                        IOTraceContainer observedAdaptiveTracesIut;
+                        IOTraceContainer observedAdaptiveTracesSpec;
+                        const shared_ptr<FsmNode>& nodeIut = reachedNodesIut.at(i);
+                        const shared_ptr<FsmNode>& nodeSpec = reachedNodesSpec.at(j);
+
+                        iut.addPossibleIOTraces(nodeIut, adaptiveTestCases, observedAdaptiveTracesIut);
+                        spec.addPossibleIOTraces(nodeSpec, adaptiveTestCases, observedAdaptiveTracesSpec);
+
+                        VLOG(1) << "  observedAdaptiveTracesIut: " << observedAdaptiveTracesIut;
+                        VLOG(1) << "  observedAdaptiveTracesSpec: " << observedAdaptiveTracesSpec;
+
+                        bool failure = false;
+                        for (auto traceIt = observedAdaptiveTracesIut.cbegin(); traceIt != observedAdaptiveTracesIut.cend(); ++traceIt)
+                        {
+                            const shared_ptr<const IOTrace>& trace = *traceIt;
+                            if (!observedAdaptiveTracesSpec.contains(trace))
+                            {
+                                LOG(INFO) << "  Specification does not contain " << *trace;
+                                failure = true;
+                                break;
+                            }
+                        }
+        //                PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "after observedAdaptiveTracesIut loop");
+                        VLOG(1) << "  concatenating: " << *inputTrace << "/" << *outIut;
+                        observedAdaptiveTracesIut.concatenateToFront(inputTrace, outIut);
+                        VLOG(1) << "  observedAdaptiveTraces after concatenation to front: " << observedAdaptiveTracesIut;
+                        observedTraces.add(observedAdaptiveTracesIut);
+                        if (failure)
+                        {
+                            // IUT produced an output that can not be produced by the specification.
+                            LOG(INFO) << "  Failure observed:";
+                            LOG(INFO) << "    Input Trace: " << *inputTrace;
+                            LOG(INFO) << "    Observed adaptive traces:";
+                            LOG(INFO) << observedAdaptiveTracesIut;
+                            VLOG(1) << "IUT is not a reduction of the specification.";
+                            return false;
+                        }
                         break;
                     }
                 }
@@ -2365,61 +2404,6 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             {
                 cerr << "Number of produced outputs and number of reached nodes do not match.";
                 exit(EXIT_FAILURE);
-            }
-
-            // Applying adaptive test cases to every node reached by the current input trace.
-            for (size_t i = 0; i< producedOutputsIut.size(); ++i)
-            {
-                TIMED_SCOPE_IF(timerBlkObj, "Apply adaptive test cases", VLOG_IS_ON(1));
-                //TODO Reached nodes should be unknown to the algorithm (due to black box);
-                //shared_ptr<FsmNode> nodeIut = reachedNodesIut.at(i);
-                //shared_ptr<FsmNode> nodeSpec = reachedNodesSpec.at(i);
-                shared_ptr<OutputTrace> outputTrace = producedOutputsIut.at(i);
-                VLOG(1) << "----------------- Getting adaptive traces -----------------";
-                IOTraceContainer observedAdaptiveTracesIut;
-                IOTraceContainer observedAdaptiveTracesSpec;
-                for (const shared_ptr<FsmNode>& nodeIut : reachedNodesIut)
-                {
-                    VLOG(1) << "  nodeIut: " << nodeIut->getName();
-                    iut.addPossibleIOTraces(nodeIut, adaptiveTestCases, observedAdaptiveTracesIut);
-                }
-                PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "after reachedNodesIut loop");
-
-                for (const shared_ptr<FsmNode>& nodeSpec : reachedNodesSpec)
-                {
-                    VLOG(1) << "  nodeSpec: " << nodeSpec->getName();
-                    spec.addPossibleIOTraces(nodeSpec, adaptiveTestCases, observedAdaptiveTracesSpec);
-                }
-                PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "after reachedNodesSpec loop");
-
-                VLOG(1) << "  observedAdaptiveTracesIut: " << observedAdaptiveTracesIut;
-                VLOG(1) << "  observedAdaptiveTracesSpec: " << observedAdaptiveTracesSpec;
-                bool failure = false;
-                for (auto traceIt = observedAdaptiveTracesIut.cbegin(); traceIt != observedAdaptiveTracesIut.cend(); ++traceIt)
-                {
-                    const shared_ptr<const IOTrace>& trace = *traceIt;
-                    if (!observedAdaptiveTracesSpec.contains(trace))
-                    {
-                        LOG(INFO) << "  Specification does not contain " << *trace;
-                        failure = true;
-                        break;
-                    }
-                }
-                PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "after observedAdaptiveTracesIut loop");
-                VLOG(1) << "  concatenating: " << *inputTrace << "/" << *outputTrace;
-                observedAdaptiveTracesIut.concatenateToFront(inputTrace, outputTrace);
-                VLOG(1) << "  observedAdaptiveTraces after concatenation to front: " << observedAdaptiveTracesIut;
-                observedTraces.add(observedAdaptiveTracesIut);
-                if (failure)
-                {
-                    // IUT produced an output that can not be produced by the specification.
-                    LOG(INFO) << "  Failure observed:";
-                    LOG(INFO) << "    Input Trace: " << *inputTrace;
-                    LOG(INFO) << "    Observed adaptive traces:";
-                    LOG(INFO) << observedAdaptiveTracesIut;
-                    VLOG(1) << "IUT is not a reduction of the specification.";
-                    return false;
-                }
             }
         }
 
@@ -2477,28 +2461,63 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                     }
                     VLOG(1) << "vDoublePrime: " << vDoublePrime;
                     VLOG(1) << "Looking for the maximum prefix of " << currentTrace;
+
                     maxPrefixFound = false;
                     discardVDoublePrime = false;
+
+                    bool isFirstVDoublePrime = vDoublePrime == vPrime.at(0);
+                    if (!isFirstVDoublePrime && !useErroneousImplementation)
+                    {
+                        VLOG(1) << "Discarding vDoublePrime. Since using correct impllementation, discarding input trace.";
+                        discardInputTrace = true;
+                        break;
+                    }
                     bool isLastVDoublePrime = vDoublePrime == vPrime.back();
                     shared_ptr<const IOTrace> maxPrefix = nullptr;
-                    for (auto traceIt = vDoublePrime.cbegin(); traceIt != vDoublePrime.cend(); ++traceIt)
+                    IOTrace suffix(InputTrace(spec.presentationLayer), OutputTrace(spec.presentationLayer));
+
+                    if (useErroneousImplementation)
                     {
-                        const shared_ptr<const IOTrace>& iOTrace = *traceIt;
-                        TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-2", VLOG_IS_ON(4));
-                        if (currentTrace.isPrefix(*iOTrace, false, true) &&
-                                ( !maxPrefix || maxPrefix->isEmptyTrace() || iOTrace->size() > maxPrefix->size()))
+                        for (auto traceIt = vDoublePrime.cbegin(); traceIt != vDoublePrime.cend(); ++traceIt)
                         {
-                            maxPrefix = iOTrace;
+                            const shared_ptr<const IOTrace>& iOTrace = *traceIt;
+                            TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-2", VLOG_IS_ON(4));
+                            if (currentTrace.isPrefix(*iOTrace, false, true) &&
+                                    ( !maxPrefix || maxPrefix->isEmptyTrace() || iOTrace->size() > maxPrefix->size()))
+                            {
+                                maxPrefix = iOTrace;
+                                maxPrefixFound = true;
+                            }
                         }
+                        if (!maxPrefix)
+                        {
+                            LOG(ERROR) << "No maxPrefix (v/v'). This should not happen.";
+                            continue;
+                        }
+                        suffix = currentTrace.getSuffix(*maxPrefix);
                     }
-                    if (!maxPrefix)
+                    else
                     {
-                        LOG(ERROR) << "No maxPrefix (v/v'). This should not happen.";
-                        continue;
+
+                        size_t prefixLength = 0;
+                        for (const shared_ptr<FsmNode>& node : dReachableStates)
+                        {
+
+                            const InputTrace& dReachInput = node->getDReachTrace()->getInputTrace();
+                            if (inputTrace->isPrefix(dReachInput) &&
+                                    (dReachInput.size() > prefixLength ||
+                                     (!dReachInput.isEmptyTrace() && dReachInput.size() >= prefixLength)))
+                            {
+                                prefixLength = dReachInput.size();
+                                maxPrefix = node->getDReachTrace();
+                                maxPrefixFound = true;
+                                VLOG(1) << "new prefixLength: : " << prefixLength << " (" << dReachInput << ")";
+                            }
+                        }
+                        suffix = IOTrace(currentTrace.removeLeadingEpsilons(), prefixLength, true);
                     }
+
                     VLOG(1) << "maxPrefix (v/v'): " << *maxPrefix;
-                    maxPrefixFound = true;
-                    IOTrace suffix = currentTrace.getSuffix(*maxPrefix);
                     VLOG(1) << "suffix (x/y): " << suffix;
                     bool discardSet;
                     for (const vector<shared_ptr<FsmNode>>& rDistStates : maximalSetsOfRDistinguishableStates)

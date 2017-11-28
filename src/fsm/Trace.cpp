@@ -25,6 +25,33 @@ Trace::Trace(const Trace& other):
 
 }
 
+Trace::Trace(const Trace& other, size_t n, bool defaultToEmpty):
+    presentationLayer(other.presentationLayer)
+{
+    std::vector<int> otherTrace = other.get();
+    if (otherTrace.size() == 0)
+    {
+        if (defaultToEmpty)
+        {
+            trace = {FsmLabel::EPSILON};
+        }
+    }
+    else
+    {
+        if (n >= otherTrace.size())
+        {
+            if (defaultToEmpty)
+            {
+                trace = {FsmLabel::EPSILON};
+            }
+        }
+        else
+        {
+            trace = std::vector<int>(otherTrace.begin() + static_cast<std::vector<int>::difference_type>(n), otherTrace.end());
+        }
+    }
+}
+
 void Trace::add(const int e)
 {
 	trace.push_back(e);
@@ -58,6 +85,21 @@ Trace Trace::removeEpsilon() const
         if (symbol != FsmLabel::EPSILON)
         {
             result.add(symbol);
+        }
+    }
+    return result;
+}
+
+Trace Trace::removeLeadingEpsilons() const
+{
+    Trace result = Trace(presentationLayer);
+    bool foundSymbol = false;
+    for (int symbol : trace)
+    {
+        if (foundSymbol || symbol != FsmLabel::EPSILON)
+        {
+            result.add(symbol);
+            foundSymbol = true;
         }
     }
     return result;
@@ -257,6 +299,16 @@ std::ostream & operator<<(std::ostream & out, const Trace & trace)
 		out << *it;
 	}
 	return out;
+}
+
+Trace& Trace::operator=(Trace& other)
+{
+    if (this != &other)
+    {
+        trace = other.trace;
+        presentationLayer = other.presentationLayer;
+    }
+    return *this;
 }
 
 Trace& Trace::operator=(Trace&& other)

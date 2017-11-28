@@ -27,6 +27,8 @@ public:
 	@param presentationLayer The presentation layer used by the trace
 	*/
     OutputTrace(const std::vector<int>& trace, const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
+    OutputTrace(const OutputTrace& other, size_t n, bool defaultToEmpty = false);
+    OutputTrace(const OutputTrace& other);
     OutputTrace(const Trace& other);
 
     /**
@@ -54,6 +56,9 @@ public:
      */
     bool contains(const int output) const;
 
+    OutputTrace removeEpsilon() const { return OutputTrace(static_cast<Trace>(*this).removeEpsilon()); }
+    OutputTrace removeLeadingEpsilons() const { return OutputTrace(static_cast<Trace>(*this).removeLeadingEpsilons()); }
+
 	/**
 	Output the OutputTrace to a standard output stream
 	@param out The standard output stream to use
@@ -61,6 +66,9 @@ public:
 	@return The standard output stream used, to allow user to cascade <<
 	*/
     friend std::ostream & operator<<(std::ostream & out, const OutputTrace & trace);
+
+    OutputTrace& operator=(OutputTrace& other);
+    OutputTrace& operator=(OutputTrace&& other);
 };
 
 namespace std {

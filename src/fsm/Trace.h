@@ -39,6 +39,7 @@ public:
           const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
     Trace(const Trace& other);
+    Trace(const Trace& other, size_t n, bool defaultToEmpty = false);
 	
 	/**
 	 * Add an element, at the end of the trace
@@ -77,6 +78,7 @@ public:
     bool isPrefix(const Trace& other, bool proper = false, bool allowEmpty = true) const;
 
     Trace removeEpsilon() const;
+    Trace removeLeadingEpsilons() const;
 
     /**
      * Determines if the given trace is a suffix of this trace.
@@ -102,6 +104,8 @@ public:
 	@return The trace itself, represented by a list of int
 	*/
 	std::vector<int> get() const;
+
+    size_t size() const { return trace.size(); }
 
 	/**
 	Getter for an iterator of the trace, pointing at the beginning
@@ -147,6 +151,7 @@ public:
 	*/
 	friend std::ostream & operator<<(std::ostream & out, const Trace & trace);
 
+    Trace& operator=(Trace& other);
     Trace& operator=(Trace&& other);
 
 };

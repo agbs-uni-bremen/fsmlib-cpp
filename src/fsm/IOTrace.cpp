@@ -72,6 +72,12 @@ IOTrace::IOTrace(std::shared_ptr<FsmPresentationLayer> pl):
 
 }
 
+IOTrace::IOTrace(const IOTrace& other, size_t n, bool defaultToEmpty):
+    inputTrace(other.inputTrace, n, defaultToEmpty), outputTrace(other.outputTrace, n, defaultToEmpty)
+{
+
+}
+
 InputTrace IOTrace::getInputTrace() const
 {
 	return inputTrace;
@@ -236,6 +242,17 @@ bool operator<=(IOTrace const & trace1, IOTrace const & trace2)
         }
     }
     return false;
+}
+
+IOTrace& IOTrace::operator= (IOTrace& other)
+{
+    if (this != &other)
+    {
+        inputTrace = other.inputTrace;
+        outputTrace = other.outputTrace;
+        targetNode = other.targetNode;
+    }
+    return *this;
 }
 
 IOTrace& IOTrace::operator= (IOTrace&& other)

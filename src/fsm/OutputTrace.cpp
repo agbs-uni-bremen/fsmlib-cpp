@@ -17,6 +17,18 @@ OutputTrace::OutputTrace(const std::vector<int>& trace, const std::shared_ptr<Fs
 
 }
 
+OutputTrace::OutputTrace(const OutputTrace& other, size_t n, bool defaultToEmpty):
+    Trace(other, n, defaultToEmpty)
+{
+
+}
+
+OutputTrace::OutputTrace(const OutputTrace& other):
+    Trace(other)
+{
+
+}
+
 OutputTrace::OutputTrace(const Trace& other):
     Trace(other)
 {
@@ -53,6 +65,24 @@ bool OutputTrace::contains(const int output) const
     return this->Trace::contains(output);
 }
 
+
+OutputTrace& OutputTrace::operator=(OutputTrace& other)
+{
+    if (this != &other)
+    {
+        trace = other.trace;
+    }
+    return *this;
+}
+
+OutputTrace& OutputTrace::operator=(OutputTrace&& other)
+{
+    if (this != &other)
+    {
+        Trace::operator=(std::move(other));
+    }
+    return *this;
+}
 
 std::ostream & operator<<(std::ostream & out, const OutputTrace & trace)
 {
