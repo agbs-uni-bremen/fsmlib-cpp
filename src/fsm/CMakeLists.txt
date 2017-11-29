@@ -42,6 +42,8 @@ set (FSM_FSM_SOURCES
         RDistinguishability.h
 	Trace.cpp
 	Trace.h
+        VPrimeLazy.cpp
+        VPrimeLazy.h
 	typedef.inc
 )
 

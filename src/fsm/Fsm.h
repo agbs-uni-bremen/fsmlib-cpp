@@ -501,15 +501,6 @@ public:
     std::vector<IOTraceContainer> bOmega(const IOTreeContainer& adaptiveTestCases, const std::vector<std::shared_ptr<InputTrace>>& inputTraces) const;
 
     /**
-     * Calculates all possible output traces for the deterministic state cover of the
-     * fsm and returns all possible combinations of the corresponding input traces
-     * and the related output traces.
-     * @return List of possible combinations of input traces and output traces, based
-     * on the deterministic state cover.
-     */
-    std::vector<IOTraceContainer> getVPrime(const std::vector<std::shared_ptr<InputTrace>>& detStateCover);
-
-    /**
      * Calculates all prefixes of `base.suffix`, that reach the given node and that
      * extend `base`.
      * @param node The given node
