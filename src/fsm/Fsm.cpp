@@ -3593,23 +3593,40 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
 
                     newOutValOk = true;
 
-                    //BUG This is always true in the first iteration.
-                    if (newOutVal == originalNewOutVal)
-                    {
-                        newOutValOk = false;
-                    }
-                    else if (lst[srcNodeId]->getTransitions().size() == 1)
+                    if (lst[srcNodeId]->getTransitions().size() == 1)
                     {
                         newOutValOk = false;
                     }
                     else
                     {
-                        for ( auto trOther : lst[srcNodeId]->getTransitions() ) {
-                            if ( tr == trOther ) continue;
-                            if ( trOther->getTarget()->getId() != tr->getTarget()->getId() )
+                        for (auto it = lst[srcNodeId]->getTransitions().begin(); it != lst[srcNodeId]->getTransitions().end(); ++it) {
+                            const shared_ptr<FsmTransition>& trOther = *it;
+                            bool isLastTransition = it == lst[srcNodeId]->getTransitions().end() - 1;
+                            if (tr == trOther)
+                            {
+                                if (isLastTransition)
+                                {
+                                    newOutVal = false;
+                                }
                                 continue;
-                            if ( trOther->getLabel()->getInput() != theInput ) continue;
-                            if ( trOther->getLabel()->getOutput() == newOutVal ) {
+                            }
+                            if (trOther->getTarget()->getId() != tr->getTarget()->getId())
+                            {
+                                if (isLastTransition)
+                                {
+                                    newOutVal = false;
+                                }
+                                continue;
+                            }
+                            if (trOther->getLabel()->getInput() != theInput)
+                            {
+                                if (isLastTransition)
+                                {
+                                    newOutVal = false;
+                                }
+                                continue;
+                            }
+                            if (trOther->getLabel()->getOutput() == newOutVal) {
                                 newOutValOk = false;
                                 break;
                             }
