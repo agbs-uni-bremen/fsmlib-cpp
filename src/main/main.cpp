@@ -792,7 +792,9 @@ bool executeAdaptiveTest(
     CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Testing.";
 
     IOTraceContainer observedTraces;
-    return isReduction == Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces, useErroneousImplementation);
+    bool result = Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces, useErroneousImplementation);
+    LOG(INFO) << "observedTraces: " << observedTraces;
+    return isReduction == result;
 }
 
 unsigned int getRandomSeed()
