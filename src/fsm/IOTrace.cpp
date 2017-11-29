@@ -67,7 +67,7 @@ IOTrace::IOTrace(const IOTrace & ioTrace, int n, std::shared_ptr<FsmNode> target
 }
 
 IOTrace::IOTrace(std::shared_ptr<FsmPresentationLayer> pl):
-    inputTrace({}, pl), outputTrace({}, pl)
+    inputTrace(vector<int>(), pl), outputTrace(vector<int>(), pl)
 {
 
 }
