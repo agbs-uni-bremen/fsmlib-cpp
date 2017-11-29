@@ -289,12 +289,6 @@ public:
      @return a new FSM which equals the intersection of this and f
      */
     Fsm intersect(const Fsm & f);
-    
-    /**
-     * Generate the deterministic state cover.
-     * @return A tree representing the deterministic state cover of this FSM.
-     */
-    std::shared_ptr<Tree> getDeterministicStateCover();
 
     /**
      * Generate the state cover of an arbitrary FSM

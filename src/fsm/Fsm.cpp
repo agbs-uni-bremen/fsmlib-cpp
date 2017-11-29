@@ -811,59 +811,6 @@ Fsm Fsm::intersect(const Fsm & f)
     return Fsm(f.getName(), maxInput, maxOutput, fsmInterNodes, pl);
 }
 
-shared_ptr<Tree> Fsm::getDeterministicStateCover()
-{
-    VLOG(2) << "getDeterministicStateCover()";
-    TIMED_FUNC(timerObj);
-	resetColor();
-	deque<shared_ptr<FsmNode>> bfsLst;
-	unordered_map<shared_ptr<FsmNode>, shared_ptr<TreeNode>> f2t;
-
-	shared_ptr<TreeNode> root = make_shared<TreeNode>();
-	shared_ptr<Tree> dscov = make_shared<Tree>(root, presentationLayer);
-
-	shared_ptr<FsmNode> initState = getInitialState();
-	initState->setColor(FsmNode::grey);
-	bfsLst.push_back(initState);
-	f2t[initState] = root;
-
-	while (!bfsLst.empty())
-	{
-		shared_ptr<FsmNode> thisNode = bfsLst.front();
-        VLOG(2) << "thisNode: " << thisNode->getName();
-		bfsLst.pop_front();
-		shared_ptr<TreeNode> currentTreeNode = f2t[thisNode];
-
-		for (int x = 0; x <= maxInput; ++x)
-		{
-            VLOG(2) << "x: " << x;
-			vector<shared_ptr<FsmNode>> successorNodes = thisNode->after(x);
-            VLOG(2) << "successorNodes: ";
-            for (auto n : successorNodes)
-            {
-                VLOG(2) << "  " + n->getName();
-            }
-            //BUG It is possible to have the same successor node with different input
-            // and different outputs.
-			if (successorNodes.size() != 1)
-			{
-				continue;
-			}
-            shared_ptr<FsmNode>& tgt = successorNodes.at(0);
-            if (tgt->getColor() == FsmNode::white)
-            {
-                tgt->setColor(FsmNode::grey);
-                shared_ptr<TreeNode> itn = currentTreeNode->add(x);
-                bfsLst.push_back(tgt);
-                f2t[tgt] = itn;
-            }
-		}
-		thisNode->setColor(FsmNode::black);
-	}
-	resetColor();
-	return dscov;
-}
-
 shared_ptr<Tree> Fsm::getStateCover()
 {
     resetColor();
