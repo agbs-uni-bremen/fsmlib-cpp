@@ -2453,7 +2453,6 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                                 VLOG(1) << "s1RPlus:" << s1RPlus;
                                 VLOG(1) << "s2RPlus:" << s2RPlus;
 
-                                //TODO reached nodes should already be in the traces. No need to calculate them again.
                                 unordered_set<shared_ptr<FsmNode>> reached1;
                                 unordered_set<shared_ptr<FsmNode>> reached2;
 
