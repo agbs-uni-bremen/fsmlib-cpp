@@ -2321,6 +2321,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 bool inputTraceMeetsCriteria = false;
                 bool outputTraceMeetsCriteria = false;
                 bool isFirstVDoublePrime = true;
+                vPrimeLazy.reset();
                 while (vPrimeLazy.hasNext())
                 {
                     const IOTraceContainer& vDoublePrime = vPrimeLazy.getNext();

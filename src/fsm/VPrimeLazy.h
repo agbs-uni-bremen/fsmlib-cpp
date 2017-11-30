@@ -49,6 +49,8 @@ public:
      */
     bool hasNext() const;
 
+    void reset();
+
     /**
      * Returns the size of V' (number of elements, aka V'').
      * @return Number of elements in V'.

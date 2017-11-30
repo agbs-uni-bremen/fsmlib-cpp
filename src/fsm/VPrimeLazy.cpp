@@ -60,3 +60,8 @@ bool VPrimeLazy::hasNext() const
 {
     return current < length;
 }
+
+void VPrimeLazy::reset()
+{
+    current = 0;
+}
