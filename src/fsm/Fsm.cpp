@@ -2178,6 +2178,14 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             observedOutputsTCElements.insert(make_pair(inputTrace, producedOutputsIut));
             PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "apply inputTrace after insertion");
 
+            if (adaptiveTestCases.size() == 0)
+            {
+                for (const shared_ptr<OutputTrace>& oTrace : producedOutputsIut)
+                {
+                    observedTraces.add(make_shared<const IOTrace>(*inputTrace, *oTrace));
+                }
+            }
+
             //Chek if the IUT has produced any output that can not be produced by the specification.
             for (size_t i = 0; i < producedOutputsIut.size(); ++i)
             {
