@@ -2378,11 +2378,11 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                         {
 
                             const InputTrace& dReachInput = node->getDReachTrace()->getInputTrace();
-                            if (inputTrace->isPrefix(dReachInput) &&
-                                    (dReachInput.size() > prefixLength ||
-                                     (!dReachInput.isEmptyTrace() && dReachInput.size() >= prefixLength)))
+                            const InputTrace& dReachInputNoEpsilon = dReachInput.removeLeadingEpsilons();
+                            if (inputTrace->isPrefix(dReachInputNoEpsilon) &&
+                                    (!maxPrefix || dReachInputNoEpsilon.size() > prefixLength))
                             {
-                                prefixLength = dReachInput.size();
+                                prefixLength = dReachInputNoEpsilon.size();
                                 maxPrefix = node->getDReachTrace();
                                 maxPrefixFound = true;
                                 VLOG(1) << "new prefixLength: : " << prefixLength << " (" << dReachInput << ")";
