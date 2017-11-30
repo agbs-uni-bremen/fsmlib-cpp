@@ -2285,6 +2285,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                     }
                     LOG(INFO) << ss.str();
                     ss.str(std::string());
+                    VLOG(1) << "Specification does not produce output " << *outIut << ".";
                     VLOG(1) << "IUT is not a reduction of the specification.";
                     return false;
                 }
@@ -3422,6 +3423,9 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
         LOG(DEBUG) << "createMutant seed: " << seed;
     }
 
+    LOG(DEBUG) << "numOutputFaults: " << numOutputFaults;
+    LOG(DEBUG) << "numTransitionFaults: " << numTransitionFaults;
+
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>(*presentationLayer);
 
     vector<shared_ptr<FsmTransition>> cantTouchThis;
@@ -3466,7 +3470,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
             }
             std::vector<int>::iterator srcNodeIt = srcNodeIdsCpy.begin() + (rand() % srcNodeIdsCpy.size());
             size_t srcNodeId = static_cast<size_t>(*srcNodeIt);
-            LOG(INFO) << "srcNodeId: " << srcNodeId;
+            VLOG(2) << "srcNodeId: " << srcNodeId;
             srcNodeIdsCpy.erase(srcNodeIt);
 
             tgtNodeIdsCpy = srcNodeIds;
@@ -3479,7 +3483,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                 }
                 std::vector<int>::iterator tgtNodeIt = tgtNodeIdsCpy.begin() + (rand() % tgtNodeIdsCpy.size());
                 size_t newTgtNodeId = static_cast<size_t>(*tgtNodeIt);
-                LOG(INFO) << "  newTgtNodeId: " << newTgtNodeId;
+                VLOG(2) << "  newTgtNodeId: " << newTgtNodeId;
                 tgtNodeIdsCpy.erase(tgtNodeIt);
 
 
@@ -3488,7 +3492,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                 {
                     std::vector<shared_ptr<FsmTransition>>::iterator transitionIt = transitions.begin() + (rand() % transitions.size());
                     shared_ptr<FsmTransition> tr = *transitionIt;
-                    LOG(INFO) << "    tr: " << tr->str();
+                    VLOG(2) << "    tr: " << tr->str();
                     transitions.erase(transitionIt);
 
                     if (find(cantTouchThis.begin(), cantTouchThis.end(), tr) != cantTouchThis.end())
