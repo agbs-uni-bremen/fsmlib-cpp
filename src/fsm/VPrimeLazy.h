@@ -17,7 +17,7 @@ using namespace std;
 class VPrimeLazy
 {
 private:
-    vector<vector<shared_ptr<IOTrace>>> allPossibleTraces;
+    vector<vector<shared_ptr<const IOTrace>>> allPossibleTraces;
     size_t current;
     size_t length;
     vector<pair<size_t,size_t>> dm;

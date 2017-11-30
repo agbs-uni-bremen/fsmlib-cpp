@@ -528,9 +528,10 @@ public:
      * @return List of input output traces
      */
     IOTraceContainer rPlus(std::shared_ptr<FsmNode> node,
-                       const IOTrace& prefix,
-                       const IOTrace& suffix,
-                       const IOTraceContainer& vDoublePrime) const;
+                           const IOTrace& prefix,
+                           const IOTrace& suffix,
+                           const IOTraceContainer& vDoublePrime,
+                           const bool onlyPlusPortion = false) const;
 
     /**
      * Calculates the lower bound that may be placed on the number of states

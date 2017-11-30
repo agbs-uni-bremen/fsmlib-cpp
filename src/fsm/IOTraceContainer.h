@@ -62,7 +62,7 @@ public:
      * this container gets added to this container.
      * @param trc The given container
      */
-    void add(IOTraceContainer& container);
+    void add(const IOTraceContainer& container);
 
     /**
      * Adds every trace that is being represented by the given tree to the container,
@@ -114,7 +114,7 @@ public:
       Concatenates the given input/output trace to the front of each trace in this container.
      * @param iOTrace The given input/output trace.
      */
-    void concatenateToFront(const std::shared_ptr<IOTrace>& iOTrace);
+    void concatenateToFront(const std::shared_ptr<const IOTrace>& iOTrace);
 
     /**
      * Clears this container.

@@ -55,10 +55,10 @@ void IOTraceContainer::removePrefixes(const shared_ptr<const IOTrace>& trc)
 
 }
 
-void IOTraceContainer::add(IOTraceContainer& container)
+void IOTraceContainer::add(const IOTraceContainer& container)
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(6));
-    list.insert(container.begin(), container.end());
+    list.insert(container.cbegin(), container.cend());
 }
 
 void IOTraceContainer::add(OutputTree& tree)
@@ -118,7 +118,7 @@ void IOTraceContainer::concatenateToFront(const shared_ptr<InputTrace>& inputTra
     concatenateToFront(newIOTrace);
 }
 
-void IOTraceContainer::concatenateToFront(const shared_ptr<IOTrace>& iOTrace)
+void IOTraceContainer::concatenateToFront(const shared_ptr<const IOTrace>& iOTrace)
 {
     IOTraceCont newList;
     for (const shared_ptr<const IOTrace>& iOT : list)

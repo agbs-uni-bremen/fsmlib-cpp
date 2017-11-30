@@ -3,7 +3,7 @@
 #include "fsm/FsmNode.h"
 
 VPrimeLazy::VPrimeLazy(const vector<shared_ptr<InputTrace>>& detStateCover, const Fsm& iut):
-    allPossibleTraces(vector<vector<shared_ptr<IOTrace>>>())
+    allPossibleTraces(vector<vector<shared_ptr<const IOTrace>>>())
 {
     current = 0;
     VLOG(1) << "allPossibleTraces:";
@@ -13,11 +13,11 @@ VPrimeLazy::VPrimeLazy(const vector<shared_ptr<InputTrace>>& detStateCover, cons
         vector<shared_ptr<OutputTrace>> producedOutputs;
         vector<shared_ptr<FsmNode>> reached;
         iut.getInitialState()->getPossibleOutputs(*input, producedOutputs, reached);
-        vector<shared_ptr<IOTrace>> producedIOTraces;
+        vector<shared_ptr<const IOTrace>> producedIOTraces;
         for (size_t j = 0; j < producedOutputs.size(); ++j)
         {
             VLOG(1) << *producedOutputs.at(j);
-            producedIOTraces.push_back(make_shared<IOTrace>(*input, *producedOutputs.at(j), reached.at(j)));
+            producedIOTraces.push_back(make_shared<const IOTrace>(*input, *producedOutputs.at(j), reached.at(j)));
         }
         allPossibleTraces.push_back(producedIOTraces);
         VLOG(1) << "--------------";

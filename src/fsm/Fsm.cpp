@@ -1633,7 +1633,7 @@ void Fsm::addPossibleIOTraces(shared_ptr<FsmNode> node,
 
             if (!tree->isDefined(y))
             {
-                shared_ptr<IOTrace> trace = make_shared<IOTrace>(x, y, nextNode, presentationLayer);
+                const shared_ptr<const IOTrace>& trace = make_shared<const IOTrace>(x, y, nextNode, presentationLayer);
                 VLOG(2)  << "(" << node->getName() << ") " << "  tree is NOT defined. Adding " << *trace;
                 iOTraceContainer.add(trace);
             }
@@ -1649,7 +1649,7 @@ void Fsm::addPossibleIOTraces(shared_ptr<FsmNode> node,
                 addPossibleIOTraces(nextNode, nextTree, iONext);
                 VLOG(2) << "-- LEAVING RECURSION.";
                 VLOG(2)  << "(" << node->getName() << ") " << "    iONext: " << iONext;
-                shared_ptr<IOTrace> trace = make_shared<IOTrace>(x, y, nextNode, presentationLayer);
+                const shared_ptr<const IOTrace>& trace = make_shared<const IOTrace>(x, y, nextNode, presentationLayer);
                 VLOG(2) << "trace: " << trace;
                 if (iONext.isEmpty())
                 {
@@ -1816,19 +1816,18 @@ IOTraceContainer Fsm::r(std::shared_ptr<FsmNode> node,
         VLOG(3) << "  " << p;
     }
 
-    for (IOTrace prefix : prefixes)
+    for (const IOTrace& prefix : prefixes)
     {
         VLOG(3) << "prefix = " << prefix;
-        shared_ptr<IOTrace> baseCopy = make_shared<IOTrace>(base);
-        baseCopy->append(prefix);
-        VLOG(3) << "v = " << baseCopy << " reaches:";
-        unordered_set<shared_ptr<FsmNode>> nodes = getInitialState()->after(baseCopy->getInputTrace(), baseCopy->getOutputTrace());
+        const shared_ptr<const IOTrace>& baseExtension = make_shared<const IOTrace>(base, prefix);
+        VLOG(3) << "v = " << baseExtension << " reaches:";
+        unordered_set<shared_ptr<FsmNode>> nodes = getInitialState()->after(baseExtension->getInputTrace(), baseExtension->getOutputTrace());
         for (shared_ptr<FsmNode> n : nodes)
         {
             if (n == node)
             {
-                VLOG(3) << "  " << n->getName() << " (adding " << *baseCopy << " to result), ";
-                result.add(baseCopy);
+                VLOG(3) << "  " << n->getName() << " (adding " << *baseExtension << " to result), ";
+                result.add(baseExtension);
             }
             else
             {
@@ -1843,16 +1842,21 @@ IOTraceContainer Fsm::r(std::shared_ptr<FsmNode> node,
 }
 
 IOTraceContainer Fsm::rPlus(std::shared_ptr<FsmNode> node,
-                   const IOTrace& base,
-                   const IOTrace& suffix,
-                   const IOTraceContainer& vDoublePrime) const
+                            const IOTrace& base,
+                            const IOTrace& suffix,
+                            const IOTraceContainer& vDoublePrime,
+                            const bool onlyPlusPortion) const
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
     VLOG(2) << "rPlus()";
     VLOG(2) << "node: " << node->getName();
     VLOG(2) << "base: " << base;
     VLOG(2) << "suffix: " << suffix;
-    IOTraceContainer rResult = r(node, base, suffix);
+    IOTraceContainer rResult;
+    if (!onlyPlusPortion)
+    {
+        rResult = r(node, base, suffix);
+    }
     VLOG(2) << "rResult: " << rResult;
     if (node->isDReachable())
     {
@@ -1995,8 +1999,8 @@ size_t Fsm::lowerBound(const IOTrace& base,
             VLOG(1) << "lb result: " << result;
         }
 
-        //TODO no need to calculate rResult again, as it has already been calculated above.
-        const IOTraceContainer rPlusResult = spec.rPlus(state, base, suffix, vDoublePrime);
+        IOTraceContainer rPlusResult = spec.rPlus(state, base, suffix, vDoublePrime, true);
+        rPlusResult.add(rResult);
         VLOG(1) << "rPlusResult: " << rPlusResult;
         for (auto traceIt = rPlusResult.cbegin(); traceIt != rPlusResult.cend(); ++traceIt)
         {
@@ -2256,7 +2260,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                         // Adding observed traces for simple input traces only in case of failure.
                         // When no error is being observed, this traces are bein used later when
                         // concatenating them with the adaptive test cases.
-                        shared_ptr<IOTrace> iOTrace = make_shared<IOTrace>(*inputTrace, *producedOutputsIut.at(i), reachedNodesIut.at(i));
+                        const shared_ptr<const IOTrace>& iOTrace = make_shared<const IOTrace>(*inputTrace, *producedOutputsIut.at(i), reachedNodesIut.at(i));
                         observedTraces.add(iOTrace);
                     }
                     LOG(INFO) << ss.str();
