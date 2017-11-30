@@ -34,6 +34,16 @@
 using namespace std;
 using namespace std::chrono;
 
+too_many_transition_faults::too_many_transition_faults(const std::string& msg): runtime_error(msg)
+{
+
+}
+
+too_many_output_faults::too_many_output_faults(const std::string& msg): runtime_error(msg)
+{
+
+}
+
 shared_ptr<FsmNode> Fsm::newNode(const int id, const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>& p, const shared_ptr<FsmPresentationLayer>& pl)
 {
     string nodeName = string("(" + p->first->getName() + to_string(p->first->getId()) + ","
@@ -3495,7 +3505,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
     if (createdTransitionFaults < numTransitionFaults)
     {
         LOG(ERROR) << "Could not create all requested transition faults.";
-        throw std::logic_error("Could not create all requested transition faults.");
+        throw too_many_transition_faults("Could not create all requested transition faults.");
     }
     
     // Now add output faults to the new machine
@@ -3607,7 +3617,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
     if (createdOutputFaults < numOutputFaults)
     {
         LOG(ERROR) << "Could not create all requested output faults.";
-        throw std::logic_error("Could not create all requested output faults.");
+        throw too_many_output_faults("Could not create all requested output faults.");
     }
     
     shared_ptr<Fsm> result = make_shared<Fsm>(fsmName,maxInput,maxOutput,lst,pl);

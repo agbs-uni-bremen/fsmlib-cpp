@@ -749,15 +749,11 @@ bool executeAdaptiveTest(
                                                 createRandomFsmSeed);
     CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Creating mutant.";
 
-    shared_ptr<Fsm> iut;
-    try {
-        iut = spec->createMutant("mutant" + prefix,
-                                 numOutFaults,
-                                 numTransFaults,
-                                 createMutantSeed);
-    } catch (exception& e) {
-        throw(e);
-    }
+
+    shared_ptr<Fsm> iut = spec->createMutant("mutant" + prefix,
+                                             numOutFaults,
+                                             numTransFaults,
+                                             createMutantSeed);
 
     CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
     CLOG(INFO, logging::globalLogger) << "numInput: " << numInput + 1;
@@ -975,19 +971,20 @@ void adaptiveTest01(AdaptiveTestConfig& config)
                     durationMS = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
                     durationMin = std::chrono::duration_cast<std::chrono::minutes>(end - start).count();
                     couldCreateMutant = true;
-                } catch (exception& e) {
-                    CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Could not create mutant. Decreasing faults.";
-                    int random = getRandom(0, 1, gen);
-                    if (random == 0 && numOutFaults > 0)
-                    {
-                        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing output faults.";
-                        --numOutFaults;
+                }
+                catch (too_many_transition_faults& e)
+                {
+                    CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Could not create mutant.";
+                    if (--numTransFaults > 0) {
+                        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing transition faults.";
                         continue;
                     }
-                    else if (numTransFaults > 0)
-                    {
-                        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing transition faults.";
-                        --numTransFaults;
+                }
+                catch (too_many_output_faults& e)
+                {
+                    CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Could not create mutant.";
+                    if (--numOutFaults > 0) {
+                        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing output faults.";
                         continue;
                     }
                     else

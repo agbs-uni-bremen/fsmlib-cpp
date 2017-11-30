@@ -57,6 +57,18 @@ enum CompleteMode
     SelfLoop
 };
 
+class too_many_transition_faults : public std::runtime_error
+{
+public:
+    too_many_transition_faults(const std::string& msg);
+};
+
+class too_many_output_faults : public std::runtime_error
+{
+public:
+    too_many_output_faults(const std::string& msg);
+};
+
 class Fsm
 {
 protected:
