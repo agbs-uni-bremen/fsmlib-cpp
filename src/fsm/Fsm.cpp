@@ -1776,15 +1776,16 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const IOT
     return result;
 }
 
-vector<IOTraceContainer> Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const vector<shared_ptr<InputTrace>>& inputTraces) const
+void Fsm::bOmega(const IOTreeContainer& adaptiveTestCases,
+                 const vector<shared_ptr<InputTrace>>& inputTraces,
+                 vector<IOTraceContainer>& result) const
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(6));
     VLOG(6) << "bOmega() - adaptiveTestCases.size: " << adaptiveTestCases.size() << ", inputTraces.size(): " << inputTraces.size();
-    vector<IOTraceContainer> result;
     shared_ptr<FsmNode> initialState = getInitialState();
     if (!initialState)
     {
-        return result;
+        return;
     }
     for (shared_ptr<InputTrace> inputTrace : inputTraces)
     {
@@ -1798,7 +1799,6 @@ vector<IOTraceContainer> Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, c
             IOTraceContainer::addUnique(result, produced);
         }
     }
-    return result;
 }
 
 IOTraceContainer Fsm::r(std::shared_ptr<FsmNode> node,
@@ -1892,6 +1892,7 @@ bool Fsm::exceedsBound(const size_t m,
                        const vector<shared_ptr<InputTrace>>& takenInputs,
                        const vector<shared_ptr<FsmNode>>& states,
                        const IOTreeContainer& adaptiveTestCases,
+                       vector<IOTraceContainer> bOmegaT,
                        const IOTraceContainer& vDoublePrime,
                        const vector<shared_ptr<FsmNode>>& dReachableStates,
                        const Fsm& spec,
@@ -1900,7 +1901,7 @@ bool Fsm::exceedsBound(const size_t m,
 {
     if (useErroneousImplementation)
     {
-        size_t lB = Fsm::lowerBound(base, suffix, takenInputs, states, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
+        size_t lB = Fsm::lowerBound(base, suffix, takenInputs, states, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
         VLOG(1) << "lB: " << lB;
         return lB > m;
     }
@@ -1965,6 +1966,7 @@ size_t Fsm::lowerBound(const IOTrace& base,
                        const vector<shared_ptr<InputTrace>>& takenInputs,
                        const vector<shared_ptr<FsmNode>>& states,
                        const IOTreeContainer& adaptiveTestCases,
+                       vector<IOTraceContainer> bOmegaT,
                        const IOTraceContainer& vDoublePrime,
                        const vector<shared_ptr<FsmNode>>& dReachableStates,
                        const Fsm& spec,
@@ -1994,9 +1996,8 @@ size_t Fsm::lowerBound(const IOTrace& base,
     size_t result = 0;
     VLOG(1) << "lb result: " << result;
 
-    vector<IOTraceContainer> testTraces = iut.bOmega(adaptiveTestCases, takenInputs);
-    VLOG(1) << "bOmega testTraces:";
-    for (const auto& cont : testTraces)
+    VLOG(1) << "bOmegaT:";
+    for (const auto& cont : bOmegaT)
     {
         VLOG(1) << "  " << cont;
     }
@@ -2023,16 +2024,16 @@ size_t Fsm::lowerBound(const IOTrace& base,
             IOTraceContainer traces = iut.bOmega(adaptiveTestCases, *trace);
             VLOG(1) << "Removing " << traces << " from testTraces.";
 
-            IOTraceContainer::remove(testTraces, traces);
+            IOTraceContainer::remove(bOmegaT, traces);
 
             VLOG(1) << "testTraces:";
-            for (const auto& cont : testTraces)
+            for (const auto& cont : bOmegaT)
             {
                 VLOG(1) << "  " << cont;
             }
         }
     }
-    result += testTraces.size();
+    result += bOmegaT.size();
     VLOG(1) << "lowerBound() result: " << result;
     return result;
 }
@@ -2101,6 +2102,10 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
      * T - set of input sequences that have been followed by Ω.
      */
     vector<shared_ptr<InputTrace>> t = detStateCover;
+    /**
+     * Holds all B_Ω(T) for the current t.
+     */
+    vector<IOTraceContainer> bOmegaT;
     /**
      * T_c - set of current elements of T: those that are being considered in the search
      * through state space. The elements in T_c are the maximal sequences considered that
@@ -2541,7 +2546,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                         {
                             //size_t lB = Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
                             //VLOG(1) << "lB: " << lB;
-                            bool exceedsBound = Fsm::exceedsBound(m, *maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut, useErroneousImplementation);
+                            bool exceedsBound = Fsm::exceedsBound(m, *maxPrefix, suffix, t, rDistStates, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut, useErroneousImplementation);
                             VLOG(1) << "exceedsBound: " << exceedsBound;
                             if (exceedsBound)
                             {
@@ -2609,6 +2614,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
         ss.str(std::string());
         // Expanding sequences.
         vector<shared_ptr<InputTrace>> expandedTC;
+        vector<shared_ptr<InputTrace>> tracesAddedToT;
         for (int x = 0; x <= spec.maxInput; ++x)
         {
             for (shared_ptr<InputTrace>& inputTrace : newTC)
@@ -2633,9 +2639,13 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 if (!InputTrace::contains(newT, *concat))
                 {
                     newT.push_back(concat);
+                    tracesAddedToT.push_back(concat);
                 }
             }
         }
+
+        iut.bOmega(adaptiveTestCases, tracesAddedToT, bOmegaT);
+
         ss << "expandedTC: ";
         for (auto w : expandedTC)
         {

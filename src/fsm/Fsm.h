@@ -504,7 +504,9 @@ public:
      * @param inputTraces The given input traces
      * @return A set of all input/output traces that can be produced
      */
-    std::vector<IOTraceContainer> bOmega(const IOTreeContainer& adaptiveTestCases, const std::vector<std::shared_ptr<InputTrace>>& inputTraces) const;
+    void bOmega(const IOTreeContainer& adaptiveTestCases,
+                const std::vector<std::shared_ptr<InputTrace>>& inputTraces,
+                std::vector<IOTraceContainer>& result) const;
 
     /**
      * Calculates all prefixes of `base.suffix`, that reach the given node and that
@@ -562,6 +564,7 @@ public:
                              const std::vector<std::shared_ptr<InputTrace>>& takenInputs,
                              const std::vector<std::shared_ptr<FsmNode>>& states,
                              const IOTreeContainer& adaptiveTestCases,
+                             std::vector<IOTraceContainer> bOmegaT,
                              const IOTraceContainer& vDoublePrime,
                              const std::vector<std::shared_ptr<FsmNode>>& dReachableStates,
                              const Fsm& spec,
@@ -573,6 +576,7 @@ public:
                              const std::vector<std::shared_ptr<InputTrace>>& takenInputs,
                              const std::vector<std::shared_ptr<FsmNode>>& states,
                              const IOTreeContainer& adaptiveTestCases,
+                             std::vector<IOTraceContainer> bOmegaT,
                              const IOTraceContainer& vDoublePrime,
                              const std::vector<std::shared_ptr<FsmNode>>& dReachableStates,
                              const Fsm& spec,
