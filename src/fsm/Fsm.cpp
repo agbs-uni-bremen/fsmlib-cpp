@@ -894,7 +894,10 @@ void Fsm::apply(const InputTrace& input, vector<shared_ptr<OutputTrace>>& produc
 
 Fsm Fsm::transformToObservableFSM() const
 {
+    TIMED_FUNC(timerObj);
     VLOG(1) << "transformToObservableFSM()";
+    CLOG(INFO, logging::globalLogger) << "Transforming to observable: " << getName();
+
     vector<shared_ptr<FsmNode>> nodeLst;
     vector<shared_ptr<FsmNode>> bfsLst;
     unordered_map<shared_ptr<FsmNode>, unordered_set<shared_ptr<FsmNode>>> node2Label;
@@ -987,6 +990,7 @@ Fsm Fsm::transformToObservableFSM() const
 
 bool Fsm::isObservable() const
 {
+    TIMED_FUNC(timerObj);
     for (shared_ptr<FsmNode> node : nodes)
     {
         if (!node->isObservable())
@@ -1011,6 +1015,7 @@ Fsm Fsm::minimiseObservableFSM()
 {
     /*Create new list to store all existing OFSMTables*/
     ofsmTableLst.clear();
+    TIMED_FUNC(timerObj);
     
     /*Create the initial OFSMTable representing the FSM,
      where all FSM states belong to the same class*/
@@ -3731,6 +3736,7 @@ void Fsm::accept(FsmVisitor& v) {
 
 
 bool Fsm::removeUnreachableNodes(std::vector<shared_ptr<FsmNode>>& unreachableNodes) {
+    TIMED_FUNC(timerObj);
     VLOG(2) << "removeUnreachableNodes()";
     vector<shared_ptr<FsmNode>> newNodes;
     FsmVisitor v;

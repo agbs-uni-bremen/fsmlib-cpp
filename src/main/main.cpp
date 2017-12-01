@@ -762,6 +762,7 @@ bool executeAdaptiveTest(
     CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
     CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed: " << createRandomFsmSeed;
     CLOG(INFO, logging::globalLogger) << "createMutantSeed: " << createMutantSeed;
+    CLOG(INFO, logging::globalLogger) << "useErroneousImplementation: " << useErroneousImplementation;
 
     Fsm specMin = spec->minimise();
     Fsm iutMin = iut->minimise();
