@@ -2198,9 +2198,9 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             }
             VLOG(1) << ss.str();
             ss.str(std::string());
-            PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "apply inputTrace before insertion");
+//            PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "apply inputTrace before insertion");
             observedOutputsTCElements.insert(make_pair(inputTrace, producedOutputsIut));
-            PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "apply inputTrace after insertion");
+//            PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "apply inputTrace after insertion");
 
             if (adaptiveTestCases.size() == 0)
             {

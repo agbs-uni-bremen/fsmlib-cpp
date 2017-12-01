@@ -1090,18 +1090,18 @@ int main(int argc, char* argv[])
 
     return 0;
 */
-
+    //TODO Analyze increasing memory usage with valgrind
     AdaptiveTestConfig config;
-    config.numFsm = 100000;
+    config.numFsm = 50000;
 
     config.minInput = 1;
-    config.maxInput = 15;
+    config.maxInput = 20;
 
     config.minOutput = 1;
-    config.maxOutput = 15;
+    config.maxOutput = 20;
 
     config.minStates = 1;
-    config.maxStates = 20;
+    config.maxStates = 30;
 
     config.minTransFaults = 1;
     config.maxTransFaults = 5;
@@ -1109,7 +1109,8 @@ int main(int argc, char* argv[])
     config.minOutFaults = 1;
     config.maxOutFaults = 5;
 
-    config.seed = 4240152224;
+    config.seed = 0;
+    config.useErroneousImplementation = false;
 
 
     bool debug = false;
@@ -1118,13 +1119,13 @@ int main(int argc, char* argv[])
         CLOG(INFO, logging::globalLogger) << "############## Debugging ##############";
 
         AdaptiveTestConfigDebug debugConfig;
-        debugConfig.numStates = 7;
-        debugConfig.numInput = 3;
-        debugConfig.numOutput = 7;
+        debugConfig.numStates = 1;
+        debugConfig.numInput = 19;
+        debugConfig.numOutput = 6;
         debugConfig.numOutFaults = 0;
         debugConfig.numTransFaults = 0;
-        debugConfig.createRandomFsmSeed = 1939155069;
-        debugConfig.createMutantSeed = 248407645;
+        debugConfig.createRandomFsmSeed = 932150670;
+        debugConfig.createMutantSeed = 1464050036;
 
         shared_ptr<FsmPresentationLayer> plTest =
         make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
@@ -1141,7 +1142,8 @@ int main(int argc, char* argv[])
                     debugConfig.createRandomFsmSeed,
                     debugConfig.createMutantSeed,
                     plTest,
-                    isReduction);
+                    isReduction,
+                    true);
         assertOnFail("TC-AT-DEBUG", result);
     }
     else
