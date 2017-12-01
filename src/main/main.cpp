@@ -753,6 +753,7 @@ bool executeAdaptiveTest(
     shared_ptr<Fsm> iut = spec->createMutant("mutant" + prefix,
                                              numOutFaults,
                                              numTransFaults,
+                                             true,
                                              createMutantSeed);
 
     CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
@@ -764,8 +765,8 @@ bool executeAdaptiveTest(
     CLOG(INFO, logging::globalLogger) << "createMutantSeed: " << createMutantSeed;
     CLOG(INFO, logging::globalLogger) << "useErroneousImplementation: " << useErroneousImplementation;
 
-    Fsm specMin = spec->minimise();
-    Fsm iutMin = iut->minimise();
+    Fsm specMin = spec->minimise(false);
+    Fsm iutMin = iut->minimise(false);
 
 #ifdef ENABLE_DEBUG_MACRO
     const string dotPrefix = "../../../resources/adaptive-test/" + spec->getName() + "-";
@@ -937,6 +938,11 @@ void adaptiveTest01(AdaptiveTestConfig& config)
             int numOutput = getRandom(config.minOutput, config.maxOutput, gen);
             size_t numOutFaults = static_cast<size_t>(getRandom(config.minOutFaults, config.maxOutFaults, gen));
             size_t numTransFaults = static_cast<size_t>(getRandom(config.minTransFaults, config.maxTransFaults, gen));
+
+            if (numOutput <= 1)
+            {
+                numOutFaults = 0;
+            }
 
             const unsigned int createRandomFsmSeed = static_cast<unsigned int>(getRandom(gen));
             const unsigned int createMutantSeed = static_cast<unsigned int>(getRandom(gen));

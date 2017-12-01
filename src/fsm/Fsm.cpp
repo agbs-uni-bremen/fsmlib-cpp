@@ -3435,8 +3435,20 @@ Fsm::createRandomFsm(const string & fsmName,
 shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                                   const size_t numOutputFaults,
                                   const size_t numTransitionFaults,
+                                  const bool keepObservability,
                                   const unsigned seed){
     TIMED_FUNC(timerObj);
+
+    if (keepObservability && !isObservable())
+    {
+        LOG(FATAL) << "Can not keep an FSM observable that is not already observable.";
+    }
+
+    if (numOutputFaults > 0 && maxOutput <= 1)
+    {
+        throw too_many_output_faults("Can not create output faults on FSMs with output alphabet size <= 1");
+    }
+
     if ( seed == 0 ) {
         unsigned int s = getRandomSeed();
         srand(s);
@@ -3580,8 +3592,17 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                 }
 
                 int theInput = tr->getLabel()->getInput();
+                int originalOutVal = tr->getLabel()->getOutput();
+
                 int newOutVal = rand() % (maxOutput+1);
                 int originalNewOutVal = newOutVal;
+
+                if (newOutVal == originalOutVal)
+                {
+                    newOutVal = (newOutVal+1) % (maxOutput+1);
+                }
+
+
                 bool newOutValOk;
 
                 // We don't want to modify this transition in such a way
@@ -3591,37 +3612,21 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
 
                     newOutValOk = true;
 
-                    if (lst[srcNodeId]->getTransitions().size() == 1)
+                    const vector<shared_ptr<FsmTransition>>& transitions = lst[srcNodeId]->getTransitions();
+                    if (transitions.size() > 1)
                     {
-                        newOutValOk = false;
-                    }
-                    else
-                    {
-                        for (auto it = lst[srcNodeId]->getTransitions().begin(); it != lst[srcNodeId]->getTransitions().end(); ++it) {
+                        for (auto it = transitions.begin(); it != transitions.end(); ++it) {
                             const shared_ptr<FsmTransition>& trOther = *it;
-                            bool isLastTransition = it == lst[srcNodeId]->getTransitions().end() - 1;
                             if (tr == trOther)
                             {
-                                if (isLastTransition)
-                                {
-                                    newOutVal = false;
-                                }
                                 continue;
                             }
-                            if (trOther->getTarget()->getId() != tr->getTarget()->getId())
+                            if (!keepObservability && trOther->getTarget()->getId() != tr->getTarget()->getId())
                             {
-                                if (isLastTransition)
-                                {
-                                    newOutVal = false;
-                                }
                                 continue;
                             }
                             if (trOther->getLabel()->getInput() != theInput)
                             {
-                                if (isLastTransition)
-                                {
-                                    newOutVal = false;
-                                }
                                 continue;
                             }
                             if (trOther->getLabel()->getOutput() == newOutVal) {

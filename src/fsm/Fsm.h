@@ -262,6 +262,7 @@ public:
     std::shared_ptr<Fsm> createMutant(const std::string & fsmName,
                                       const size_t numOutputFaults,
                                       const size_t numTransitionFaults,
+                                      const bool keepObservability = false,
                                       const unsigned seed = 0);
     
     
