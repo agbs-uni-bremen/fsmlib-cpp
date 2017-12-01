@@ -369,7 +369,7 @@ public:
      \pre This method can only be applied to an observable OFSM
      @return minimal observable FSM which is equivalent to this FSM
      */
-    Fsm minimiseObservableFSM();
+    Fsm minimiseObservableFSM(bool storeOFSMTables = true);
     
     /**
      Create the minimal observable FSM which is equivalent to this FSM.
@@ -377,7 +377,7 @@ public:
      first. The observable FSM is then minimised.
      @return minimal observable FSM which is equivalent to this FSM
      */
-    Fsm minimise();
+    Fsm minimise(bool storeOFSMTables = true);
 
     /**
      * Returns a new, completely specified FSM, based on this FSM.

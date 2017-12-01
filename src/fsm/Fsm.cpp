@@ -1011,11 +1011,14 @@ bool Fsm::isComplete() const
     return complete;
 }
 
-Fsm Fsm::minimiseObservableFSM()
+Fsm Fsm::minimiseObservableFSM(bool storeOFSMTables)
 {
-    /*Create new list to store all existing OFSMTables*/
-    ofsmTableLst.clear();
     TIMED_FUNC(timerObj);
+    if (storeOFSMTables)
+    {
+        /*Create new list to store all existing OFSMTables*/
+        ofsmTableLst.clear();
+    }
     
     /*Create the initial OFSMTable representing the FSM,
      where all FSM states belong to the same class*/
@@ -1025,22 +1028,29 @@ Fsm Fsm::minimiseObservableFSM()
      predecessor, and add them to the ofsmTableLst*/
     while (tbl != nullptr)
     {
-        ofsmTableLst.push_back(tbl);
-        tbl = tbl->next();
+        if (storeOFSMTables)
+        {
+            ofsmTableLst.push_back(tbl);
+        }
+        const shared_ptr<OFSMTable>& nextTbl = tbl->next();
+        if (nextTbl == nullptr)
+        {
+            break;
+        }
+        else
+        {
+            tbl = nextTbl;
+        }
     }
-    
-    /*The last OFSMTable defined has classes corresponding to
-     the minimised FSM to be constructed*/
-    tbl = ofsmTableLst.back();
-    
-    /*Create the minimised FSM from tbl and return it*/
+
+    /*Create the minimised FSM from the last OFSMTable defined and return it*/
     Fsm fsm = tbl->toFsm(name + "_MIN");
     fsm.minimal = True;
     fsm.failOutput = failOutput;
     return fsm;
 }
 
-Fsm Fsm::minimise()
+Fsm Fsm::minimise(bool storeOFSMTables)
 {
     TIMED_FUNC(timerObj);
     vector<shared_ptr<FsmNode>> uNodes;
@@ -1049,10 +1059,10 @@ Fsm Fsm::minimise()
     if (!isObservable())
     {
         LOG(INFO) << "Fsm is not observable. Converting.";
-        return transformToObservableFSM().minimiseObservableFSM();
+        return transformToObservableFSM().minimiseObservableFSM(storeOFSMTables);
     }
     
-    return minimiseObservableFSM();
+    return minimiseObservableFSM(storeOFSMTables);
 }
 
 Fsm Fsm::makeComplete(CompleteMode mode)
