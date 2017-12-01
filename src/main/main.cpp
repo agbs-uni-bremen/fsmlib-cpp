@@ -990,6 +990,11 @@ void adaptiveTest01(AdaptiveTestConfig& config)
                         CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing output faults.";
                         continue;
                     }
+                    else if (--numTransFaults > 0)
+                    {
+                        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing transition faults.";
+                        continue;
+                    }
                     else
                     {
                         CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
