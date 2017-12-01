@@ -777,13 +777,9 @@ bool executeAdaptiveTest(
 
     Fsm intersect = spec->intersect(*iut);
     intersect.toDot(dotPrefix + "intersect");
-
-    Fsm product = spec->intersect(*iut);
-
-    product.toDot(dotPrefix + "product");
 #endif
 
-    isReduction = !product.hasFailure();
+    isReduction = !intersect.hasFailure();
 
     CLOG(INFO, logging::globalLogger) << "IUT is " + string((isReduction) ? "" : "NOT ") +
                                          "a reduction of the specification.";
