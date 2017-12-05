@@ -37,7 +37,7 @@ void Tree::printChildren(ostream & out, const shared_ptr<TreeNode> top, const sh
     }
 }
 
-bool Tree::inPrefixRelation(std::vector<int> aPath, std::vector<int> bPath)
+bool Tree::inPrefixRelation(vector<int> aPath, vector<int> bPath)
 {
     if (aPath.size() == 0 || bPath.size() == 0)
         return false;
@@ -68,7 +68,7 @@ shared_ptr<TreeNode> Tree::getRoot() const
 	return root;
 }
 
-std::shared_ptr<Tree> Tree::getSubTree(const shared_ptr<InputTrace> alpha)
+shared_ptr<Tree> Tree::getSubTree(const shared_ptr<InputTrace> alpha)
 {
     shared_ptr<TreeNode> afterAlpha = getRoot()->after(alpha->cbegin(), alpha->cend());
     shared_ptr<TreeNode> cpyNode = afterAlpha->clone();
@@ -171,13 +171,13 @@ size_t Tree::size() {
     return theSize;
 }
 
-std::shared_ptr<Tree> Tree::getPrefixRelationTree(const std::shared_ptr<Tree> & b)
+shared_ptr<Tree> Tree::getPrefixRelationTree(const shared_ptr<Tree> & b)
 {
     IOListContainer aIOlst = getIOLists();
     IOListContainer bIOlst = b->getIOLists();
 
-    std::shared_ptr<std::vector<std::vector<int>>> aPrefixes = aIOlst.getIOLists();
-    std::shared_ptr<std::vector<std::vector<int>>> bPrefixes = bIOlst.getIOLists();
+    shared_ptr<vector<vector<int>>> aPrefixes = aIOlst.getIOLists();
+    shared_ptr<vector<vector<int>>> bPrefixes = bIOlst.getIOLists();
 
     shared_ptr<TreeNode> r = make_shared<TreeNode>();
     shared_ptr<Tree> tree = make_shared<Tree>(r, presentationLayer);
