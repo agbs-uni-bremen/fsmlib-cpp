@@ -374,6 +374,7 @@ public:
      *  @return distinguishing InputTrace for s_i and s_j.
      *   returns an empty InputTrace if no distinguishing trace could be found
      */
+    InputTrace calcDistinguishingTraceInTree(const std::shared_ptr<FsmNode> s_i, const std::shared_ptr<FsmNode> s_j, const std::shared_ptr<Tree> tree);
     InputTrace calcDistinguishingTraceInTree(const std::shared_ptr<InputTrace> alpha, const std::shared_ptr<InputTrace> beta, const std::shared_ptr<Tree> tree);
 
     /**
@@ -389,7 +390,7 @@ public:
      *  @return distinguishing InputTrace for s_i and s_j.
      *   returns an empty InputTrace if no distinguishing trace could be found
      */
-    InputTrace calcDistinguishingTraceAfterTree(const std::shared_ptr<InputTrace> alpha, const std::shared_ptr<InputTrace> beta, const std::shared_ptr<Tree> tree);
+    InputTrace calcDistinguishingTraceAfterTree(const std::shared_ptr<FsmNode> s_i, const std::shared_ptr<FsmNode> s_j, const std::shared_ptr<Tree> tree);
 
     std::vector<std::shared_ptr<PkTable> > getPktblLst() const;
 };

@@ -1244,7 +1244,7 @@ IOListContainer Dfsm::wpMethodOnMinimisedDfsm(const unsigned int numAddStates)
     shared_ptr<Tree> tcov = getTransitionCover();
 
     tcov->remove(scov);
-    shared_ptr<Tree> r = tcov;
+    const shared_ptr<Tree> &r = tcov;
 
     IOListContainer w = getCharacterisationSet();
 
@@ -1336,12 +1336,12 @@ InputTrace Dfsm::calcDistinguishingTrace(
     shared_ptr<FsmNode> s1 = *s0->after(*iAlpha).begin();
     shared_ptr<FsmNode> s2 = *s0->after(*iBeta).begin();
 
-    InputTrace gamma = calcDistinguishingTraceInTree(iAlpha, iBeta, tree);
-    if (gamma.get().size() > 0)
+    InputTrace gamma = calcDistinguishingTraceInTree(s1, s2, tree);
+    if (!gamma.get().empty())
         return gamma;
 
-    InputTrace gamma2 = calcDistinguishingTraceAfterTree(iAlpha, iBeta, tree);
-    if (gamma2.get().size() > 0)
+    InputTrace gamma2 = calcDistinguishingTraceAfterTree(s1, s2, tree);
+    if (!gamma2.get().empty())
         return gamma2;
 
     return s1->calcDistinguishingTrace(s2,
@@ -1350,21 +1350,16 @@ InputTrace Dfsm::calcDistinguishingTrace(
 }
 
 InputTrace Dfsm::calcDistinguishingTraceInTree(
-        const shared_ptr<InputTrace> alpha,
-        const shared_ptr<InputTrace> beta,
+        const shared_ptr<FsmNode> s_i,
+        const shared_ptr<FsmNode> s_j,
         const shared_ptr<Tree> tree)
 {
-
-    // Only one element in the set, since FSM is deterministic
-    shared_ptr<FsmNode> s_i = *(getInitialState()->after(*alpha)).begin();
-    shared_ptr<FsmNode> s_j = *(getInitialState()->after(*beta)).begin();
-
     shared_ptr<TreeNode> root = tree->getRoot();
     shared_ptr<TreeNode> currentNode = root;
     std::deque<shared_ptr<InputTrace>> q1;
 
     /* initialize queue */
-    for (shared_ptr<TreeEdge> e : *currentNode->getChildren())
+    for (const shared_ptr<TreeEdge> &e : *currentNode->getChildren())
     {
         shared_ptr<InputTrace> itrc = make_shared<InputTrace>(presentationLayer);
         itrc->add(e->getIO());
@@ -1379,16 +1374,12 @@ InputTrace Dfsm::calcDistinguishingTraceInTree(
 
         if(s_i->distinguished(s_j, itrc->get()))
         {
-            shared_ptr<InputTrace> alpha_gamma =
-                make_shared<InputTrace>(alpha->get(),presentationLayer);
-            alpha_gamma->append(itrc->get());
-
             return *itrc;
         }
 
         currentNode = root->after(itrc->cbegin(), itrc->cend());
 
-        for (shared_ptr<TreeEdge> ne : *currentNode->getChildren())
+        for (const shared_ptr<TreeEdge> &ne : *currentNode->getChildren())
         {
             shared_ptr<InputTrace> itrcTmp = make_shared<InputTrace>(itrc->get(), presentationLayer);
             std::vector<int>nItrc;
@@ -1400,17 +1391,21 @@ InputTrace Dfsm::calcDistinguishingTraceInTree(
     return InputTrace(presentationLayer);
 }
 
+InputTrace Dfsm::calcDistinguishingTraceInTree(const shared_ptr<InputTrace> alpha, const shared_ptr<InputTrace> beta, const shared_ptr<Tree> tree)
+{
+    // Only one element in the set, since FSM is deterministic
+    shared_ptr<FsmNode> s_i = *(getInitialState()->after(*alpha)).begin();
+    shared_ptr<FsmNode> s_j = *(getInitialState()->after(*beta)).begin();
+    return calcDistinguishingTraceInTree(s_i, s_j, tree);
+}
+
 InputTrace Dfsm::calcDistinguishingTraceAfterTree(
-        const shared_ptr<InputTrace> alpha,
-        const shared_ptr<InputTrace> beta,
+        const shared_ptr<FsmNode> s_i,
+        const shared_ptr<FsmNode> s_j,
         const shared_ptr<Tree> tree)
 {
-    shared_ptr<FsmNode> s0 = getInitialState();
-    shared_ptr<FsmNode> s_i = *(s0->after(*alpha)).begin();
-    shared_ptr<FsmNode> s_j = *(s0->after(*beta)).begin();
-
     vector<shared_ptr<TreeNode>> leaves = tree->getLeaves();
-    for(shared_ptr<TreeNode> leaf : leaves)
+    for(const shared_ptr<TreeNode> &leaf : leaves)
     {
         shared_ptr<InputTrace> itrc = make_shared<InputTrace>(leaf->getPath(), presentationLayer);
         shared_ptr<FsmNode> s_i_after_input = *(s_i->after(*itrc)).begin();
@@ -1501,9 +1496,9 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
     
     shared_ptr<vector<vector<int>>> iolAllBeta = allBeta.getIOLists();
     
-    for ( auto beta : *iolAllBeta ) {
+    for (const auto &beta : *iolAllBeta ) {
         
-        for ( auto alpha : *iolV ) {
+        for (const auto &alpha : *iolV ) {
             
             shared_ptr<InputTrace> iAlphaBeta =
                 make_shared<InputTrace>(alpha,presentationLayer);
