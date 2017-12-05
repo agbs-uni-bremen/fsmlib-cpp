@@ -7,21 +7,16 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
 #include "interface/FsmPresentationLayer.h"
 #include "fsm/Dfsm.h"
-#include "fsm/Fsm.h"
 #include "fsm/FsmNode.h"
 #include "fsm/IOTrace.h"
-#include "fsm/FsmPrintVisitor.h"
-#include "fsm/FsmSimVisitor.h"
-#include "fsm/FsmOraVisitor.h"
 #include "trees/IOListContainer.h"
 #include "trees/OutputTree.h"
 #include "trees/TestSuite.h"
-#include "json/json.h"
 
 
 using namespace std;
@@ -413,23 +408,15 @@ struct TracePairHash
         auto trc1 = tracePair.first;
         auto trc2 = tracePair.second;
 
-        if (trc1.size() < trc2.size())
-        {
-            trc2 = tracePair.first;
-            trc1 = tracePair.second;
+        std::size_t seed1 = trc1.size();
+        for(auto& i : trc1) {
+            seed1 ^= i + 0x9e3779b9 + (seed1 << 6) + (seed1 >> 2);
         }
-
-        string trace_string = "";
-        for (int i : trc1)
-        {
-            trace_string += to_string(i);
+        std::size_t seed2 = trc2.size();
+        for(auto& i : trc1) {
+            seed2 ^= i + 0x9e3779b9 + (seed2 << 6) + (seed2 >> 2);
         }
-        for (int i : trc2)
-        {
-            trace_string += to_string(i);
-        }
-
-        return trace_string.size() ? stoi(trace_string) : 0 ;
+        return seed1 ^ seed2;
     }
 };
 
@@ -438,9 +425,9 @@ typedef pair < TracePair, TCTrace > TracePair2Trace;
 typedef unordered_map < TracePair, TCTrace, TracePairHash > Traces2GammaMap;
 typedef unordered_multimap < TCTrace, TracePair, TCTraceHash > TC2TracesMap;
 
-bool inPrefixRelation(std::vector<int> aPath, std::vector<int> bPath)
+bool inPrefixRelation(vector<int> aPath, vector<int> bPath)
 {
-    if (aPath.size() == 0 || bPath.size() == 0)
+    if (aPath.empty() || bPath.empty())
         return false;
     for (unsigned i = 0; i<aPath.size() && i < bPath.size(); i++)
     {
@@ -452,8 +439,7 @@ bool inPrefixRelation(std::vector<int> aPath, std::vector<int> bPath)
     return true;
 }
 
-
-std::shared_ptr<Tree> getPrefixRelationTreeWithoutTrace(const std::shared_ptr<Tree> & a, const std::shared_ptr<Tree> & b, const std::vector<int> & trc)
+shared_ptr<Tree> getPrefixRelationTreeWithoutTrace(const shared_ptr<Tree> & a, const shared_ptr<Tree> & b, const vector<int> & trc)
 {
     IOListContainer aIOlst = a->getIOLists();
     IOListContainer bIOlst = b->getIOLists();
@@ -464,24 +450,24 @@ std::shared_ptr<Tree> getPrefixRelationTreeWithoutTrace(const std::shared_ptr<Tr
     shared_ptr<TreeNode> r = make_shared<TreeNode>();
     shared_ptr<Tree> tree = make_shared<Tree>(r, pl);
 
-    if (aPrefixes->at(0).size() == 0 && bPrefixes->at(0).size() == 0)
+    if (aPrefixes->at(0).empty() && bPrefixes->at(0).empty())
     {
         return tree;
     }
 
-    if (aPrefixes->at(0).size() == 0)
+    if (aPrefixes->at(0).empty())
     {
         return b;
     }
-    if (bPrefixes->at(0).size() == 0)
+    if (bPrefixes->at(0).empty())
     {
         return a;
     }
 
 
-    for (auto aPrefix : *aPrefixes)
+    for (const auto &aPrefix : *aPrefixes)
     {
-        for (auto bPrefix : *bPrefixes)
+        for (const auto &bPrefix : *bPrefixes)
         {
             if (inPrefixRelation(aPrefix, bPrefix))
             {
@@ -497,7 +483,7 @@ std::shared_ptr<Tree> getPrefixRelationTreeWithoutTrace(const std::shared_ptr<Tr
 
 }
 
-static void safeHMethod(shared_ptr<TestSuite> testSuite) {
+static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
     
     // Minimise original reference DFSM
     Dfsm dfsmRefMin = dfsm->minimise();
@@ -517,7 +503,6 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
 
     shared_ptr<Tree> iTreeH = dfsmRefMin.getStateCover();
     shared_ptr<Tree> iTreeSH = dfsmRefMin.getStateCover();
-    shared_ptr<Tree> iTreeNewSH = dfsmRefMin.getStateCover();
 
     // Let A be a set consisting of alpha.w, beta.w for any alpha != beta in V
     // and a distinguishing trace w. q0-after-alpha !~ q0-after-beta
@@ -540,16 +525,13 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
     vector<TracePair> tracesToCompare;
 
     // A
-    shared_ptr<TreeNode> rootA = make_shared<TreeNode>();
-    Tree treeA = Tree(rootA, pl);
-
     for (unsigned i = 0; i < iolV->size(); i++)
     {
         shared_ptr<InputTrace> alpha = make_shared<InputTrace>(iolV->at(i), pl);
         for (unsigned j = i + 1; j < iolV->size(); j++)
         {
             shared_ptr<InputTrace> beta = make_shared<InputTrace>(iolV->at(j), pl);
-            tracesToCompare.push_back(make_pair(alpha->get(),beta->get()));
+            tracesToCompare.emplace_back(alpha->get(),beta->get());
 
             shared_ptr<Tree> alphaTree = iTreeH->getSubTree(alpha);
             shared_ptr<Tree> betaTree = iTreeH->getSubTree(beta);
@@ -564,17 +546,11 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
             shared_ptr<InputTrace> iBetaGamma = make_shared<InputTrace>(beta->get(), pl);
             iBetaGamma->append(gamma.get());
 
-            treeA.addToRoot(iAlphaGamma->get());
-            treeA.addToRoot(iBetaGamma->get());
-
             iTreeH->addToRoot(iAlphaGamma->get());
             iTreeH->addToRoot(iBetaGamma->get());
 
             iTreeSH->addToRoot(iAlphaGamma->get());
             iTreeSH->addToRoot(iBetaGamma->get());
-
-            iTreeNewSH->addToRoot(iAlphaGamma->get());
-            iTreeNewSH->addToRoot(iBetaGamma->get());
 
             TracePair2Trace tracePair2Gamma1(make_pair(alpha->get(), beta->get()), gamma.get());
             tracePair2gamma.insert(tracePair2Gamma1);
@@ -586,7 +562,7 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
     shared_ptr<vector<vector<int>>> iolB = inputEnum.getIOLists();
     shared_ptr<FsmNode> abs_s0 = dfsmAbstractionMin.getInitialState();
 
-    for (auto beta : *iolB)
+    for (const auto &beta : *iolB)
     {
         for (auto alpha : *iolV)
         {
@@ -600,7 +576,7 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
                 shared_ptr<FsmNode> s0AfterAlphaBeta = *s0->after(*iAlphaBeta).begin();
                 shared_ptr<FsmNode> s0AfterOmega = *s0->after(*iOmega).begin();
                 if (s0AfterAlphaBeta == s0AfterOmega) continue;
-                tracesToCompare.push_back(make_pair(iAlphaBeta->get(),iOmega->get()));
+                tracesToCompare.emplace_back(iAlphaBeta->get(),iOmega->get());
             }
         }
     }
@@ -618,7 +594,7 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
             shared_ptr<FsmNode> s0AfterAlpha = *s0->after(*iAlphaBeta_1).begin();
             shared_ptr<FsmNode> s0AfterBeta = *s0->after(*iAlphaBeta_2).begin();
             if (s0AfterAlpha == s0AfterBeta) continue;
-            tracesToCompare.push_back(make_pair(iAlphaBeta_1->get(),iAlphaBeta_2->get()));
+            tracesToCompare.emplace_back(iAlphaBeta_1->get(),iAlphaBeta_2->get());
         }
     }
 
@@ -676,7 +652,6 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
     }
 
     vector< vector<int> > tests = *iTreeSH->getIOLists().getIOLists();
-    set< vector<int> > testCases(tests.begin(), tests.end());
 
     /**
      * This loop finds and removes redundant test cases
@@ -770,7 +745,7 @@ static void safeHMethod(shared_ptr<TestSuite> testSuite) {
     *testSuite = dfsmRefMin.createTestSuite(testCasesSH);
 }
 
-static void safeWpMethod(shared_ptr<TestSuite> testSuite) {
+static void safeWpMethod(const shared_ptr<TestSuite> &testSuite) {
     
     // Minimise original reference DFSM
     // Dfsm dfsmRefMin = dfsm->minimise();
@@ -852,7 +827,7 @@ static void safeWpMethod(shared_ptr<TestSuite> testSuite) {
     
 }
 
-static void safeWMethod(shared_ptr<TestSuite> testSuite) {
+static void safeWMethod(const shared_ptr<TestSuite> &testSuite) {
     
     // Minimise original reference DFSM
     Dfsm dfsmRefMin = dfsm->minimise();
