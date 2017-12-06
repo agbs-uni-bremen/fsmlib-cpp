@@ -1397,6 +1397,7 @@ InputTrace Dfsm::calcDistinguishingTraceInTree(
             q1.push_back(itrcTmp);
         }
     }
+    // Return empty trace: no distinguishing trace found in tree
     return InputTrace(presentationLayer);
 }
 
