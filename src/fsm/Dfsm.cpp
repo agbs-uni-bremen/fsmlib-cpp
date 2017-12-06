@@ -4,16 +4,12 @@
  * Licensed under the EUPL V.1.1
  */
 #include "fsm/Dfsm.h"
-#include "fsm/DFSMTable.h"
-#include "fsm/DFSMTableRow.h"
 #include "fsm/FsmNode.h"
 #include "fsm/FsmTransition.h"
-#include "fsm/FsmLabel.h"
 #include "fsm/PkTable.h"
 #include "fsm/InputTrace.h"
 #include "fsm/IOTrace.h"
 #include "trees/Tree.h"
-#include "trees/IOListContainer.h"
 
 using namespace std;
 
@@ -123,7 +119,7 @@ shared_ptr<FsmPresentationLayer> Dfsm::createPresentationLayerFromCsvFormat(cons
     }
     inputFile.close();
     
-    for ( auto s : outStrSet ) {
+    for (const auto &s : outStrSet ) {
         out2String.push_back(s);
     }
     
@@ -253,7 +249,7 @@ Dfsm::createPresentationLayerFromCsvFormat(const std::string & fname,
     }
     inputFile.close();
     
-    for ( auto s : outStrSet ) {
+    for (const auto &s : outStrSet ) {
         out2String.push_back(s);
     }
     
@@ -572,8 +568,8 @@ Fsm()
     
     // iterate over all inputs
     vector<string> in2String;
-    for (unsigned int index = 0; index < inputs.size(); ++index ) {
-        in2String.push_back(inputs[index].asString());
+    for (const auto &input : inputs) {
+        in2String.push_back(input.asString());
     }
     
     // iterate over all outputs
@@ -598,15 +594,13 @@ Fsm()
     // iterate over all states, insert initial state at index 0
     // of the state2String vector.
     vector<string> state2String;
-    for (unsigned int index = 0; index < states.size(); ++index ) {
-        Json::Value state = states[index];
+    for (const auto &state : states) {
         if (state["initial"].asBool()) {
             state2String.push_back(state["name"].asString());
             break;
         }
     }
-    for (unsigned int index = 0; index < states.size(); ++index ) {
-        Json::Value state = states[index];
+    for (const auto &state : states) {
         if (state["initial"].asBool()) {
             continue; // Initial state has already been inserted
         }
@@ -637,10 +631,7 @@ Fsm()
     
     
     // Create all transitions
-    for (unsigned int index = 0; index < transitions.size(); ++index ) {
-        Json::Value transition = transitions[index];
-        
-        
+    for (const auto &transition : transitions) {
         // Handle source and target nodes
         string srcName(transition["source"].asString());
         string tgtName(transition["target"].asString());
@@ -681,9 +672,9 @@ Fsm()
         // For each input, create a separate transition
         // and add it to the source node
         Json::Value inputlist = transition["input"];
-        for (unsigned int inidx = 0; inidx < inputlist.size(); ++inidx ) {
+        for (const auto &inidx : inputlist) {
             
-            string xString(inputlist[inidx].asString());
+            string xString(inidx.asString());
             // Trim
             xString.erase(0,xString.find_first_not_of(" \n\r\t\""));
             xString.erase(xString.find_last_not_of(" \n\r\t\"")+1);
@@ -704,8 +695,8 @@ Fsm()
             
             // Record the requirements satisfied by the transition
             Json::Value satisfies = transition["requirements"];
-            for (unsigned int ridx = 0; ridx < satisfies.size(); ++ridx ) {
-                tr->addSatisfies(satisfies[ridx].asString());
+            for (const auto &satisfie : satisfies) {
+                tr->addSatisfies(satisfie.asString());
             }
             
             srcNode->addTransition(tr);
@@ -714,15 +705,14 @@ Fsm()
     }
     
     // Add requirements to nodes
-    for (unsigned int index = 0; index < states.size(); ++index ) {
-        Json::Value state = states[index];
+    for (const auto &state : states) {
         string nodeName(state["name"].asString());
         
-        for ( auto n : nodes ) {
+        for (const auto &n : nodes ) {
             if ( n->getName() == nodeName ) {
                 Json::Value satisfies = state["requirements"];
-                for (unsigned int ridx = 0; ridx < satisfies.size(); ++ridx ) {
-                    n->addSatisfies(satisfies[ridx].asString());
+                for (const auto &satisfie : satisfies) {
+                    n->addSatisfies(satisfie.asString());
                 }
             }
         }
@@ -740,7 +730,7 @@ Fsm()
         for ( int x = 0; x <= maxInput; x++ ) {
             inputs.push_back(false);
         }
-        for ( auto tr : n->getTransitions() ) {
+        for (const auto &tr : n->getTransitions() ) {
             inputs[tr->getLabel()->getInput()] = true;
         }
         for ( int x = 0; x <= maxInput; x++ ) {
@@ -814,8 +804,8 @@ Fsm()
     // iterate over all inputs; add all inputs not already contained
     // in pl to in2String.
     vector<string> in2String(pl->getIn2String());
-    for (unsigned int index = 0; index < inputs.size(); ++index ) {
-        string theInput(inputs[index].asString());
+    for (const auto &input : inputs) {
+        string theInput(input.asString());
         if ( pl->in2Num(theInput) < 0 ) {
             in2String.push_back(theInput);
         }
@@ -823,8 +813,8 @@ Fsm()
     
     // iterate over all outputs
     vector<string> out2String(pl->getOut2String());
-    for (unsigned int index = 0; index < outputs.size(); ++index ) {
-        string theOutput(outputs[index].asString());
+    for (const auto &output : outputs) {
+        string theOutput(output.asString());
         if ( pl->out2Num(theOutput) < 0 ) {
             out2String.push_back(theOutput);
         }
@@ -840,15 +830,13 @@ Fsm()
     // iterate over all states, insert initial state at index 0
     // of the state2String vector.
     vector<string> state2String;
-    for (unsigned int index = 0; index < states.size(); ++index ) {
-        Json::Value state = states[index];
+    for (const auto &state : states) {
         if (state["initial"].asBool()) {
             state2String.push_back(state["name"].asString());
             break;
         }
     }
-    for (unsigned int index = 0; index < states.size(); ++index ) {
-        Json::Value state = states[index];
+    for (const auto &state : states) {
         if (state["initial"].asBool()) {
             continue; // Initial state has already been inserted
         }
@@ -879,10 +867,7 @@ Fsm()
     
     
     // Create all transitions
-    for (unsigned int index = 0; index < transitions.size(); ++index ) {
-        Json::Value transition = transitions[index];
-        
-        
+    for (const auto &transition : transitions) {
         // Handle source and target nodes
         string srcName(transition["source"].asString());
         string tgtName(transition["target"].asString());
@@ -923,9 +908,9 @@ Fsm()
         // For each input, create a separate transition
         // and add it to the source node
         Json::Value inputlist = transition["input"];
-        for (unsigned int inidx = 0; inidx < inputlist.size(); ++inidx ) {
+        for (const auto &inidx : inputlist) {
             
-            string xString(inputlist[inidx].asString());
+            string xString(inidx.asString());
             // Trim
             xString.erase(0,xString.find_first_not_of(" \n\r\t\""));
             xString.erase(xString.find_last_not_of(" \n\r\t\"")+1);
@@ -946,8 +931,8 @@ Fsm()
             
             // Record the requirements satisfied by the transition
             Json::Value satisfies = transition["requirements"];
-            for (unsigned int ridx = 0; ridx < satisfies.size(); ++ridx ) {
-                tr->addSatisfies(satisfies[ridx].asString());
+            for (const auto &satisfie : satisfies) {
+                tr->addSatisfies(satisfie.asString());
             }
             
             srcNode->addTransition(tr);
@@ -956,15 +941,14 @@ Fsm()
     }
     
     // Add requirements to nodes
-    for (unsigned int index = 0; index < states.size(); ++index ) {
-        Json::Value state = states[index];
+    for (const auto &state : states) {
         string nodeName(state["name"].asString());
         
-        for ( auto n : nodes ) {
+        for (const auto &n : nodes ) {
             if ( n->getName() == nodeName ) {
                 Json::Value satisfies = state["requirements"];
-                for (unsigned int ridx = 0; ridx < satisfies.size(); ++ridx ) {
-                    n->addSatisfies(satisfies[ridx].asString());
+                for (const auto &satisfie : satisfies) {
+                    n->addSatisfies(satisfie.asString());
                 }
             }
         }
@@ -982,7 +966,7 @@ Fsm()
         for ( int x = 0; x <= maxInput; x++ ) {
             inputs.push_back(false);
         }
-        for ( auto tr : n->getTransitions() ) {
+        for (const auto &tr : n->getTransitions() ) {
             inputs[tr->getLabel()->getInput()] = true;
         }
         for ( int x = 0; x <= maxInput; x++ ) {
@@ -1048,9 +1032,8 @@ void Dfsm::printTables() const
         file << *dfsmTable;
     }
     
-    for (unsigned int i = 0; i < pktblLst.size(); ++ i)
-    {
-        file << *pktblLst.at(i) << endl << endl;
+    for (const auto &i : pktblLst) {
+        file << *i << endl << endl;
     }
     file.close();
 }
@@ -1244,7 +1227,7 @@ IOListContainer Dfsm::wpMethodOnMinimisedDfsm(const unsigned int numAddStates)
     shared_ptr<Tree> tcov = getTransitionCover();
 
     tcov->remove(scov);
-    shared_ptr<Tree> r = tcov;
+    const shared_ptr<Tree> &r = tcov;
 
     IOListContainer w = getCharacterisationSet();
 
@@ -1302,14 +1285,14 @@ void Dfsm::toCsv(const std::string& fname) {
         out << presentationLayer->getInId(x);
     }
     
-    for ( size_t n = 0; n < nodes.size(); n++ ) {
-        out << endl << "\"" << nodes[n]->getName() << "\"";
+    for (const auto &node : nodes) {
+        out << endl << "\"" << node->getName() << "\"";
         
         for ( int x = 0; x <= maxInput; x++ ) {
             
             out << " ; ";
             
-            for ( auto tr : nodes[n]->getTransitions() ) {
+            for (const auto &tr : node->getTransitions() ) {
                 if ( tr->getLabel()->getInput() == x ) {
                     out << "\"" << tr->getTarget()->getName()
                     << " / "
@@ -1336,12 +1319,12 @@ InputTrace Dfsm::calcDistinguishingTrace(
     shared_ptr<FsmNode> s1 = *s0->after(*iAlpha).begin();
     shared_ptr<FsmNode> s2 = *s0->after(*iBeta).begin();
 
-    InputTrace gamma = calcDistinguishingTraceInTree(iAlpha, iBeta, tree);
-    if (gamma.get().size() > 0)
+    InputTrace gamma = calcDistinguishingTraceInTree(s1, s2, tree);
+    if (!gamma.get().empty())
         return gamma;
 
-    InputTrace gamma2 = calcDistinguishingTraceAfterTree(iAlpha, iBeta, tree);
-    if (gamma2.get().size() > 0)
+    InputTrace gamma2 = calcDistinguishingTraceAfterTree(s1, s2, tree);
+    if (!gamma2.get().empty())
         return gamma2;
 
     return s1->calcDistinguishingTrace(s2,
@@ -1350,21 +1333,16 @@ InputTrace Dfsm::calcDistinguishingTrace(
 }
 
 InputTrace Dfsm::calcDistinguishingTraceInTree(
-        const shared_ptr<InputTrace> alpha,
-        const shared_ptr<InputTrace> beta,
+        const shared_ptr<FsmNode> s_i,
+        const shared_ptr<FsmNode> s_j,
         const shared_ptr<Tree> tree)
 {
-
-    // Only one element in the set, since FSM is deterministic
-    shared_ptr<FsmNode> s_i = *(getInitialState()->after(*alpha)).begin();
-    shared_ptr<FsmNode> s_j = *(getInitialState()->after(*beta)).begin();
-
     shared_ptr<TreeNode> root = tree->getRoot();
     shared_ptr<TreeNode> currentNode = root;
     std::deque<shared_ptr<InputTrace>> q1;
 
     /* initialize queue */
-    for (shared_ptr<TreeEdge> e : *currentNode->getChildren())
+    for (const shared_ptr<TreeEdge> &e : *currentNode->getChildren())
     {
         shared_ptr<InputTrace> itrc = make_shared<InputTrace>(presentationLayer);
         itrc->add(e->getIO());
@@ -1379,16 +1357,12 @@ InputTrace Dfsm::calcDistinguishingTraceInTree(
 
         if(s_i->distinguished(s_j, itrc->get()))
         {
-            shared_ptr<InputTrace> alpha_gamma =
-                make_shared<InputTrace>(alpha->get(),presentationLayer);
-            alpha_gamma->append(itrc->get());
-
             return *itrc;
         }
 
         currentNode = root->after(itrc->cbegin(), itrc->cend());
 
-        for (shared_ptr<TreeEdge> ne : *currentNode->getChildren())
+        for (const shared_ptr<TreeEdge> &ne : *currentNode->getChildren())
         {
             shared_ptr<InputTrace> itrcTmp = make_shared<InputTrace>(itrc->get(), presentationLayer);
             std::vector<int>nItrc;
@@ -1401,17 +1375,21 @@ InputTrace Dfsm::calcDistinguishingTraceInTree(
     return InputTrace(presentationLayer);
 }
 
+InputTrace Dfsm::calcDistinguishingTraceInTree(const shared_ptr<InputTrace> alpha, const shared_ptr<InputTrace> beta, const shared_ptr<Tree> tree)
+{
+    // Only one element in the set, since FSM is deterministic
+    shared_ptr<FsmNode> s_i = *(getInitialState()->after(*alpha)).begin();
+    shared_ptr<FsmNode> s_j = *(getInitialState()->after(*beta)).begin();
+    return calcDistinguishingTraceInTree(s_i, s_j, tree);
+}
+
 InputTrace Dfsm::calcDistinguishingTraceAfterTree(
-        const shared_ptr<InputTrace> alpha,
-        const shared_ptr<InputTrace> beta,
+        const shared_ptr<FsmNode> s_i,
+        const shared_ptr<FsmNode> s_j,
         const shared_ptr<Tree> tree)
 {
-    shared_ptr<FsmNode> s0 = getInitialState();
-    shared_ptr<FsmNode> s_i = *(s0->after(*alpha)).begin();
-    shared_ptr<FsmNode> s_j = *(s0->after(*beta)).begin();
-
     vector<shared_ptr<TreeNode>> leaves = tree->getLeaves();
-    for(shared_ptr<TreeNode> leaf : leaves)
+    for(const shared_ptr<TreeNode> &leaf : leaves)
     {
         shared_ptr<InputTrace> itrc = make_shared<InputTrace>(leaf->getPath(), presentationLayer);
         shared_ptr<FsmNode> s_i_after_input = *(s_i->after(*itrc)).begin();
@@ -1502,9 +1480,9 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
     
     shared_ptr<vector<vector<int>>> iolAllBeta = allBeta.getIOLists();
     
-    for ( auto beta : *iolAllBeta ) {
+    for (const auto &beta : *iolAllBeta ) {
         
-        for ( auto alpha : *iolV ) {
+        for (const auto &alpha : *iolV ) {
             
             shared_ptr<InputTrace> iAlphaBeta =
                 make_shared<InputTrace>(alpha,presentationLayer);
