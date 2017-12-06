@@ -1394,8 +1394,13 @@ InputTrace Dfsm::calcDistinguishingTraceAfterTree(
         shared_ptr<InputTrace> itrc = make_shared<InputTrace>(leaf->getPath(), presentationLayer);
         shared_ptr<FsmNode> s_i_after_input = *(s_i->after(*itrc)).begin();
         shared_ptr<FsmNode> s_j_after_input = *(s_j->after(*itrc)).begin();
+        
+        // Cannot find distinguishing trace if the states reached
+        // by the path are identical
         if(s_i_after_input == s_j_after_input ) continue;
 
+        // Since we are dealing with a minimised DFSM, a distinguishing
+        // trace can ALWAYS be found, if s_i_after_input != s_j_after_input
         InputTrace gamma = s_i_after_input->calcDistinguishingTrace(s_j_after_input ,
                                                                         pktblLst,
                                                                         maxInput);
@@ -1404,6 +1409,9 @@ InputTrace Dfsm::calcDistinguishingTraceAfterTree(
 
         return *itrc;
     }
+    
+    // Return empty trace: could not find a tree extension
+    // distinguishing s_i and s_j
     return InputTrace(presentationLayer);
 }
 

@@ -379,14 +379,14 @@ public:
 
     /**
      *  Calculate trace that distinguishes the states s_i=s0->after(alpha) and
-     *  s_j=s0->after(beta), starting with a leaf of tree.
+     *  s_j=s0->after(beta), starting with a path of tree.
      *  The distinguishing trace is returned.
      *  This method tries to lengthen an InputTrace in tree so that it
      *  distinguishes s_i and s_j.
-     *  @param alpha InputTrace that leads to state s_i
-     *  @param beta InputTrace that leads to state s_j
-     *  @param tree Search in the leaves of this tree for a trace
-     *         that can be lenghtened to distinguish s_i and s_j.
+     *  @param s_i state reached by some input trace alpha
+     *  @param s_j state reached by some input trace beta
+     *  @param tree Search in the paths of this tree for a trace
+     *         that can be extended to distinguish s_i and s_j.
      *  @return distinguishing InputTrace for s_i and s_j.
      *   returns an empty InputTrace if no distinguishing trace could be found
      */
