@@ -10,17 +10,22 @@ using namespace std;
 TraceSegment::TraceSegment() {
     segment = make_shared< vector<int> >();
     prefix = string::npos;
+    tgtNode = nullptr;
 }
 
 TraceSegment::TraceSegment(std::shared_ptr< std::vector<int> > segment,
-                           size_t prefix) {
+                           size_t prefix,
+                           std::shared_ptr<FsmNode> tgtNode)
+{
     this->segment = segment;
     this->prefix = prefix;
+    this->tgtNode = tgtNode;
 }
 
 TraceSegment::TraceSegment(const TraceSegment& other) {
     segment = other.segment;
     prefix = other.prefix;
+    tgtNode = other.tgtNode;
 }
 
 
@@ -63,6 +68,31 @@ int TraceSegment::at(size_t n) {
 }
 
 
+// **************************************************************************
+
+SegmentedTrace::SegmentedTrace(std::deque< std::shared_ptr<TraceSegment> > segments) {
+    this->segments = segments;
+}
+
+void SegmentedTrace::add(std::shared_ptr<TraceSegment> seg) {
+    segments.push_back(seg);
+}
+
+deque<int> SegmentedTrace::getCopy() {
+    deque<int> v;
+    for ( auto s : segments ) {
+        v.insert(v.end(),s->getCopy().begin(),s->getCopy().end());
+    }
+    return v;
+}
+
+shared_ptr<FsmNode> SegmentedTrace::tgtNode() {
+    
+    if ( segments.size() == 0 ) return nullptr;
+    
+    return segments.back()->getTgtNode();
+    
+}
 
 
 

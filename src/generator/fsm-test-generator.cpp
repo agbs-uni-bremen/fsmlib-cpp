@@ -14,6 +14,8 @@
 #include "fsm/Dfsm.h"
 #include "fsm/FsmNode.h"
 #include "fsm/IOTrace.h"
+#include "fsm/SegmentedTrace.h"
+
 #include "trees/IOListContainer.h"
 #include "trees/OutputTree.h"
 #include "trees/TestSuite.h"
@@ -393,7 +395,7 @@ struct TCTraceHash
 {
     size_t operator() (const vector<int> & itrc) const
     {
-        std::size_t seed = itrc.size();
+        size_t seed = itrc.size();
         for(auto& i : itrc) {
             seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
         }
@@ -408,11 +410,11 @@ struct TracePairHash
         auto trc1 = tracePair.first;
         auto trc2 = tracePair.second;
 
-        std::size_t seed1 = trc1.size();
+        size_t seed1 = trc1.size();
         for(auto& i : trc1) {
             seed1 ^= i + 0x9e3779b9 + (seed1 << 6) + (seed1 >> 2);
         }
-        std::size_t seed2 = trc2.size();
+        size_t seed2 = trc2.size();
         for(auto& i : trc1) {
             seed2 ^= i + 0x9e3779b9 + (seed2 << 6) + (seed2 >> 2);
         }
@@ -444,8 +446,8 @@ shared_ptr<Tree> getPrefixRelationTreeWithoutTrace(const shared_ptr<Tree> & a, c
     IOListContainer aIOlst = a->getIOLists();
     IOListContainer bIOlst = b->getIOLists();
 
-    std::shared_ptr<std::vector<std::vector<int>>> aPrefixes = aIOlst.getIOLists();
-    std::shared_ptr<std::vector<std::vector<int>>> bPrefixes = bIOlst.getIOLists();
+    shared_ptr<vector<vector<int>>> aPrefixes = aIOlst.getIOLists();
+    shared_ptr<vector<vector<int>>> bPrefixes = bIOlst.getIOLists();
 
     shared_ptr<TreeNode> r = make_shared<TreeNode>();
     shared_ptr<Tree> tree = make_shared<Tree>(r, pl);
@@ -482,6 +484,8 @@ shared_ptr<Tree> getPrefixRelationTreeWithoutTrace(const shared_ptr<Tree> & a, c
     return tree;
 
 }
+
+#if 1
 
 static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
     
@@ -744,6 +748,47 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
     IOListContainer testCasesSH = iTreeSH->getIOLists();
     *testSuite = dfsmRefMin.createTestSuite(testCasesSH);
 }
+
+#else
+
+
+static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
+    
+    // Minimise original reference DFSM
+    Dfsm dfsmRefMin = dfsm->minimise();
+    
+    // Minimise abstracted Dfsm
+    Dfsm dfsmAbstractionMin = dfsmAbstraction->minimise();
+    
+    dfsmRefMin.toDot("FSM_MINIMAL");
+    dfsmAbstractionMin.toDot("ABS_FSM_MINIMAL");
+    dfsmAbstractionMin.toCsv("ABS_FSM_MINIMAL");
+    cout << "REF    size = " << dfsm->size() << endl;
+    cout << "REFMIN size = " << dfsmRefMin.size() << endl;
+    cout << "ABSMIN size = " << dfsmAbstractionMin.size() << endl;
+    
+    shared_ptr<FsmNode> s0 = dfsmRefMin.getInitialState();
+    shared_ptr<FsmPresentationLayer> pl = dfsmRefMin.getPresentationLayer();
+    
+    shared_ptr<Tree> V = dfsmRefMin.getStateCover();
+    
+    IOListContainer Vcontainer = V->getIOListsWithPrefixes();
+    shared_ptr< vector< vector<int> > > Vvectors = Vcontainer.getIOLists();
+    deque< shared_ptr<SegmentedTrace> > Vtraces;
+    
+    for ( const auto v : *Vvectors ) {
+        InputTrace itrc(v,pl);
+        shared_ptr<FsmNode> tgtNode = *(s0->after(itrc).begin());
+        shared_ptr< vector<int> > vPtr = make_shared<vector<int>>(v.begin(),v.end());
+        shared_ptr<TraceSegment> seg = make_shared<TraceSegment>(vPtr,
+                                                                 string::npos,
+                                                                 tgtNode);
+    }
+    
+}
+
+#endif
+
 
 static void safeWpMethod(const shared_ptr<TestSuite> &testSuite) {
     

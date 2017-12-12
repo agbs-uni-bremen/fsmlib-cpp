@@ -8,18 +8,23 @@
 
 #include <iostream>
 #include <vector>
+#include <deque>
+
+#include "fsm/FsmNode.h"
 
 class TraceSegment {
     
 private:
     std::shared_ptr< std::vector<int> > segment;
     size_t prefix;
+    std::shared_ptr<FsmNode> tgtNode;
     
 public:
     
     TraceSegment();
     TraceSegment(std::shared_ptr< std::vector<int> > segment,
-                 size_t prefix = std::string::npos);
+                 size_t prefix = std::string::npos,
+                 std::shared_ptr<FsmNode> tgtNode = nullptr);
     
     /** Shallow copy */
     TraceSegment(const TraceSegment& other);
@@ -36,16 +41,27 @@ public:
     
     int at(size_t n);
     
+    std::shared_ptr<FsmNode> getTgtNode() { return tgtNode; }
+    
 };
 
 class SegmentedTrace
 {
 private:
     
-    std::vector< std::shared_ptr<TraceSegment> > segments;
+    std::deque< std::shared_ptr<TraceSegment> > segments;
     
-	 
 public:
+    
+    SegmentedTrace(std::deque< std::shared_ptr<TraceSegment> > segments);
+    
+    void add(std::shared_ptr<TraceSegment> seg);
+    
+    std::deque<int> getCopy();
+    
+    std::shared_ptr<FsmNode> tgtNode();
+    
+    size_t size() { return segments.size(); }
 	 
 };
 #endif  
