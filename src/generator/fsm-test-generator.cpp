@@ -531,7 +531,6 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
         for (unsigned j = i + 1; j < iolV->size(); j++)
         {
             shared_ptr<InputTrace> beta = make_shared<InputTrace>(iolV->at(j), pl);
-            tracesToCompare.emplace_back(alpha->get(),beta->get());
 
             shared_ptr<Tree> alphaTree = iTreeH->getSubTree(alpha);
             shared_ptr<Tree> betaTree = iTreeH->getSubTree(beta);
@@ -713,6 +712,7 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
 
             // append new gammas to all TracePairs (a,b)
             auto range = tc2traces.equal_range(testCase);
+            vector<TC2Trace> newTestCases;
             for (auto it = range.first; it != range.second; ++it)
             {
                 TracePair tracePair = it->second;
@@ -724,10 +724,12 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
                 auto iBetaGamma =  make_shared<InputTrace>(tracePair.second, pl);
                 iBetaGamma->append(g);
 
-                TC2Trace tc2trace1(iAlphaGamma->get(), tracePair);
-                TC2Trace tc2trace2(iBetaGamma->get(), tracePair);
-                tc2traces.insert(tc2trace2);
-                tc2traces.insert(tc2trace1);
+//                TC2Trace tc2trace1(iAlphaGamma->get(), tracePair);
+//                TC2Trace tc2trace2(iBetaGamma->get(), tracePair);
+//                tc2traces.emplace(iAlphaGamma->get(), tracePair);
+//                tc2traces.emplace(iBetaGamma->get(), tracePair);
+                newTestCases.emplace_back(iAlphaGamma->get(), tracePair);
+                newTestCases.emplace_back(iBetaGamma->get(), tracePair);
 
                 tracePair2gamma.erase(tracePair);
                 TracePair2Trace tracePair2NewGamma1(tracePair, g);
@@ -737,6 +739,9 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
                 iTreeSH->addToRoot(iBetaGamma->get());
 
             }
+            for (TC2Trace tc2trace : newTestCases)
+                tc2traces.insert(tc2trace);
+
             tc2traces.erase(testCase);
         }
     }
