@@ -420,7 +420,7 @@ struct TracePairHash
     }
 };
 
-typedef pair < TCTrace, TracePair > TC2Trace;
+typedef pair < TCTrace, TracePair > TC2TracePair;
 typedef pair < TracePair, TCTrace > TracePair2Trace;
 typedef unordered_map < TracePair, TCTrace, TracePairHash > Traces2GammaMap;
 typedef unordered_multimap < TCTrace, TracePair, TCTraceHash > TC2TracesMap;
@@ -619,8 +619,8 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
         shared_ptr<FsmNode> afterBeta = *abs_s0->after(*beta).begin();
         if (afterAlpha == afterBeta) continue;
 
-        TC2Trace tc2trace1(iAlphaGamma->get(), tracePair);
-        TC2Trace tc2trace2(iBetaGamma->get(), tracePair);
+        TC2TracePair tc2trace1(iAlphaGamma->get(), tracePair);
+        TC2TracePair tc2trace2(iBetaGamma->get(), tracePair);
         tc2traces.insert(tc2trace2);
         tc2traces.insert(tc2trace1);
 
@@ -650,23 +650,34 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
         iTreeSH->addToRoot(iBetaGamma);
     }
 
-    vector< vector<int> > tests = *iTreeSH->getIOLists().getIOLists();
-
     /**
      * This loop finds and removes redundant test cases
      *
        - iterate over all safety-h test cases
-         - iterate over all trace pairs (a, b) needing this test case
+         - iterate over all trace pairs (a, b) needing this test case tc
+           - note: tc1 = a.g . There is also a partner test case tc2 = b.g
            - find a better gamma g' for (a,b)
          - if a better gamma can be found for all trace pairs:
-           - remove this test case from iTreeSH
+           - remove this test case (a.g) and its partner (b.g)
            - add a.g' and b.g' to iTreeSH
 
     *  By adding a.g' and b.g' some existend test cases can be lengthened
     *  but no new test cases are added
+    *
+    *  NOTE: Going through this loop multiple times improves the result
+    *        One could loop until there is no change.
     */
+
+    /* test cases that should not be changed */
+    vector< vector<int> > perfectTestCases;
+
+    vector< vector<int> > tests = *iTreeSH->getIOLists().getIOLists();
     for (vector<int> testCase : tests)
     {
+        if (find(begin(perfectTestCases), end(perfectTestCases), testCase) != end(perfectTestCases))
+        {
+            continue;
+        }
 
         bool betterGammaForAllPairs = true;
         Traces2GammaMap pair2NewGamma;
@@ -705,42 +716,56 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
         // if for this test case all trace pairs can have better gammas
         if (betterGammaForAllPairs)
         {
-            // delete this test case
-            shared_ptr<InputTrace> iTestCase = make_shared<InputTrace>(testCase, pl);
-            shared_ptr<TreeNode> afterTC = iTreeSH->getRoot()->after(iTestCase->cbegin(), iTestCase->cend());
-            afterTC->deleteSingleNode();
+
+            //            shared_ptr<InputTrace> iTestCase = make_shared<InputTrace>(testCase, pl);
+            //            shared_ptr<TreeNode> afterTC = iTreeSH->getRoot()->after(iTestCase->cbegin(), iTestCase->cend());
+            //            if (afterTC && afterTC->isLeaf())
+            //                afterTC->deleteSingleNode();
 
             // append new gammas to all TracePairs (a,b)
             auto range = tc2traces.equal_range(testCase);
-            vector<TC2Trace> newTestCases;
+            vector<TC2TracePair> newTestCases;
             for (auto it = range.first; it != range.second; ++it)
             {
                 TracePair tracePair = it->second;
 
-                auto g = pair2NewGamma[tracePair];
+                // delete this test case and its partner if possible
+                auto oldGamma = tracePair2gamma[tracePair];
+                auto iAlphaGammaOld = make_shared<InputTrace>(tracePair.first, pl);
+                iAlphaGammaOld->append(oldGamma);
+                auto iBetaGammaOld = make_shared<InputTrace>(tracePair.first, pl);
+                iBetaGammaOld->append(oldGamma);
+                shared_ptr<TreeNode> afterAGOld = iTreeSH->getRoot()->after(iAlphaGammaOld->cbegin(), iAlphaGammaOld->cend());
+                if (afterAGOld && afterAGOld->isLeaf())
+                    afterAGOld->deleteNode();
+                shared_ptr<TreeNode> afterBGOld = iTreeSH->getRoot()->after(iBetaGammaOld->cbegin(), iBetaGammaOld->cend());
+                if (afterBGOld && afterBGOld->isLeaf())
+                    afterBGOld->deleteNode();
 
+                // insert new two new test cases
+                // actual insertion is done after iteration
+                auto newGamma = pair2NewGamma[tracePair];
                 auto iAlphaGamma = make_shared<InputTrace>(tracePair.first, pl);
-                iAlphaGamma->append(g);
+                iAlphaGamma->append(newGamma);
                 auto iBetaGamma =  make_shared<InputTrace>(tracePair.second, pl);
-                iBetaGamma->append(g);
+                iBetaGamma->append(newGamma);
 
-//                TC2Trace tc2trace1(iAlphaGamma->get(), tracePair);
-//                TC2Trace tc2trace2(iBetaGamma->get(), tracePair);
-//                tc2traces.emplace(iAlphaGamma->get(), tracePair);
-//                tc2traces.emplace(iBetaGamma->get(), tracePair);
                 newTestCases.emplace_back(iAlphaGamma->get(), tracePair);
                 newTestCases.emplace_back(iBetaGamma->get(), tracePair);
+                perfectTestCases.push_back(iAlphaGamma->get());
+                perfectTestCases.push_back(iBetaGamma->get());
 
                 tracePair2gamma.erase(tracePair);
-                TracePair2Trace tracePair2NewGamma1(tracePair, g);
-                tracePair2gamma.insert(tracePair2NewGamma1);
+                TracePair2Trace tracePair2NewGamma(tracePair, newGamma);
+                tracePair2gamma.insert(tracePair2NewGamma);
 
                 iTreeSH->addToRoot(iAlphaGamma->get());
                 iTreeSH->addToRoot(iBetaGamma->get());
 
             }
-            for (TC2Trace tc2trace : newTestCases)
+            for (const TC2TracePair &tc2trace : newTestCases){
                 tc2traces.insert(tc2trace);
+            }
 
             tc2traces.erase(testCase);
         }
