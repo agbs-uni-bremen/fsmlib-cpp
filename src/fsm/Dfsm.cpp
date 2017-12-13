@@ -15,7 +15,7 @@ using namespace std;
 
 
 
-shared_ptr<FsmPresentationLayer> Dfsm::createPresentationLayerFromCsvFormat(const std::string & fname) {
+shared_ptr<FsmPresentationLayer> Dfsm::createPresentationLayerFromCsvFormat(const string & fname) {
     
     // key comparator for usage in string sets
     class setCmp
@@ -30,9 +30,9 @@ shared_ptr<FsmPresentationLayer> Dfsm::createPresentationLayerFromCsvFormat(cons
     set<string,setCmp> outStrSet;
     
     
-    vector<std::string> in2String;
-    vector<std::string> out2String;
-    vector<std::string> state2String;
+    vector<string> in2String;
+    vector<string> out2String;
+    vector<string> state2String;
     
     ifstream inputFile(fname);
     
@@ -135,8 +135,8 @@ shared_ptr<FsmPresentationLayer> Dfsm::createPresentationLayerFromCsvFormat(cons
 
 
 shared_ptr<FsmPresentationLayer>
-Dfsm::createPresentationLayerFromCsvFormat(const std::string & fname,
-                                           const std::shared_ptr<FsmPresentationLayer> pl) {
+Dfsm::createPresentationLayerFromCsvFormat(const string & fname,
+                                           const shared_ptr<FsmPresentationLayer> pl) {
     
     // key comparator for usage in string sets
     class setCmp
@@ -151,9 +151,9 @@ Dfsm::createPresentationLayerFromCsvFormat(const std::string & fname,
     set<string,setCmp> outStrSet;
     
     
-    vector<std::string> in2String(pl->getIn2String());
-    vector<std::string> out2String(pl->getOut2String());
-    vector<std::string> state2String;
+    vector<string> in2String(pl->getIn2String());
+    vector<string> out2String(pl->getOut2String());
+    vector<string> state2String;
     
     ifstream inputFile(fname);
     
@@ -264,7 +264,7 @@ Dfsm::createPresentationLayerFromCsvFormat(const std::string & fname,
 
 
 
-void Dfsm::createDfsmTransitionGraph(const std::string& fname) {
+void Dfsm::createDfsmTransitionGraph(const string& fname) {
     
     ifstream inputFile(fname);
     size_t pos;
@@ -390,8 +390,8 @@ void Dfsm::createDfsmTransitionGraph(const std::string& fname) {
 
 
 
-Dfsm::Dfsm(const std::string & fname,
-           const std::string & fsmName) : Fsm(nullptr)   {
+Dfsm::Dfsm(const string & fname,
+           const string & fsmName) : Fsm(nullptr)   {
     dfsmTable = nullptr;
     name = fsmName;
     presentationLayer = createPresentationLayerFromCsvFormat(fname);
@@ -399,9 +399,9 @@ Dfsm::Dfsm(const std::string & fname,
     
 }
 
-Dfsm::Dfsm(const std::string & fname,
-           const std::string & fsmName,
-           const std::shared_ptr<FsmPresentationLayer> pl) : Fsm(nullptr)   {
+Dfsm::Dfsm(const string & fname,
+           const string & fsmName,
+           const shared_ptr<FsmPresentationLayer> pl) : Fsm(nullptr)   {
     
     dfsmTable = nullptr;
     name = fsmName;
@@ -439,7 +439,7 @@ void Dfsm::createAtRandom()
     }
 }
 
-std::vector<std::shared_ptr<PkTable> > Dfsm::getPktblLst() const
+vector<shared_ptr<PkTable> > Dfsm::getPktblLst() const
 {
     return pktblLst;
 }
@@ -750,7 +750,7 @@ Fsm()
 
 
 Dfsm::Dfsm(const Json::Value& fsmExport,
-           const std::shared_ptr<FsmPresentationLayer> pl) :
+           const shared_ptr<FsmPresentationLayer> pl) :
 Fsm()
 {
     
@@ -1276,7 +1276,7 @@ IOListContainer Dfsm::tMethod()
 }
 
 
-void Dfsm::toCsv(const std::string& fname) {
+void Dfsm::toCsv(const string& fname) {
     ofstream out(fname + ".csv");
     
     // Table heading contains input identifiers
@@ -1332,6 +1332,34 @@ InputTrace Dfsm::calcDistinguishingTrace(
                                        maxInput);
 }
 
+
+vector<int> Dfsm::calcDistinguishingTrace(shared_ptr<SegmentedTrace> alpha,
+                                               shared_ptr<SegmentedTrace> beta, const shared_ptr<TreeNode> treeNode) {
+    
+    
+    shared_ptr<FsmNode> s0 = getInitialState();
+    shared_ptr<FsmNode> s1 = alpha->getTgtNode();
+    shared_ptr<FsmNode> s2 = beta->getTgtNode();
+    
+    shared_ptr<Tree> tree = make_shared<Tree>(treeNode,presentationLayer);
+    
+    InputTrace gamma = calcDistinguishingTraceInTree(s1, s2, tree);
+    if (!gamma.get().empty())
+        return gamma.get();
+    
+    InputTrace gamma2 = calcDistinguishingTraceAfterTree(s1, s2, tree);
+    if (!gamma2.get().empty())
+        return gamma2.get();
+    
+    return s1->calcDistinguishingTrace(s2,
+                                       pktblLst,
+                                       maxInput).get();
+    
+}
+
+
+
+
 InputTrace Dfsm::calcDistinguishingTraceInTree(
         const shared_ptr<FsmNode> s_i,
         const shared_ptr<FsmNode> s_j,
@@ -1339,7 +1367,7 @@ InputTrace Dfsm::calcDistinguishingTraceInTree(
 {
     shared_ptr<TreeNode> root = tree->getRoot();
     shared_ptr<TreeNode> currentNode = root;
-    std::deque<shared_ptr<InputTrace>> q1;
+    deque<shared_ptr<InputTrace>> q1;
 
     /* initialize queue */
     for (const shared_ptr<TreeEdge> &e : *currentNode->getChildren())
@@ -1365,7 +1393,7 @@ InputTrace Dfsm::calcDistinguishingTraceInTree(
         for (const shared_ptr<TreeEdge> &ne : *currentNode->getChildren())
         {
             shared_ptr<InputTrace> itrcTmp = make_shared<InputTrace>(itrc->get(), presentationLayer);
-            std::vector<int>nItrc;
+            vector<int>nItrc;
             nItrc.push_back(ne->getIO());
             itrcTmp->append(nItrc);
             q1.push_back(itrcTmp);
@@ -1445,7 +1473,7 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
     // (if alpha.gamma or beta.gamma are already in iTree, addition
     // will not lead to a new test case)
     IOListContainer iolcV = V->getIOListsWithPrefixes();
-    shared_ptr<std::vector<std::vector<int>>> iolV = iolcV.getIOLists();
+    shared_ptr<vector<vector<int>>> iolV = iolcV.getIOLists();
     
     for ( size_t i = 0; i < iolV->size(); i++ ) {
         
@@ -1599,3 +1627,18 @@ IOListContainer Dfsm::hMethodOnMinimisedDfsm(const unsigned int numAddStates) {
     return iTree->getIOLists();
 
 }
+
+
+bool Dfsm::distinguishable(const FsmNode& s1, const FsmNode& s2) {
+    
+    if ( pktblLst.empty() ) {
+        calcPkTables();
+    }
+    
+    shared_ptr<PkTable> p = pktblLst.back();
+    
+    return ( p->getClass(s1.getId()) != p->getClass(s2.getId()) );
+    
+}
+
+

@@ -16,6 +16,7 @@
 #include <deque>
 
 #include "fsm/FsmVisitor.h"
+#include "fsm/SegmentedTrace.h"
 
 class FsmTransition;
 class FsmPresentationLayer;
@@ -26,6 +27,7 @@ class InputTrace;
 class OFSMTable;
 class PkTable;
 class DFSMTableRow;
+class TraceSegment;
 
 class FsmNode : public std::enable_shared_from_this<FsmNode>
 {
@@ -85,6 +87,7 @@ public:
 	*/
 	std::unordered_set<std::shared_ptr<FsmNode>> after(const InputTrace & itrc);
     std::unordered_set<std::shared_ptr<FsmNode>> after(const std::vector<int> & itrc);
+    std::unordered_set<std::shared_ptr<FsmNode>> after(const std::shared_ptr<TraceSegment> seg);
 
 	/**
 	Return list of nodes that can be reached from this node

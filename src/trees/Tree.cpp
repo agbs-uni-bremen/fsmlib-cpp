@@ -75,6 +75,11 @@ shared_ptr<Tree> Tree::getSubTree(const shared_ptr<InputTrace> alpha)
     return make_shared<Tree>(cpyNode, presentationLayer);
 }
 
+shared_ptr<TreeNode> Tree::getSubTree(shared_ptr< vector<int> > alpha) {
+    
+    return getRoot()->after(alpha->begin(),alpha->end());
+}
+
 IOListContainer Tree::getIOLists()
 {
 	shared_ptr<vector<vector<int>>> ioll = make_shared<vector<vector<int>>>();

@@ -791,28 +791,33 @@ Minimal Fsm::isMinimal() const
     return minimal;
 }
 
-Fsm Fsm::minimiseObservableFSM()
-{
-    /*Create new list to store all existing OFSMTables*/
+void Fsm::calcOFSMTables() {
+    
     ofsmTableLst.clear();
     
-    /*Create the initial OFSMTable representing the FSM,
-     where all FSM states belong to the same class*/
+    // Create the initial OFSMTable representing the FSM,
+    //  where all FSM states belong to the same class
     shared_ptr<OFSMTable> tbl = make_shared<OFSMTable>(nodes, maxInput, maxOutput, presentationLayer);
     
-    /*Create all possible OFSMTables, each new one from its
-     predecessor, and add them to the ofsmTableLst*/
+    // Create all possible OFSMTables, each new one from its
+    // predecessor, and add them to the ofsmTableLst
     while (tbl != nullptr)
     {
         ofsmTableLst.push_back(tbl);
         tbl = tbl->next();
     }
     
-    /*The last OFSMTable defined has classes corresponding to
-     the minimised FSM to be constructed*/
-    tbl = ofsmTableLst.back();
+}
+
+Fsm Fsm::minimiseObservableFSM()
+{
+    calcOFSMTables();
+
+    // The last OFSMTable defined has classes corresponding to
+    // the minimised FSM to be constructed*/
+    shared_ptr<OFSMTable> tbl = ofsmTableLst.back();
     
-    /*Create the minimised FSM from tbl and return it*/
+    // Create the minimised FSM from tbl and return it
     Fsm fsm = tbl->toFsm(name + "_MIN");
     fsm.minimal = True;
     return fsm;
@@ -1720,6 +1725,20 @@ bool Fsm::removeUnreachableNodes(std::vector<shared_ptr<FsmNode>>& unreachableNo
     nodes = newNodes;
     
     return (unreachableNodes.size() > 0);
+}
+
+
+
+bool Fsm::distinguishable(const FsmNode& s1, const FsmNode& s2) {
+    
+    if ( ofsmTableLst.empty() ) {
+        calcOFSMTables();
+    }
+    
+    shared_ptr<OFSMTable> p = ofsmTableLst.back();
+    
+    return ( p->getS2C().at(s1.getId()) != p->getS2C().at(s2.getId()) );
+    
 }
 
 

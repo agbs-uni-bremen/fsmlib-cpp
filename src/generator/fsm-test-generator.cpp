@@ -9,6 +9,7 @@
 #include <memory>
 #include <cstdlib>
 #include <cstring>
+#include <utility>
 
 #include "interface/FsmPresentationLayer.h"
 #include "fsm/Dfsm.h"
@@ -802,18 +803,275 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
     
     shared_ptr<Tree> V = dfsmRefMin.getStateCover();
     
+    // Complete state cover as IOListContainer
     IOListContainer Vcontainer = V->getIOListsWithPrefixes();
+    
+    // State cover as vector of vectors
     shared_ptr< vector< vector<int> > > Vvectors = Vcontainer.getIOLists();
+    
+    // Empty deque of pointers to segmented traces
     deque< shared_ptr<SegmentedTrace> > Vtraces;
     
+    // Fill Vtraces with new instances of segmented traces,
+    // each trace consisting of a single segment from V, together
+    // with its target node.
     for ( const auto v : *Vvectors ) {
-        InputTrace itrc(v,pl);
-        shared_ptr<FsmNode> tgtNode = *(s0->after(itrc).begin());
-        shared_ptr< vector<int> > vPtr = make_shared<vector<int>>(v.begin(),v.end());
+        shared_ptr<FsmNode> tgtNode = *(s0->after(v).begin());
+        shared_ptr< vector<int> > vPtr =
+            make_shared< vector<int> >(v.begin(),v.end());
         shared_ptr<TraceSegment> seg = make_shared<TraceSegment>(vPtr,
                                                                  string::npos,
                                                                  tgtNode);
+        deque< shared_ptr<TraceSegment> > d;
+        d.push_back(seg);
+        Vtraces.push_back(make_shared<SegmentedTrace>(d));
     }
+    
+    // Fill deque A with all pairs of Vtraces leading to distinct
+    // target nodes
+    deque< pair< shared_ptr<SegmentedTrace>,shared_ptr<SegmentedTrace> > > A;
+    for ( const auto st1 : Vtraces ) {
+        shared_ptr<FsmNode> tgtNode1 = st1->getTgtNode();
+        for ( const auto st2 : Vtraces ) {
+            if ( st2->getTgtNode() != tgtNode1 ) {
+                A.push_back(make_pair(st1, st2));
+            }
+        }
+    }
+    
+    // Construct all Sigma_I traces of
+    // length 1..(m-n+1) (input enumeration).
+    // The IOListContainer containing the input enumerations
+    // is transformed into a deque of trace segments
+    IOListContainer inputEnum = IOListContainer(dfsmRefMin.getMaxInput(),
+                                                1,
+                                                numAddStates + 1,
+                                                pl);
+    shared_ptr< vector< vector<int> > > inputEnumVec = inputEnum.getIOLists();
+    deque< shared_ptr<TraceSegment> > inputEnumDeq;
+    for ( const auto v : *inputEnumVec ) {
+        shared_ptr< vector<int> > vPtr =
+            make_shared< vector<int> >(v.begin(),v.end());
+        shared_ptr<TraceSegment> seg = make_shared<TraceSegment>(vPtr,
+                                                                 string::npos);
+        inputEnumDeq.push_back(seg);
+    }
+    
+    // Create deque of all Vtraces extended by suffixes from inpuEnumDeque
+    deque< shared_ptr<SegmentedTrace> > V_inputEnumTraces;
+    for ( const auto v : Vtraces ) {
+        for ( const auto seg : inputEnumDeq ) {
+            // Calculate the target node reached via v.seg
+            shared_ptr<FsmNode> tgtNode =
+                *(v->getTgtNode()->after(*seg->get()).begin());
+            shared_ptr<TraceSegment> s = make_shared<TraceSegment>(*seg);
+            s->setTgtNode(tgtNode);
+            // Append s to copy of v
+            shared_ptr<SegmentedTrace> u = make_shared<SegmentedTrace>(*v);
+            u->add(s);
+            V_inputEnumTraces.push_back(u);
+        }
+    }
+    
+    // Create deque B containing all pairs of elements of Vtraces
+    // V_inputEnumTraces, such that their target nodes differ
+    deque< pair< shared_ptr<SegmentedTrace>,shared_ptr<SegmentedTrace> > > B;
+    for ( const auto v : Vtraces ) {
+        for ( const auto u : V_inputEnumTraces ) {
+            if ( v->getTgtNode() != u->getTgtNode() ) {
+                B.push_back(make_pair(v,u));
+            }
+        }
+    }
+    
+    // Create deque C containing all pairs <alpha.gamma',alpha.gamma>
+    // of elements from V_inputEnumTraces, such that alpha is in Vtraces,
+    // and gamma' is a non-empty prefix of gamma, and the target nodes
+    // differ. Recall that the alpha part is always contained in the
+    // first segment of a segmented trace, while the input enumeration
+    // is in the second segment.
+    deque< pair< shared_ptr<SegmentedTrace>,shared_ptr<SegmentedTrace> > > C;
+    for ( const auto v : V_inputEnumTraces ) {
+        shared_ptr<TraceSegment> seg = v->back();
+        // Loop over all true gamma-prefixes of v = alpha.gamma
+        for ( size_t prefix = seg->size() - 1; prefix > 0; prefix-- ) {
+            shared_ptr<FsmNode> tgtNode1 = v->getTgtNode();
+
+            shared_ptr<TraceSegment> seg1 = v->front();
+            shared_ptr<TraceSegment> s1 = make_shared<TraceSegment>(*seg1);
+            shared_ptr<TraceSegment> s2 = make_shared<TraceSegment>(*seg);
+            s2->setPrefix(prefix);
+            
+            shared_ptr<FsmNode> tgtNode2 =
+                *(s1->getTgtNode()->after(s2).begin());
+            
+            if ( tgtNode1 != tgtNode2 ) {
+                deque< std::shared_ptr<TraceSegment> > segs;
+                segs.push_back(s1);
+                segs.push_back(s2);
+                shared_ptr<SegmentedTrace> vPref = make_shared<SegmentedTrace>(segs);
+                C.push_back(make_pair(vPref,v));
+            }
+        }
+    }
+    
+    // Create the test suite
+    shared_ptr<Tree> testSuiteTree =
+        make_shared<Tree>(make_shared<TreeNode>(),pl);
+    
+    // Add all traces from A-pairs, extended by distinguishing traces
+    for ( const auto p : A ) {
+        const shared_ptr<SegmentedTrace> tr1 = p.first;
+        const shared_ptr<SegmentedTrace> tr2 = p.second;
+        shared_ptr<FsmNode> s1 = tr1->getTgtNode();
+        shared_ptr<FsmNode> s2 = tr2->getTgtNode();
+        
+        // Add the state cover traces first
+        testSuiteTree->addToRoot(*tr1->front()->get());
+        testSuiteTree->addToRoot(*tr2->front()->get());
+        
+        // Now take care of the same traces, extended by
+        // a distinguishing trace
+        //
+        // @todo replace this by optmised selection
+        // from table of distinguishing traces
+        InputTrace itrc = s1->calcDistinguishingTrace(s2,
+                                                      dfsmRefMin.getPktblLst(),
+                                                      dfsmRefMin.getMaxInput());
+        
+        // @todo optimise this
+        vector<int> vTrc = itrc.get();
+        shared_ptr< vector<int> > distTrace =
+        make_shared< vector<int> >(vTrc.begin(),vTrc.end());
+        
+        shared_ptr<FsmNode> s1Target = *(s1->after(*distTrace).begin());
+        shared_ptr<FsmNode> s2Target = *(s2->after(*distTrace).begin());
+        
+        shared_ptr<SegmentedTrace> trNew1 = make_shared<SegmentedTrace>(*tr1);
+        shared_ptr<SegmentedTrace> trNew2 = make_shared<SegmentedTrace>(*tr2);
+        
+        trNew1->add( make_shared<TraceSegment>(distTrace,
+                                               string::npos,
+                                               s1Target) );
+        trNew2->add( make_shared<TraceSegment>(distTrace,
+                                               string::npos,
+                                               s2Target) );
+        
+        vector<int> v1 = trNew1->getCopy();
+        vector<int> v2 = trNew2->getCopy();
+        
+        testSuiteTree->addToRoot(v1);
+        testSuiteTree->addToRoot(v2);
+
+
+    }
+    
+    // Add all traces from B-pairs, that are distinguishable
+    // in dfsmAbstractionMin, extended by distinguishing traces
+    for ( const auto p : B ) {
+        
+        const shared_ptr<SegmentedTrace> tr1 = p.first;
+        const shared_ptr<SegmentedTrace> tr2 = p.second;
+        shared_ptr<FsmNode> s1 = tr1->getTgtNode();
+        shared_ptr<FsmNode> s2 = tr2->getTgtNode();
+        
+        if ( not dfsmAbstraction->distinguishable(*s1,*s2) ) continue;
+        
+        // Add the extended trace of the second component first,
+        // the V-component is already inside the testSuiteTree
+        testSuiteTree->addToRoot(*tr2->front()->get());
+        
+        // Now take care of the same traces, extended by
+        // a distinguishing trace
+        //
+        // @todo replace this by optmised selection
+        // from table of distinguishing traces
+        InputTrace itrc = s1->calcDistinguishingTrace(s2,
+                                                      dfsmRefMin.getPktblLst(),
+                                                      dfsmRefMin.getMaxInput());
+        
+        
+        // @todo optimise this
+        vector<int> vTrc = itrc.get();
+        shared_ptr< vector<int> > distTrace =
+        make_shared< vector<int> >(vTrc.begin(),vTrc.end());
+        
+        shared_ptr<FsmNode> s1Target = *(s1->after(*distTrace).begin());
+        shared_ptr<FsmNode> s2Target = *(s2->after(*distTrace).begin());
+        
+        shared_ptr<SegmentedTrace> trNew1 = make_shared<SegmentedTrace>(*tr1);
+        shared_ptr<SegmentedTrace> trNew2 = make_shared<SegmentedTrace>(*tr2);
+        
+        trNew1->add( make_shared<TraceSegment>(distTrace,
+                                               string::npos,
+                                               s1Target) );
+        trNew2->add( make_shared<TraceSegment>(distTrace,
+                                               string::npos,
+                                               s2Target) );
+        
+        vector<int> v1 = trNew1->getCopy();
+        vector<int> v2 = trNew2->getCopy();
+        
+        testSuiteTree->addToRoot(v1);
+        testSuiteTree->addToRoot(v2);
+        
+    }
+    
+    
+    
+    // Add all traces from C-pairs, that are distinguishable
+    // in dfsmAbstractionMin, extended by distinguishing traces
+    for ( const auto p : C ) {
+        
+        const shared_ptr<SegmentedTrace> tr1 = p.first;
+        const shared_ptr<SegmentedTrace> tr2 = p.second;
+        shared_ptr<FsmNode> s1 = tr1->getTgtNode();
+        shared_ptr<FsmNode> s2 = tr2->getTgtNode();
+        
+        if ( not dfsmAbstraction->distinguishable(*s1,*s2) ) continue;
+        
+        // Add the extended traces first
+        testSuiteTree->addToRoot(*tr1->front()->get());
+        testSuiteTree->addToRoot(*tr2->front()->get());
+        
+        // Now take care of the same traces, extended by
+        // a distinguishing trace
+        //
+        // @todo replace this by optmised selection
+        // from table of distinguishing traces
+        InputTrace itrc = s1->calcDistinguishingTrace(s2,
+                                                      dfsmRefMin.getPktblLst(),
+                                                      dfsmRefMin.getMaxInput());
+        
+        
+        // @todo optimise this
+        vector<int> vTrc = itrc.get();
+        shared_ptr< vector<int> > distTrace =
+        make_shared< vector<int> >(vTrc.begin(),vTrc.end());
+        
+        shared_ptr<FsmNode> s1Target = *(s1->after(*distTrace).begin());
+        shared_ptr<FsmNode> s2Target = *(s2->after(*distTrace).begin());
+        
+        shared_ptr<SegmentedTrace> trNew1 = make_shared<SegmentedTrace>(*tr1);
+        shared_ptr<SegmentedTrace> trNew2 = make_shared<SegmentedTrace>(*tr2);
+        
+        trNew1->add( make_shared<TraceSegment>(distTrace,
+                                               string::npos,
+                                               s1Target) );
+        trNew2->add( make_shared<TraceSegment>(distTrace,
+                                               string::npos,
+                                               s2Target) );
+        
+        vector<int> v1 = trNew1->getCopy();
+        vector<int> v2 = trNew2->getCopy();
+        
+        testSuiteTree->addToRoot(v1);
+        testSuiteTree->addToRoot(v2);
+        
+    }
+    
+    IOListContainer testCasesSH = testSuiteTree->getIOLists();
+    *testSuite = dfsmRefMin.createTestSuite(testCasesSH);
     
 }
 

@@ -56,7 +56,7 @@ protected:
     bool inPrefixRelation(std::vector<int> aPath, std::vector<int> bPath);
 public:
 	/**
-	Create a new tree, with a root and a presenation layer
+	Create a new tree, with a root and a presentation layer
 	@param root  root of the tree
 	@param presentationLayer The presentation layer to use
 	*/
@@ -170,5 +170,12 @@ public:
      *         or null if no tree node could be found after applying alpha
      */
     std::shared_ptr<Tree> getSubTree(const std::shared_ptr<InputTrace> alpha);
+    
+    /**
+     *  return te TreeNode where the subtree after input trace alpha starts
+     */
+    std::shared_ptr<TreeNode> getSubTree(std::shared_ptr< std::vector<int> > alpha);
+    
+    
 };
 #endif //FSM_TREES_TREE_H_

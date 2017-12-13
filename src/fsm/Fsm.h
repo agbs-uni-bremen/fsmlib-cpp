@@ -98,6 +98,10 @@ protected:
      */
     std::vector< std::unordered_set<int> > getEquivalentInputsFromPrimeMachine();
 
+    /**
+     *   Calculate OFSM tables and store them in ofsmTableLst
+     */
+    void calcOFSMTables();
     
 public:
     
@@ -470,6 +474,11 @@ public:
      *  the accept command.
      */
     void accept(FsmVisitor& v);
+    
+    /**
+     *  Return true if and only if the two FSM states are distinhuishable
+     */
+    virtual bool distinguishable(const FsmNode& s1, const FsmNode& s2);
 
 };
 #endif //FSM_FSM_FSM_H_

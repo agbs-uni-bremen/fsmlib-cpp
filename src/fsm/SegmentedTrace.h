@@ -42,6 +42,7 @@ public:
     int at(size_t n);
     
     std::shared_ptr<FsmNode> getTgtNode() { return tgtNode; }
+    void setTgtNode(const std::shared_ptr<FsmNode> tgtNode) { this->tgtNode = tgtNode; }
     
 };
 
@@ -54,14 +55,23 @@ private:
 public:
     
     SegmentedTrace(std::deque< std::shared_ptr<TraceSegment> > segments);
+    SegmentedTrace(const SegmentedTrace& other);
     
     void add(std::shared_ptr<TraceSegment> seg);
     
-    std::deque<int> getCopy();
+    std::vector<int> getCopy();
     
-    std::shared_ptr<FsmNode> tgtNode();
+    std::shared_ptr<FsmNode> getTgtNode();
     
     size_t size() { return segments.size(); }
+    
+    std::shared_ptr<TraceSegment> back() {
+         return (segments.empty()) ? nullptr : segments.back();
+    }
+    
+    std::shared_ptr<TraceSegment> front() {
+        return (segments.empty()) ? nullptr : segments.front();
+    }
 	 
 };
 #endif  

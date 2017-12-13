@@ -209,6 +209,31 @@ unordered_set<shared_ptr<FsmNode>> FsmNode::after(const InputTrace& itrc)
     return nodeSet;
 }
 
+std::unordered_set<std::shared_ptr<FsmNode>> FsmNode::after(const std::shared_ptr<TraceSegment> seg) {
+    
+    unordered_set<shared_ptr<FsmNode>> nodeSet;
+    nodeSet.insert(shared_from_this());
+    
+    size_t len = 0;
+    for (auto it = seg->get()->begin();
+         it != seg->get()->end() and len++ < seg->getPrefix();
+         ++it)
+    {
+        int x = *it;
+        unordered_set<shared_ptr<FsmNode>> newNodeSet;
+        
+        for (shared_ptr<FsmNode> n : nodeSet)
+        {
+            unordered_set<shared_ptr<FsmNode>> ns = n->afterAsSet(x);
+            newNodeSet.insert(ns.begin(), ns.end());
+        }
+        nodeSet = newNodeSet;
+    }
+    return nodeSet;
+    
+    
+}
+
 vector<shared_ptr<FsmNode>> FsmNode::after(const int x)
 {
     vector<shared_ptr<FsmNode> > lst;

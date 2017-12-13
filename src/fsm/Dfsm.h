@@ -17,11 +17,15 @@
 
 #include "fsm/DFSMTable.h"
 #include "fsm/Fsm.h"
+#include "fsm/SegmentedTrace.h"
 #include "json/json.h"
+#include "trees/TreeNode.h"
 
 
 class PkTable;
 class IOTrace;
+class SegmentedTrace;
+class TreeNode;
 
 class Dfsm : public Fsm
 {
@@ -360,6 +364,9 @@ public:
      * @return a distinguishing trace for s_i and s_j
      */
     InputTrace calcDistinguishingTrace(const std::shared_ptr<InputTrace> iAlpha, const std::shared_ptr<InputTrace> iBeta, const std::shared_ptr<Tree> tree);
+    
+    std::vector<int> calcDistinguishingTrace(std::shared_ptr<SegmentedTrace> alpha,
+                                             std::shared_ptr<SegmentedTrace> beta, const std::shared_ptr<TreeNode> treeNode);
 
     /**
      *  Breadth-first search in a given Tree for a Trace that
@@ -393,5 +400,11 @@ public:
     InputTrace calcDistinguishingTraceAfterTree(const std::shared_ptr<FsmNode> s_i, const std::shared_ptr<FsmNode> s_j, const std::shared_ptr<Tree> tree);
 
     std::vector<std::shared_ptr<PkTable> > getPktblLst() const;
+    
+    /**
+     *  Return true if and only if the two FSM states are distinhuishable
+     */
+    virtual bool distinguishable(const FsmNode& s1, const FsmNode& s2);
+    
 };
 #endif //FSM_FSM_DFSM_H_

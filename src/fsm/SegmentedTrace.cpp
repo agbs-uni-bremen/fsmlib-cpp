@@ -74,19 +74,24 @@ SegmentedTrace::SegmentedTrace(std::deque< std::shared_ptr<TraceSegment> > segme
     this->segments = segments;
 }
 
+SegmentedTrace::SegmentedTrace(const SegmentedTrace& other) {
+    segments = other.segments;
+}
+
 void SegmentedTrace::add(std::shared_ptr<TraceSegment> seg) {
     segments.push_back(seg);
 }
 
-deque<int> SegmentedTrace::getCopy() {
-    deque<int> v;
+vector<int> SegmentedTrace::getCopy() {
+    vector<int> v;
     for ( auto s : segments ) {
-        v.insert(v.end(),s->getCopy().begin(),s->getCopy().end());
+        vector<int> svec = s->getCopy();
+        v.insert(v.end(),svec.begin(),svec.end());
     }
     return v;
 }
 
-shared_ptr<FsmNode> SegmentedTrace::tgtNode() {
+shared_ptr<FsmNode> SegmentedTrace::getTgtNode() {
     
     if ( segments.size() == 0 ) return nullptr;
     
