@@ -7,6 +7,7 @@
 #include "fsm/FsmNode.h"
 #include "fsm/FsmTransition.h"
 #include "fsm/PkTable.h"
+#include "fsm/DFSMTableRow.h"
 #include "fsm/InputTrace.h"
 #include "fsm/IOTrace.h"
 #include "trees/Tree.h"
@@ -388,7 +389,24 @@ void Dfsm::createDfsmTransitionGraph(const string& fname) {
     
 }
 
-
+void Dfsm::initDistTraces() {
+    
+    distTraces.clear();
+    
+    for ( int n = 0; n < size(); n++ ) {
+        // Create empty vector of for row n, to be extended in
+        // the inner loop
+        vector< vector< shared_ptr< vector<int> > > > thisRow;
+        for ( int m = 0; m < size(); m++ ) {
+            // Create empty vector of pointers to traces
+            vector< shared_ptr< vector<int> > > v;
+            thisRow.push_back(v);
+        }
+        // Add thisRow to distTraces
+        distTraces.push_back(thisRow);
+    }
+    
+}
 
 Dfsm::Dfsm(const string & fname,
            const string & fsmName) : Fsm(nullptr)   {
@@ -396,7 +414,6 @@ Dfsm::Dfsm(const string & fname,
     name = fsmName;
     presentationLayer = createPresentationLayerFromCsvFormat(fname);
     createDfsmTransitionGraph(fname);
-    
 }
 
 Dfsm::Dfsm(const string & fname,
@@ -407,7 +424,6 @@ Dfsm::Dfsm(const string & fname,
     name = fsmName;
     presentationLayer = createPresentationLayerFromCsvFormat(fname,pl);
     createDfsmTransitionGraph(fname);
-    
 }
 
 void Dfsm::createAtRandom()
@@ -517,7 +533,6 @@ Dfsm::Dfsm(const Fsm & fsm)
      vector<shared_ptr<OFSMTable>> ofsmTableLst;
      shared_ptr<Tree> characterisationSet;
      vector<shared_ptr<Tree>> stateIdentificationSets;*/
-    
 }
 
 
@@ -1640,5 +1655,132 @@ bool Dfsm::distinguishable(const FsmNode& s1, const FsmNode& s2) {
     return ( p->getClass(s1.getId()) != p->getClass(s2.getId()) );
     
 }
+
+void Dfsm::calculateDistMatrix() {
+    initDistTraces();
+    calcPkTables();
+    
+    for ( int n = 0; n < size(); n++ ) {
+        for ( int m = n+1; m < size(); m++ ) {
+            // Skip indistinguishable nodes
+            if ( not distinguishable(*nodes[n], *nodes[m]) ) continue;
+            
+            vector< shared_ptr< vector<int> > > u = calcDistTraces(*nodes[n],*nodes[m]);
+            distTraces[n][m] = u;
+            distTraces[m][n] = u;
+            
+        }
+    }
+    
+    
+}
+
+vector< shared_ptr< vector<int> > >  Dfsm::calcDistTraces(shared_ptr< vector<int> > trc,
+                                                          int id1,
+                                                          int id2) {
+    
+    vector< shared_ptr< vector<int> > > v;
+    
+    for ( int x = 0; x <= maxInput; x++ ) {
+        int y1 = dfsmTable->getRow(id1)->getioSection()[x];
+        int y2 = dfsmTable->getRow(id2)->getioSection()[x];
+        
+        if ( y1 != y2 ) {
+            shared_ptr< vector<int> > newTrc = make_shared< vector<int> >(*trc);
+            newTrc->push_back(x);
+            v.push_back(newTrc);
+        }
+    }
+    
+    return v;
+    
+}
+
+vector< shared_ptr< vector<int> > > Dfsm::calcDistTraces(size_t l,
+                                                         shared_ptr< vector<int> > trc,
+                                                         int id1,
+                                                         int id2) {
+    if ( l == 0 ) return calcDistTraces(trc,id1,id2);
+    
+    vector< shared_ptr< vector<int> > > v;
+    shared_ptr<PkTable> thisPkTbl = pktblLst[l];
+    shared_ptr<PkTable> prevPkTbl = pktblLst[l-1];
+    
+    for ( int x = 0; x <= maxInput; x++ ) {
+        int idNext1 = thisPkTbl->getRow(id1)->getI2PMap()[x];
+        int idNext2 = thisPkTbl->getRow(id2)->getI2PMap()[x];
+
+        if ( prevPkTbl->getClass(idNext1) != prevPkTbl->getClass(idNext2) ) {
+            shared_ptr< vector<int> > newTrc = make_shared< vector<int> >(*trc);
+            newTrc->push_back(x);
+            vector< shared_ptr< vector<int> > > w = calcDistTraces(l-1,newTrc,idNext1,idNext2);
+            v.insert(v.end(),w.begin(),w.end());
+        }
+        
+    }
+    
+    return v;
+    
+}
+
+
+vector< shared_ptr< vector<int> > > Dfsm::calcDistTraces(FsmNode& s1,
+                                                         FsmNode& s2) {
+    
+    int id1 = s1.getId();
+    int id2 = s2.getId();
+    
+    // Find first Pk-table distPkTbl,  where s1 and s2 are distinguished
+    size_t l = 0;
+    shared_ptr<PkTable> distPkTbl = nullptr;
+    for ( ; l < pktblLst.size(); l++ ) {
+        distPkTbl = pktblLst[l];
+        if ( distPkTbl->getClass(id1) != distPkTbl->getClass(id2) )
+            break;
+    }
+    
+    return calcDistTraces(l,make_shared< vector<int> >(),id1,id2);
+}
+
+
+vector< shared_ptr< vector<int> > > Dfsm::getDistTraces(FsmNode& s1,
+                                                                  FsmNode& s2) {
+    
+    return distTraces[s1.getId()][s2.getId()];
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

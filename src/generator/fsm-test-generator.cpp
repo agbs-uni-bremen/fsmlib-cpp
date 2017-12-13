@@ -787,6 +787,25 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
     
     // Minimise original reference DFSM
     Dfsm dfsmRefMin = dfsm->minimise();
+    dfsmRefMin.calculateDistMatrix();
+    
+    
+    for ( int n = 0; n < dfsmRefMin.size(); n++ ) {
+        for ( int m = n+1; m < dfsmRefMin.size(); m++ ) {
+            vector< shared_ptr< vector<int> > > v01 =
+            dfsmRefMin.getDistTraces(*dfsmRefMin.getNodes()[n],
+                                     *dfsmRefMin.getNodes()[m]);
+            
+            cout << endl << "DIST TRC: " << n << " " << m << endl;
+            for ( const auto trc : v01 ) {
+                for ( const auto x : *trc ) {
+                    cout << x << ", ";
+                }
+                cout << endl;
+            }
+        }
+    }
+    
     
     // Minimise abstracted Dfsm
     Dfsm dfsmAbstractionMin = dfsmAbstraction->minimise();

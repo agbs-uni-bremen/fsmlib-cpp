@@ -47,6 +47,26 @@ private:
     std::shared_ptr<FsmPresentationLayer> createPresentationLayerFromCsvFormat(const std::string& fname,const std::shared_ptr<FsmPresentationLayer> pl);
     
     void createDfsmTransitionGraph(const std::string& fname);
+    
+    /**
+     *   distTraces[n][m] contains a vector of pointers to
+     *   traces distinguishing this from FsmNode number n
+     */
+    std::vector< std::vector< std::vector< std::shared_ptr< std::vector<int> > > > > distTraces;
+    
+    void initDistTraces();
+    
+    std::vector< std::shared_ptr< std::vector<int> > > calcDistTraces(FsmNode& s1,
+                                                                      FsmNode& s2);
+    
+    std::vector< std::shared_ptr< std::vector<int> > > calcDistTraces(size_t l,
+                                                                      std::shared_ptr< std::vector<int> > trc,
+                                                                      int id1,
+                                                                      int id2);
+    
+    std::vector< std::shared_ptr< std::vector<int> > > calcDistTraces(std::shared_ptr< std::vector<int> > trc,
+                                                                      int id1,
+                                                                      int id2);
 
 public:
 	/**
@@ -405,6 +425,17 @@ public:
      *  Return true if and only if the two FSM states are distinhuishable
      */
     virtual bool distinguishable(const FsmNode& s1, const FsmNode& s2);
+    
+    /**
+     *   Calculate the distinguishability matrix
+     */
+    void calculateDistMatrix();
+    
+    /**
+     * Return the vector of shortest traces distinguishing s1 and s2
+     */
+    std::vector< std::shared_ptr< std::vector<int> > > getDistTraces(FsmNode& s1,
+                                                                     FsmNode& s2);
     
 };
 #endif //FSM_FSM_DFSM_H_

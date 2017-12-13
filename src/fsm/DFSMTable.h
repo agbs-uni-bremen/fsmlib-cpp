@@ -50,6 +50,8 @@ public:
      */
     void setRow(const int n, const std::shared_ptr<DFSMTableRow> r);
     
+    std::shared_ptr<DFSMTableRow> getRow(int n) { return rows[n]; }
+    
     /**
      * Modify a row of the DFSMTable
      * @return The PkTablep1

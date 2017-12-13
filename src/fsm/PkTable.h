@@ -67,6 +67,9 @@ public:
      * @param row The row
      */
     void setRow(const int s, const std::shared_ptr<PkTableRow> row);
+    std::shared_ptr<PkTableRow> getRow(int n) {
+        return rows[n];
+    }
     
     /**
      * Set the id of the Pk-equivalence class at the position n
