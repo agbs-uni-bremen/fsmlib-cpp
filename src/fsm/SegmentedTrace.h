@@ -72,6 +72,8 @@ public:
     std::shared_ptr<TraceSegment> front() {
         return (segments.empty()) ? nullptr : segments.front();
     }
+    
+    const std::deque< std::shared_ptr<TraceSegment> >& getSegments() { return segments; }
 	 
 };
 #endif  

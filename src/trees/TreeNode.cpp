@@ -17,7 +17,7 @@ std::shared_ptr<TreeNode> TreeNode::clone() const
 {
     shared_ptr<TreeNode> clone = make_shared<TreeNode>();
     clone->getChildren()->reserve(children->size());
-
+    
     for (const auto& c : *children)
     {
         std::shared_ptr<TreeEdge> childClone = c->clone();
@@ -40,15 +40,15 @@ weak_ptr<TreeNode> TreeNode::getParent() const
 void TreeNode::deleteSingleNode()
 {
     deleted = true;
-
+    
     if (!isLeaf())
     {
         return;
     }
-
+    
     shared_ptr<TreeNode> c = shared_from_this();
     shared_ptr<TreeNode> t = parent.lock();
-
+    
     if (t != nullptr)
     {
         t->remove(c);
@@ -314,6 +314,59 @@ void TreeNode::add(const IOListContainer & tcl)
     }
 }
 
+
+int TreeNode::tentativeAddToThisNode(vector<int>::const_iterator start,
+                                     vector<int>::const_iterator stop) {
+    
+    // If we have reached the end, the trace is fully contained in the tree
+    if ( start == stop ) return 0;
+    
+    // If this is a node without children (i.e., a leaf),
+    // we just have to extend the tree, without creating a new branch.
+    if ( children->empty() ) return 1;
+    
+    // Now we have to check whether an existing edge
+    // is labelled with inout *start
+    int x = *start;
+    for ( auto e : *children ) {
+        if ( e->getIO() == x ) return tentativeAddToThisNode(++start,stop);
+    }
+    
+    // Adding this trace requires a new branch in the tree,
+    // this means, an additional test case.
+    return 2;
+}
+
+int TreeNode::tentativeAddToThisNode(vector<int>::const_iterator start,
+                                     vector<int>::const_iterator stop,
+                                     std::shared_ptr<TreeNode>& n) {
+    
+    n = shared_from_this();
+    
+    // If we have reached the end, the trace is fully contained in the tree
+    if ( start == stop ) return 0;
+    
+    // If this is a node without children (i.e., a leaf),
+    // we just have to extend the tree, without creating a new branch.
+    if ( children->empty() ) return 1;
+    
+    // Now we have to check whether an existing edge
+    // is labelled with inout *start
+    int x = *start;
+    for ( auto e : *children ) {
+        if ( e->getIO() == x ) {
+            shared_ptr<TreeNode> next = e->getTarget();
+            return next->tentativeAddToThisNode(++start,stop,n);
+        }
+    }
+    
+    // Adding this trace requires a new branch in the tree,
+    // this means, an additional test case.
+    return 2;
+}
+
+
+
 void TreeNode::addToThisNode(const IOListContainer& tcl)
 {
     /*Append each input sequence in tcl to this node,
@@ -375,7 +428,7 @@ void TreeNode::traverse(vector<int>& v,
         int io = e->getIO();
         shared_ptr<TreeNode> n = e->getTarget();
         v.push_back(io);
-
+        
         n->traverse(v,ioll);
         
         // Pop the last element in v

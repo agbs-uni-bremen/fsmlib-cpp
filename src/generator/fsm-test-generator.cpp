@@ -486,7 +486,15 @@ shared_ptr<Tree> getPrefixRelationTreeWithoutTrace(const shared_ptr<Tree> & a, c
 
 }
 
-#if 1
+static void addSHTraces(deque<pair<shared_ptr<SegmentedTrace>,shared_ptr<SegmentedTrace>>>  X,
+                        Dfsm& distDfsm) {
+    
+    
+    
+    
+}
+
+#if 0
 
 static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
     
@@ -820,6 +828,9 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
     shared_ptr<FsmNode> s0 = dfsmRefMin.getInitialState();
     shared_ptr<FsmPresentationLayer> pl = dfsmRefMin.getPresentationLayer();
     
+    // Create an empty test suite as a tree of input traces
+    shared_ptr<Tree> testSuiteTree = make_shared<Tree>(make_shared<TreeNode>(),pl);
+    
     shared_ptr<Tree> V = dfsmRefMin.getStateCover();
     
     // Complete state cover as IOListContainer
@@ -876,7 +887,9 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
         inputEnumDeq.push_back(seg);
     }
     
-    // Create deque of all Vtraces extended by suffixes from inpuEnumDeque
+    // Create deque of all Vtraces extended by suffixes from inpuEnumDeque.
+    // Each of these extended traces needs to be in the test suite. As a consequence,
+    // all traces of the state cover are also contained in the test suite as prefixes.
     deque< shared_ptr<SegmentedTrace> > V_inputEnumTraces;
     for ( const auto v : Vtraces ) {
         for ( const auto seg : inputEnumDeq ) {
@@ -889,6 +902,9 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
             shared_ptr<SegmentedTrace> u = make_shared<SegmentedTrace>(*v);
             u->add(s);
             V_inputEnumTraces.push_back(u);
+            
+            // Put u into the test suite
+            testSuiteTree->addToRoot(u->getCopy());
         }
     }
     
@@ -934,9 +950,7 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
         }
     }
     
-    // Create the test suite
-    shared_ptr<Tree> testSuiteTree =
-        make_shared<Tree>(make_shared<TreeNode>(),pl);
+
     
     // Add all traces from A-pairs, extended by distinguishing traces
     for ( const auto p : A ) {
@@ -945,44 +959,49 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
         shared_ptr<FsmNode> s1 = tr1->getTgtNode();
         shared_ptr<FsmNode> s2 = tr2->getTgtNode();
         
-        // Add the state cover traces first
-        testSuiteTree->addToRoot(*tr1->front()->get());
-        testSuiteTree->addToRoot(*tr2->front()->get());
-        
         // Now take care of the same traces, extended by
         // a distinguishing trace
         //
-        // @todo replace this by optmised selection
-        // from table of distinguishing traces
-        InputTrace itrc = s1->calcDistinguishingTrace(s2,
-                                                      dfsmRefMin.getPktblLst(),
-                                                      dfsmRefMin.getMaxInput());
         
-        // @todo optimise this
-        vector<int> vTrc = itrc.get();
-        shared_ptr< vector<int> > distTrace =
-        make_shared< vector<int> >(vTrc.begin(),vTrc.end());
-        
-        shared_ptr<FsmNode> s1Target = *(s1->after(*distTrace).begin());
-        shared_ptr<FsmNode> s2Target = *(s2->after(*distTrace).begin());
-        
-        shared_ptr<SegmentedTrace> trNew1 = make_shared<SegmentedTrace>(*tr1);
-        shared_ptr<SegmentedTrace> trNew2 = make_shared<SegmentedTrace>(*tr2);
-        
-        trNew1->add( make_shared<TraceSegment>(distTrace,
-                                               string::npos,
-                                               s1Target) );
-        trNew2->add( make_shared<TraceSegment>(distTrace,
-                                               string::npos,
-                                               s2Target) );
-        
-        vector<int> v1 = trNew1->getCopy();
-        vector<int> v2 = trNew2->getCopy();
-        
-        testSuiteTree->addToRoot(v1);
-        testSuiteTree->addToRoot(v2);
+        // Which are the candidates to distinguish s1 and s2 ?
+        vector< shared_ptr< vector<int> > > v01 = dfsmRefMin.getDistTraces(*s1,*s2);
+        shared_ptr<SegmentedTrace> tr1Ext = make_shared<SegmentedTrace>(*tr1);
+        shared_ptr<SegmentedTrace> tr2Ext = make_shared<SegmentedTrace>(*tr2);
 
-
+        shared_ptr< vector<int> > vBest = v01[0];
+        shared_ptr<TraceSegment> seg = make_shared<TraceSegment>(vBest);
+        tr1Ext->add(seg);
+        tr2Ext->add(seg);
+        
+        int bestEffect = testSuiteTree->tentativeAddToRoot(*tr1Ext) +
+                         testSuiteTree->tentativeAddToRoot(*tr2Ext);
+        
+        for ( size_t i = 1; i < v01.size() and bestEffect > 0; i++ ) {
+            shared_ptr< vector<int> > vAux = v01[i];
+            shared_ptr<SegmentedTrace> tr1Aux = make_shared<SegmentedTrace>(*tr1);
+            shared_ptr<SegmentedTrace> tr2Aux = make_shared<SegmentedTrace>(*tr2);
+            tr1Aux->add(seg);
+            tr2Aux->add(seg);
+            
+            int effAux = testSuiteTree->tentativeAddToRoot(*tr1Aux) +
+                         testSuiteTree->tentativeAddToRoot(*tr1Aux);
+            
+            if ( effAux < bestEffect ) {
+                vBest = vAux;
+                bestEffect = effAux;
+                tr1Ext = tr1Aux;
+                tr2Ext = tr2Aux;
+            }
+        }
+        
+        vector<int> v1 = tr1Ext->getCopy();
+        vector<int> v2 = tr1Ext->getCopy();
+        
+        if ( bestEffect > 0 ) {
+            testSuiteTree->addToRoot(v1);
+            testSuiteTree->addToRoot(v2);
+        }
+        
     }
     
     // Add all traces from B-pairs, that are distinguishable
@@ -996,43 +1015,49 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
         
         if ( not dfsmAbstraction->distinguishable(*s1,*s2) ) continue;
         
-        // Add the extended trace of the second component first,
-        // the V-component is already inside the testSuiteTree
-        testSuiteTree->addToRoot(*tr2->front()->get());
         
-        // Now take care of the same traces, extended by
+        // Now take care of the B-traces, extended by
         // a distinguishing trace
         //
-        // @todo replace this by optmised selection
-        // from table of distinguishing traces
-        InputTrace itrc = s1->calcDistinguishingTrace(s2,
-                                                      dfsmRefMin.getPktblLst(),
-                                                      dfsmRefMin.getMaxInput());
         
+        // Which are the candidates to distinguish s1 and s2 ?
+        vector< shared_ptr< vector<int> > > v01 = dfsmRefMin.getDistTraces(*s1,*s2);
+        shared_ptr<SegmentedTrace> tr1Ext = make_shared<SegmentedTrace>(*tr1);
+        shared_ptr<SegmentedTrace> tr2Ext = make_shared<SegmentedTrace>(*tr2);
         
-        // @todo optimise this
-        vector<int> vTrc = itrc.get();
-        shared_ptr< vector<int> > distTrace =
-        make_shared< vector<int> >(vTrc.begin(),vTrc.end());
+        shared_ptr< vector<int> > vBest = v01[0];
+        shared_ptr<TraceSegment> seg = make_shared<TraceSegment>(vBest);
+        tr1Ext->add(seg);
+        tr2Ext->add(seg);
         
-        shared_ptr<FsmNode> s1Target = *(s1->after(*distTrace).begin());
-        shared_ptr<FsmNode> s2Target = *(s2->after(*distTrace).begin());
+        int bestEffect = testSuiteTree->tentativeAddToRoot(*tr1Ext) +
+        testSuiteTree->tentativeAddToRoot(*tr2Ext);
         
-        shared_ptr<SegmentedTrace> trNew1 = make_shared<SegmentedTrace>(*tr1);
-        shared_ptr<SegmentedTrace> trNew2 = make_shared<SegmentedTrace>(*tr2);
+        for ( size_t i = 1; i < v01.size() and bestEffect > 0; i++ ) {
+            shared_ptr< vector<int> > vAux = v01[i];
+            shared_ptr<SegmentedTrace> tr1Aux = make_shared<SegmentedTrace>(*tr1);
+            shared_ptr<SegmentedTrace> tr2Aux = make_shared<SegmentedTrace>(*tr2);
+            tr1Aux->add(seg);
+            tr2Aux->add(seg);
+            
+            int effAux = testSuiteTree->tentativeAddToRoot(*tr1Aux) +
+            testSuiteTree->tentativeAddToRoot(*tr1Aux);
+            
+            if ( effAux < bestEffect ) {
+                vBest = vAux;
+                bestEffect = effAux;
+                tr1Ext = tr1Aux;
+                tr2Ext = tr2Aux;
+            }
+        }
         
-        trNew1->add( make_shared<TraceSegment>(distTrace,
-                                               string::npos,
-                                               s1Target) );
-        trNew2->add( make_shared<TraceSegment>(distTrace,
-                                               string::npos,
-                                               s2Target) );
+        vector<int> v1 = tr1Ext->getCopy();
+        vector<int> v2 = tr1Ext->getCopy();
         
-        vector<int> v1 = trNew1->getCopy();
-        vector<int> v2 = trNew2->getCopy();
-        
-        testSuiteTree->addToRoot(v1);
-        testSuiteTree->addToRoot(v2);
+        if ( bestEffect > 0 ) {
+            testSuiteTree->addToRoot(v1);
+            testSuiteTree->addToRoot(v2);
+        }
         
     }
     
@@ -1049,43 +1074,48 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
         
         if ( not dfsmAbstraction->distinguishable(*s1,*s2) ) continue;
         
-        // Add the extended traces first
-        testSuiteTree->addToRoot(*tr1->front()->get());
-        testSuiteTree->addToRoot(*tr2->front()->get());
-        
-        // Now take care of the same traces, extended by
+        // Now take care of the C-traces, extended by
         // a distinguishing trace
         //
-        // @todo replace this by optmised selection
-        // from table of distinguishing traces
-        InputTrace itrc = s1->calcDistinguishingTrace(s2,
-                                                      dfsmRefMin.getPktblLst(),
-                                                      dfsmRefMin.getMaxInput());
         
+        // Which are the candidates to distinguish s1 and s2 ?
+        vector< shared_ptr< vector<int> > > v01 = dfsmRefMin.getDistTraces(*s1,*s2);
+        shared_ptr<SegmentedTrace> tr1Ext = make_shared<SegmentedTrace>(*tr1);
+        shared_ptr<SegmentedTrace> tr2Ext = make_shared<SegmentedTrace>(*tr2);
         
-        // @todo optimise this
-        vector<int> vTrc = itrc.get();
-        shared_ptr< vector<int> > distTrace =
-        make_shared< vector<int> >(vTrc.begin(),vTrc.end());
+        shared_ptr< vector<int> > vBest = v01[0];
+        shared_ptr<TraceSegment> seg = make_shared<TraceSegment>(vBest);
+        tr1Ext->add(seg);
+        tr2Ext->add(seg);
         
-        shared_ptr<FsmNode> s1Target = *(s1->after(*distTrace).begin());
-        shared_ptr<FsmNode> s2Target = *(s2->after(*distTrace).begin());
+        int bestEffect = testSuiteTree->tentativeAddToRoot(*tr1Ext) +
+        testSuiteTree->tentativeAddToRoot(*tr2Ext);
         
-        shared_ptr<SegmentedTrace> trNew1 = make_shared<SegmentedTrace>(*tr1);
-        shared_ptr<SegmentedTrace> trNew2 = make_shared<SegmentedTrace>(*tr2);
+        for ( size_t i = 1; i < v01.size() and bestEffect > 0; i++ ) {
+            shared_ptr< vector<int> > vAux = v01[i];
+            shared_ptr<SegmentedTrace> tr1Aux = make_shared<SegmentedTrace>(*tr1);
+            shared_ptr<SegmentedTrace> tr2Aux = make_shared<SegmentedTrace>(*tr2);
+            tr1Aux->add(seg);
+            tr2Aux->add(seg);
+            
+            int effAux = testSuiteTree->tentativeAddToRoot(*tr1Aux) +
+            testSuiteTree->tentativeAddToRoot(*tr1Aux);
+            
+            if ( effAux < bestEffect ) {
+                vBest = vAux;
+                bestEffect = effAux;
+                tr1Ext = tr1Aux;
+                tr2Ext = tr2Aux;
+            }
+        }
         
-        trNew1->add( make_shared<TraceSegment>(distTrace,
-                                               string::npos,
-                                               s1Target) );
-        trNew2->add( make_shared<TraceSegment>(distTrace,
-                                               string::npos,
-                                               s2Target) );
+        vector<int> v1 = tr1Ext->getCopy();
+        vector<int> v2 = tr1Ext->getCopy();
         
-        vector<int> v1 = trNew1->getCopy();
-        vector<int> v2 = trNew2->getCopy();
-        
-        testSuiteTree->addToRoot(v1);
-        testSuiteTree->addToRoot(v2);
+        if ( bestEffect > 0 ) {
+            testSuiteTree->addToRoot(v1);
+            testSuiteTree->addToRoot(v2);
+        }
         
     }
     

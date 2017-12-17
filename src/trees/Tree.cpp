@@ -70,14 +70,14 @@ shared_ptr<TreeNode> Tree::getRoot() const
 
 shared_ptr<Tree> Tree::getSubTree(const shared_ptr<InputTrace> alpha)
 {
-    shared_ptr<TreeNode> afterAlpha = getRoot()->after(alpha->cbegin(), alpha->cend());
+    shared_ptr<TreeNode> afterAlpha = root->after(alpha->cbegin(), alpha->cend());
     shared_ptr<TreeNode> cpyNode = afterAlpha->clone();
     return make_shared<Tree>(cpyNode, presentationLayer);
 }
 
 shared_ptr<TreeNode> Tree::getSubTree(shared_ptr< vector<int> > alpha) {
     
-    return getRoot()->after(alpha->begin(),alpha->end());
+    return root->after(alpha->begin(),alpha->end());
 }
 
 IOListContainer Tree::getIOLists()
@@ -131,20 +131,17 @@ IOListContainer Tree::getTestCases()
 
 void Tree::add(const IOListContainer & tcl)
 {
-	shared_ptr<TreeNode> r = getRoot();
-	r->add(tcl);
+	root->add(tcl);
 }
 
 void Tree::addToRoot(const IOListContainer & tcl)
 {
-	shared_ptr<TreeNode> r = getRoot();
-	r->addToThisNode(tcl);
+	root->addToThisNode(tcl);
 }
 
 void Tree::addToRoot(const vector<int> &lst)
 {
-    shared_ptr<TreeNode> r = getRoot();
-    r->addToThisNode(lst);
+    root->addToThisNode(lst);
 }
 
 void Tree::unionTree(const shared_ptr<Tree> otherTree)
@@ -154,8 +151,7 @@ void Tree::unionTree(const shared_ptr<Tree> otherTree)
 
 void Tree::addAfter(const InputTrace & tr, const IOListContainer & cnt)
 {
-	shared_ptr<TreeNode> r = getRoot();
-	shared_ptr<TreeNode> n = r->after(tr.cbegin(), tr.cend());
+	shared_ptr<TreeNode> n = root->after(tr.cbegin(), tr.cend());
 
 	if (n == nullptr)
 	{
@@ -168,11 +164,7 @@ void Tree::addAfter(const InputTrace & tr, const IOListContainer & cnt)
 size_t Tree::size() {
     
     size_t theSize = 0;
-    
-    shared_ptr<TreeNode> r = getRoot();
-    r->calcSize(theSize);
-    
-    
+    root->calcSize(theSize);
     return theSize;
 }
 
@@ -216,3 +208,38 @@ shared_ptr<Tree> Tree::getPrefixRelationTree(const shared_ptr<Tree> & b)
     return tree;
 
 }
+
+
+
+int Tree::tentativeAddToRoot(const std::vector<int>& alpha) {
+    return root->tentativeAddToThisNode(alpha.cbegin(), alpha.cend());
+}
+
+
+
+
+
+int Tree::tentativeAddToRoot(SegmentedTrace& alpha) const {
+    
+    int r;
+    shared_ptr<TreeNode> n = root;
+    
+    for ( size_t i = 0; i < alpha.size(); i++ ) {
+        shared_ptr<TraceSegment> seg = alpha.getSegments().at(i);
+        r = n->tentativeAddToThisNode(seg->get()->cbegin(), seg->get()->cend(),n);
+        if ( r > 0 ) return r;
+    }
+    
+    return 0;
+
+}
+
+
+
+
+
+
+
+
+
+

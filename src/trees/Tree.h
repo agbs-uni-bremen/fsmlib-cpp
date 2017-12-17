@@ -15,6 +15,7 @@
 #include "trees/IOListContainer.h"
 #include "trees/TreeEdge.h"
 #include "trees/TreeNode.h"
+#include "fsm/SegmentedTrace.h"
 
 class Tree : public std::enable_shared_from_this<Tree>
 {
@@ -35,12 +36,13 @@ protected:
 	const std::shared_ptr<FsmPresentationLayer> presentationLayer;
 
 	/**
-	Calculate the leaves of the all tree, calling calcLeaves on the root of the tree
-	*/
+	 * Calculate the leaves of the tree, calling calcLeaves on the root of the tree
+	 */
 	void calcLeaves();
 
 	//TODO
-	void remove(const std::shared_ptr<TreeNode> thisNode, const std::shared_ptr<TreeNode> otherNode);
+	void remove(const std::shared_ptr<TreeNode> thisNode,
+                const std::shared_ptr<TreeNode> otherNode);
 
 	/**
 	Print every childran of this tree to a dot format into a standard output stream
@@ -177,5 +179,21 @@ public:
     std::shared_ptr<TreeNode> getSubTree(std::shared_ptr< std::vector<int> > alpha);
     
     
+    /**
+     *   Check the effect of adding a trace at the tree root,
+     *   using addToRoot(),
+     *   without actually changing the tree.
+     *   @param alpha The trace to be checked w.r.t. insertion into the tree
+     *
+     *   @return 0 If the alpha is already contained in the tree,
+     *             so it's not necessary to add it at all
+     *   @return 1 If adding alpha will just extend one path of the tree at
+     *             one of its leaves.
+     *   @return 2 If adding alpha will create a new branch in the tree,
+     *             leading to an additional test case.
+     */
+    int tentativeAddToRoot(const std::vector<int>& alpha);
+    int tentativeAddToRoot(SegmentedTrace& alpha) const;
+
 };
 #endif //FSM_TREES_TREE_H_

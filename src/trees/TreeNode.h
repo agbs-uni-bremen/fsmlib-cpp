@@ -176,7 +176,11 @@ public:
 	*/
 	void addToThisNode(const IOListContainer & tcl);
     void addToThisNode(const std::vector<int> &lst);
-
+    int tentativeAddToThisNode(std::vector<int>::const_iterator start,
+                               std::vector<int>::const_iterator stop);
+    int tentativeAddToThisNode(std::vector<int>::const_iterator start,
+                               std::vector<int>::const_iterator stop,
+                               std::shared_ptr<TreeNode>& n);
 	/**
 	Return target TreeNode reached after following the inputs
 	from a given trace in the Tree.
