@@ -538,14 +538,21 @@ static void addSHTraces(deque<pair<shared_ptr<SegmentedTrace>,shared_ptr<Segment
         }
         
         vector<int> v1 = tr1Ext->getCopy();
-        vector<int> v2 = tr1Ext->getCopy();
+        vector<int> v2 = tr2Ext->getCopy();
         
         if ( bestEffect > 0 ) {
+            
+            cout << "ADD: " << *tr1Ext << endl;
+            cout << "ADD: " << *tr2Ext << endl;
+
             testSuiteTree.addToRoot(v1);
             testSuiteTree.addToRoot(v2);
         }
         
     }
+    
+    IOListContainer testCasesSH = testSuiteTree.getIOLists();
+    cout << "TEST SUITE STATUS:" << endl<< refDfsm.createTestSuite(testCasesSH) << endl;
     
 }
 
@@ -963,6 +970,9 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
         }
     }
     
+    IOListContainer xxx = testSuiteTree->getIOLists();
+    cout << "TEST SUITE STATUS (initial):" << endl<< dfsmRefMin.createTestSuite(xxx) << endl;
+    
     // Create deque B containing all pairs of elements of Vtraces
     // V_inputEnumTraces, such that their target nodes differ
     deque< pair< shared_ptr<SegmentedTrace>,shared_ptr<SegmentedTrace> > > B;
@@ -1008,7 +1018,7 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
     addSHTraces(A, dfsmRefMin, dfsmRefMin, *testSuiteTree);
     addSHTraces(B, dfsmRefMin, *dfsmAbstraction, *testSuiteTree);
     addSHTraces(C, dfsmRefMin, *dfsmAbstraction, *testSuiteTree);
-
+    
     IOListContainer testCasesSH = testSuiteTree->getIOLists();
     *testSuite = dfsmRefMin.createTestSuite(testCasesSH);
     

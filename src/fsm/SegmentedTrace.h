@@ -37,12 +37,15 @@ public:
     
     std::vector<int> getCopy();
     
-    size_t size();
+    size_t size() const;
     
     int at(size_t n);
     
     std::shared_ptr<FsmNode> getTgtNode() { return tgtNode; }
     void setTgtNode(const std::shared_ptr<FsmNode> tgtNode) { this->tgtNode = tgtNode; }
+    
+    friend std::ostream & operator<<(std::ostream & out, const TraceSegment& fsm);
+
     
 };
 
@@ -63,7 +66,7 @@ public:
     
     std::shared_ptr<FsmNode> getTgtNode();
     
-    size_t size() { return segments.size(); }
+    size_t size() const { return segments.size(); }
     
     std::shared_ptr<TraceSegment> back() {
          return (segments.empty()) ? nullptr : segments.back();
@@ -73,7 +76,10 @@ public:
         return (segments.empty()) ? nullptr : segments.front();
     }
     
-    const std::deque< std::shared_ptr<TraceSegment> >& getSegments() { return segments; }
+    const std::deque< std::shared_ptr<TraceSegment> >& getSegments() const { return segments; }
+    
+    
+    friend std::ostream & operator<<(std::ostream & out, const SegmentedTrace& fsm);
 	 
 };
 #endif  

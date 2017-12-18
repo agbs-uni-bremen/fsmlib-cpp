@@ -54,7 +54,7 @@ vector<int> TraceSegment::getCopy() {
     
 }
 
-size_t TraceSegment::size() {
+size_t TraceSegment::size() const {
     return (prefix == string::npos or prefix > segment->size()) ?
              segment->size() : prefix;
 }
@@ -66,6 +66,22 @@ int TraceSegment::at(size_t n) {
     return segment->at(n);
     
 }
+
+ostream & operator<<(ostream & out, const TraceSegment& seg)
+{
+    
+    if ( seg.segment->size() == 0 ) return out;
+    
+    out << seg.segment->at(0);
+    
+    for (size_t i = 1; i < seg.size(); i++ ) {
+        out << "." << seg.segment->at(i);
+    }
+        
+    return out;
+    
+}
+
 
 
 // **************************************************************************
@@ -96,6 +112,21 @@ shared_ptr<FsmNode> SegmentedTrace::getTgtNode() {
     if ( segments.size() == 0 ) return nullptr;
     
     return segments.back()->getTgtNode();
+    
+}
+
+ostream & operator<<(ostream & out, const SegmentedTrace& trc)
+{
+    
+    if ( trc.segments.size() == 0 ) return out;
+    
+    out << *trc.segments.at(0);
+    
+    for ( size_t i = 1; i < trc.segments.size(); i++ ) {
+        cout << "." << *trc.segments[i];
+    }
+    out << endl;
+    return out;
     
 }
 
