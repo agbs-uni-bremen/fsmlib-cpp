@@ -70,7 +70,10 @@ int TraceSegment::at(size_t n) {
 ostream & operator<<(ostream & out, const TraceSegment& seg)
 {
     
-    if ( seg.segment->size() == 0 ) return out;
+    if ( seg.segment->size() == 0 ) {
+        out << "eps";
+        return out;
+    }
     
     out << seg.segment->at(0);
     
@@ -118,14 +121,16 @@ shared_ptr<FsmNode> SegmentedTrace::getTgtNode() {
 ostream & operator<<(ostream & out, const SegmentedTrace& trc)
 {
     
-    if ( trc.segments.size() == 0 ) return out;
+    if ( trc.segments.size() == 0 ) {
+        out << "eps";
+        return out;
+    }
     
     out << *trc.segments.at(0);
     
     for ( size_t i = 1; i < trc.segments.size(); i++ ) {
         cout << "." << *trc.segments[i];
     }
-    out << endl;
     return out;
     
 }
