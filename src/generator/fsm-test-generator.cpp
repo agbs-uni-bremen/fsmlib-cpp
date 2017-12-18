@@ -926,9 +926,11 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
     // Fill deque A with all pairs of Vtraces leading to distinct
     // target nodes
     deque< pair< shared_ptr<SegmentedTrace>,shared_ptr<SegmentedTrace> > > A;
-    for ( const auto st1 : Vtraces ) {
-        shared_ptr<FsmNode> tgtNode1 = st1->getTgtNode();
-        for ( const auto st2 : Vtraces ) {
+    for ( size_t i = 0; i < Vtraces.size(); i++ ) {
+        auto st1 = Vtraces.at(i);
+        auto tgtNode1 = st1->getTgtNode();
+        for ( size_t j = i+1; j < Vtraces.size(); j++ ) {
+            auto st2 = Vtraces.at(j);
             if ( st2->getTgtNode() != tgtNode1 ) {
                 A.push_back(make_pair(st1, st2));
             }
@@ -1020,11 +1022,8 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
     }
     
     addSHTraces(A, dfsmRefMin, dfsmRefMin, *testSuiteTree);
-    addSHTraces(B, dfsmRefMin, dfsmRefMin, *testSuiteTree);
-    addSHTraces(C, dfsmRefMin, dfsmRefMin, *testSuiteTree);
-
-    //addSHTraces(B, dfsmRefMin, *dfsmAbstraction, *testSuiteTree);
-    //addSHTraces(C, dfsmRefMin, *dfsmAbstraction, *testSuiteTree);
+    addSHTraces(B, dfsmRefMin, *dfsmAbstraction, *testSuiteTree);
+    addSHTraces(C, dfsmRefMin, *dfsmAbstraction, *testSuiteTree);
     
     IOListContainer testCasesSH = testSuiteTree->getIOLists();
     *testSuite = dfsmRefMin.createTestSuite(testCasesSH);
