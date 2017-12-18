@@ -499,6 +499,10 @@ static void addSHTraces(deque<pair<shared_ptr<SegmentedTrace>,shared_ptr<Segment
         shared_ptr<FsmNode> s1 = tr1->getTgtNode();
         shared_ptr<FsmNode> s2 = tr2->getTgtNode();
         
+        cout << "============================================ " << endl;
+        cout << "CHECK: " << *tr1 << "  NODE " << tr1->back()->getTgtNode()->getId() << endl;
+        cout << "CHECK: " << *tr2 << "  NODE " << tr2->back()->getTgtNode()->getId() << endl;
+        
         // Only handle trace pairs leading to
         // distinguishable target nodes
         if ( not distDfsm.distinguishable(*s1, *s2) ) continue;
@@ -527,7 +531,7 @@ static void addSHTraces(deque<pair<shared_ptr<SegmentedTrace>,shared_ptr<Segment
             tr2Aux->add(seg);
             
             int effAux = testSuiteTree.tentativeAddToRoot(*tr1Aux) +
-            testSuiteTree.tentativeAddToRoot(*tr1Aux);
+            testSuiteTree.tentativeAddToRoot(*tr2Aux);
             
             if ( effAux < bestEffect ) {
                 vBest = vAux;
@@ -1016,8 +1020,11 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
     }
     
     addSHTraces(A, dfsmRefMin, dfsmRefMin, *testSuiteTree);
-    addSHTraces(B, dfsmRefMin, *dfsmAbstraction, *testSuiteTree);
-    addSHTraces(C, dfsmRefMin, *dfsmAbstraction, *testSuiteTree);
+    addSHTraces(B, dfsmRefMin, dfsmRefMin, *testSuiteTree);
+    addSHTraces(C, dfsmRefMin, dfsmRefMin, *testSuiteTree);
+
+    //addSHTraces(B, dfsmRefMin, *dfsmAbstraction, *testSuiteTree);
+    //addSHTraces(C, dfsmRefMin, *dfsmAbstraction, *testSuiteTree);
     
     IOListContainer testCasesSH = testSuiteTree->getIOLists();
     *testSuite = dfsmRefMin.createTestSuite(testCasesSH);
