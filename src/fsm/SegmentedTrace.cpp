@@ -138,7 +138,43 @@ ostream & operator<<(ostream & out, const SegmentedTrace& trc)
 
 
 
+bool operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) {
+    
+    size_t len1 = 0;
+    for ( size_t s = 0; s < trace1.size(); s++ ) {
+        len1 += trace1.segments.at(s)->size();
+    }
+    size_t len2 = 0;
+    for ( size_t s = 0; s < trace2.size(); s++ ) {
+        len2 += trace2.segments.at(s)->size();
+    }
+    
+    if ( len1 != len2 ) return false;
+    
+    size_t seg1 = 0;
+    size_t seg2 = 0;
+    size_t seg1Idx = 0;
+    size_t seg2Idx = 0;
 
+    for ( size_t i = 0; i < len1; i++ ) {
+        if ( seg1Idx >= trace1.segments.at(seg1)->size() ) {
+            seg1Idx = 0;
+            seg1++;
+        }
+        if ( seg2Idx >= trace2.segments.at(seg2)->size() ) {
+            seg2Idx = 0;
+            seg2++;
+        }
+        if ( trace1.segments.at(seg1)->at(seg1Idx) !=
+            trace2.segments.at(seg2)->at(seg2Idx) ) {
+            return false;
+        }
+        seg1Idx++;
+        seg2Idx++;
+    }
+    
+    return true;
+}
 
 
 

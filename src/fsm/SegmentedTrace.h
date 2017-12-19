@@ -80,6 +80,8 @@ public:
     
     
     friend std::ostream & operator<<(std::ostream & out, const SegmentedTrace& fsm);
+    
+    friend bool operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2);
 	 
 };
 #endif  
