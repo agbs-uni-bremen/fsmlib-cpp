@@ -13,6 +13,7 @@
 
 #include "interface/FsmPresentationLayer.h"
 #include "fsm/Dfsm.h"
+#include "fsm/PkTable.h"
 #include "fsm/FsmNode.h"
 #include "fsm/IOTrace.h"
 #include "fsm/SegmentedTrace.h"
@@ -486,10 +487,29 @@ shared_ptr<Tree> getPrefixRelationTreeWithoutTrace(const shared_ptr<Tree> & a, c
 
 }
 
+static int costMatrix[3][3];
+
+static void initCostMatrix() {
+    costMatrix[0][0] = 0;
+    costMatrix[0][1] = 1;
+    costMatrix[0][2] = 3;
+    costMatrix[1][0] = 1;
+    costMatrix[1][1] = 2;
+    costMatrix[1][2] = 4;
+    costMatrix[2][0] = 3;
+    costMatrix[2][1] = 4;
+    costMatrix[2][2] = 5;
+}
+
+static int insertionCosts(int trc1Costs, int trc2Costs) {
+    return costMatrix[trc1Costs][trc2Costs];
+}
+
 static void addSHTraces(deque<pair<shared_ptr<SegmentedTrace>,shared_ptr<SegmentedTrace>>>  X,
                         Dfsm& refDfsm,
                         Dfsm& distDfsm,
-                        Tree &testSuiteTree) {
+                        Tree &testSuiteTree,
+                        vector<int>* dfsmMinNodes2dfsmNodes = nullptr) {
     
     
     // Add all traces from X-pairs, extended by distinguishing traces
@@ -504,8 +524,30 @@ static void addSHTraces(deque<pair<shared_ptr<SegmentedTrace>,shared_ptr<Segment
         cout << "CHECK: " << *tr2 << "  NODE " << tr2->back()->getTgtNode()->getId() << endl;
         
         // Only handle trace pairs leading to
-        // distinguishable target nodes
-        if ( not distDfsm.distinguishable(*s1, *s2) ) continue;
+        // distinguishable target nodes.
+        // If dfsmMinNodes2dfsmNodes is not null,
+        // we have to translate the node numbers from
+        // those of the minimised reference machine to
+        // the original numbers of the unminimised machine.
+        // The latter are identical to the node numbers of
+        // the unminimised abstraction used here as distDfsm.
+        shared_ptr<FsmNode> d1;
+        shared_ptr<FsmNode> d2;
+        if ( dfsmMinNodes2dfsmNodes == nullptr) {
+            d1 = s1;
+            d2 = s2;
+        }
+        else {
+            d1 = distDfsm.getNodes().at(dfsmMinNodes2dfsmNodes->at(s1->getId()));
+            d2 = distDfsm.getNodes().at(dfsmMinNodes2dfsmNodes->at(s2->getId()));
+            
+            cout << "ORIGINAL NODES " << d1->getId() << " " << d2->getId() << endl;
+            
+        }
+        if ( not distDfsm.distinguishable(*d1, *d2) ) {
+            cout << "Indistinguishable." << endl;
+            continue;
+        }
         
         // Now process this trace pair, extended by
         // a distinguishing trace
@@ -516,40 +558,48 @@ static void addSHTraces(deque<pair<shared_ptr<SegmentedTrace>,shared_ptr<Segment
         shared_ptr<SegmentedTrace> tr2Ext = make_shared<SegmentedTrace>(*tr2);
         
         shared_ptr< vector<int> > vBest = v01[0];
-        shared_ptr<TraceSegment> seg = make_shared<TraceSegment>(vBest);
+        auto seg = make_shared<TraceSegment>(vBest);
         tr1Ext->add(seg);
         tr2Ext->add(seg);
         
-        int bestEffect = testSuiteTree.tentativeAddToRoot(*tr1Ext) +
-        testSuiteTree.tentativeAddToRoot(*tr2Ext);
+        // @debug
+        if ( tr1->back()->getTgtNode()->getId() == 0 and
+             tr2->back()->getTgtNode()->getId() == 1 ) {
+            cout << "NOW" << endl;
+        }
         
-        for ( size_t i = 1; i < v01.size() and bestEffect > 0; i++ ) {
+        int bestEffect1 = testSuiteTree.tentativeAddToRoot(*tr1Ext);
+        int bestEffect2 = testSuiteTree.tentativeAddToRoot(*tr2Ext);
+        
+        for ( size_t i = 1; i < v01.size() and bestEffect1 + bestEffect2 > 0; i++ ) {
             shared_ptr< vector<int> > vAux = v01[i];
+            seg = make_shared<TraceSegment>(vAux);
             shared_ptr<SegmentedTrace> tr1Aux = make_shared<SegmentedTrace>(*tr1);
             shared_ptr<SegmentedTrace> tr2Aux = make_shared<SegmentedTrace>(*tr2);
             tr1Aux->add(seg);
             tr2Aux->add(seg);
             
-            int effAux = testSuiteTree.tentativeAddToRoot(*tr1Aux) +
-            testSuiteTree.tentativeAddToRoot(*tr2Aux);
+            int effAux1 = testSuiteTree.tentativeAddToRoot(*tr1Aux);
+            int effAux2 = testSuiteTree.tentativeAddToRoot(*tr2Aux);
             
-            if ( effAux < bestEffect ) {
+            if ( insertionCosts(effAux1, effAux2) < insertionCosts(bestEffect1, bestEffect2) ) {
                 vBest = vAux;
-                bestEffect = effAux;
                 tr1Ext = tr1Aux;
                 tr2Ext = tr2Aux;
+                bestEffect1 = effAux1;
+                bestEffect2 = effAux2;
             }
         }
         
         vector<int> v1 = tr1Ext->getCopy();
         vector<int> v2 = tr2Ext->getCopy();
         
-        if ( bestEffect > 0 ) {
-            
+        if ( bestEffect1 > 0 ) {
             cout << "ADD: " << *tr1Ext << endl;
-            cout << "ADD: " << *tr2Ext << endl;
-
             testSuiteTree.addToRoot(v1);
+        }
+        if ( bestEffect2 > 0 ) {
+            cout << "ADD: " << *tr2Ext << endl;
             testSuiteTree.addToRoot(v2);
         }
         
@@ -859,9 +909,20 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
 
 static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
     
-    // Minimise original reference DFSM
+    initCostMatrix();
     Dfsm dfsmRefMin = dfsm->minimise();
     dfsmRefMin.calculateDistMatrix();
+    
+    // Map from node numbers in dfsmRefMin to
+    // representatives in dfsm
+    vector<int> dfsmMinNodes2dfsmNodes;
+    for ( size_t n = 0; n < dfsmRefMin.size(); n++ ) {
+        dfsmMinNodes2dfsmNodes.push_back(0);
+    }
+    shared_ptr<PkTable> pDfsm = dfsm->getPktblLst().back();
+    for ( size_t n = 0; n < dfsm->size(); n++ ) {
+        dfsmMinNodes2dfsmNodes[pDfsm->getClass(n)] = n;
+    }
     
     
     for ( int n = 0; n < dfsmRefMin.size(); n++ ) {
@@ -1021,9 +1082,19 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
         }
     }
     
-    addSHTraces(A, dfsmRefMin, dfsmRefMin, *testSuiteTree);
-    addSHTraces(B, dfsmRefMin, *dfsmAbstraction, *testSuiteTree);
-    addSHTraces(C, dfsmRefMin, *dfsmAbstraction, *testSuiteTree);
+    addSHTraces(A,dfsmRefMin,dfsmRefMin,*testSuiteTree);
+    addSHTraces(B,dfsmRefMin,*dfsmAbstraction,*testSuiteTree,&dfsmMinNodes2dfsmNodes);
+    addSHTraces(C,dfsmRefMin,*dfsmAbstraction,*testSuiteTree,&dfsmMinNodes2dfsmNodes);
+    
+    cout << "DFSM TABLE" << endl << *(dfsmAbstraction->getDFSMTable()) << endl;
+    
+    cout << "Pk-Tables of dfsmAbstraction:" << endl;
+    int aux = 1;
+    for ( const auto p : dfsmAbstraction->getPktblLst() ) {
+        
+        cout << "PKTABLE" << (aux++) << endl << *p << endl;
+        
+    }
     
     IOListContainer testCasesSH = testSuiteTree->getIOLists();
     *testSuite = dfsmRefMin.createTestSuite(testCasesSH);
