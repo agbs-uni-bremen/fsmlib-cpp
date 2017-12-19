@@ -520,8 +520,8 @@ static void addSHTraces(deque<pair<shared_ptr<SegmentedTrace>,shared_ptr<Segment
         shared_ptr<FsmNode> s2 = tr2->getTgtNode();
         
         cout << "============================================ " << endl;
-        cout << "CHECK: " << *tr1 << "  NODE " << tr1->back()->getTgtNode()->getId() << endl;
-        cout << "CHECK: " << *tr2 << "  NODE " << tr2->back()->getTgtNode()->getId() << endl;
+        cout << "CHECK: " << *tr1 << "  NODE " << tr1->getTgtNode()->getId() << endl;
+        cout << "CHECK: " << *tr2 << "  NODE " << tr2->getTgtNode()->getId() << endl;
         
         // Only handle trace pairs leading to
         // distinguishable target nodes.
@@ -561,12 +561,6 @@ static void addSHTraces(deque<pair<shared_ptr<SegmentedTrace>,shared_ptr<Segment
         auto seg = make_shared<TraceSegment>(vBest);
         tr1Ext->add(seg);
         tr2Ext->add(seg);
-        
-        // @debug
-        if ( tr1->back()->getTgtNode()->getId() == 0 and
-             tr2->back()->getTgtNode()->getId() == 1 ) {
-            cout << "NOW" << endl;
-        }
         
         int bestEffect1 = testSuiteTree.tentativeAddToRoot(*tr1Ext);
         int bestEffect2 = testSuiteTree.tentativeAddToRoot(*tr2Ext);
@@ -1030,10 +1024,21 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
             // Append s to copy of v
             shared_ptr<SegmentedTrace> u = make_shared<SegmentedTrace>(*v);
             u->add(s);
-            V_inputEnumTraces.push_back(u);
             
-            // Put u into the test suite
-            testSuiteTree->addToRoot(u->getCopy());
+            // Do not add u if it is already contained in Vtraces
+            bool containedInVtraces = false;
+            for ( const auto w : Vtraces ) {
+                if ( *w == *u ) {
+                    containedInVtraces = true;
+                    break;
+                }
+            }
+            
+            if ( not containedInVtraces ) {
+                V_inputEnumTraces.push_back(u);
+                // Put u into the test suite
+                testSuiteTree->addToRoot(u->getCopy());
+            }
         }
     }
     
