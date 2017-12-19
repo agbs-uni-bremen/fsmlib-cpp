@@ -713,19 +713,24 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
     }
 
     // C
-    for (vector<int> b : *iolB)
+    for (const auto &v : *iolV)
     {
-        shared_ptr<InputTrace> iAlphaBeta_2 = make_shared<InputTrace>(b, pl);
-
-        for (unsigned i = 0; i < b.size()+1; i++)
+        for (const auto &g1 : *iolB)
         {
-            vector<int> a(b.begin(), b.begin() + i);
-            shared_ptr<InputTrace> iAlphaBeta_1 = make_shared<InputTrace>(a, pl);
+            shared_ptr<InputTrace> iVG1 = make_shared<InputTrace>(v, pl);
+            iVG1->append(g1);
 
-            shared_ptr<FsmNode> s0AfterAlpha = *s0->after(*iAlphaBeta_1).begin();
-            shared_ptr<FsmNode> s0AfterBeta = *s0->after(*iAlphaBeta_2).begin();
-            if (s0AfterAlpha == s0AfterBeta) continue;
-            tracesToCompare.emplace_back(iAlphaBeta_1->get(),iAlphaBeta_2->get());
+            for (unsigned i = 1; i < g1.size(); ++i)
+            {
+                vector<int> g2(begin(g1), begin(g1) + i);
+                shared_ptr<InputTrace> iVG2 = make_shared<InputTrace>(v, pl);
+                iVG2->append(g2);
+
+                shared_ptr<FsmNode> s0AfterVG1 = *s0->after(*iVG1).begin();
+                shared_ptr<FsmNode> s0AfterVG2 = *s0->after(*iVG2).begin();
+                if (s0AfterVG1 == s0AfterVG2) continue;
+                tracesToCompare.emplace_back(iVG1->get(),iVG2->get());
+            }
         }
     }
 
@@ -802,7 +807,7 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
 
     /* test cases that should not be changed */
     vector< vector<int> > perfectTestCases;
-
+    for (unsigned int i = 0; i < 3; i++) {
     vector< vector<int> > tests = *iTreeSH->getIOLists().getIOLists();
     for (vector<int> testCase : tests)
     {
@@ -901,6 +906,7 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
 
             tc2traces.erase(testCase);
         }
+    }
     }
 
     IOListContainer testCasesSH = iTreeSH->getIOLists();
