@@ -103,6 +103,7 @@ std::ostream & operator<<(std::ostream & out, const DFSMTable & dfsmTable)
 	}
     
     // Create the table footer
-	out << "\\hline" << std::endl << "\\end{tabular}" << std::endl << "\\end {center}" << std::endl << std::endl;
+	out << "\\hline" << std::endl << "\\end{tabular}" << std::endl
+    << "\\end{center}" << std::endl << std::endl;
 	return out;
 }

@@ -420,6 +420,8 @@ public:
     InputTrace calcDistinguishingTraceAfterTree(const std::shared_ptr<FsmNode> s_i, const std::shared_ptr<FsmNode> s_j, const std::shared_ptr<Tree> tree);
 
     std::vector<std::shared_ptr<PkTable> > getPktblLst() const;
+    std::shared_ptr<DFSMTable> getDFSMTable() const { return dfsmTable; }
+    
     
     /**
      *  Return true if and only if the two FSM states are distinhuishable

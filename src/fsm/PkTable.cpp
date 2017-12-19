@@ -323,6 +323,6 @@ ostream & operator<<(ostream & out, const PkTable & pkTable)
     }
     
     // Create the table footer
-    out << "\\hline" << endl << "\\end{tabular}" << endl << "\\end {center}" << endl << endl;
+    out << "\\hline" << endl << "\\end{tabular}" << endl << "\\end{center}" << endl << endl;
     return out;
 }
