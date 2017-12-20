@@ -22,7 +22,7 @@
 #include "trees/OutputTree.h"
 #include "trees/TestSuite.h"
 
-
+#define DBG 0
 using namespace std;
 using namespace Json;
 
@@ -519,9 +519,11 @@ static void addSHTraces(deque<pair<shared_ptr<SegmentedTrace>,shared_ptr<Segment
         shared_ptr<FsmNode> s1 = tr1->getTgtNode();
         shared_ptr<FsmNode> s2 = tr2->getTgtNode();
         
+#if DBG
         cout << "============================================ " << endl;
         cout << "CHECK: " << *tr1 << "  NODE " << tr1->getTgtNode()->getId() << endl;
         cout << "CHECK: " << *tr2 << "  NODE " << tr2->getTgtNode()->getId() << endl;
+#endif
         
         // Only handle trace pairs leading to
         // distinguishable target nodes.
@@ -540,12 +542,14 @@ static void addSHTraces(deque<pair<shared_ptr<SegmentedTrace>,shared_ptr<Segment
         else {
             d1 = distDfsm.getNodes().at(dfsmMinNodes2dfsmNodes->at(s1->getId()));
             d2 = distDfsm.getNodes().at(dfsmMinNodes2dfsmNodes->at(s2->getId()));
-            
+#if DBG
             cout << "ORIGINAL NODES " << d1->getId() << " " << d2->getId() << endl;
-            
+#endif
         }
         if ( not distDfsm.distinguishable(*d1, *d2) ) {
+#if DBG
             cout << "Indistinguishable." << endl;
+#endif
             continue;
         }
         
@@ -589,19 +593,24 @@ static void addSHTraces(deque<pair<shared_ptr<SegmentedTrace>,shared_ptr<Segment
         vector<int> v2 = tr2Ext->getCopy();
         
         if ( bestEffect1 > 0 ) {
+#if DBG
             cout << "ADD: " << *tr1Ext << endl;
+#endif
             testSuiteTree.addToRoot(v1);
         }
         if ( bestEffect2 > 0 ) {
+#if DBG
             cout << "ADD: " << *tr2Ext << endl;
+#endif
             testSuiteTree.addToRoot(v2);
         }
         
     }
     
+#if DBG
     IOListContainer testCasesSH = testSuiteTree.getIOLists();
     cout << "TEST SUITE STATUS:" << endl<< refDfsm.createTestSuite(testCasesSH) << endl;
-    
+#endif
 }
 
 #if 0
@@ -918,7 +927,7 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
         dfsmMinNodes2dfsmNodes[pDfsm->getClass(n)] = n;
     }
     
-    
+#if DBG
     for ( int n = 0; n < dfsmRefMin.size(); n++ ) {
         for ( int m = n+1; m < dfsmRefMin.size(); m++ ) {
             vector< shared_ptr< vector<int> > > v01 =
@@ -934,6 +943,7 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
             }
         }
     }
+#endif
     
     
     // Minimise abstracted Dfsm
@@ -1042,8 +1052,10 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
         }
     }
     
+#if DBG
     IOListContainer xxx = testSuiteTree->getIOLists();
     cout << "TEST SUITE STATUS (initial):" << endl<< dfsmRefMin.createTestSuite(xxx) << endl;
+#endif
     
     // Create deque B containing all pairs of elements of Vtraces
     // V_inputEnumTraces, such that their target nodes differ
@@ -1090,16 +1102,6 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
     addSHTraces(A,dfsmRefMin,dfsmRefMin,*testSuiteTree);
     addSHTraces(B,dfsmRefMin,*dfsmAbstraction,*testSuiteTree,&dfsmMinNodes2dfsmNodes);
     addSHTraces(C,dfsmRefMin,*dfsmAbstraction,*testSuiteTree,&dfsmMinNodes2dfsmNodes);
-    
-    cout << "DFSM TABLE" << endl << *(dfsmAbstraction->getDFSMTable()) << endl;
-    
-    cout << "Pk-Tables of dfsmAbstraction:" << endl;
-    int aux = 1;
-    for ( const auto p : dfsmAbstraction->getPktblLst() ) {
-        
-        cout << "PKTABLE" << (aux++) << endl << *p << endl;
-        
-    }
     
     IOListContainer testCasesSH = testSuiteTree->getIOLists();
     *testSuite = dfsmRefMin.createTestSuite(testCasesSH);
