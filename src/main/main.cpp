@@ -724,7 +724,7 @@ void wVersusT() {
 
 //bool executeAdaptiveTest(const shared_ptr<Fsm>& spec, const shared_ptr<Fsm>& iut, bool& isReduction)
 bool executeAdaptiveTest(
-        const string prefix,
+        const string& prefix,
         const int numStates,
         const int numInput,
         const int numOutput,
@@ -778,6 +778,10 @@ bool executeAdaptiveTest(
     Fsm intersect = spec->intersect(*iut);
     intersect.toDot(dotPrefix + "intersect");
 #endif
+
+    spec = nullptr;
+    iut = nullptr;
+
 
     isReduction = !intersect.hasFailure();
 
