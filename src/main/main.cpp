@@ -733,8 +733,7 @@ bool executeAdaptiveTest(
         const unsigned int createRandomFsmSeed,
         const unsigned int createMutantSeed,
         const shared_ptr<FsmPresentationLayer>& pl,
-        bool& isReduction,
-        bool useErroneousImplementation = false)
+        bool& isReduction)
 {
 
     shared_ptr<FsmPresentationLayer> plCopy = make_shared<FsmPresentationLayer>(*pl);
@@ -763,7 +762,6 @@ bool executeAdaptiveTest(
     CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
     CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed: " << createRandomFsmSeed;
     CLOG(INFO, logging::globalLogger) << "createMutantSeed: " << createMutantSeed;
-    CLOG(INFO, logging::globalLogger) << "useErroneousImplementation: " << useErroneousImplementation;
 
     Fsm specMin = spec->minimise(false);
     Fsm iutMin = iut->minimise(false);
@@ -790,7 +788,7 @@ bool executeAdaptiveTest(
     CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Testing.";
 
     IOTraceContainer observedTraces;
-    bool result = Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces, useErroneousImplementation);
+    bool result = Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces);
     LOG(INFO) << "observedTraces: " << observedTraces;
     return isReduction == result;
 }
@@ -848,7 +846,6 @@ struct AdaptiveTestConfig
     int minOutFaults = 1;
     int minTransFaults = 1;
     unsigned int seed = 0;
-    bool useErroneousImplementation = false;
 };
 
 void adaptiveTest01(AdaptiveTestConfig& config)
@@ -972,8 +969,7 @@ void adaptiveTest01(AdaptiveTestConfig& config)
                                 createRandomFsmSeed,
                                 createMutantSeed,
                                 plTest,
-                                isReduction,
-                                config.useErroneousImplementation);
+                                isReduction);
                     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
                     durationMS = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
                     durationMin = std::chrono::duration_cast<std::chrono::minutes>(end - start).count();
@@ -1096,7 +1092,7 @@ int main(int argc, char* argv[])
 */
     //TODO Analyze increasing memory usage with valgrind
     AdaptiveTestConfig config;
-    config.numFsm = 50000;
+    config.numFsm = 100;
 
     config.minInput = 1;
     config.maxInput = 20;
@@ -1113,8 +1109,7 @@ int main(int argc, char* argv[])
     config.minOutFaults = 1;
     config.maxOutFaults = 5;
 
-    config.seed = 0;
-    config.useErroneousImplementation = false;
+    config.seed = 781022341;
 
 
     bool debug = false;
@@ -1146,8 +1141,7 @@ int main(int argc, char* argv[])
                     debugConfig.createRandomFsmSeed,
                     debugConfig.createMutantSeed,
                     plTest,
-                    isReduction,
-                    true);
+                    isReduction);
         assertOnFail("TC-AT-DEBUG", result);
     }
     else

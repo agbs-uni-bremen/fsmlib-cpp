@@ -1896,69 +1896,11 @@ bool Fsm::exceedsBound(const size_t m,
                        const IOTraceContainer& vDoublePrime,
                        const vector<shared_ptr<FsmNode>>& dReachableStates,
                        const Fsm& spec,
-                       const Fsm& iut,
-                       const bool useErroneousImplementation)
+                       const Fsm& iut)
 {
-    if (useErroneousImplementation)
-    {
-        size_t lB = Fsm::lowerBound(base, suffix, takenInputs, states, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
-        VLOG(1) << "lB: " << lB;
-        return lB > m;
-    }
-    else
-    {
-        VLOG(1) << "lowerBound()";
-        VLOG(1) << "base: " << base;
-        VLOG(1) << "suffix: " << suffix;
-        VLOG(1) << "takenInputs:";
-        for (auto i : takenInputs)
-        {
-            VLOG(1) << "  " << *i;
-        }
-        VLOG(1) << "states:";
-        for (auto s : states)
-        {
-            VLOG(1) << "  " << s->getName();
-        }
-        VLOG(1) << "adaptiveTestCases: " << adaptiveTestCases;
-        VLOG(1) << "vDoublePrime: " << vDoublePrime;
-        VLOG(1) << "dReachableStates: ";
-        for (auto s : dReachableStates)
-        {
-            VLOG(1) << "  " << s->getName();
-        }
-        unordered_set<shared_ptr<FsmNode>> baseSuccessors = spec.getInitialState()->after(base);
-        if (baseSuccessors.size() != 1)
-        {
-            LOG(FATAL) << "The Specification does not seem to be observable.";
-        }
-        const shared_ptr<FsmNode>& node = *baseSuccessors.begin();
-        VLOG(1) << "base node: " << node->getName();
-
-        vector<shared_ptr<FsmNode>> traversedStates = node->getTraversedStates(suffix);
-        size_t traversedCount = 0;
-        size_t numDReach = 0;
-        for (const shared_ptr<FsmNode>& n : states)
-        {
-            if (n->isDReachable())
-            {
-                ++numDReach;
-            }
-        }
-        VLOG(1) << "traversedStates:";
-        for (const shared_ptr<FsmNode>& n : traversedStates)
-        {
-            VLOG(1) << "  " << n->getName();
-            if(find(states.begin(), states.end(), n) != states.end())
-            {
-                ++traversedCount;
-            }
-        }
-        size_t limit = m - numDReach + 1;
-        VLOG(1) << "lBlimit " << limit;
-        VLOG(1) << "traversedCount: " << traversedCount;
-        return traversedCount > limit;
-    }
+    size_t lB = Fsm::lowerBound(base, suffix, takenInputs, states, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
+    VLOG(1) << "lB: " << lB;
+    return lB > m;
 }
 
 size_t Fsm::lowerBound(const IOTrace& base,
@@ -2038,7 +1980,7 @@ size_t Fsm::lowerBound(const IOTrace& base,
     return result;
 }
 
-bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceContainer& observedTraces, bool useErroneousImplementation)
+bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceContainer& observedTraces)
 {
     VLOG(1)<< "adaptiveStateCounting()";
     if (spec.isMinimal() != True)
@@ -2363,7 +2305,6 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 bool discardVDoublePrime = false;
                 bool inputTraceMeetsCriteria = false;
                 bool outputTraceMeetsCriteria = false;
-                bool isFirstVDoublePrime = true;
                 vPrimeLazy.reset();
                 while (vPrimeLazy.hasNext())
                 {
@@ -2379,60 +2320,27 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                     maxPrefixFound = false;
                     discardVDoublePrime = false;
 
-                    if (!isFirstVDoublePrime && !useErroneousImplementation)
-                    {
-                        VLOG(1) << "Discarding vDoublePrime. Since using correct impllementation, discarding input trace.";
-                        discardInputTrace = true;
-                        break;
-                    }
-                    else
-                    {
-                        isFirstVDoublePrime = false;
-                    }
                     bool isLastVDoublePrime = !vPrimeLazy.hasNext();
                     shared_ptr<const IOTrace> maxPrefix = nullptr;
                     IOTrace suffix(InputTrace(spec.presentationLayer), OutputTrace(spec.presentationLayer));
 
-                    if (useErroneousImplementation)
+                    for (auto traceIt = vDoublePrime.cbegin(); traceIt != vDoublePrime.cend(); ++traceIt)
                     {
-                        for (auto traceIt = vDoublePrime.cbegin(); traceIt != vDoublePrime.cend(); ++traceIt)
+                        const shared_ptr<const IOTrace>& iOTrace = *traceIt;
+                        TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-2", VLOG_IS_ON(4));
+                        if (currentTrace.isPrefix(*iOTrace, false, true) &&
+                                ( !maxPrefix || maxPrefix->isEmptyTrace() || iOTrace->size() > maxPrefix->size()))
                         {
-                            const shared_ptr<const IOTrace>& iOTrace = *traceIt;
-                            TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-2", VLOG_IS_ON(4));
-                            if (currentTrace.isPrefix(*iOTrace, false, true) &&
-                                    ( !maxPrefix || maxPrefix->isEmptyTrace() || iOTrace->size() > maxPrefix->size()))
-                            {
-                                maxPrefix = iOTrace;
-                                maxPrefixFound = true;
-                            }
+                            maxPrefix = iOTrace;
+                            maxPrefixFound = true;
                         }
-                        if (!maxPrefix)
-                        {
-                            LOG(ERROR) << "No maxPrefix (v/v'). This should not happen.";
-                            continue;
-                        }
-                        suffix = currentTrace.getSuffix(*maxPrefix);
                     }
-                    else
+                    if (!maxPrefix)
                     {
-
-                        size_t prefixLength = 0;
-                        for (const shared_ptr<FsmNode>& node : dReachableStates)
-                        {
-
-                            const InputTrace& dReachInput = node->getDReachTrace()->getInputTrace();
-                            const InputTrace& dReachInputNoEpsilon = dReachInput.removeLeadingEpsilons();
-                            if (inputTrace->isPrefix(dReachInputNoEpsilon) &&
-                                    (!maxPrefix || dReachInputNoEpsilon.size() > prefixLength))
-                            {
-                                prefixLength = dReachInputNoEpsilon.size();
-                                maxPrefix = node->getDReachTrace();
-                                maxPrefixFound = true;
-                                VLOG(1) << "new prefixLength: : " << prefixLength << " (" << dReachInput << ")";
-                            }
-                        }
-                        suffix = IOTrace(currentTrace.removeLeadingEpsilons(), prefixLength, true);
+                        LOG(ERROR) << "No maxPrefix (v/v'). This should not happen.";
+                        continue;
                     }
+                    suffix = currentTrace.getSuffix(*maxPrefix);
 
                     VLOG(1) << "maxPrefix (v/v'): " << *maxPrefix;
                     VLOG(1) << "suffix (x/y): " << suffix;
@@ -2546,7 +2454,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                         {
                             //size_t lB = Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
                             //VLOG(1) << "lB: " << lB;
-                            bool exceedsBound = Fsm::exceedsBound(m, *maxPrefix, suffix, t, rDistStates, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut, useErroneousImplementation);
+                            bool exceedsBound = Fsm::exceedsBound(m, *maxPrefix, suffix, t, rDistStates, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
                             VLOG(1) << "exceedsBound: " << exceedsBound;
                             if (exceedsBound)
                             {

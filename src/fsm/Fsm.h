@@ -581,8 +581,7 @@ public:
                              const IOTraceContainer& vDoublePrime,
                              const std::vector<std::shared_ptr<FsmNode>>& dReachableStates,
                              const Fsm& spec,
-                             const Fsm& iut,
-                             const bool useErroneousImplementation = false);
+                             const Fsm& iut);
 
     /**
      * Calculates a test suite that determines if a given IUT is a reduction of the given
@@ -598,7 +597,7 @@ public:
      * @return `true`, if no failure has been observed during the creation of the test suite,
      * `false`, otherwise.
      */
-    static bool adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceContainer& observedTraces, bool useErroneousImplementation = false);
+    static bool adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceContainer& observedTraces);
 
     /**
      * Determines if the given adaptive test cases distinguish all states from
