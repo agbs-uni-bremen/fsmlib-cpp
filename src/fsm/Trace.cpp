@@ -25,6 +25,14 @@ Trace::Trace(const Trace& other):
 
 }
 
+Trace::Trace(const std::vector<int>::const_iterator& begin,
+             const std::vector<int>::const_iterator& end,
+             const std::shared_ptr<FsmPresentationLayer>& presentationLayer)
+    : presentationLayer(presentationLayer)
+{
+    trace = std::vector<int>(begin, end);
+}
+
 Trace::Trace(const Trace& other, size_t n, bool defaultToEmpty):
     presentationLayer(other.presentationLayer)
 {
@@ -172,6 +180,32 @@ bool Trace::isSuffix(const Trace& other) const
 bool Trace::isPrefixOf(const Trace& other) const
 {
  return other.isPrefix(*this);
+}
+
+std::shared_ptr<Trace> Trace::getSuffix(size_t n, bool defaultToEmpty) const
+{
+    const std::vector<int>::const_iterator& begin = trace.begin() + static_cast<std::vector<int>::difference_type>(n);
+    const std::vector<int>::const_iterator& end = trace.end();
+    Trace t = Trace(begin, end, presentationLayer);
+    std::shared_ptr<Trace> trace = std::make_shared<Trace>(t);
+    if (defaultToEmpty && trace->size() == 0)
+    {
+        trace->add(FsmLabel::EPSILON);
+    }
+    return trace;
+}
+
+std::shared_ptr<const Trace> Trace::getPrefix(size_t n, bool defaultToEmpty) const
+{
+    const std::vector<int>::const_iterator& begin = trace.begin();
+    const std::vector<int>::const_iterator& end = trace.begin() + static_cast<std::vector<int>::difference_type>(n);
+    Trace t = Trace(begin, end, presentationLayer);
+    std::shared_ptr<Trace> trace = std::make_shared<Trace>(t);
+    if (defaultToEmpty && trace->size() == 0)
+    {
+        trace->add(FsmLabel::EPSILON);
+    }
+    return trace;
 }
 
 Trace Trace::getSuffix(const Trace& prefix) const

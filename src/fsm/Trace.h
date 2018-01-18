@@ -23,6 +23,12 @@ protected:
 	The presentation layer used by the trace
 	*/
     std::shared_ptr<FsmPresentationLayer> presentationLayer;
+
+
+    Trace(const std::vector<int>::const_iterator& begin,
+          const std::vector<int>::const_iterator& end,
+          const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
+
 public:
 	/**
 	Create an empty trace, with only one presentation layer
@@ -39,8 +45,16 @@ public:
           const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
     Trace(const Trace& other);
+    /**
+     * Creates a trace based on the given trace `other` and skips the first `n` symbols.
+     * @param other The given trace the new trace will be based on.
+     * @param n The number of symbols to be skipped.
+     * @param defaultToEmpty If `true` and `n` is larger than the `other` trace's size, a trace containing ε
+     * will be created. If `false` and `n` is larger than the `other` trace's size, a trace not containing
+     * any symbol will be created.
+     */
     Trace(const Trace& other, size_t n, bool defaultToEmpty = false);
-	
+
 	/**
 	 * Add an element, at the end of the trace
 	 */
@@ -94,6 +108,24 @@ public:
      * the given trace, {@code false}, otherwise.
      */
     bool isPrefixOf(const Trace& other) const;
+
+    /**
+     * Creates a trace based on this trace and skips the first `n` symbols.
+     * @param n The number of symbols to be skipped.
+     * @param defaultToEmpty If `true` and `n` is larger than the `other` trace's size, a trace containing ε
+     * will be created. If `false` and `n` is larger than the `other` trace's size, a trace not containing
+     * any symbol will be created.
+     */
+    std::shared_ptr<Trace> getSuffix(size_t n, bool defaultToEmpty = false) const;
+
+    /**
+     * Creates a trace based on this trace and takes only the first `n` symbols into account.
+     * @param n The number of symbols to be taken into account.
+     * @param defaultToEmpty If `true` and `n` is larger than the `other` trace's size, a trace containing ε
+     * will be created. If `false` and `n` is larger than the `other` trace's size, a trace not containing
+     * any symbol will be created.
+     */
+    std::shared_ptr<const Trace> getPrefix(size_t n, bool defaultToEmpty = false) const;
 
     Trace getSuffix(const Trace& prefix) const;
 

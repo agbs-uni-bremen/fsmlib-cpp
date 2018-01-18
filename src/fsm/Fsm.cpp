@@ -2290,6 +2290,23 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             }
             long outputTraceCount = 0;
             size_t numberOutputTraces = producedOutputs.size();
+
+            shared_ptr<const InputTrace> maxInputPrefixInV = nullptr;
+            for (const shared_ptr<InputTrace>& detStateTransition : detStateCover)
+            {
+                TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-find-prefix-in-v", VLOG_IS_ON(4));
+                if (inputTrace->isPrefix(*detStateTransition, false, true) &&
+                        ( !maxInputPrefixInV || maxInputPrefixInV->isEmptyTrace() || detStateTransition->size() > maxInputPrefixInV->size()))
+                {
+                    maxInputPrefixInV = detStateTransition;
+                }
+            }
+            if (!maxInputPrefixInV)
+            {
+                LOG(FATAL) << "No prefix for input trace " << *inputTrace << " found in V. This should not happen.";
+            }
+            VLOG(1) << "maxInputPrefixInV: " << *maxInputPrefixInV;
+
             for (shared_ptr<OutputTrace> outputTrace : producedOutputs)
             {
                 TIMED_SCOPE_IF(timerBlkObj, "Check output trace", VLOG_IS_ON(1));
@@ -2301,11 +2318,18 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 IOTrace currentTrace(*inputTrace, *outputTrace);
                 VLOG(1) << "currentTrace (x_1/y_1): " << currentTrace;
                 bool isLastOutputTrace = outputTrace == producedOutputs.back();
-                bool maxPrefixFound = false;
                 bool discardVDoublePrime = false;
                 bool inputTraceMeetsCriteria = false;
                 bool outputTraceMeetsCriteria = false;
                 vPrimeLazy.reset();
+
+                shared_ptr<const IOTrace> maxIOPrefixInV = make_shared<const IOTrace>(*static_pointer_cast<const Trace>(maxInputPrefixInV),
+                                                                                      *outputTrace->getPrefix(maxInputPrefixInV->size(), true));
+                VLOG(1) << "maxIOPrefixInV (v/v'): " << *maxIOPrefixInV;
+                IOTrace suffix(InputTrace(spec.presentationLayer), OutputTrace(spec.presentationLayer));
+                suffix = currentTrace.getSuffix(*maxIOPrefixInV);
+                VLOG(1) << "suffix (x/y): " << suffix;
+
                 while (vPrimeLazy.hasNext())
                 {
                     const IOTraceContainer& vDoublePrime = vPrimeLazy.getNext();
@@ -2315,35 +2339,14 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                         break;
                     }
                     VLOG(1) << "vDoublePrime: " << vDoublePrime;
-                    VLOG(1) << "Looking for the maximum prefix of " << currentTrace;
-
-                    maxPrefixFound = false;
-                    discardVDoublePrime = false;
-
                     bool isLastVDoublePrime = !vPrimeLazy.hasNext();
-                    shared_ptr<const IOTrace> maxPrefix = nullptr;
-                    IOTrace suffix(InputTrace(spec.presentationLayer), OutputTrace(spec.presentationLayer));
 
-                    for (auto traceIt = vDoublePrime.cbegin(); traceIt != vDoublePrime.cend(); ++traceIt)
+                    if (!vDoublePrime.contains(maxIOPrefixInV))
                     {
-                        const shared_ptr<const IOTrace>& iOTrace = *traceIt;
-                        TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-2", VLOG_IS_ON(4));
-                        if (currentTrace.isPrefix(*iOTrace, false, true) &&
-                                ( !maxPrefix || maxPrefix->isEmptyTrace() || iOTrace->size() > maxPrefix->size()))
-                        {
-                            maxPrefix = iOTrace;
-                            maxPrefixFound = true;
-                        }
-                    }
-                    if (!maxPrefix)
-                    {
-                        LOG(ERROR) << "No maxPrefix (v/v'). This should not happen.";
+                        VLOG(1) << "vDoublePrime does not contain prefix " << *maxIOPrefixInV << ". Skipping.";
                         continue;
                     }
-                    suffix = currentTrace.getSuffix(*maxPrefix);
 
-                    VLOG(1) << "maxPrefix (v/v'): " << *maxPrefix;
-                    VLOG(1) << "suffix (x/y): " << suffix;
                     bool discardSet;
                     for (const vector<shared_ptr<FsmNode>>& rDistStates : maximalSetsOfRDistinguishableStates)
                     {
@@ -2375,8 +2378,8 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                                 {
                                     continue;
                                 }
-                                const IOTraceContainer& s1RPlus = spec.rPlus(s1, *maxPrefix, suffix, vDoublePrime);
-                                const IOTraceContainer& s2RPlus = spec.rPlus(s2, *maxPrefix, suffix, vDoublePrime);
+                                const IOTraceContainer& s1RPlus = spec.rPlus(s1, *maxIOPrefixInV, suffix, vDoublePrime);
+                                const IOTraceContainer& s2RPlus = spec.rPlus(s2, *maxIOPrefixInV, suffix, vDoublePrime);
 
                                 VLOG(1) << "s1RPlus:" << s1RPlus;
                                 VLOG(1) << "s2RPlus:" << s2RPlus;
@@ -2454,7 +2457,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                         {
                             //size_t lB = Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
                             //VLOG(1) << "lB: " << lB;
-                            bool exceedsBound = Fsm::exceedsBound(m, *maxPrefix, suffix, t, rDistStates, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
+                            bool exceedsBound = Fsm::exceedsBound(m, *maxIOPrefixInV, suffix, t, rDistStates, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
                             VLOG(1) << "exceedsBound: " << exceedsBound;
                             if (exceedsBound)
                             {
@@ -2489,11 +2492,6 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                             }
                         }
                     }
-                }
-                if (!maxPrefixFound)
-                {
-                    discardInputTrace = true;
-                    VLOG(1) << "No max prefix found, discarding input trace: " << *inputTrace;
                 }
             }
 
