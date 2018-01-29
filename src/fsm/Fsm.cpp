@@ -2048,6 +2048,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
      * Holds all B_Ω(T) for the current t.
      */
     vector<IOTraceContainer> bOmegaT;
+    iut.bOmega(adaptiveTestCases, t, bOmegaT);
     /**
      * T_c - set of current elements of T: those that are being considered in the search
      * through state space. The elements in T_c are the maximal sequences considered that
