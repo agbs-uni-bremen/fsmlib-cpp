@@ -2319,7 +2319,6 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 IOTrace currentTrace(*inputTrace, *outputTrace);
                 VLOG(1) << "currentTrace (x_1/y_1): " << currentTrace;
                 bool isLastOutputTrace = outputTrace == producedOutputs.back();
-                bool discardVDoublePrime = false;
                 bool inputTraceMeetsCriteria = false;
                 bool outputTraceMeetsCriteria = false;
                 vPrimeLazy.reset();
@@ -2348,11 +2347,15 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                         continue;
                     }
 
+                    bool discardVDoublePrime = false;
                     bool discardSet;
                     for (const vector<shared_ptr<FsmNode>>& rDistStates : maximalSetsOfRDistinguishableStates)
                     {
-                        if (discardVDoublePrime || outputTraceMeetsCriteria || inputTraceMeetsCriteria)
+                        if (outputTraceMeetsCriteria || inputTraceMeetsCriteria)
                         {
+                            VLOG(1) << "outputTraceMeetsCriteria: " << outputTraceMeetsCriteria <<
+                                       ", inputTraceMeetsCriteria: " << inputTraceMeetsCriteria;
+                            VLOG(1) << "breaking";
                             break;
                         }
                         discardSet = false;
@@ -2445,13 +2448,10 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                                 break;
                             }
                         }
-                        if (discardVDoublePrime)
+                        if (discardVDoublePrime && isLastVDoublePrime)
                         {
-                            if (isLastVDoublePrime)
-                            {
-                                VLOG(1) << "isLastVDoublePrime, discarding input trace: " << *inputTrace;
-                                discardInputTrace = true;
-                            }
+                            VLOG(1) << "isLastVDoublePrime, discarding input trace: " << *inputTrace;
+                            discardInputTrace = true;
                             break;
                         }
                         if (!discardSet)
