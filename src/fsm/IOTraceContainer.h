@@ -5,6 +5,8 @@
 #include "fsm/IOTrace.h"
 #include "trees/OutputTree.h"
 
+class IOTraceContainer;
+
 struct IOTraceHash {
     size_t operator() (const std::shared_ptr<const IOTrace>& a) const {
         return std::hash<IOTrace>()(*a);
@@ -151,7 +153,7 @@ public:
      * @param container The given container, holding IOTraceContainers.
      * @param elem The given `IOTraceContainer` to be removed.
      */
-    static void remove(std::vector<IOTraceContainer>& container, const IOTraceContainer& elem);
+    static void remove(std::unordered_set<IOTraceContainer>& container, const IOTraceContainer& elem);
 
     /**
      * Adds the given `elem` to the given `container`, if the `container` does not hold any
@@ -175,6 +177,23 @@ public:
 
 namespace std {
     bool operator==(IOTraceCont const& x, IOTraceCont const& y);
+    template <> struct hash<IOTraceContainer>
+    {
+      size_t operator()(const IOTraceContainer& container) const
+      {
+
+          size_t seed = 0;
+          std::hash<IOTrace> hasher;
+
+          for (auto it = container.cbegin(); it != container.cend(); ++it)
+          {
+            const shared_ptr<const IOTrace>& trace = *it;
+            seed ^= hasher(*trace) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+          }
+
+          return seed;
+      }
+    };
 }
 
 #endif // IOTRACECONTAINER_H

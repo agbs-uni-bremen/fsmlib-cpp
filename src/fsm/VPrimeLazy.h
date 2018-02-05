@@ -1,7 +1,6 @@
 #ifndef VPRIMELAZY_H
 #define VPRIMELAZY_H
 
-#include <vector>
 #include <memory>
 #include "fsm/Fsm.h"
 #include "fsm/IOTrace.h"
@@ -28,7 +27,7 @@ public:
      * @param detStateCover The deterministic state cover for the specification fsm.
      * @param iut The implementation under test.
      */
-    VPrimeLazy(const vector<shared_ptr<InputTrace>>& detStateCover, const Fsm& iut);
+    VPrimeLazy(const InputTraceSet& detStateCover, const Fsm& iut);
 
     /**
      * Returns the `n`-th V'' for a given index `n`.

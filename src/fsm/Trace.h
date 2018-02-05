@@ -189,18 +189,38 @@ public:
 };
 
 namespace std {
-  template <> struct hash<Trace>
-  {
-    size_t operator()(const Trace& trace) const
+    template <> struct hash<Trace>
     {
-        std::hash<int> hasher;
-        size_t seed = 0;
-        for (int i : trace.get()) {
-            seed ^= hasher(i) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+        size_t operator()(const Trace& trace) const
+        {
+            std::hash<int> hasher;
+            size_t seed = 0;
+            for (int i : trace.get()) {
+                seed ^= hasher(i) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+            }
+            return seed;
         }
-        return seed;
-    }
-  };
+        size_t operator()(const shared_ptr<Trace>& trace) const
+        {
+            std::hash<int> hasher;
+            size_t seed = 0;
+            for (int i : trace->get()) {
+                seed ^= hasher(i) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+            }
+            return seed;
+        }
+    };
+    template <> struct equal_to<Trace>
+    {
+        bool operator() (const shared_ptr<const Trace>& a, const shared_ptr<const Trace>& b) const
+        {
+            if (a == b)
+            {
+                return true;
+            }
+            return *a == *b;
+        }
+    };
 }
 
 #endif //FSM_FSM_TRACE_H_

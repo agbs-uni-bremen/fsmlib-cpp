@@ -8,9 +8,14 @@
 
 #include <iostream>
 #include <vector>
+#include <unordered_set>
 
 #include "fsm/Trace.h"
 #include "interface/FsmPresentationLayer.h"
+
+class InputTrace;
+
+typedef std::unordered_set<std::shared_ptr<InputTrace>, std::hash<InputTrace>, std::equal_to<InputTrace>> InputTraceSet;
 
 class InputTrace : public Trace
 {
@@ -34,7 +39,7 @@ public:
     InputTrace(const InputTrace& other);
     InputTrace(const Trace& other);
 
-    static bool contains(const std::vector<std::shared_ptr<InputTrace>>& list, const InputTrace& trace);
+    static bool contains(const InputTraceSet& list, const std::shared_ptr<InputTrace>& trace);
     bool isEmptyTrace() const;
 
     InputTrace removeEpsilon() const { return InputTrace(static_cast<Trace>(*this).removeEpsilon()); }
@@ -54,14 +59,28 @@ public:
 };
 
 namespace std {
-  template <> struct hash<InputTrace>
-  {
-    size_t operator()(const InputTrace& trace) const
+    template <> struct hash<InputTrace>
     {
-        const Trace& t = static_cast<Trace>(trace);
-        return std::hash<Trace>()(t);
-    }
-  };
+        size_t operator()(const InputTrace& trace) const
+        {
+            const Trace& t = static_cast<Trace>(trace);
+            return std::hash<Trace>()(t);
+        }
+        size_t operator()(const shared_ptr<InputTrace>& trace) const
+        {
+            const shared_ptr<Trace>& t = static_pointer_cast<Trace>(trace);
+            return std::hash<Trace>()(t);
+        }
+    };
+    template <> struct equal_to<InputTrace>
+    {
+        bool operator() (const shared_ptr<const InputTrace>& a, const shared_ptr<const InputTrace>& b) const
+        {
+            const shared_ptr<const Trace>& tA = static_pointer_cast<const Trace>(a);
+            const shared_ptr<const Trace>& tB = static_pointer_cast<const Trace>(b);
+            return std::equal_to<Trace>()(tA, tB);
+        }
+    };
 }
 
 #endif //FSM_FSM_INPUTTRACE_H_

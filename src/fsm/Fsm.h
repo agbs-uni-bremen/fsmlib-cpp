@@ -18,6 +18,7 @@
 
 #include "fsm/FsmVisitor.h"
 #include "fsm/FsmLabel.h"
+#include "fsm/InputTrace.h"
 
 
 class Dfsm;
@@ -279,7 +280,7 @@ public:
      * \item post-state is a number in range 0..(number of states -1)
      */
     void dumpFsm(std::ofstream & outputFile) const;
-    std::vector<std::shared_ptr<FsmNode>> getDReachableStates(std::vector<std::shared_ptr<InputTrace>>& detStateCover);
+    std::vector<std::shared_ptr<FsmNode>> getDReachableStates(InputTraceSet& detStateCover);
     std::shared_ptr<FsmNode> getInitialState() const;
     
     /**
@@ -506,8 +507,8 @@ public:
      * @return A set of all input/output traces that can be produced
      */
     void bOmega(const IOTreeContainer& adaptiveTestCases,
-                const std::vector<std::shared_ptr<InputTrace>>& inputTraces,
-                std::vector<IOTraceContainer>& result) const;
+                const InputTraceSet& inputTraces,
+                std::unordered_set<IOTraceContainer>& result) const;
 
     /**
      * Calculates all prefixes of `base.suffix`, that reach the given node and that
@@ -547,8 +548,6 @@ public:
      * of the deterministic state cover and the output sequence being a possible
      * output to said input sequence. `base` is a prefix of x/y.
      * @param suffix Suffix x/y with base.suffix = x/y
-     * @param takenInputs Set of input sequences that have been followed during
-     * adaptive state counting.
      * @param states A maximum set of r-distinguishable states, that has been used
      * during the calculation of `base` and `suffix`.
      * @param adaptiveTestCases The corresponding adaptive test cases.
@@ -562,10 +561,9 @@ public:
      */
     static size_t lowerBound(const IOTrace& base,
                              const IOTrace& suffix,
-                             const std::vector<std::shared_ptr<InputTrace>>& takenInputs,
                              const std::vector<std::shared_ptr<FsmNode>>& states,
                              const IOTreeContainer& adaptiveTestCases,
-                             std::vector<IOTraceContainer> bOmegaT,
+                             std::unordered_set<IOTraceContainer> bOmegaT,
                              const IOTraceContainer& vDoublePrime,
                              const std::vector<std::shared_ptr<FsmNode>>& dReachableStates,
                              const Fsm& spec,
@@ -574,10 +572,9 @@ public:
     static bool exceedsBound(const size_t m,
                              const IOTrace& base,
                              const IOTrace& suffix,
-                             const std::vector<std::shared_ptr<InputTrace>>& takenInputs,
                              const std::vector<std::shared_ptr<FsmNode>>& states,
                              const IOTreeContainer& adaptiveTestCases,
-                             std::vector<IOTraceContainer> bOmegaT,
+                             std::unordered_set<IOTraceContainer> bOmegaT,
                              const IOTraceContainer& vDoublePrime,
                              const std::vector<std::shared_ptr<FsmNode>>& dReachableStates,
                              const Fsm& spec,

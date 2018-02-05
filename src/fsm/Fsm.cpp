@@ -543,7 +543,7 @@ void Fsm::dumpFsm(ofstream & outputFile) const
     }
 }
 
-vector<shared_ptr<FsmNode>> Fsm::getDReachableStates(vector<std::shared_ptr<InputTrace>>& detStateCover)
+vector<shared_ptr<FsmNode>> Fsm::getDReachableStates(InputTraceSet& detStateCover)
 {
     TIMED_FUNC(timerObj);
     VLOG(2) << "getDReachableStates()";
@@ -557,7 +557,7 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates(vector<std::shared_ptr<Inpu
     bfsLst.push_back(initState);
     nodes.push_back(initState);
     shared_ptr<IOTrace> emptyTrace = IOTrace::getEmptyTrace(presentationLayer);
-    detStateCover.push_back(make_shared<InputTrace>(FsmLabel::EPSILON, presentationLayer));
+    detStateCover.insert(make_shared<InputTrace>(FsmLabel::EPSILON, presentationLayer));
     emptyTrace->setTargetNode(initState);
     initState->setDReachable(emptyTrace);
     paths.insert(make_pair(initState, IOTrace::getEmptyTrace(presentationLayer)));
@@ -651,7 +651,7 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates(vector<std::shared_ptr<Inpu
                 tgt->setColor(FsmNode::grey);
                 bfsLst.push_back(tgt);
                 nodes.push_back(tgt);
-                detStateCover.push_back(make_shared<InputTrace>(paths.at(tgt)->getInputTrace()));
+                detStateCover.insert(make_shared<InputTrace>(paths.at(tgt)->getInputTrace()));
                 tgt->setDReachable(paths.at(tgt));
             }
         }
@@ -1754,6 +1754,10 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const IOT
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
     VLOG(7) << "bOmega() - adaptiveTestCases.size: " << adaptiveTestCases.size() << ", trace.size(): " << trace.size();
     IOTraceContainer result;
+    if (adaptiveTestCases.size() == 0)
+    {
+        return result;
+    }
 
     shared_ptr<FsmNode> initialState = getInitialState();
     if (!initialState)
@@ -1777,17 +1781,21 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const IOT
 }
 
 void Fsm::bOmega(const IOTreeContainer& adaptiveTestCases,
-                 const vector<shared_ptr<InputTrace>>& inputTraces,
-                 vector<IOTraceContainer>& result) const
+                 const InputTraceSet& inputTraces,
+                 unordered_set<IOTraceContainer>& result) const
 {
     TIMED_FUNC_IF(timerObj, VLOG_IS_ON(6));
     VLOG(6) << "bOmega() - adaptiveTestCases.size: " << adaptiveTestCases.size() << ", inputTraces.size(): " << inputTraces.size();
+    if (adaptiveTestCases.size() == 0)
+    {
+        return;
+    }
     shared_ptr<FsmNode> initialState = getInitialState();
     if (!initialState)
     {
         return;
     }
-    for (shared_ptr<InputTrace> inputTrace : inputTraces)
+    for (const shared_ptr<InputTrace>& inputTrace : inputTraces)
     {
         vector<shared_ptr<OutputTrace>> producedOutputs;
         initialState->getPossibleOutputs(*inputTrace, producedOutputs);
@@ -1796,7 +1804,7 @@ void Fsm::bOmega(const IOTreeContainer& adaptiveTestCases,
             IOTrace iOTrace = IOTrace(*inputTrace, *outputTrace);
             IOTraceContainer produced = bOmega(adaptiveTestCases, iOTrace);
             VLOG(1) << "produced bOmega with " << iOTrace << ": " << produced;
-            IOTraceContainer::addUnique(result, produced);
+            result.insert(produced);
         }
     }
 }
@@ -1889,26 +1897,24 @@ IOTraceContainer Fsm::rPlus(std::shared_ptr<FsmNode> node,
 bool Fsm::exceedsBound(const size_t m,
                        const IOTrace& base,
                        const IOTrace& suffix,
-                       const vector<shared_ptr<InputTrace>>& takenInputs,
                        const vector<shared_ptr<FsmNode>>& states,
                        const IOTreeContainer& adaptiveTestCases,
-                       vector<IOTraceContainer> bOmegaT,
+                       unordered_set<IOTraceContainer> bOmegaT,
                        const IOTraceContainer& vDoublePrime,
                        const vector<shared_ptr<FsmNode>>& dReachableStates,
                        const Fsm& spec,
                        const Fsm& iut)
 {
-    size_t lB = Fsm::lowerBound(base, suffix, takenInputs, states, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
+    size_t lB = Fsm::lowerBound(base, suffix, states, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
     VLOG(1) << "lB: " << lB;
     return lB > m;
 }
 
 size_t Fsm::lowerBound(const IOTrace& base,
                        const IOTrace& suffix,
-                       const vector<shared_ptr<InputTrace>>& takenInputs,
                        const vector<shared_ptr<FsmNode>>& states,
                        const IOTreeContainer& adaptiveTestCases,
-                       vector<IOTraceContainer> bOmegaT,
+                       unordered_set<IOTraceContainer> bOmegaT,
                        const IOTraceContainer& vDoublePrime,
                        const vector<shared_ptr<FsmNode>>& dReachableStates,
                        const Fsm& spec,
@@ -1918,11 +1924,6 @@ size_t Fsm::lowerBound(const IOTrace& base,
     VLOG(1) << "lowerBound()";
     VLOG(1) << "base: " << base;
     VLOG(1) << "suffix: " << suffix;
-    VLOG(1) << "takenInputs:";
-    for (auto i : takenInputs)
-    {
-        VLOG(1) << "  " << *i;
-    }
     VLOG(1) << "states:";
     for (auto s : states)
     {
@@ -2024,7 +2025,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
         LOG(INFO) << ss.str();
     }
 
-    vector<shared_ptr<InputTrace>> detStateCover;
+    InputTraceSet detStateCover;
     const vector<shared_ptr<FsmNode>>& dReachableStates = spec.getDReachableStates(detStateCover);
 
     LOG(INFO) << "dReachableStates:";
@@ -2043,18 +2044,18 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
     /**
      * T - set of input sequences that have been followed by Ω.
      */
-    vector<shared_ptr<InputTrace>> t = detStateCover;
+    InputTraceSet t = detStateCover;
     /**
      * Holds all B_Ω(T) for the current t.
      */
-    vector<IOTraceContainer> bOmegaT;
+    unordered_set<IOTraceContainer> bOmegaT;
     iut.bOmega(adaptiveTestCases, t, bOmegaT);
     /**
      * T_c - set of current elements of T: those that are being considered in the search
      * through state space. The elements in T_c are the maximal sequences considered that
      * do not meet the termination criterion.
      */
-    vector<shared_ptr<InputTrace>> tC = detStateCover;
+    InputTraceSet tC = detStateCover;
     while (tC.size() != 0)
     {
         stringstream ss;
@@ -2274,8 +2275,8 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
         }
         VLOG(1) << "Number of input/output combinations: " << numberToCheck;
         bool discardInputTrace = false;
-        vector<shared_ptr<InputTrace>> newT = t;
-        vector<shared_ptr<InputTrace>> newTC;
+        InputTraceSet newT = t;
+        InputTraceSet newTC;
         long inputTraceCount = 0;
         size_t numberInputTraces = tC.size();
         for (shared_ptr<InputTrace> inputTrace : tC)
@@ -2463,7 +2464,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                         {
                             //size_t lB = Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
                             //VLOG(1) << "lB: " << lB;
-                            bool exceedsBound = Fsm::exceedsBound(m, *maxIOPrefixInV, suffix, t, rDistStates, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
+                            bool exceedsBound = Fsm::exceedsBound(m, *maxIOPrefixInV, suffix, rDistStates, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
                             VLOG(1) << "exceedsBound: " << exceedsBound;
                             if (exceedsBound)
                             {
@@ -2505,10 +2506,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             {
                 // Keeping current input trace in T_C
                 VLOG(1) << "Keeping " << *inputTrace << " in T_C.";
-                if (!InputTrace::contains(newTC, *inputTrace))
-                {
-                    newTC.push_back(inputTrace);
-                }
+                newTC.insert(inputTrace);
                 // Next input trace.
                 continue;
             }
@@ -2525,13 +2523,14 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
         VLOG(1) << ss.str() << endl;
         ss.str(std::string());
         // Expanding sequences.
-        vector<shared_ptr<InputTrace>> expandedTC;
-        vector<shared_ptr<InputTrace>> tracesAddedToT;
+        InputTraceSet expandedTC;
+        InputTraceSet tracesAddedToT;
+        LOG(INFO) << "Expanding input sequences.";
         for (int x = 0; x <= spec.maxInput; ++x)
         {
-            for (shared_ptr<InputTrace>& inputTrace : newTC)
+            for (const shared_ptr<InputTrace>& inputTrace : newTC)
             {
-                TIMED_SCOPE(timerBlkObj, "adaptiveStateCounting-expansion");
+                TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-expansion", VLOG_IS_ON(2));
 
                 shared_ptr<InputTrace> concat;
                 if (inputTrace->isEmptyTrace())
@@ -2544,19 +2543,20 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 }
 
                 concat->add(x);
-                if (!InputTrace::contains(t, *concat) && !InputTrace::contains(expandedTC, *concat))
+                if (!InputTrace::contains(t, concat))
                 {
-                    expandedTC.push_back(concat);
+                    expandedTC.insert(concat);
                 }
-                if (!InputTrace::contains(newT, *concat))
+
+                if (newT.insert(concat).second)
                 {
-                    newT.push_back(concat);
-                    tracesAddedToT.push_back(concat);
+                    tracesAddedToT.insert(concat);
                 }
             }
         }
-
+        LOG(INFO) << "Finished expansion.";
         iut.bOmega(adaptiveTestCases, tracesAddedToT, bOmegaT);
+        LOG(INFO) << "Finished calculating bOmega.";
 
         ss << "expandedTC: ";
         for (auto w : expandedTC)

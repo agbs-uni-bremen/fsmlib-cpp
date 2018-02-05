@@ -2,14 +2,13 @@
 #include "logging/easylogging++.h"
 #include "fsm/FsmNode.h"
 
-VPrimeLazy::VPrimeLazy(const vector<shared_ptr<InputTrace>>& detStateCover, const Fsm& iut):
+VPrimeLazy::VPrimeLazy(const InputTraceSet& detStateCover, const Fsm& iut):
     allPossibleTraces(vector<vector<shared_ptr<const IOTrace>>>())
 {
     current = 0;
     VLOG(1) << "allPossibleTraces:";
-    for (size_t i = 0; i < detStateCover.size(); ++i)
+    for (const shared_ptr<InputTrace>& input : detStateCover)
     {
-        const shared_ptr<InputTrace>& input = detStateCover.at(i);
         vector<shared_ptr<OutputTrace>> producedOutputs;
         vector<shared_ptr<FsmNode>> reached;
         iut.getInitialState()->getPossibleOutputs(*input, producedOutputs, reached);

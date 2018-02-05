@@ -43,16 +43,10 @@ InputTrace::InputTrace(const Trace& other):
 
 }
 
-bool InputTrace::contains(const std::vector<std::shared_ptr<InputTrace>>& list, const InputTrace& trace)
+bool InputTrace::contains(const InputTraceSet& list,
+                          const std::shared_ptr<InputTrace>& trace)
 {
-    for (std::shared_ptr<InputTrace> t : list)
-    {
-        if (*t == trace)
-        {
-            return true;
-        }
-    }
-    return false;
+    return list.find(trace) != list.end();
 }
 
 bool InputTrace::isEmptyTrace() const

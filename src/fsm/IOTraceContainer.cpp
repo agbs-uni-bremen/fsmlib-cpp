@@ -162,19 +162,9 @@ void IOTraceContainer::addUnique(std::vector<IOTraceContainer>& container, const
     container.push_back(elem);
 }
 
-void IOTraceContainer::remove(std::vector<IOTraceContainer>& container, const IOTraceContainer& elem)
+void IOTraceContainer::remove(std::unordered_set<IOTraceContainer>& container, const IOTraceContainer& elem)
 {
-    for (auto it = container.begin(); it != container.end();)
-    {
-        if (*it == elem)
-        {
-            it = container.erase(it);
-        }
-        else
-        {
-            ++it;
-        }
-    }
+    container.erase(elem);
 }
 
 std::ostream & operator<<(std::ostream & out, const IOTraceContainer & iot)
