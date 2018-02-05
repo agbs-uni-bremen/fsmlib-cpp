@@ -1795,7 +1795,7 @@ void Fsm::bOmega(const IOTreeContainer& adaptiveTestCases,
         {
             IOTrace iOTrace = IOTrace(*inputTrace, *outputTrace);
             IOTraceContainer produced = bOmega(adaptiveTestCases, iOTrace);
-            VLOG(2) << "produced bOmega with " << iOTrace << ": " << produced;
+            VLOG(1) << "produced bOmega with " << iOTrace << ": " << produced;
             IOTraceContainer::addUnique(result, produced);
         }
     }
@@ -2006,12 +2006,12 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
      * Adaptive test cases for the product FSM (Ω).
      */
     const IOTreeContainer& adaptiveTestCases = spec.getAdaptiveRCharacterisationSet();
-    VLOG(1) << "adaptiveTestCases: " << adaptiveTestCases;
+    LOG(INFO) << "adaptiveTestCases: " << adaptiveTestCases;
     IOListContainer adaptiveList = adaptiveTestCases.toIOList();
-    VLOG(1) << "adaptiveTestCases as input traces:";
-    VLOG(1) << adaptiveList;
+    LOG(INFO) << "adaptiveTestCases as input traces:";
+    LOG(INFO) << adaptiveList;
     const vector<vector<shared_ptr<FsmNode>>>& maximalSetsOfRDistinguishableStates = spec.getMaximalSetsOfRDistinguishableStates();
-    VLOG(1) << "maximalSetsOfRDistinguishableStates:";
+    LOG(INFO) << "maximalSetsOfRDistinguishableStates:";
     for (auto v : maximalSetsOfRDistinguishableStates)
     {
         stringstream ss;
@@ -2021,21 +2021,21 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             ss << e->getName() << ", ";
         }
         ss << "}";
-        VLOG(1) << ss.str();
+        LOG(INFO) << ss.str();
     }
 
     vector<shared_ptr<InputTrace>> detStateCover;
     const vector<shared_ptr<FsmNode>>& dReachableStates = spec.getDReachableStates(detStateCover);
 
-    VLOG(1) << "dReachableStates:";
+    LOG(INFO) << "dReachableStates:";
     for (auto s : dReachableStates)
     {
-        VLOG(1) << s->getName();
+        LOG(INFO) << s->getName();
     }
-    VLOG(1) << "detStateCover:";
+    LOG(INFO) << "detStateCover:";
     for (auto t : detStateCover)
     {
-        VLOG(1) << *t;
+        LOG(INFO) << *t;
     }
 
     VPrimeLazy vPrimeLazy(detStateCover, iut);
@@ -2063,14 +2063,14 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
         {
             ss << *w << ", ";
         }
-        VLOG(1) << ss.str();
+        LOG(INFO) << ss.str();
         ss.str(std::string());
         ss << "t: ";
         for (auto w : t)
         {
             ss << *w << ", ";
         }
-        VLOG(1) << ss.str();
+        LOG(INFO) << ss.str();
         ss.str(std::string());
         VLOG(1) << "adaptiveTestCases as input traces:";
         VLOG(1) << adaptiveList;
@@ -2282,7 +2282,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
         {
             discardInputTrace = false;
             TIMED_SCOPE(timerBlkObj, "Check input trace");
-            VLOG(1) << "check inputTrace: " << *inputTrace << " (" << ++inputTraceCount << " of " << numberInputTraces << ")";
+            LOG(INFO) << "check inputTrace: " << *inputTrace << " (" << ++inputTraceCount << " of " << numberInputTraces << ")";
             vector<shared_ptr<OutputTrace>>& producedOutputs = observedOutputsTCElements.at(inputTrace);
             VLOG(1) << "producedOutputs:";
             for (shared_ptr<OutputTrace> outputTrace : producedOutputs)
@@ -2315,7 +2315,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 {
                     break;
                 }
-                VLOG(1) << "outputTrace: " << *outputTrace << " (" << ++outputTraceCount << " of " << numberOutputTraces << ")";
+                LOG(INFO) << "outputTrace: " << *outputTrace << " (" << ++outputTraceCount << " of " << numberOutputTraces << ")";
                 IOTrace currentTrace(*inputTrace, *outputTrace);
                 VLOG(1) << "currentTrace (x_1/y_1): " << currentTrace;
                 bool isLastOutputTrace = outputTrace == producedOutputs.back();
@@ -2323,6 +2323,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 bool outputTraceMeetsCriteria = false;
                 vPrimeLazy.reset();
 
+                VLOG(1) << "maxInputPrefixInV.size(): " << maxInputPrefixInV->size();
                 shared_ptr<const IOTrace> maxIOPrefixInV = make_shared<const IOTrace>(*static_pointer_cast<const Trace>(maxInputPrefixInV),
                                                                                       *outputTrace->getPrefix(maxInputPrefixInV->size(), true));
                 VLOG(1) << "maxIOPrefixInV (v/v'): " << *maxIOPrefixInV;
@@ -2336,6 +2337,10 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                     TIMED_SCOPE_IF(timerBlkObj, "Check vDoublePrime", VLOG_IS_ON(1));
                     if (discardInputTrace || outputTraceMeetsCriteria || inputTraceMeetsCriteria)
                     {
+                        VLOG(1) << "discardInputTrace: " << discardInputTrace <<
+                                   ", outputTraceMeetsCriteria: " << outputTraceMeetsCriteria <<
+                                   ", inputTraceMeetsCriteria: " << inputTraceMeetsCriteria;
+                        VLOG(1) << "breaking";
                         break;
                     }
                     VLOG(1) << "vDoublePrime: " << vDoublePrime;
@@ -2526,7 +2531,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
         {
             for (shared_ptr<InputTrace>& inputTrace : newTC)
             {
-                TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-expansion", VLOG_IS_ON(2));
+                TIMED_SCOPE(timerBlkObj, "adaptiveStateCounting-expansion");
 
                 shared_ptr<InputTrace> concat;
                 if (inputTrace->isEmptyTrace())
