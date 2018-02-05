@@ -239,6 +239,12 @@ std::vector<int> Trace::get() const
 	return trace;
 }
 
+size_t Trace::size() const
+{
+    Trace tmp = this->removeEpsilon();
+    return tmp.trace.size();
+}
+
 std::vector<int>::const_iterator Trace::cbegin() const
 {
 	return trace.cbegin();

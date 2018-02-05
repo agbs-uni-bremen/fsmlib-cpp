@@ -137,7 +137,7 @@ public:
 	*/
 	std::vector<int> get() const;
 
-    size_t size() const { return trace.size(); }
+    size_t size() const;
 
 	/**
 	Getter for an iterator of the trace, pointing at the beginning
