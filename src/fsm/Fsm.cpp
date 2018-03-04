@@ -1998,7 +1998,8 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
 
 #endif
     spec.calcRDistinguishableStates();
-
+    IOListContainer rCharacterisationSet = spec.getRCharacterisationSet();
+    VLOG(1) << "Spec rCharacterisationSet:" << rCharacterisationSet;
 
     TIMED_FUNC(timerObj);
     observedTraces.clear();
@@ -3153,7 +3154,7 @@ bool Fsm::isCompletelyDefined() const
             }
             if (!found)
             {
-                LOG(INFO) << "Incomplete FSM : for state " << nn->getName() << " " << nn->getId() << ", input " << x << " does not have a transition." << endl;
+                LOG(INFO) << "Incomplete FSM : for state " << nn->getName() << " (" << nn->getId() << "), input " << x << " does not have a transition." << endl;
                 cDefd = false;
             }
         }

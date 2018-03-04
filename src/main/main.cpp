@@ -1058,19 +1058,31 @@ int main(int argc, char* argv[])
 
     CLOG(INFO, logging::globalLogger) << "############## Starting Application ##############";
 
-    /*
-    shared_ptr<FsmPresentationLayer> plKaput =
-    make_shared<FsmPresentationLayer>("../../../resources/adaptiveIn.txt",
-            + "../../../resources/adaptiveOut.txt",
-            + "../../../resources/adaptiveState.txt");
+    shared_ptr<FsmPresentationLayer> plSpec =
+    make_shared<FsmPresentationLayer>("../../../resources/example-master-fehler.in",
+            + "../../../resources/example-master-fehler.out",
+            + "../../../resources/example-master-fehler.state");
 
-    Fsm spec = Fsm("../../../resources/adaptive-kaput-spec.fsm", plKaput, "spec");
-    Fsm iut = Fsm("../../../resources/adaptive-kaput-iut.fsm", plKaput, "iut");
+    shared_ptr<FsmPresentationLayer> plIut =
+    make_shared<FsmPresentationLayer>("../../../resources/example-master-fehler.in",
+            + "../../../resources/example-master-fehler.out",
+            + "../../../resources/example-master-fehler-iut.state");
+
+
+    Fsm spec = Fsm("../../../resources/example-master-fehler.fsm", plSpec, "spec");
+    Fsm iut = Fsm("../../../resources/example-master-fehler-iut.fsm", plIut, "iut");
+
+    if (!spec.isCompletelyDefined()) {
+        LOG(FATAL) << "Specification is not completely defined.";
+    }
+    if (!iut.isCompletelyDefined()) {
+        LOG(FATAL) << "IUT is not completely defined.";
+    }
 
     Fsm specMin = spec.minimise();
     Fsm iutMin = iut.minimise();
 
-    const string dotPrefix = "../../../resources/adaptive-test/";
+    const string dotPrefix = "../../../resources/example-master-fehler/";
     spec.toDot(dotPrefix + "spec");
     iut.toDot(dotPrefix + "iut");
     specMin.toDot(dotPrefix + "specMin");
@@ -1079,29 +1091,25 @@ int main(int argc, char* argv[])
     Fsm intersect = spec.intersect(iut);
     intersect.toDot(dotPrefix + "intersect");
 
-    Fsm product = spec.intersect(iut);
-
-    product.toDot(dotPrefix + "product");
-
     IOTraceContainer observedTraces;
     bool isReduction = Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces);
 
     CLOG(INFO, logging::globalLogger) << "isReduction: " << isReduction;
 
     return 0;
-*/
+
     //TODO Analyze increasing memory usage with valgrind
     AdaptiveTestConfig config;
     config.numFsm = 100;
 
     config.minInput = 1;
-    config.maxInput = 20;
+    config.maxInput = 5;
 
     config.minOutput = 1;
-    config.maxOutput = 20;
+    config.maxOutput = 5;
 
     config.minStates = 1;
-    config.maxStates = 30;
+    config.maxStates = 10;
 
     config.minTransFaults = 1;
     config.maxTransFaults = 5;
@@ -1109,7 +1117,7 @@ int main(int argc, char* argv[])
     config.minOutFaults = 1;
     config.maxOutFaults = 5;
 
-    config.seed = 781022341;
+    config.seed = 0;
 
 
     bool debug = false;
