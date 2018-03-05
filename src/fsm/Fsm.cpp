@@ -1949,7 +1949,7 @@ size_t Fsm::lowerBound(const IOTrace& base,
     {
         const IOTraceContainer& rResult = spec.r(state, base, suffix);
         VLOG(1) << "--- state: " << state->getName();
-        VLOG(1) << "rResult: " << rResult;
+        VLOG(1) << "rResult(" << state->getName() << ", " << base << ", " << suffix << "): " << rResult;
         result += rResult.size();
         VLOG(1) << "lb result: " << result;
         if(find(dReachableStates.begin(), dReachableStates.end(), state) != dReachableStates.end()) {
@@ -1975,6 +1975,12 @@ size_t Fsm::lowerBound(const IOTrace& base,
                 VLOG(1) << "  " << cont;
             }
         }
+    }
+    VLOG(1) << "bOmegaT size: " << bOmegaT.size();
+    VLOG(1) << "bOmegaT:";
+    for (const auto& cont : bOmegaT)
+    {
+        VLOG(1) << "  " << cont;
     }
     result += bOmegaT.size();
     VLOG(1) << "lowerBound() result: " << result;
