@@ -44,6 +44,11 @@ too_many_output_faults::too_many_output_faults(const std::string& msg): runtime_
 
 }
 
+unexpected_reduction::unexpected_reduction(const std::string& msg): runtime_error(msg)
+{
+
+}
+
 shared_ptr<FsmNode> Fsm::newNode(const int id, const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>& p, const shared_ptr<FsmPresentationLayer>& pl)
 {
     string nodeName = string("(" + p->first->getName() + to_string(p->first->getId()) + ","

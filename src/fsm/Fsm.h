@@ -70,6 +70,12 @@ public:
     too_many_output_faults(const std::string& msg);
 };
 
+class unexpected_reduction : public std::runtime_error
+{
+public:
+    unexpected_reduction(const std::string& msg);
+};
+
 class Fsm
 {
 protected:
