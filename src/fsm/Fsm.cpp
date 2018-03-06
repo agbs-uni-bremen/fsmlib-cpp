@@ -3569,6 +3569,10 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
 
                     if ( not newOutValOk ) {
                         newOutVal = (newOutVal+1) % (maxOutput+1);
+                        if (newOutVal == originalOutVal)
+                        {
+                            newOutVal = (newOutVal+1) % (maxOutput+1);
+                        }
                     }
 
                 } while ( (not newOutValOk) and (originalNewOutVal != newOutVal) );
