@@ -2172,45 +2172,51 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                     if (*outIut == *outSpec)
                     {
                         allowed = true;
-                        // Applying adaptive test cases to every node reached by the current input/output trace.
-                        VLOG(1) << "----------------- Getting adaptive traces -----------------";
-                        IOTraceContainer observedAdaptiveTracesIut;
-                        IOTraceContainer observedAdaptiveTracesSpec;
-                        const shared_ptr<FsmNode>& nodeIut = reachedNodesIut.at(i);
-                        const shared_ptr<FsmNode>& nodeSpec = reachedNodesSpec.at(j);
-
-                        iut.addPossibleIOTraces(nodeIut, adaptiveTestCases, observedAdaptiveTracesIut);
-                        spec.addPossibleIOTraces(nodeSpec, adaptiveTestCases, observedAdaptiveTracesSpec);
-
-                        VLOG(1) << "  observedAdaptiveTracesIut: " << observedAdaptiveTracesIut;
-                        VLOG(1) << "  observedAdaptiveTracesSpec: " << observedAdaptiveTracesSpec;
-
-                        bool failure = false;
-                        for (auto traceIt = observedAdaptiveTracesIut.cbegin(); traceIt != observedAdaptiveTracesIut.cend(); ++traceIt)
+                        // No need to apply adaptive test cases, if there are no adaptive test cases.
+                        if (adaptiveTestCases.size() > 0)
                         {
-                            const shared_ptr<const IOTrace>& trace = *traceIt;
-                            if (!observedAdaptiveTracesSpec.contains(trace))
+                            // Applying adaptive test cases to every node reached by the current input/output trace.
+                            VLOG(1) << "----------------- Getting adaptive traces -----------------";
+                            IOTraceContainer observedAdaptiveTracesIut;
+                            IOTraceContainer observedAdaptiveTracesSpec;
+                            const shared_ptr<FsmNode>& nodeIut = reachedNodesIut.at(i);
+                            const shared_ptr<FsmNode>& nodeSpec = reachedNodesSpec.at(j);
+
+                            iut.addPossibleIOTraces(nodeIut, adaptiveTestCases, observedAdaptiveTracesIut);
+                            spec.addPossibleIOTraces(nodeSpec, adaptiveTestCases, observedAdaptiveTracesSpec);
+
+                            VLOG(1) << "  observedAdaptiveTracesIut: " << observedAdaptiveTracesIut;
+                            VLOG(1) << "  observedAdaptiveTracesSpec: " << observedAdaptiveTracesSpec;
+
+                            bool failure = false;
+                            for (auto traceIt = observedAdaptiveTracesIut.cbegin(); traceIt != observedAdaptiveTracesIut.cend(); ++traceIt)
                             {
-                                LOG(INFO) << "  Specification does not contain " << *trace;
-                                failure = true;
-                                break;
+                                const shared_ptr<const IOTrace>& trace = *traceIt;
+                                if (!observedAdaptiveTracesSpec.contains(trace))
+                                {
+                                    LOG(INFO) << "  Specification does not contain " << *trace;
+                                    failure = true;
+                                    break;
+                                }
+                            }
+            //                PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "after observedAdaptiveTracesIut loop");
+                            VLOG(1) << "  concatenating: " << *inputTrace << "/" << *outIut;
+                            observedAdaptiveTracesIut.concatenateToFront(inputTrace, outIut);
+                            VLOG(1) << "  observedAdaptiveTraces after concatenation to front: " << observedAdaptiveTracesIut;
+                            observedTraces.add(observedAdaptiveTracesIut);
+                            if (failure)
+                            {
+                                // IUT produced an output that can not be produced by the specification.
+                                LOG(INFO) << "  Failure observed:";
+                                LOG(INFO) << "    Input Trace: " << *inputTrace;
+                                LOG(INFO) << "    Observed adaptive traces:";
+                                LOG(INFO) << observedAdaptiveTracesIut;
+                                VLOG(1) << "IUT is not a reduction of the specification.";
+                                return false;
                             }
                         }
-        //                PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "after observedAdaptiveTracesIut loop");
-                        VLOG(1) << "  concatenating: " << *inputTrace << "/" << *outIut;
-                        observedAdaptiveTracesIut.concatenateToFront(inputTrace, outIut);
-                        VLOG(1) << "  observedAdaptiveTraces after concatenation to front: " << observedAdaptiveTracesIut;
-                        observedTraces.add(observedAdaptiveTracesIut);
-                        if (failure)
-                        {
-                            // IUT produced an output that can not be produced by the specification.
-                            LOG(INFO) << "  Failure observed:";
-                            LOG(INFO) << "    Input Trace: " << *inputTrace;
-                            LOG(INFO) << "    Observed adaptive traces:";
-                            LOG(INFO) << observedAdaptiveTracesIut;
-                            VLOG(1) << "IUT is not a reduction of the specification.";
-                            return false;
-                        }
+                        // No failure observed, IUT output is allowed by specification.
+                        // No need to search through remaining specification outputs.
                         break;
                     }
                 }
