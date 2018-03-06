@@ -930,7 +930,10 @@ void adaptiveTest01(AdaptiveTestConfig& config)
             stringstream ss;
             ss << setw(numberDigits) << setfill('0') << i;
             string iteration = ss.str();
+
+#ifdef ENABLE_DEBUG_MACRO
             logging::setLogfileSuffix(iteration);
+#endif
 
             int numInput = getRandom(config.minInput, config.maxInput, gen);
             int numOutput = getRandom(config.minOutput, config.maxOutput, gen);
@@ -1063,7 +1066,7 @@ int main(int argc, char* argv[])
 #else
     CLOG(INFO, logging::globalLogger) << "This is a release build!";
 #endif
-
+/*
     shared_ptr<FsmPresentationLayer> plSpec =
     make_shared<FsmPresentationLayer>("../../../resources/example-master-fehler.in",
             + "../../../resources/example-master-fehler.out",
@@ -1102,7 +1105,7 @@ int main(int argc, char* argv[])
     CLOG(INFO, logging::globalLogger) << "isReduction: " << isReduction;
 
     return 0;
-
+*/
     //TODO Analyze increasing memory usage with valgrind
     AdaptiveTestConfig config;
     config.numFsm = 200000;
