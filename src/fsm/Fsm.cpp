@@ -3574,7 +3574,10 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
 
                     if ( not newOutValOk ) {
                         newOutVal = (newOutVal+1) % (maxOutput+1);
-                        if (newOutVal == originalOutVal)
+                        // Checking if we already have tried all output values.
+                        if (newOutVal != originalNewOutVal &&
+                                // We want to create a faulty transition, not a clone.
+                                newOutVal == originalOutVal)
                         {
                             newOutVal = (newOutVal+1) % (maxOutput+1);
                         }
