@@ -1128,19 +1128,19 @@ int main(int argc, char* argv[])
     config.seed = 0;
 
 
-    bool debug = false;
+    bool debug = true;
     if (debug)
     {
         CLOG(INFO, logging::globalLogger) << "############## Debugging ##############";
 
         AdaptiveTestConfigDebug debugConfig;
-        debugConfig.numStates = 3;
-        debugConfig.numInput = 8;
+        debugConfig.numStates = 4;
+        debugConfig.numInput = 2;
         debugConfig.numOutput = 2;
         debugConfig.numOutFaults = 0;
         debugConfig.numTransFaults = 0;
-        debugConfig.createRandomFsmSeed = 1674495431;
-        debugConfig.createMutantSeed = 1560607012;
+        debugConfig.createRandomFsmSeed = 144401996;
+        debugConfig.createMutantSeed = 563330989;
 
         shared_ptr<FsmPresentationLayer> plTest =
         make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
