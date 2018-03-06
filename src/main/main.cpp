@@ -765,6 +765,8 @@ bool executeAdaptiveTest(
 
     Fsm specMin = spec->minimise(false);
     Fsm iutMin = iut->minimise(false);
+    //Should not be in release:
+    Fsm intersect = spec->intersect(*iut);
 
 #ifdef ENABLE_DEBUG_MACRO
     const string dotPrefix = "../../../resources/adaptive-test/" + spec->getName() + "-";
@@ -773,7 +775,6 @@ bool executeAdaptiveTest(
     specMin.toDot(dotPrefix + "specMin");
     iutMin.toDot(dotPrefix + "iutMin");
 
-    Fsm intersect = spec->intersect(*iut);
     intersect.toDot(dotPrefix + "intersect");
 #endif
 
@@ -1057,12 +1058,16 @@ int main(int argc, char* argv[])
     logging::initLogging();
 
     CLOG(INFO, logging::globalLogger) << "############## Starting Application ##############";
+#ifdef ENABLE_DEBUG_MACRO
+    CLOG(INFO, logging::globalLogger) << "This is a debug build!";
+#else
+    CLOG(INFO, logging::globalLogger) << "This is a release build!";
+#endif
 
     shared_ptr<FsmPresentationLayer> plSpec =
     make_shared<FsmPresentationLayer>("../../../resources/example-master-fehler.in",
             + "../../../resources/example-master-fehler.out",
             + "../../../resources/example-master-fehler.state");
-
     shared_ptr<FsmPresentationLayer> plIut =
     make_shared<FsmPresentationLayer>("../../../resources/example-master-fehler.in",
             + "../../../resources/example-master-fehler.out",
@@ -1100,22 +1105,22 @@ int main(int argc, char* argv[])
 
     //TODO Analyze increasing memory usage with valgrind
     AdaptiveTestConfig config;
-    config.numFsm = 100;
+    config.numFsm = 200000;
 
     config.minInput = 1;
-    config.maxInput = 5;
+    config.maxInput = 10;
 
     config.minOutput = 1;
-    config.maxOutput = 5;
+    config.maxOutput = 10;
 
     config.minStates = 1;
-    config.maxStates = 10;
+    config.maxStates = 11;
 
-    config.minTransFaults = 1;
-    config.maxTransFaults = 5;
+    config.minTransFaults = 0;
+    config.maxTransFaults = 0;
 
     config.minOutFaults = 1;
-    config.maxOutFaults = 5;
+    config.maxOutFaults = 1;
 
     config.seed = 0;
 
@@ -1126,13 +1131,13 @@ int main(int argc, char* argv[])
         CLOG(INFO, logging::globalLogger) << "############## Debugging ##############";
 
         AdaptiveTestConfigDebug debugConfig;
-        debugConfig.numStates = 1;
-        debugConfig.numInput = 19;
-        debugConfig.numOutput = 6;
+        debugConfig.numStates = 3;
+        debugConfig.numInput = 8;
+        debugConfig.numOutput = 2;
         debugConfig.numOutFaults = 0;
         debugConfig.numTransFaults = 0;
-        debugConfig.createRandomFsmSeed = 932150670;
-        debugConfig.createMutantSeed = 1464050036;
+        debugConfig.createRandomFsmSeed = 1674495431;
+        debugConfig.createMutantSeed = 1560607012;
 
         shared_ptr<FsmPresentationLayer> plTest =
         make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
