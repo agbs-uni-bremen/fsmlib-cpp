@@ -2060,6 +2060,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
     while (tC.size() != 0)
     {
         stringstream ss;
+#ifdef ENABLE_DEBUG_MACRO
         ss << "tC: ";
         for (auto w : tC)
         {
@@ -2074,31 +2075,34 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
         }
         LOG(INFO) << ss.str();
         ss.str(std::string());
+#endif
         VLOG(1) << "adaptiveTestCases as input traces:";
         VLOG(1) << adaptiveList;
         map<shared_ptr<InputTrace>, vector<shared_ptr<OutputTrace>>> observedOutputsTCElements;
-
+        size_t numberInputTraces = tC.size();
+        size_t inputTraceCount = 0;
         // Applying all input traces from T_c to this FSM.
         // All observed outputs are bein recorded.
         // If the FSM observes a failure, adaptive state counting terminates.
-        for (shared_ptr<InputTrace> inputTrace : tC)
+        for (const shared_ptr<InputTrace>& inputTrace : tC)
         {
             TIMED_SCOPE(timerBlkObj, "apply inputTrace");
             VLOG(1) << "############################################################";
-            VLOG(1) << "  inputTrace: " << *inputTrace;
+            VLOG(1) << "  Applying inputTrace " << ++inputTraceCount << " of " << numberInputTraces << ": " << *inputTrace;
             /**
-             * Holds the produced output traces for the current input trace.
+             * Hold the produced output traces for the current input trace.
              */
             vector<shared_ptr<OutputTrace>> producedOutputsSpec;
             vector<shared_ptr<OutputTrace>> producedOutputsIut;
             /**
-             * Holds the reached nodes for the current input trace.
+             * Hold the reached nodes for the current input trace.
              */
             vector<shared_ptr<FsmNode>> reachedNodesSpec;
             vector<shared_ptr<FsmNode>> reachedNodesIut;
 
             spec.apply(*inputTrace, producedOutputsSpec, reachedNodesSpec);
             iut.apply(*inputTrace, producedOutputsIut, reachedNodesIut);
+#ifdef ENABLE_DEBUG_MACRO
             ss << "    producedOutputs spec: ";
             for (size_t i = 0; i < producedOutputsSpec.size(); ++i)
             {
@@ -2143,6 +2147,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             }
             VLOG(1) << ss.str();
             ss.str(std::string());
+#endif
 //            PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "apply inputTrace before insertion");
             observedOutputsTCElements.insert(make_pair(inputTrace, producedOutputsIut));
 //            PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "apply inputTrace after insertion");
@@ -2230,6 +2235,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                     }
                     LOG(INFO) << ss.str();
                     ss.str(std::string());
+#ifdef ENABLE_DEBUG_MACRO
                     ss << "    Produced Outputs Spec: ";
                     for (size_t i = 0; i < producedOutputsSpec.size(); ++i)
                     {
@@ -2250,6 +2256,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                     }
                     LOG(INFO) << ss.str();
                     ss.str(std::string());
+#endif
                     VLOG(1) << "Specification does not produce output " << *outIut << ".";
                     VLOG(1) << "IUT is not a reduction of the specification.";
                     return false;
@@ -2278,8 +2285,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
         bool discardInputTrace = false;
         InputTraceSet newT = t;
         InputTraceSet newTC;
-        long inputTraceCount = 0;
-        size_t numberInputTraces = tC.size();
+        inputTraceCount = 0;
         for (shared_ptr<InputTrace> inputTrace : tC)
         {
             discardInputTrace = false;
