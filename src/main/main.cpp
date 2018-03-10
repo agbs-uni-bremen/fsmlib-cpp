@@ -860,6 +860,7 @@ struct AdaptiveTestConfig
 void adaptiveTest01(AdaptiveTestConfig& config)
 {
     CLOG(INFO, logging::globalLogger) << "############## Adaptive Test 01 ##############";
+    std::chrono::steady_clock::time_point totalStart = std::chrono::steady_clock::now();
 
     shared_ptr<FsmPresentationLayer> plTest =
     make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
@@ -1062,12 +1063,17 @@ void adaptiveTest01(AdaptiveTestConfig& config)
         }
     }
 
+    std::chrono::steady_clock::time_point totalEnd = std::chrono::steady_clock::now();
+    long durationS = std::chrono::duration_cast<std::chrono::seconds>(totalEnd - totalStart).count();
+    long durationMin = std::chrono::duration_cast<std::chrono::minutes>(totalEnd - totalStart).count();
+
     CLOG(INFO, logging::globalLogger) << "";
     CLOG(INFO, logging::globalLogger) << "#################### SUMMARY ####################";
     CLOG(INFO, logging::globalLogger) << "# Total tests  : " << executed;
     CLOG(INFO, logging::globalLogger) << "# Passed       : " << passed;
     CLOG(INFO, logging::globalLogger) << "# Failed       : " << executed - passed;
     CLOG(INFO, logging::globalLogger) << "# Not executed : " << i - executed;
+    CLOG(INFO, logging::globalLogger) << "# Duration     : " << durationS << " s (" << durationMin << " min).";
     CLOG(INFO, logging::globalLogger) << "#################################################";
 }
 
