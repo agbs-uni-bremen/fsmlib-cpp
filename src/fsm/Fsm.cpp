@@ -2163,12 +2163,9 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             observedOutputsTCElements.insert(make_pair(inputTrace, producedOutputsIut));
 //            PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "apply inputTrace after insertion");
 
-            if (adaptiveTestCases.size() == 0)
+            for (const shared_ptr<OutputTrace>& oTrace : producedOutputsIut)
             {
-                for (const shared_ptr<OutputTrace>& oTrace : producedOutputsIut)
-                {
-                    observedTraces.add(make_shared<const IOTrace>(*inputTrace, *oTrace));
-                }
+                observedTraces.add(make_shared<const IOTrace>(*inputTrace, *oTrace));
             }
 
             //Chek if the IUT has produced any output that can not be produced by the specification.
@@ -2244,11 +2241,6 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                         {
                             ss << ", ";
                         }
-                        // Adding observed traces for simple input traces only in case of failure.
-                        // When no error is being observed, this traces are bein used later when
-                        // concatenating them with the adaptive test cases.
-                        const shared_ptr<const IOTrace>& iOTrace = make_shared<const IOTrace>(*inputTrace, *producedOutputsIut.at(i), reachedNodesIut.at(i));
-                        observedTraces.add(iOTrace);
                     }
                     LOG(INFO) << ss.str();
                     ss.str(std::string());
