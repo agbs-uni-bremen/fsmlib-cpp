@@ -1105,12 +1105,13 @@ int main(int argc, char* argv[])
 /*
     shared_ptr<FsmPresentationLayer> plSpec =
     make_shared<FsmPresentationLayer>("../../../resources/example-master-fehler.in",
-            + "../../../resources/example-master-fehler.out",
-            + "../../../resources/example-master-fehler.state");
+                                      "../../../resources/example-master-fehler.out",
+                                      "../../../resources/example-master-fehler.state");
+
     shared_ptr<FsmPresentationLayer> plIut =
     make_shared<FsmPresentationLayer>("../../../resources/example-master-fehler.in",
-            + "../../../resources/example-master-fehler.out",
-            + "../../../resources/example-master-fehler-iut.state");
+                                      "../../../resources/example-master-fehler.out",
+                                      "../../../resources/example-master-fehler-iut.state");
 
 
     Fsm spec = Fsm("../../../resources/example-master-fehler.fsm", plSpec, "spec");
@@ -1182,8 +1183,8 @@ int main(int argc, char* argv[])
 
         shared_ptr<FsmPresentationLayer> plTest =
         make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
-                + "../../../resources/adaptive-test-out.txt",
-                + "../../../resources/adaptive-test-state.txt");
+                                          "../../../resources/adaptive-test-out.txt",
+                                          "../../../resources/adaptive-test-state.txt");
         bool isReduction;
         bool result = executeAdaptiveTest(
                     debugConfig.prefix,
