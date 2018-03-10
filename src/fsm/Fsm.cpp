@@ -2321,13 +2321,12 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             }
         }
         VLOG(1) << "Number of input/output combinations: " << numberToCheck;
-        bool discardInputTrace = false;
         InputTraceSet newT = t;
         InputTraceSet newTC;
         inputTraceCount = 0;
         for (shared_ptr<InputTrace> inputTrace : tC)
         {
-            discardInputTrace = false;
+            bool inputTraceMeetsCriteria = true;
             TIMED_SCOPE(timerBlkObj, "Check input trace");
             LOG(INFO) << "check inputTrace: " << *inputTrace << " (" << ++inputTraceCount << " of " << numberInputTraces << ")";
             vector<shared_ptr<OutputTrace>>& producedOutputs = observedOutputsTCElements.at(inputTrace);
@@ -2358,15 +2357,13 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
             for (shared_ptr<OutputTrace> outputTrace : producedOutputs)
             {
                 TIMED_SCOPE_IF(timerBlkObj, "Check output trace", VLOG_IS_ON(1));
-                if (discardInputTrace)
+                if (!inputTraceMeetsCriteria)
                 {
                     break;
                 }
                 LOG(INFO) << "outputTrace: " << *outputTrace << " (" << ++outputTraceCount << " of " << numberOutputTraces << ")";
                 IOTrace currentTrace(*inputTrace, *outputTrace);
                 VLOG(1) << "currentTrace (x_1/y_1): " << currentTrace;
-                bool isLastOutputTrace = outputTrace == producedOutputs.back();
-                bool inputTraceMeetsCriteria = false;
                 bool outputTraceMeetsCriteria = false;
                 vPrimeLazy.reset();
 
@@ -2382,47 +2379,26 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 {
                     const IOTraceContainer& vDoublePrime = vPrimeLazy.getNext();
                     TIMED_SCOPE_IF(timerBlkObj, "Check vDoublePrime", VLOG_IS_ON(1));
-                    if (discardInputTrace || outputTraceMeetsCriteria || inputTraceMeetsCriteria)
+                    if (outputTraceMeetsCriteria)
                     {
-                        VLOG(1) << "discardInputTrace: " << discardInputTrace <<
-                                   ", outputTraceMeetsCriteria: " << outputTraceMeetsCriteria <<
-                                   ", inputTraceMeetsCriteria: " << inputTraceMeetsCriteria;
-                        VLOG(1) << "breaking";
                         break;
                     }
                     VLOG(1) << "vDoublePrime: " << vDoublePrime;
-                    bool isLastVDoublePrime = !vPrimeLazy.hasNext();
 
                     if (!vDoublePrime.contains(maxIOPrefixInV))
                     {
                         VLOG(1) << "vDoublePrime does not contain prefix " << *maxIOPrefixInV << ". Skipping.";
                         continue;
                     }
-
-                    bool discardVDoublePrime = false;
                     for (const vector<shared_ptr<FsmNode>>& rDistStates : maximalSetsOfRDistinguishableStates)
                     {
-                        if (outputTraceMeetsCriteria || inputTraceMeetsCriteria)
-                        {
-                            VLOG(1) << "outputTraceMeetsCriteria: " << outputTraceMeetsCriteria <<
-                                       ", inputTraceMeetsCriteria: " << inputTraceMeetsCriteria;
-                            VLOG(1) << "breaking";
-                            break;
-                        }
-                        bool isLastSet = rDistStates == maximalSetsOfRDistinguishableStates.back();
                         VLOG(1) << "rDistStates:";
                         for (auto r : rDistStates)
                         {
                             VLOG(1) << "  " << r->getName();
                         }
                         TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3", VLOG_IS_ON(4));
-                        if (discardVDoublePrime && isLastVDoublePrime)
-                        {
-                            VLOG(1) << "isLastVDoublePrime, discarding input trace: " << *inputTrace;
-                            discardInputTrace = true;
-                            break;
-                        }
-                        //size_t lB = Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
+                         //size_t lB = Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
                         //VLOG(1) << "lB: " << lB;
                         bool exceedsBound = Fsm::exceedsBound(m, *maxIOPrefixInV, suffix, rDistStates, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
                         VLOG(1) << "exceedsBound: " << exceedsBound;
@@ -2430,38 +2406,17 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                         {
                             VLOG(1) << "Exceeded lower bound. Output trace " << *outputTrace << " meets criteria.";
                             outputTraceMeetsCriteria = true;
-                            if (isLastOutputTrace)
-                            {
-                                VLOG(1) << "Input trace " << *inputTrace << " meets all criteria.";
-                                inputTraceMeetsCriteria = true;
-                            }
-                        }
-                        else
-                        {
-                            VLOG(1) << "Lower bound not exceeded.";
-                            if (isLastSet)
-                            {
-                                discardVDoublePrime = true;
-                                VLOG(1) << "isLastSet. Discarding vDoublePrime: " << vDoublePrime ;
-                                if (isLastVDoublePrime)
-                                {
-                                    VLOG(1) << "isLastVDoublePrime, discarding input trace: " << *inputTrace;
-                                    discardInputTrace = true;
-                                }
-                                break;
-                            }
-                            VLOG(1) << "Going to skip rDistStates:";
-                            for (auto r : rDistStates)
-                            {
-                                VLOG(1) << "  " << r->getName();
-                            }
-                            continue;
+                            break;
                         }
                     }
                 }
+                if (outputTraceMeetsCriteria == false)
+                {
+                    inputTraceMeetsCriteria = false;
+                }
             }
 
-            if (discardInputTrace)
+            if (!inputTraceMeetsCriteria)
             {
                 // Keeping current input trace in T_C
                 VLOG(1) << "Keeping " << *inputTrace << " in T_C.";
