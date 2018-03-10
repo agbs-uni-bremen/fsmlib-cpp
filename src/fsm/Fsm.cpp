@@ -2370,7 +2370,6 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                     }
 
                     bool discardVDoublePrime = false;
-                    bool discardSet;
                     for (const vector<shared_ptr<FsmNode>>& rDistStates : maximalSetsOfRDistinguishableStates)
                     {
                         if (outputTraceMeetsCriteria || inputTraceMeetsCriteria)
@@ -2380,7 +2379,6 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                             VLOG(1) << "breaking";
                             break;
                         }
-                        discardSet = false;
                         bool isLastSet = rDistStates == maximalSetsOfRDistinguishableStates.back();
                         VLOG(1) << "rDistStates:";
                         for (auto r : rDistStates)
@@ -2388,131 +2386,46 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                             VLOG(1) << "  " << r->getName();
                         }
                         TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3", VLOG_IS_ON(4));
-                        for (size_t i = 0; i < rDistStates.size() - 1; ++i)
-                        {
-                            TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3-1", VLOG_IS_ON(5));
-                            shared_ptr<FsmNode> s1 = rDistStates.at(i);
-                            VLOG(1) << "############################################################";
-                            VLOG(1) << "s1:" << s1->getName();
-                            for (size_t j = i + 1; j < rDistStates.size(); ++j)
-                            {
-                                TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3-1-1", VLOG_IS_ON(6));
-                                shared_ptr<FsmNode> s2 = rDistStates.at(j);
-                                VLOG(1) << "----------------------------------------------------------";
-                                VLOG(1) << "s2:" << s2->getName();
-                                if (s1 == s2)
-                                {
-                                    continue;
-                                }
-                                const IOTraceContainer& s1RPlus = spec.rPlus(s1, *maxIOPrefixInV, suffix, vDoublePrime);
-                                const IOTraceContainer& s2RPlus = spec.rPlus(s2, *maxIOPrefixInV, suffix, vDoublePrime);
-
-                                VLOG(1) << "s1RPlus:" << s1RPlus;
-                                VLOG(1) << "s2RPlus:" << s2RPlus;
-
-                                unordered_set<shared_ptr<FsmNode>> reached1;
-                                unordered_set<shared_ptr<FsmNode>> reached2;
-
-                                for (auto traceIt = s1RPlus.cbegin(); traceIt != s1RPlus.cend(); ++traceIt)
-                                {
-                                    const shared_ptr<const IOTrace>& trace = *traceIt;
-                                    TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3-1-1-1", VLOG_IS_ON(7));
-                                    unordered_set<shared_ptr<FsmNode>> reached = iut.getInitialState()->after(*trace);
-                                    reached1.insert(reached.begin(), reached.end());
-                                }
-                                for (auto traceIt = s2RPlus.cbegin(); traceIt != s2RPlus.cend(); ++traceIt)
-                                {
-                                    const shared_ptr<const IOTrace>& trace = *traceIt;
-                                    TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3-1-1-2", VLOG_IS_ON(7));
-                                    unordered_set<shared_ptr<FsmNode>> reached = iut.getInitialState()->after(*trace);
-                                    reached2.insert(reached.begin(), reached.end());
-                                }
-
-                                vector<shared_ptr<FsmNode>> reached1V(reached1.begin(), reached1.end());
-                                vector<shared_ptr<FsmNode>> reached2V(reached2.begin(), reached2.end());
-
-                                VLOG(1) << "reached1V:";
-                                for (auto r : reached1V)
-                                {
-                                    VLOG(1) << "  " << r->getName();
-                                }
-                                VLOG(1) << "reached2V:";
-                                for (auto r : reached2V)
-                                {
-                                    VLOG(1) << "  " << r->getName();
-                                }
-
-                                if (iut.distinguishesAllStates(reached1V, reached2V, adaptiveTestCases))
-                                {
-                                    VLOG(1) << "Omega ( " << adaptiveList << ") distinguishes every state of the IUT reached by an IO sequence"
-                                            << " from rPlus(s1, v/v', x/y, V'') (" << s1RPlus << ") from every state of the IUT reached by an IO sequence"
-                                            << " from rPlus(s2, v/v', x/y, V'') (" << s2RPlus << ").";
-                                }
-                                else
-                                {
-                                    discardSet = true;
-                                    VLOG(1) << "rDistStates:";
-                                    for (auto r : rDistStates)
-                                    {
-                                        VLOG(1) << "  " << r->getName();
-                                    }
-                                    VLOG(1) << "Does not r-distinguish all states.";
-                                    if (isLastSet)
-                                    {
-                                        VLOG(1) << "isLastSet, discarding vDoublePrime: " << vDoublePrime;
-                                        discardVDoublePrime = true;
-                                    }
-                                    break;
-                                }
-                            }
-                            if (discardSet)
-                            {
-                                break;
-                            }
-                        }
                         if (discardVDoublePrime && isLastVDoublePrime)
                         {
                             VLOG(1) << "isLastVDoublePrime, discarding input trace: " << *inputTrace;
                             discardInputTrace = true;
                             break;
                         }
-                        if (!discardSet)
+                        //size_t lB = Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
+                        //VLOG(1) << "lB: " << lB;
+                        bool exceedsBound = Fsm::exceedsBound(m, *maxIOPrefixInV, suffix, rDistStates, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
+                        VLOG(1) << "exceedsBound: " << exceedsBound;
+                        if (exceedsBound)
                         {
-                            //size_t lB = Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
-                            //VLOG(1) << "lB: " << lB;
-                            bool exceedsBound = Fsm::exceedsBound(m, *maxIOPrefixInV, suffix, rDistStates, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
-                            VLOG(1) << "exceedsBound: " << exceedsBound;
-                            if (exceedsBound)
+                            VLOG(1) << "Exceeded lower bound. Output trace " << *outputTrace << " meets criteria.";
+                            outputTraceMeetsCriteria = true;
+                            if (isLastOutputTrace)
                             {
-                                VLOG(1) << "Exceeded lower bound. Output trace " << *outputTrace << " meets criteria.";
-                                outputTraceMeetsCriteria = true;
-                                if (isLastOutputTrace)
-                                {
-                                    VLOG(1) << "Input trace " << *inputTrace << " meets all criteria.";
-                                    inputTraceMeetsCriteria = true;
-                                }
+                                VLOG(1) << "Input trace " << *inputTrace << " meets all criteria.";
+                                inputTraceMeetsCriteria = true;
                             }
-                            else
+                        }
+                        else
+                        {
+                            VLOG(1) << "Lower bound not exceeded.";
+                            if (isLastSet)
                             {
-                                VLOG(1) << "Lower bound not exceeded.";
-                                if (isLastSet)
+                                discardVDoublePrime = true;
+                                VLOG(1) << "isLastSet. Discarding vDoublePrime: " << vDoublePrime ;
+                                if (isLastVDoublePrime)
                                 {
-                                    discardVDoublePrime = true;
-                                    VLOG(1) << "isLastSet. Discarding vDoublePrime: " << vDoublePrime ;
-                                    if (isLastVDoublePrime)
-                                    {
-                                        VLOG(1) << "isLastVDoublePrime, discarding input trace: " << *inputTrace;
-                                        discardInputTrace = true;
-                                    }
-                                    break;
+                                    VLOG(1) << "isLastVDoublePrime, discarding input trace: " << *inputTrace;
+                                    discardInputTrace = true;
                                 }
-                                VLOG(1) << "Going to skip rDistStates:";
-                                for (auto r : rDistStates)
-                                {
-                                    VLOG(1) << "  " << r->getName();
-                                }
-                                continue;
+                                break;
                             }
+                            VLOG(1) << "Going to skip rDistStates:";
+                            for (auto r : rDistStates)
+                            {
+                                VLOG(1) << "  " << r->getName();
+                            }
+                            continue;
                         }
                     }
                 }
