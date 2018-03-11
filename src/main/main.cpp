@@ -755,6 +755,13 @@ bool executeAdaptiveTest(
                                              true,
                                              createMutantSeed);
 
+    std::stringstream csvOutput;
+    csvOutput << numStates + 1;
+    csvOutput << "," << numInput + 1;
+    csvOutput << "," << numOutput + 1;
+    csvOutput << "," << numOutFaults;
+    csvOutput << "," << numTransFaults;
+
     CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
     CLOG(INFO, logging::globalLogger) << "numInput: " << numInput + 1;
     CLOG(INFO, logging::globalLogger) << "numOutput: " << numOutput + 1;
@@ -778,10 +785,28 @@ bool executeAdaptiveTest(
     intersect.toDot(dotPrefix + "intersect");
 #endif
 
-    isReduction = !intersect.hasFailure();
+    shared_ptr<IOTrace> failTrace;
+    isReduction = !intersect.hasFailure(failTrace);
+    csvOutput << "," << isReduction;
+    if (failTrace)
+    {
+        failTrace = make_shared<IOTrace>(failTrace->removeLeadingEpsilons());
+    }
 
     CLOG(INFO, logging::globalLogger) << "IUT is " + string((isReduction) ? "" : "NOT ") +
                                          "a reduction of the specification.";
+
+    if (failTrace)
+    {
+        csvOutput << "," << failTrace->size();
+        CLOG(INFO, logging::globalLogger) << "failTrace: " << *failTrace;
+        CLOG(INFO, logging::globalLogger) << "failTrace length: " << failTrace->size();
+    }
+    else
+    {
+        csvOutput << ",-1";
+    }
+
     if (isReduction && dontTestReductions) {
         CLOG(INFO, logging::globalLogger) << "Won't test this one, since it is a reduction.";
         throw unexpected_reduction("Interrupting testing, since IUT is an unexcpected reduction of the specification.");
@@ -792,8 +817,18 @@ bool executeAdaptiveTest(
     }
 
     IOTraceContainer observedTraces;
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     bool result = Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces);
+    csvOutput << "," << result;
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    long durationMS = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    long durationMin = std::chrono::duration_cast<std::chrono::minutes>(end - start).count();
+    csvOutput << "," << durationMS;
+    CLOG(INFO, logging::csvLogger) << csvOutput.str();
+
+    CLOG(INFO, logging::globalLogger) << "Calculation took " << durationMS << " ms (" << durationMin << " minutes).";
     LOG(INFO) << "observedTraces: " << observedTraces;
+    csvOutput << "," << (isReduction == result);
     return isReduction == result;
 }
 
@@ -956,6 +991,7 @@ void adaptiveTest01(AdaptiveTestConfig& config)
                     CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
                     CLOG(WARNING, logging::globalLogger) << "Too little outputs. Can not create requested umber of " <<
                                                             "output faults. Could not create mutant. Skipping.";
+                    continue;
                 }
                 else
                 {
@@ -973,14 +1009,10 @@ void adaptiveTest01(AdaptiveTestConfig& config)
             bool isReduction;
             bool result;
 
-            long durationMS;
-            long durationMin;
-
             bool couldCreateMutant = false;
             while (!couldCreateMutant)
             {
                 try {
-                    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
                     result = executeAdaptiveTest(
                                 iteration,
                                 numStates,
@@ -993,9 +1025,6 @@ void adaptiveTest01(AdaptiveTestConfig& config)
                                 plTest,
                                 config.dontTestReductions,
                                 isReduction);
-                    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-                    durationMS = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-                    durationMin = std::chrono::duration_cast<std::chrono::minutes>(end - start).count();
                     couldCreateMutant = true;
                 }
                 catch (unexpected_reduction& e)
@@ -1052,7 +1081,6 @@ void adaptiveTest01(AdaptiveTestConfig& config)
             }
 
             assertOnFail("TC-AT-01-" + iteration, result);
-            CLOG(INFO, logging::globalLogger) << "Calculation took " << durationMS << " ms (" << durationMin << " minutes).";
 
             ++executed;
             ++i;
@@ -1132,10 +1160,18 @@ int main(int argc, char* argv[])
     Fsm intersect = spec.intersect(iut);
     intersect.toDot(dotPrefix + "intersect");
 
+    shared_ptr<IOTrace> failTrace;
+    bool isReduction = !intersect.hasFailure(failTrace);
+
     IOTraceContainer observedTraces;
-    bool isReduction = Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces);
+    bool result = Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces);
 
     CLOG(INFO, logging::globalLogger) << "isReduction: " << isReduction;
+    if (failTrace)
+    {
+        CLOG(INFO, logging::globalLogger) << "failTrace: " << *failTrace;
+    }
+    CLOG(INFO, logging::globalLogger) << "result: " << result;
 
     return 0;
 */
@@ -1162,6 +1198,7 @@ int main(int argc, char* argv[])
 
     config.seed = 760460091;
 
+    CLOG(INFO, logging::csvLogger) << "numStates,numInput,numOutput,numOutFaults,numTransFault,isReduction,failTraceSize,result,durationMS,pass";
 
     bool debug = false;
     if (debug)

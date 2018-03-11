@@ -8,11 +8,13 @@ using std::chrono::system_clock;
 
 const char* logging::fsmConversion = "fsm-conversion";
 const char* logging::globalLogger = "global-logger";
+const char* logging::csvLogger = "csv-logger";
 
 void logging::initLogging()
 {
     el::Loggers::getLogger(logging::fsmConversion);
     el::Loggers::getLogger(logging::globalLogger);
+    el::Loggers::getLogger(logging::csvLogger);
 
     const string loggerConfigDir = "../../../src/externals/easyloggingpp_v9.95.0";
 #ifdef ENABLE_DEBUG_MACRO
@@ -40,12 +42,14 @@ void logging::initLogging()
     {
         el::Logger* logger = el::Loggers::getLogger(id, false);
         string fileName = logger->configurations()->get(el::Level::Global, el::ConfigurationType::Filename)->value();
+        string fileExtension = "";
         size_t lastindex = fileName.find_last_of(".");
         if (lastindex != string::npos)
         {
+            fileExtension = fileName.substr(lastindex);
             fileName = fileName.substr(0, lastindex);
         }
-        fileName += "_" + nowText + ".log";
+        fileName += "_" + nowText + fileExtension;
         logger->configurations()->set(el::Level::Global, el::ConfigurationType::Filename, fileName);
         logger->reconfigure();
     }
@@ -59,7 +63,7 @@ void logging::setLogfileSuffix(const std::string& suffix, const string& loggerId
 
     for (string id : *loggerIds)
     {
-        if (id == logging::globalLogger || (loggerId != "" && id != loggerId))
+        if (id == logging::globalLogger || id == logging::csvLogger || (loggerId != "" && id != loggerId))
         {
             continue;
         }
