@@ -33,6 +33,11 @@ int FsmLabel::getOutput() const
 	return output;
 }
 
+std::shared_ptr<IOTrace> FsmLabel::toIOTrace() const
+{
+    return std::make_shared<IOTrace>(input, output, presentationLayer);
+}
+
 bool operator==(FsmLabel const & label1, FsmLabel const & label2)
 {
 	return label1.getInput() == label2.getInput() && label1.getOutput() == label2.getOutput();

@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "fsm/FsmVisitor.h"
+#include "fsm/IOTrace.h"
 #include "interface/FsmPresentationLayer.h"
 
 class FsmLabel
@@ -60,6 +61,8 @@ public:
 	@return The output of this label
 	*/
 	int getOutput() const;
+
+    std::shared_ptr<IOTrace> toIOTrace() const;
 
 	/**
 	Check wheter or not, the 2 label are the same

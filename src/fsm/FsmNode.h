@@ -44,6 +44,7 @@ private:
     bool isInitialNode;
     bool dReachable = false;
     std::shared_ptr<IOTrace> dReachTrace;
+    std::shared_ptr<IOTrace> reachTrace;
     
     /**
      *  List of requirements satisfied by the node
@@ -76,12 +77,14 @@ public:
 	void setVisited();
     void setUnvisited();
     void setDReachable(std::shared_ptr<IOTrace> trace);
+    void setReachTrace(std::shared_ptr<IOTrace> trace);
     void setNotDReachable();
     void setPair(const std::shared_ptr<FsmNode>& l, const std::shared_ptr<FsmNode>& r);
     void setPair(const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>& p);
     bool isDerivedFrom(const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>& p) const;
     bool isDReachable() const;
     std::shared_ptr<IOTrace> getDReachTrace() const;
+    std::shared_ptr<IOTrace> getReachTrace() const;
 	std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> getPair() const;
 	std::shared_ptr<FsmNode> apply(const int e, OutputTrace & o);
 	OutputTree apply(const InputTrace & itrc, bool markAsVisited = false);

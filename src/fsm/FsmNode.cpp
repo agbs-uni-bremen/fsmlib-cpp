@@ -94,6 +94,11 @@ void FsmNode::setDReachable(shared_ptr<IOTrace> trace)
     dReachable = true;
 }
 
+void FsmNode::setReachTrace(shared_ptr<IOTrace> trace)
+{
+    reachTrace = trace;
+}
+
 void FsmNode::setNotDReachable() {
     dReachable = false;
 }
@@ -121,6 +126,11 @@ bool FsmNode::isDReachable() const
 std::shared_ptr<IOTrace> FsmNode::getDReachTrace() const
 {
     return dReachTrace;
+}
+
+std::shared_ptr<IOTrace> FsmNode::getReachTrace() const
+{
+    return reachTrace;
 }
 
 shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> FsmNode::getPair() const

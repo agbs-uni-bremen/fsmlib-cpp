@@ -737,6 +737,8 @@ Fsm Fsm::intersect(const Fsm & f)
 
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
     
+    bool isInitialState = true;
+
     /*This is the BFS loop, running over the (this,f)-node pairs*/
     while (!nodeList.empty())
     {
@@ -762,6 +764,12 @@ Fsm Fsm::intersect(const Fsm & f)
              nSource is created from the state pair (myCurrentNode,theirCurrentNode)
              which is identified by p.*/
             nSource = newNode(id ++, p, pl);
+            // Adding the trace that reaches the new state.
+            if (isInitialState)
+            {
+                isInitialState = false;
+                nSource->setReachTrace(IOTrace::getEmptyTrace(pl));
+            }
             string nodeName = string("(" + p->first->getName() + "," + p->second->getName() + ")");
             pl->addState2String(nodeName);
             fsmInterNodes.push_back(nSource);
@@ -795,6 +803,12 @@ Fsm Fsm::intersect(const Fsm & f)
                     if (nTarget == nullptr)
                     {
                         nTarget = newNode(id ++, pTarget, pl);
+                        // Adding the trace that reaches the new state.
+                        shared_ptr<IOTrace> nSourceReachTrace = nSource->getReachTrace();
+                        shared_ptr<IOTrace> nTargetReachTrace = make_shared<IOTrace>(*tr->getLabel()->toIOTrace());
+                        nTargetReachTrace->prepend(*nSourceReachTrace);
+                        nTarget->setReachTrace(nTargetReachTrace);
+
                         string nodeName = string("(" + pTarget->first->getName() + "," + pTarget->second->getName() + ")");
                         pl->addState2String(nodeName);
                         fsmInterNodes.push_back(nTarget);
