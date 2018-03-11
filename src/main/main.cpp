@@ -1177,7 +1177,7 @@ int main(int argc, char* argv[])
 */
     //TODO Analyze increasing memory usage with valgrind
     AdaptiveTestConfig config;
-    config.numFsm = 40000;
+    config.numFsm = 150000;
 
     config.minInput = 1;
     config.maxInput = 10;
@@ -1186,7 +1186,7 @@ int main(int argc, char* argv[])
     config.maxOutput = 10;
 
     config.minStates = 1;
-    config.maxStates = 13;
+    config.maxStates = 15;
 
     config.minTransFaults = 0;
     config.maxTransFaults = 0;
@@ -1196,7 +1196,7 @@ int main(int argc, char* argv[])
 
     config.dontTestReductions = true;
 
-    config.seed = 760460091;
+    config.seed = 1337;
 
     CLOG(INFO, logging::csvLogger) << "numStates,numInput,numOutput,numOutFaults,numTransFault,isReduction,failTraceSize,result,durationMS,pass";
 
