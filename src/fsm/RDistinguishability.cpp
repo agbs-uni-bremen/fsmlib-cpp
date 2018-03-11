@@ -12,12 +12,12 @@ RDistinguishability::RDistinguishability(const shared_ptr<FsmPresentationLayer>&
     hBeenCalculated = false;
 }
 
-vector<shared_ptr<FsmNode>>::iterator RDistinguishability::removeNotRDistinguishable(size_t i, std::shared_ptr<FsmNode> node)
+vector<int>::iterator RDistinguishability::removeNotRDistinguishable(size_t i, std::shared_ptr<FsmNode> node)
 {
-    vector<shared_ptr<FsmNode>>& notDist = notRDistinguishableWith.at(i);
-    for (vector<shared_ptr<FsmNode>>::iterator it = notDist.begin(); it != notDist.end(); ++it)
+    vector<int>& notDist = notRDistinguishableWith.at(i);
+    for (vector<int>::iterator it = notDist.begin(); it != notDist.end(); ++it)
     {
-        if (*it == node) {
+        if (*it == node->getId()) {
             return notDist.erase(it);
         }
     }
@@ -29,7 +29,7 @@ void RDistinguishability::initRDistinguishable(size_t i)
     auto it = rDistinguishableWith.find(i);
     if (it == rDistinguishableWith.end())
     {
-        rDistinguishableWith.insert(pair<size_t, std::vector<std::shared_ptr<FsmNode>>>(i, {}));
+        rDistinguishableWith.insert(pair<size_t, std::vector<int>>(i, {}));
     }
     else
     {
@@ -43,11 +43,11 @@ void RDistinguishability::addRDistinguishable(size_t i, std::shared_ptr<FsmNode>
     auto it = rDistinguishableWith.find(i);
     if (it == rDistinguishableWith.end())
     {
-        rDistinguishableWith.insert(pair<size_t, std::vector<std::shared_ptr<FsmNode>>>(i, {node}));
+        rDistinguishableWith.insert(pair<size_t, std::vector<int>>(i, {node->getId()}));
     }
     else
     {
-        it->second.push_back(node);
+        it->second.push_back(node->getId());
     }
 }
 
@@ -56,11 +56,11 @@ void RDistinguishability::addNotRDistinguishable(size_t i, std::shared_ptr<FsmNo
     auto it = notRDistinguishableWith.find(i);
     if (it == notRDistinguishableWith.end())
     {
-        notRDistinguishableWith.insert(pair<size_t, std::vector<std::shared_ptr<FsmNode>>>(i, {node}));
+        notRDistinguishableWith.insert(pair<size_t, std::vector<int>>(i, {node->getId()}));
     }
     else
     {
-        it->second.push_back(node);
+        it->second.push_back(node->getId());
     }
 }
 
@@ -71,15 +71,15 @@ void RDistinguishability::addNotRDistinguishable(size_t i)
 
 void RDistinguishability::addAdaptiveIOSequence(std::shared_ptr<FsmNode> otherNode, std::shared_ptr<InputOutputTree> tree)
 {
-    adaptiveIOSequences.insert(pair<shared_ptr<FsmNode>, std::shared_ptr<InputOutputTree>>(otherNode, tree));
+    adaptiveIOSequences.insert(pair<int, shared_ptr<InputOutputTree>>(otherNode->getId(), tree));
 }
 
-vector<shared_ptr<FsmNode>> RDistinguishability::getRDistinguishableWith(size_t i)
+vector<int> RDistinguishability::getRDistinguishableWith(size_t i)
 {
     return rDistinguishableWith.at(i);
 }
 
-vector<shared_ptr<FsmNode>> RDistinguishability::getRDistinguishableWith()
+vector<int> RDistinguishability::getRDistinguishableWith()
 {
     if (rDistinguishableWith.rbegin() != rDistinguishableWith.rend())
     {
@@ -87,12 +87,12 @@ vector<shared_ptr<FsmNode>> RDistinguishability::getRDistinguishableWith()
     }
     else
     {
-        return vector<shared_ptr<FsmNode>>();
+        return vector<int>();
     }
 
 }
 
-vector<shared_ptr<FsmNode>> RDistinguishability::getNotRDistinguishableWith(size_t i)
+vector<int> RDistinguishability::getNotRDistinguishableWith(size_t i)
 {
     return notRDistinguishableWith.at(i);
 }
@@ -108,7 +108,7 @@ bool RDistinguishability::isRDistinguishableWith(size_t i, std::shared_ptr<FsmNo
     {
         try {
             auto dist = rDistinguishableWith.at(i);
-            if ( std::find(dist.begin(), dist.end(), node) != dist.end() )
+            if ( std::find(dist.begin(), dist.end(), node->getId()) != dist.end() )
             {
                 return true;
             }
@@ -124,8 +124,8 @@ bool RDistinguishability::isRDistinguishableWith(std::shared_ptr<FsmNode> node)
 {
     for (auto it = rDistinguishableWith.rbegin(); it != rDistinguishableWith.rend(); ++it)
     {
-        vector<shared_ptr<FsmNode>> dist = it->second;
-        if ( std::find(dist.begin(), dist.end(), node) != dist.end() )
+        vector<int> dist = it->second;
+        if ( std::find(dist.begin(), dist.end(), node->getId()) != dist.end() )
         {
             return true;
         }
@@ -147,7 +147,7 @@ bool RDistinguishability::isRDistinguishableWith(vector<shared_ptr<FsmNode>> nod
 
 shared_ptr<InputOutputTree> RDistinguishability::getAdaptiveIOSequence(shared_ptr<FsmNode> otherNode)
 {
-    auto it = adaptiveIOSequences.find(otherNode);
+    auto it = adaptiveIOSequences.find(otherNode->getId());
     if (it == adaptiveIOSequences.end())
     {
         return make_shared<InputOutputTree>(make_shared<AdaptiveTreeNode>(), presentationLayer);

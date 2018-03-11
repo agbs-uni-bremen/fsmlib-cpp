@@ -1257,6 +1257,18 @@ vector<shared_ptr<OutputTrace>> Fsm::getOutputIntersection(shared_ptr<FsmNode> q
     return intersection;
 }
 
+shared_ptr<FsmNode> Fsm::getNode(int id) const
+{
+    for(auto n : nodes)
+    {
+        if (id == n->getId())
+        {
+            return n;
+        }
+    }
+    return nullptr;
+}
+
 void Fsm::calcROneDistinguishableStates()
 {
     for (size_t i = 0; i < nodes.size(); ++i)
@@ -1272,14 +1284,15 @@ void Fsm::calcROneDistinguishableStates()
     for (size_t k = 0; k < nodes.size(); ++k)
     {
         shared_ptr<FsmNode> q1 = nodes.at(k);
-        vector<shared_ptr<FsmNode>> notROneDist = q1->getRDistinguishability()->getNotRDistinguishableWith(1);
+        vector<int> notROneDist = q1->getRDistinguishability()->getNotRDistinguishableWith(1);
 
         for (auto it = notROneDist.begin(); it != notROneDist.end(); ++it)
         {
-            shared_ptr<FsmNode> q2 = *it;
+            int q2Id = *it;
             for (int x = 0; x <= maxInput; ++ x)
             {
                 InputTrace input = InputTrace(vector<int>({x}), presentationLayer);
+                shared_ptr<FsmNode> q2 = getNode(q2Id);
                 vector<shared_ptr<OutputTrace>> intersection = getOutputIntersection(q1, q2, x);
                 if (intersection.size() == 0)
                 {
@@ -1364,12 +1377,13 @@ void Fsm::calcRDistinguishableStates()
         {
             shared_ptr<FsmNode> q1 = nodes.at(k);
             VLOG(3) << "q1 = " << q1->getName() << ":";
-            vector<shared_ptr<FsmNode>> notROneDist = q1->getRDistinguishability()->getNotRDistinguishableWith(l);
+            vector<int> notROneDist = q1->getRDistinguishability()->getNotRDistinguishableWith(l);
             for (auto it = notROneDist.begin(); it != notROneDist.end(); ++it)
             {
                 // There are still nodes that can not be r-distuinguisehd from each other. Do one more iteration.
                 allRDistinguishable = false;
-                shared_ptr<FsmNode> q2 = *it;
+                int q2Id = *it;
+                shared_ptr<FsmNode> q2 = getNode(q2Id);
                 VLOG(3) << "  q2 = " << q2->getName() << ":";
                 for (int x = 0; x <= maxInput; ++ x)
                 {
@@ -1509,10 +1523,10 @@ void Fsm::calcRDistinguishableStates()
         for (size_t l = 1; l <= maxL; ++l)
         {
             node->getRDistinguishability()->addNotRDistinguishable(l);
-            vector<shared_ptr<FsmNode>> dist = node->getRDistinguishability()->getRDistinguishableWith(l);
+            vector<int> dist = node->getRDistinguishability()->getRDistinguishableWith(l);
             for (auto n : nodes)
             {
-                if(node != n && find(dist.begin(), dist.end(), n) == dist.end()) {
+                if(node != n && find(dist.begin(), dist.end(), n->getId()) == dist.end()) {
                     node->getRDistinguishability()->addNotRDistinguishable(l, n);
                 }
             }

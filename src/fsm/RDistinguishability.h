@@ -26,18 +26,18 @@ protected:
      * This maps holds for every `i` the states that are r(i)-distinguishable from the state
      * that corresponds to the `RDistinguishability` instance.
      */
-    std::map<size_t, std::vector<std::shared_ptr<FsmNode>>> rDistinguishableWith;
+    std::map<size_t, std::vector<int>> rDistinguishableWith;
     /**
      * This maps holds for every `i` the states that are not r(i)-distinguishable from the state
      * that corresponds to the `RDistinguishability` instance.
      */
-    std::map<size_t, std::vector<std::shared_ptr<FsmNode>>> notRDistinguishableWith;
+    std::map<size_t, std::vector<int>> notRDistinguishableWith;
 
     /**
      * This map holds for every state an adaptive input sequence, that r-distinguishes
      * that state from the state that corresponds to the `RDistinguishability` instance.
      */
-    std::map<std::shared_ptr<FsmNode>, std::shared_ptr<InputOutputTree>> adaptiveIOSequences;
+    std::map<int, std::shared_ptr<InputOutputTree>> adaptiveIOSequences;
 public:
     /**
      * Removes a given state from the set that holds the states that are not r(i)-distinguishable
@@ -48,7 +48,7 @@ public:
      * non-r(i)-distinguisability set, an iterator, pointing to the end of the non-r(i)-distinguisability set,
      * if the node has not beend found.
      */
-    std::vector<std::shared_ptr<FsmNode>>::iterator removeNotRDistinguishable(size_t i, std::shared_ptr<FsmNode> node);
+    std::vector<int>::iterator removeNotRDistinguishable(size_t i, std::shared_ptr<FsmNode> node);
 
     void initRDistinguishable(size_t i);
 
@@ -88,14 +88,14 @@ public:
      * @param i The given r(i)-distinguishability index
      * @return All r(i)-distinguishable states
      */
-    std::vector<std::shared_ptr<FsmNode>> getRDistinguishableWith(size_t i);
+    std::vector<int> getRDistinguishableWith(size_t i);
 
     /**
      * Returns all states that are r-distinguishable from the state that corresponds to the
      * `RDistinguishability` instance.
      * @return All r-distinguishable states
      */
-    std::vector<std::shared_ptr<FsmNode>> getRDistinguishableWith();
+    std::vector<int> getRDistinguishableWith();
 
     /**
      * Returns all states that are non-r(i)-distinguishable for a given index `i` from the state
@@ -104,7 +104,7 @@ public:
      * @param i The given non-r(i)-distinguishability index
      * @return All non-r(i)-distinguishable states
      */
-    std::vector<std::shared_ptr<FsmNode>> getNotRDistinguishableWith(size_t i);
+    std::vector<int> getNotRDistinguishableWith(size_t i);
 
     /**
      * Determines wether a given state is r(i)-distinguishable from the state that
