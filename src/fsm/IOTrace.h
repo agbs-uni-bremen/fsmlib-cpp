@@ -30,7 +30,7 @@ private:
     /**
      * The node that can be reached via this trace
      */
-    std::shared_ptr<FsmNode> targetNode;
+    std::weak_ptr<FsmNode> targetNode;
 public:
 	/**
 	Create an iotrace from one inut trace and one output trace
@@ -68,7 +68,7 @@ public:
 
     std::shared_ptr<FsmNode> getTargetNode() const
     {
-        return targetNode;
+        return targetNode.lock();
     }
 
     size_t size() const;
@@ -121,8 +121,8 @@ public:
 
     static std::shared_ptr<IOTrace> getEmptyTrace(std::shared_ptr<FsmPresentationLayer> pl);
 
-    IOTrace removeEpsilon() const { return IOTrace(inputTrace.removeEpsilon(), outputTrace.removeEpsilon(), targetNode); }
-    IOTrace removeLeadingEpsilons() const { return IOTrace(inputTrace.removeLeadingEpsilons(), outputTrace.removeLeadingEpsilons(), targetNode); }
+    IOTrace removeEpsilon() const { return IOTrace(inputTrace.removeEpsilon(), outputTrace.removeEpsilon(), targetNode.lock()); }
+    IOTrace removeLeadingEpsilons() const { return IOTrace(inputTrace.removeLeadingEpsilons(), outputTrace.removeLeadingEpsilons(), targetNode.lock()); }
 
 	/**
 	Output the IOTrace to a standard output stream

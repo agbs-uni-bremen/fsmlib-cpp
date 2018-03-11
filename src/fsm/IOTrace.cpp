@@ -190,9 +190,9 @@ shared_ptr<IOTrace> IOTrace::getEmptyTrace(shared_ptr<FsmPresentationLayer> pl)
 ostream & operator<<(ostream & out, const IOTrace & trace)
 {
     out << trace.inputTrace << "/" << trace.outputTrace;
-    if (trace.targetNode)
+    if (!trace.targetNode.expired())
     {
-        out << " -> " << trace.targetNode->getName();
+        out << " -> " << trace.targetNode.lock()->getName();
     }
 	return out;
 }
