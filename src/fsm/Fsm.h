@@ -111,7 +111,6 @@ protected:
     Minimal minimal;
     bool complete;
 
-    std::vector<std::shared_ptr<FsmTransition>> transitions;
     std::vector<std::shared_ptr<OFSMTable>> ofsmTableLst;
     std::vector<std::shared_ptr<Tree>> stateIdentificationSets;
     std::shared_ptr<FsmPresentationLayer> presentationLayer;
@@ -298,6 +297,7 @@ public:
     int getMaxInput() const;
     int getMaxOutput() const;
     std::vector<std::shared_ptr<FsmNode>> getNodes() const;
+    std::shared_ptr<FsmNode> getNode(int id) const;
     std::shared_ptr<FsmPresentationLayer> getPresentationLayer() const;
     int getInitStateIdx() const;
     void resetColor();
