@@ -19,12 +19,12 @@ private:
 	/**
 	 *The node from which the transition comes
 	 */
-	std::shared_ptr<FsmNode> source;
+    std::weak_ptr<FsmNode> source;
 
 	/**
 	 * The node where the transition go
 	 */
-	std::shared_ptr<FsmNode> target;
+    std::weak_ptr<FsmNode> target;
 
 	/**
 	 * The label of this transition
