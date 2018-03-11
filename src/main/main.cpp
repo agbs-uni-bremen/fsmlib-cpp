@@ -778,10 +778,6 @@ bool executeAdaptiveTest(
     intersect.toDot(dotPrefix + "intersect");
 #endif
 
-    spec = nullptr;
-    iut = nullptr;
-
-
     isReduction = !intersect.hasFailure();
 
     CLOG(INFO, logging::globalLogger) << "IUT is " + string((isReduction) ? "" : "NOT ") +
@@ -1145,7 +1141,7 @@ int main(int argc, char* argv[])
 */
     //TODO Analyze increasing memory usage with valgrind
     AdaptiveTestConfig config;
-    config.numFsm = 200000;
+    config.numFsm = 40000;
 
     config.minInput = 1;
     config.maxInput = 10;
@@ -1154,7 +1150,7 @@ int main(int argc, char* argv[])
     config.maxOutput = 10;
 
     config.minStates = 1;
-    config.maxStates = 11;
+    config.maxStates = 13;
 
     config.minTransFaults = 0;
     config.maxTransFaults = 0;
@@ -1173,9 +1169,9 @@ int main(int argc, char* argv[])
         CLOG(INFO, logging::globalLogger) << "############## Debugging ##############";
 
         AdaptiveTestConfigDebug debugConfig;
-        debugConfig.numStates = 1;
-        debugConfig.numInput = 9;
-        debugConfig.numOutput = 7;
+        debugConfig.numStates = 10;
+        debugConfig.numInput = 10;
+        debugConfig.numOutput = 10;
         debugConfig.numOutFaults = 1;
         debugConfig.numTransFaults = 0;
         debugConfig.createRandomFsmSeed = 625413890;
