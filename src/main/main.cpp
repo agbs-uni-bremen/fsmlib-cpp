@@ -137,10 +137,10 @@ void test3() {
     cout << "TC-FSM-0002 Show that createMutant() injects a fault into the original FSM" << endl;
     
     
-    for ( size_t i = 0; i < 10; i++ ) {
+    for ( size_t i = 0; i < 3; i++ ) {
         shared_ptr<FsmPresentationLayer> pl =
         make_shared<FsmPresentationLayer>();
-        shared_ptr<Fsm> fsm = Fsm::createRandomFsm("F",5,5,8,pl,i);
+        shared_ptr<Fsm> fsm = Fsm::createRandomFsm("F",5,5,8,pl,(unsigned)i);
         fsm->toDot("F");
         
         shared_ptr<Fsm> fsmMutant = fsm->createMutant("F_M",1,0);
@@ -162,7 +162,7 @@ void test3() {
         
         cout << "TS SIZE (W-Method): " << iolc1.size() << endl;
         
-        if ( iolc1.size() > 100000) {
+        if ( iolc1.size() > 1000) {
             cout << "Skip this test case, since size is too big" << endl;
             continue;
         }
@@ -224,7 +224,7 @@ void test4() {
     for (size_t i = 0; i < 2000; i++) {
         
         // Create a random FSM
-        std::shared_ptr<Fsm> f = Fsm::createRandomFsm("F",5,5,10,pl,i);
+        std::shared_ptr<Fsm> f = Fsm::createRandomFsm("F",5,5,10,pl,(unsigned)i);
         std::shared_ptr<Tree> sc = f->getStateCover();
         
         if ( sc->size() != (size_t)f->getMaxNodes() + 1 ) {
@@ -558,6 +558,74 @@ void test10() {
 }
 
 
+void test10b() {
+    
+    cout << "TC-FSM-1010 Check correctness of Dfsm::minimise() with DFSM huang201711"
+    << endl;
+    
+    shared_ptr<FsmPresentationLayer> pl =
+        make_shared<FsmPresentationLayer>("../../../resources/huang201711in.txt",
+                                          "../../../resources/huang201711out.txt",
+                                          "../../../resources/huang201711state.txt");
+    
+    
+    shared_ptr<Dfsm> d = make_shared<Dfsm>("../../../resources/huang201711.fsm",
+                                           pl,
+                                           "F");
+    Dfsm dMin = d->minimise();
+    
+    IOListContainer w = dMin.getCharacterisationSet();
+    
+    shared_ptr<std::vector<std::vector<int>>> inLst = w.getIOLists();
+    
+    bool allNodesDistinguished = true;
+    for ( size_t n = 0; n < dMin.size(); n++ ) {
+        
+        shared_ptr<FsmNode> node1 = dMin.getNodes().at(n);
+        
+        for ( size_t m = n+1; m < dMin.size(); m++ ) {
+            shared_ptr<FsmNode> node2 = dMin.getNodes().at(m);
+            
+            bool areDistinguished = false;
+            
+            for ( auto inputs : *inLst ) {
+                
+                shared_ptr<InputTrace> itr = make_shared<InputTrace>(inputs,pl);
+                
+                OutputTree o1 = node1->apply(*itr);
+                OutputTree o2 = node2->apply(*itr);
+                
+                if ( o1 != o2 ) {
+                    areDistinguished = true;
+                    break;
+                }
+                
+            }
+            
+            if ( not areDistinguished ) {
+                
+                assert("TC-FSM-1010",
+                       false,
+                       "All nodes of minimised DFSM must be distinguishable");
+                cout << "Could not distinguish nodes "
+                << node1->getName() << " and " << node2->getName() << endl;
+                
+                allNodesDistinguished = false;
+            }
+            
+        }
+        
+    }
+    
+    if ( allNodesDistinguished ) {
+        assert("TC-FSM-1010",
+               true,
+               "All nodes of minimised DFSM must be distinguishable");
+    }
+    
+}
+
+
 void gdc_test1() {
     
     cout << "TC-GDC-0001 Check that the correct W-Method test suite "
@@ -571,6 +639,10 @@ void gdc_test1() {
     
     gdc->toDot("GDC");
     gdc->toCsv("GDC");
+    
+    Dfsm gdcMin = gdc->minimise();
+    
+    gdcMin.toDot("GDC_MIN");
     
     IOListContainer iolc =
         gdc->wMethod(2);
@@ -689,6 +761,201 @@ void wVersusT() {
     }
     
     
+}
+
+void test11() {
+    
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>("garageIn.txt",
+                                                                            "garageOut.txt",
+                                                                            "garageState.txt");
+    
+    shared_ptr<Fsm> gdc = make_shared<Fsm>("garage.fsm",pl,"GDC");
+    
+    
+    gdc->toDot("GDC");
+    
+    Fsm gdcMin = gdc->minimise();
+    
+    gdcMin.toDot("GDC_MIN");
+    
+}
+
+void test12() {
+    
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>("garageIn.txt",
+                                                                            "garageOut.txt",
+                                                                            "garageState.txt");
+    
+    shared_ptr<Dfsm> gdc = make_shared<Dfsm>("garage.fsm",pl,"GDC");
+    
+    
+    gdc->toDot("GDC");
+    
+    Dfsm gdcMin = gdc->minimise();
+    
+    gdcMin.toDot("GDC_MIN");
+    
+}
+
+void test13() {
+    
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+    
+    shared_ptr<Dfsm> gdc = make_shared<Dfsm>("garage.fsm",pl,"GDC");
+    
+    
+    gdc->toDot("GDC");
+    
+    Dfsm gdcMin = gdc->minimise();
+    
+    gdcMin.toDot("GDC_MIN");
+    
+}
+
+
+void test14() {
+    
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+    
+    shared_ptr<Fsm> fsm = make_shared<Fsm>("NN.fsm",pl,"NN");
+    
+    fsm->toDot("NN");
+    
+    Fsm fsmMin = fsm->minimiseObservableFSM();
+    
+    fsmMin.toDot("NN_MIN");
+    
+}
+
+
+void test15() {
+    
+    cout << "TC-DFSM-0015 Show that Fsm::transformToObservableFSM() produces an "
+    << "equivalent observable FSM"
+    << endl;
+    
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+    
+    shared_ptr<Fsm> nonObs = make_shared<Fsm>("nonObservable.fsm",pl,"NON_OBS");
+    
+    
+    nonObs->toDot("NON_OBS");
+    
+    Fsm obs = nonObs->transformToObservableFSM();
+    
+    obs.toDot("OBS");
+    
+    assert("TC-DFSM-0015",
+           obs.isObservable(),
+           "Transformed FSM is observable");
+    
+    // Show that nonObs and obs have the same language.
+    // We use brute force test that checks all traces of length n*m
+    int n = (int)nonObs->size();
+    int m = (int)obs.size();
+    int theLen = n+m-1;
+    
+    IOListContainer allTrc = IOListContainer(nonObs->getMaxInput(),
+                                             1,
+                                             theLen,
+                                             pl);
+    
+    shared_ptr<vector<vector<int>>> allTrcLst = allTrc.getIOLists();
+    
+    for ( auto trc : *allTrcLst ) {
+        
+        // Run the test case against both FSMs and compare
+        // the (nondeterministic) result
+        shared_ptr<InputTrace> iTr =
+        make_shared<InputTrace>(trc,pl);
+        OutputTree o1 = nonObs->apply(*iTr);
+        OutputTree o2 = obs.apply(*iTr);
+        
+        if ( o1 != o2 ) {
+            
+            assert("TC-DFSM-0015",
+                   o1 == o2,
+                   "Transformed FSM has same language as original FSM");
+            
+            cout << "o1 = " << o1 << endl;
+            cout << "o2 = " << o2 << endl;
+            return;
+            
+        }
+       
+    }
+    
+}
+
+void faux() {
+    
+    
+    shared_ptr<FsmPresentationLayer> pl =
+    make_shared<FsmPresentationLayer>("gillIn.txt",
+                                      "gillOut.txt",
+                                      "gillState.txt");
+    
+    shared_ptr<Dfsm> d = make_shared<Dfsm>("gill.fsm",
+                                           pl,
+                                           "G0");
+    
+    d->toDot("G0");
+    
+    d->toCsv("G0");
+    
+    Dfsm dMin = d->minimise();
+    
+    dMin.toDot("G0_MIN");
+    
+    
+    
+}
+
+void test16() {
+    
+    shared_ptr<Dfsm> exp1 = nullptr;
+    Reader jReader;
+    Value root;
+    stringstream document;
+    ifstream inputFile("exp1.fsm");
+    document << inputFile.rdbuf();
+    inputFile.close();
+    
+    if ( jReader.parse(document.str(),root) ) {
+        exp1 = make_shared<Dfsm>(root);
+    }
+    else {
+        cerr << "Could not parse JSON model - exit." << endl;
+        exit(1);
+    }
+    
+    exp1->toDot("exp1");
+    
+    shared_ptr<Dfsm> exp2 = nullptr;
+    Reader jReader2;
+    Value root2;
+    stringstream document2;
+    ifstream inputFile2("exp2.fsm");
+    document2 << inputFile2.rdbuf();
+    inputFile2.close();
+    
+    if ( jReader2.parse(document2.str(),root) ) {
+        exp2 = make_shared<Dfsm>(root);
+    }
+    else {
+        cerr << "Could not parse JSON model - exit." << endl;
+        exit(1);
+    }
+    
+    exp2->toDot("exp2");
+    
+    Fsm prod = exp1->intersect(*exp2);
+    
+    cout << endl << "NEW PL STATES" << endl ;
+    prod.getPresentationLayer()->dumpState(cout);
+    
+    
+    prod.toDot("PRODexp1exp2");
     
     
     
@@ -696,13 +963,12 @@ void wVersusT() {
 }
 
 
-int main()
+int main(int argc, char** argv)
 {
     
     
     
 #if 0
-    int tc = atoi(argv[1]);
     test1();
     test2();
     test3();
@@ -713,32 +979,59 @@ int main()
     test8();
     test9();
     test10();
+    test10b();
+    test11();
+    test13();
+    test14();
+    test15();
+
+    faux();
+
     
     gdc_test1();
     
-    switch (tc) {
-        case 1:
-            checkPlsAuto1();
-            break;
-        case 2:
-            fsbrtsTestComplete();
-            break;
-        case 3:
-            fsbrtsTestCompleteSafe();
-            break;
-        case 4:
-            fsbrtsTestCompleteSafe2();
-            break;
-        default:
-            break;
-    }
+    
 
     wVersusT();
 
-
+    if ( argc < 6 ) {
+        cerr << endl <<
+        "Missing file names - exit." << endl;
+        exit(1);
+    }
+    
+    
+    
+    string fsmName(argv[1]);
+    string fsmFile(argv[2]);
+    
+    /*
+    string inputFile(argv[3]);
+    string outputFile(argv[4]);
+    string stateFile(argv[5]);
+    */
+    
+    /* Create the presentation layer */
+    //shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>(inputFile,outputFile,stateFile);
+    
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+    
+    /* Create an Fsm instance, using the transition relation file,
+     * the presentation layer, and the FSM name
+     */
+    shared_ptr<Fsm> fsm = make_shared<Fsm>(fsmFile,pl,fsmName);
+    
+    /* Produce a GraphViz (.dot) representation of the created FSM */
+    fsm->toDot(fsmName);
+    
+    /* Transform the FSM into an equivalent observable one */
+    Fsm fsmObs = fsm->transformToObservableFSM();
+    
+    /* Output the observable FSM to a GraphViz file (.dot-file) */
+    fsmObs.toDot(fsmObs.getName());
+    
 #endif
-    
-    
+
     test1();
     test2();
     test3();
@@ -749,8 +1042,11 @@ int main()
     test8();
     test9();
     test10();
-    
-
+    test10b();
+    test11();
+    test13();
+    test14();
+    test15();
     exit(0);
     
 }
