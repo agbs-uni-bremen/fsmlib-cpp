@@ -41,22 +41,6 @@ enum Minimal
     True, False, Maybe
 };
 
-/**
- * Modes that can be applied to completely specify a FSM.
- */
-enum CompleteMode
-{
-    /**
-      For every missing transition, add a transition with the missing input and output "error"
-      to an error state that can never be left.
-      */
-    ErrorState,
-    /**
-      For every missing transition, add a transition with the missing input and output "ε" to
-      the state that is missing the transition.
-      */
-    SelfLoop
-};
 
 class too_many_transition_faults : public std::runtime_error
 {
@@ -386,13 +370,6 @@ public:
      @return minimal observable FSM which is equivalent to this FSM
      */
     Fsm minimise(bool storeOFSMTables = true);
-
-    /**
-     * Returns a new, completely specified FSM, based on this FSM.
-     * @param mode The way this FSM will be completely specified.
-     * @return The new completely specified FSM
-     */
-    Fsm makeComplete(CompleteMode mode);
 
     /**
      * Returns the output that is associated with "fail" (used for adaptive

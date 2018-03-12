@@ -1084,65 +1084,6 @@ Fsm Fsm::minimise(bool storeOFSMTables)
     return minimiseObservableFSM(storeOFSMTables);
 }
 
-Fsm Fsm::makeComplete(CompleteMode mode)
-{
-    TIMED_FUNC(timerObj);
-    CLOG(DEBUG, logging::fsmConversion) << "makeComplete():";
-    vector<shared_ptr<FsmNode>> newNodes = nodes;
-    bool addErrorState = false;
-    shared_ptr<FsmNode> errorNode;
-    if (mode == ErrorState)
-    {
-        errorNode = make_shared<FsmNode>(getMaxNodes() + 1, "Error", presentationLayer);
-        presentationLayer->addState2String("Error");
-        for (int x = 0; x <= maxInput; ++x)
-        {
-            shared_ptr<FsmLabel> label = make_shared<FsmLabel>(x, FsmLabel::EPSILON, presentationLayer);
-            shared_ptr<FsmTransition> transition = make_shared<FsmTransition>(errorNode, errorNode, label);
-            errorNode->addTransition(transition);
-        }
-    }
-    for (shared_ptr<FsmNode> node : newNodes)
-    {
-        CVLOG(2, logging::fsmConversion) << "  State " << node->getName() << ": ";
-        for (int x = 0; x <= maxInput; ++x)
-        {
-            std::stringstream ss;
-            ss << "    Input " << presentationLayer->getInId(x);
-            if(!node->isPossibleInput(x))
-            {
-                ss << " is not defined.";
-                if (mode == ErrorState)
-                {
-                    addErrorState = true;
-                    shared_ptr<FsmLabel> label = make_shared<FsmLabel>(x, FsmLabel::ERROR_OUTPUT, presentationLayer);
-                    shared_ptr<FsmTransition> transition = make_shared<FsmTransition>(node, errorNode, label);
-                    node->addTransition(transition);
-                }
-                else if (mode == SelfLoop)
-                {
-                    shared_ptr<FsmLabel> label = make_shared<FsmLabel>(x, FsmLabel::EPSILON, presentationLayer);
-                    shared_ptr<FsmTransition> transition = make_shared<FsmTransition>(node, node, label);
-                    node->addTransition(transition);
-                }
-            }
-            else
-            {
-                ss << " is defined.";
-            }
-            CVLOG(2, logging::fsmConversion) << ss.str();
-        }
-    }
-    if (mode == ErrorState && addErrorState)
-    {
-        newNodes.push_back(errorNode);
-    }
-    Fsm fsmComplete(name + "_COMPLETE", maxInput, maxOutput, newNodes, presentationLayer);
-    fsmComplete.complete = true;
-    fsmComplete.failOutput = failOutput;
-    return fsmComplete;
-}
-
 int Fsm::getFailOutput() const
 {
     return failOutput;
