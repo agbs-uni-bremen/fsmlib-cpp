@@ -72,6 +72,20 @@ bool OutputTree::contains(OutputTree& ot)
     
 }
 
+vector<OutputTrace> OutputTree::getOutputTraces() const {
+    //Get all traces
+    auto lli = getIOLists().getIOLists();
+    vector<OutputTrace> traces;
+    //Reserve enough space in the result vector
+    traces.reserve(lli->size());
+    //Move each trace into the result vector and construct an OutputTrace for
+    //each
+    for(auto &trace : *lli) {
+        traces.emplace_back(std::move(trace), presentationLayer);
+    }
+    return traces;
+}
+
 void OutputTree::toDot(ostream& out) const
 {
 	out << "digraph OutputTree {" << endl;
