@@ -92,6 +92,13 @@ public:
      */
     friend bool operator==(Trace const & trace1, std::vector<int> const & trace2);
 
+    /**
+     * Define a total order on traces (used in sorting algorithms).
+     * @param trace to compare against
+     * @return True if this trace is defined to be less than the other trace, false otherwise
+     */
+    bool operator<(Trace const &other) const;
+
 	/**
 	Output the Trace to a standard output stream
 	@param out The standard output stream to use

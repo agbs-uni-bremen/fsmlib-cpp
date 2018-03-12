@@ -79,6 +79,10 @@ bool operator==(Trace const & trace1, std::vector<int> const & trace2)
     return true;
 }
 
+bool Trace::operator<(Trace const &other) const {
+    return trace < other.trace;
+}
+
 std::ostream & operator<<(std::ostream & out, const Trace & trace)
 {
 	for (auto it = trace.cbegin(); it != trace.cend(); ++ it)
