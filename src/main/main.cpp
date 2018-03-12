@@ -1218,19 +1218,19 @@ int main(int argc, char* argv[])
     CLOG(INFO, logging::csvLogger) << "i,numStates,numInput,numOutput,numDReachable,numMaximalSetsOfRDistStates,numOutFaults,numTransFault,"
                                       "isReduction,failTraceSize,result,durationMS,pass,createRandomFsmSeed,createMutantSeed";
 
-    bool debug = false;
+    bool debug = true;
     if (debug)
     {
         CLOG(INFO, logging::globalLogger) << "############## Debugging ##############";
 
         AdaptiveTestConfigDebug debugConfig;
-        debugConfig.numStates = 10;
-        debugConfig.numInput = 10;
-        debugConfig.numOutput = 10;
-        debugConfig.numOutFaults = 1;
-        debugConfig.numTransFaults = 0;
-        debugConfig.createRandomFsmSeed = 625413890;
-        debugConfig.createMutantSeed = 633486634;
+        debugConfig.numStates = 4;
+        debugConfig.numInput = 5;
+        debugConfig.numOutput = 2;
+        debugConfig.numOutFaults = 0;
+        debugConfig.numTransFaults = 1;
+        debugConfig.createRandomFsmSeed = 653887049;
+        debugConfig.createMutantSeed = 1588831269;
 
         shared_ptr<FsmPresentationLayer> plTest =
         make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
