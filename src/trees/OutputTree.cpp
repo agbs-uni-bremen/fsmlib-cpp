@@ -41,17 +41,18 @@ bool OutputTree::contains(OutputTree const &ot)
     vector<OutputTrace> otherOutputs = ot.getOutputTraces();
     //If the input traces are not equal or this tree has less output traces
     //than the other, this tree cannot contain the other.
-    if((not (myInputs == otherInputs)) or
-       myOutputs.size() < otherOutputs.size()) {
+    if((not (myInputs == otherInputs))) {
         return false;
     }
     //Sort both sequences of output traces to obtain sorted sets of output
     //traces ( O(nlog(n)) )
     sort(myOutputs.begin(), myOutputs.end());
     sort(otherOutputs.begin(), otherOutputs.end());
+    vector<OutputTrace>::const_iterator myLast = unique(myOutputs.begin(), myOutputs.end());
+    vector<OutputTrace>::const_iterator otherLast = unique(otherOutputs.begin(), otherOutputs.end());
     //Return whether the set of output traces of this tree contains the set of
     //output traces of the other ( O(n) )
-    return includes(myOutputs.cbegin(), myOutputs.cend(), otherOutputs.cbegin(), otherOutputs.cend());
+    return includes(myOutputs.cbegin(), myLast, otherOutputs.cbegin(), otherLast);
 }
 
 vector<OutputTrace> OutputTree::getOutputTraces() const {
