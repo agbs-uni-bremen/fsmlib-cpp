@@ -2316,6 +2316,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 suffix = currentTrace.getSuffix(*maxIOPrefixInV);
                 VLOG(1) << "suffix (x/y): " << suffix;
 
+                VLOG(1) << "vPrimeLazy.hasNext(): " << vPrimeLazy.hasNext();
                 while (vPrimeLazy.hasNext())
                 {
                     const IOTraceContainer& vDoublePrime = vPrimeLazy.getNext();
@@ -2329,6 +2330,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                     if (!vDoublePrime.contains(maxIOPrefixInV))
                     {
                         VLOG(1) << "vDoublePrime does not contain prefix " << *maxIOPrefixInV << ". Skipping.";
+                        VLOG(1) << "vPrimeLazy.hasNext(): " << vPrimeLazy.hasNext();
                         continue;
                     }
                     for (const vector<shared_ptr<FsmNode>>& rDistStates : maximalSetsOfRDistinguishableStates)
