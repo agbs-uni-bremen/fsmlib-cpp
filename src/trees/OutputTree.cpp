@@ -4,6 +4,7 @@
  * Licensed under the EUPL V.1.1
  */
 #include "trees/OutputTree.h"
+#include <algorithm>
 
 using namespace std;
 
@@ -30,46 +31,27 @@ InputTrace OutputTree::getInputTrace() const
     return inputTrace;
 }
 
-bool OutputTree::contains(OutputTree& ot)
+bool OutputTree::contains(OutputTree const &ot)
 {
-    
-    vector<IOTrace> myOutputs;
-    vector<IOTrace> otherOutputs;
-    
-    toIOTrace(myOutputs);
-    ot.toIOTrace(otherOutputs);
-    
-    // Check whether every trace of ot is also contained as a trace in this.
-    for ( auto trc : otherOutputs ) {
-        
-        bool found = false;
-        
-        for ( auto myTrc : myOutputs ) {
-            if ( myTrc == trc ) {
-                found = true;
-                break;
-            }
-        }
-        
-        if ( not found ) return false;
-        
+    //Get the input traces
+    InputTrace myInputs = getInputTrace();
+    InputTrace otherInputs = ot.getInputTrace();
+    //Get all output traces
+    vector<OutputTrace> myOutputs = getOutputTraces();
+    vector<OutputTrace> otherOutputs = ot.getOutputTraces();
+    //If the input traces are not equal or this tree has less output traces
+    //than the other, this tree cannot contain the other.
+    if((not (myInputs == otherInputs)) or
+       myOutputs.size() < otherOutputs.size()) {
+        return false;
     }
-    
-    return true;
-    
-#if 0
-    // This does not work for OutputTrees generated from unobservable FSMs
-    
-	/* If the associated input traces differ,
-	the output trees can never be equal*/
-	if (!(inputTrace == ot.inputTrace))
-	{
-		return false;
-	}
-
-	return getRoot()->superTreeOf(ot.getRoot());
-#endif
-    
+    //Sort both sequences of output traces to obtain sorted sets of output
+    //traces ( O(nlog(n)) )
+    sort(myOutputs.begin(), myOutputs.end());
+    sort(otherOutputs.begin(), otherOutputs.end());
+    //Return whether the set of output traces of this tree contains the set of
+    //output traces of the other ( O(n) )
+    return includes(myOutputs.cbegin(), myOutputs.cend(), otherOutputs.cbegin(), otherOutputs.cend());
 }
 
 vector<OutputTrace> OutputTree::getOutputTraces() const {
