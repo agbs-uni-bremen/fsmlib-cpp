@@ -66,7 +66,13 @@ bool operator==(IOTrace const& trc1, IOTrace const& trc2) {
     return trc1.inputTrace == trc2.inputTrace and trc1.outputTrace == trc2.outputTrace;
 }
 
-
-
-
+bool IOTrace::operator<(IOTrace const &other) const {
+    if(inputTrace < other.inputTrace) {
+        return true;
+    }
+    if(other.inputTrace < inputTrace) {
+        return false;
+    }
+    return outputTrace < other.outputTrace;
+}
 
