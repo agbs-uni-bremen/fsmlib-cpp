@@ -5,13 +5,13 @@
  */
 #include "fsm/Trace.h"
 
-Trace::Trace(const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+Trace::Trace(std::shared_ptr<FsmPresentationLayer const> presentationLayer)
 	: presentationLayer(presentationLayer)
 {
 
 }
 
-Trace::Trace(const std::vector<int>& trace, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+Trace::Trace(const std::vector<int>& trace, std::shared_ptr<FsmPresentationLayer const> presentationLayer)
 	: trace(trace), presentationLayer(presentationLayer)
 {
 

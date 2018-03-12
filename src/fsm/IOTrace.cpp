@@ -40,7 +40,7 @@ string IOTrace::toRttString() const {
     
     vector<int> inputs = inputTrace.get();
     vector<int> outputs = outputTrace.get();
-    const std::shared_ptr<FsmPresentationLayer> pl = inputTrace.getPresentationLayer();
+    std::shared_ptr<FsmPresentationLayer const> pl = inputTrace.getPresentationLayer();
     
     for ( size_t i = 0; i < inputs.size(); i++ ) {
         ostringstream ossIn;

@@ -22,13 +22,13 @@ protected:
 	/**
 	The presentation layer used by the trace
 	*/
-	const std::shared_ptr<FsmPresentationLayer> presentationLayer;
+	std::shared_ptr<FsmPresentationLayer const> presentationLayer;
 public:
 	/**
 	Create an empty trace, with only one presentation layer
 	@param presentationLayer The presentation layer used by the trace
 	*/
-	Trace(const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+	Trace(std::shared_ptr<FsmPresentationLayer const> presentationLayer);
 
 	/**
 	Create a trace
@@ -36,7 +36,7 @@ public:
 	@param presentationLayer The presentation layer used by the trace
 	*/
 	Trace(const std::vector<int>& trace,
-          const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+          std::shared_ptr<FsmPresentationLayer const> presentationLayer);
 	
 	/**
 	 * Add an element, at the end of the trace
@@ -66,7 +66,7 @@ public:
 	*/
 	std::vector<int>::const_iterator cend() const;
     
-    const std::shared_ptr<FsmPresentationLayer> getPresentationLayer() const { return presentationLayer; }
+    std::shared_ptr<FsmPresentationLayer const> getPresentationLayer() const { return presentationLayer; }
     
     
     /**
