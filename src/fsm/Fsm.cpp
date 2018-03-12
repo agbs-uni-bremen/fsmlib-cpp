@@ -548,7 +548,7 @@ void Fsm::dumpFsm(ofstream & outputFile) const
     }
 }
 
-vector<shared_ptr<FsmNode>> Fsm::getDReachableStates(InputTraceSet& detStateCover)
+vector<shared_ptr<FsmNode>> Fsm::calcDReachableStates(InputTraceSet& detStateCover)
 {
     TIMED_FUNC(timerObj);
     VLOG(2) << "getDReachableStates()";
@@ -662,7 +662,7 @@ vector<shared_ptr<FsmNode>> Fsm::getDReachableStates(InputTraceSet& detStateCove
         }
     }
     resetColor();
-
+    dReachableStates = nodes;
     return nodes;
 }
 
@@ -2009,7 +2009,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
     }
 
     InputTraceSet detStateCover;
-    const vector<shared_ptr<FsmNode>>& dReachableStates = spec.getDReachableStates(detStateCover);
+    const vector<shared_ptr<FsmNode>>& dReachableStates = spec.calcDReachableStates(detStateCover);
 
     LOG(INFO) << "dReachableStates:";
     for (auto s : dReachableStates)

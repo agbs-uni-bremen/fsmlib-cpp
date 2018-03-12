@@ -92,6 +92,7 @@ protected:
     
     int failOutput = FsmLabel::UNDEFINED_OUTPUT;
     std::shared_ptr<Tree> characterisationSet;
+    std::vector<std::shared_ptr<FsmNode>> dReachableStates;
     Minimal minimal;
     bool complete;
 
@@ -269,7 +270,8 @@ public:
      * \item post-state is a number in range 0..(number of states -1)
      */
     void dumpFsm(std::ofstream & outputFile) const;
-    std::vector<std::shared_ptr<FsmNode>> getDReachableStates(InputTraceSet& detStateCover);
+    std::vector<std::shared_ptr<FsmNode>> getDReachableStates() { return dReachableStates; }
+    std::vector<std::shared_ptr<FsmNode>> calcDReachableStates(InputTraceSet& detStateCover);
     std::shared_ptr<FsmNode> getInitialState() const;
     
     /**

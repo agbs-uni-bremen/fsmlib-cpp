@@ -733,7 +733,8 @@ bool executeAdaptiveTest(
         const unsigned int createMutantSeed,
         const shared_ptr<FsmPresentationLayer>& pl,
         const bool dontTestReductions,
-        bool& isReduction)
+        bool& isReduction,
+        const string iteration = "")
 {
 
     shared_ptr<FsmPresentationLayer> plCopy = make_shared<FsmPresentationLayer>(*pl);
@@ -754,13 +755,6 @@ bool executeAdaptiveTest(
                                              numTransFaults,
                                              true,
                                              createMutantSeed);
-
-    std::stringstream csvOutput;
-    csvOutput << numStates + 1;
-    csvOutput << "," << numInput + 1;
-    csvOutput << "," << numOutput + 1;
-    csvOutput << "," << numOutFaults;
-    csvOutput << "," << numTransFaults;
 
     CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
     CLOG(INFO, logging::globalLogger) << "numInput: " << numInput + 1;
@@ -787,7 +781,7 @@ bool executeAdaptiveTest(
 
     shared_ptr<IOTrace> failTrace;
     isReduction = !intersect.hasFailure(failTrace);
-    csvOutput << "," << isReduction;
+
     if (failTrace)
     {
         failTrace = make_shared<IOTrace>(failTrace->removeLeadingEpsilons());
@@ -798,13 +792,8 @@ bool executeAdaptiveTest(
 
     if (failTrace)
     {
-        csvOutput << "," << failTrace->size();
         CLOG(INFO, logging::globalLogger) << "failTrace: " << *failTrace;
         CLOG(INFO, logging::globalLogger) << "failTrace length: " << failTrace->size();
-    }
-    else
-    {
-        csvOutput << ",-1";
     }
 
     if (isReduction && dontTestReductions) {
@@ -819,16 +808,43 @@ bool executeAdaptiveTest(
     IOTraceContainer observedTraces;
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     bool result = Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces);
-    csvOutput << "," << result;
+
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     long durationMS = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     long durationMin = std::chrono::duration_cast<std::chrono::minutes>(end - start).count();
-    csvOutput << "," << durationMS;
-    CLOG(INFO, logging::csvLogger) << csvOutput.str();
+
+
 
     CLOG(INFO, logging::globalLogger) << "Calculation took " << durationMS << " ms (" << durationMin << " minutes).";
     LOG(INFO) << "observedTraces: " << observedTraces;
+
+
+    std::stringstream csvOutput;
+    csvOutput << iteration;
+    csvOutput << "," << numStates + 1;
+    csvOutput << "," << numInput + 1;
+    csvOutput << "," << numOutput + 1;
+    csvOutput << "," << specMin.getDReachableStates().size();
+    csvOutput << "," << specMin.getMaximalSetsOfRDistinguishableStates().size();
+    csvOutput << "," << numOutFaults;
+    csvOutput << "," << numTransFaults;
+    csvOutput << "," << isReduction;
+    if (failTrace)
+    {
+        csvOutput << "," << failTrace->size();
+    }
+    else
+    {
+        csvOutput << ",-1";
+    }
+    csvOutput << "," << result;
+    csvOutput << "," << durationMS;
     csvOutput << "," << (isReduction == result);
+    csvOutput << "," << createRandomFsmSeed;
+    csvOutput << "," << createMutantSeed;
+
+    CLOG(INFO, logging::csvLogger) << csvOutput.str();
+
     return isReduction == result;
 }
 
@@ -1024,7 +1040,8 @@ void adaptiveTest01(AdaptiveTestConfig& config)
                                 createMutantSeed,
                                 plTest,
                                 config.dontTestReductions,
-                                isReduction);
+                                isReduction,
+                                iteration);
                     couldCreateMutant = true;
                 }
                 catch (unexpected_reduction& e)
@@ -1198,7 +1215,8 @@ int main(int argc, char* argv[])
 
     config.seed = 1337;
 
-    CLOG(INFO, logging::csvLogger) << "numStates,numInput,numOutput,numOutFaults,numTransFault,isReduction,failTraceSize,result,durationMS,pass";
+    CLOG(INFO, logging::csvLogger) << "i,numStates,numInput,numOutput,numDReachable,numMaximalSetsOfRDistStates,numOutFaults,numTransFault,"
+                                      "isReduction,failTraceSize,result,durationMS,pass,createRandomFsmSeed,createMutantSeed";
 
     bool debug = false;
     if (debug)
