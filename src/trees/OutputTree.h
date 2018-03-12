@@ -64,7 +64,7 @@ public:
      * @note This operations re-calculates the leaves of this and of ot,
      *        so int changes the internal state of both objects.
 	*/
-	bool contains(OutputTree const &ot);
+	bool contains(OutputTree& ot);
 
 	/**
 	 * Store the OutputTree to a standard output file in dot format
