@@ -101,8 +101,8 @@ vector<IOTrace> IOTrace::getPrefixes(bool proper) const
 
     size_t prefixIndex = proper ? 1 : 0;
     if (inputRaw.size() > prefixIndex) {
-        vector<Trace> inPre = inputTrace.getPrefixes();
-        vector<Trace> outPre = outputTrace.getPrefixes();
+        vector<Trace> inPre = inputTrace.getPrefixes(proper);
+        vector<Trace> outPre = outputTrace.getPrefixes(proper);
         for (size_t i = 0; i < inPre.size(); ++i)
         {
             InputTrace ip = InputTrace(inPre.at(i).get(), inPre.at(i).getPresentationLayer());
