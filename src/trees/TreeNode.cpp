@@ -4,6 +4,7 @@
  * Licensed under the EUPL V.1.1
  */
 #include "trees/TreeNode.h"
+#include <deque>
 
 using namespace std;
 
@@ -120,6 +121,21 @@ void TreeNode::calcLeaves(vector<shared_ptr<TreeNode>>& leaves)
     }
 }
 
+void TreeNode::calcLeaves(vector<shared_ptr<TreeNode const>>& leaves) const
+{
+    if (isLeaf())
+    {
+        leaves.push_back(shared_from_this());
+    }
+    else
+    {
+        for (shared_ptr<TreeEdge> e : *children)
+        {
+            e->getTarget()->calcLeaves(leaves);
+        }
+    }
+}
+
 void TreeNode::add(const shared_ptr<TreeEdge> edge)
 {
     edge->getTarget()->setParent(shared_from_this());
@@ -131,7 +147,7 @@ bool TreeNode::isLeaf() const
     return children->empty();
 }
 
-int TreeNode::getIO(const shared_ptr<TreeNode> node) const
+int TreeNode::getIO(shared_ptr<TreeNode const> node) const
 {
     for (shared_ptr<TreeEdge> e : *children)
     {
@@ -155,12 +171,14 @@ shared_ptr<TreeEdge> TreeNode::hasEdge(const shared_ptr<TreeEdge> edge) const
     return nullptr;
 }
 
-vector<int> TreeNode::getPath()
+vector<int> TreeNode::getPath() const
 {
-    vector<int> path;
+    //As all path elements are inserted at the front, a deque is better to use
+    //than a vector
+    deque<int> path;
     
-    shared_ptr<TreeNode> m = shared_from_this();
-    shared_ptr<TreeNode> n = parent.lock();
+    shared_ptr<TreeNode const> m = shared_from_this();
+    shared_ptr<TreeNode const> n = parent.lock();
     
     while (n != nullptr)
     {
@@ -168,8 +186,11 @@ vector<int> TreeNode::getPath()
         m = n;
         n = n->getParent().lock();
     }
+    //Copy deque to vector. As this is a sequence of contiguous memory access
+    //operations, this should be quite fast.
+    vector<int> result(path.begin(), path.end());
     
-    return path;
+    return result;
 }
 
 bool TreeNode::superTreeOf(const shared_ptr<TreeNode> otherNode) const
