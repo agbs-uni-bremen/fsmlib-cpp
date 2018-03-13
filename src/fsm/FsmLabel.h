@@ -31,8 +31,6 @@ private:
 	std::shared_ptr<FsmPresentationLayer> presentationLayer;
 public:
     const static int EPSILON;
-    const static int ERROR_OUTPUT;
-    const static int UNDEFINED_OUTPUT;
 
 	/**
 	 * Create a FsmLabel

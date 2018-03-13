@@ -90,7 +90,6 @@ protected:
     /** Integer id of the initial state */
     int initStateIdx;
     
-    int failOutput = FsmLabel::UNDEFINED_OUTPUT;
     std::shared_ptr<Tree> characterisationSet;
     std::vector<std::shared_ptr<FsmNode>> dReachableStates;
     Minimal minimal;
@@ -372,13 +371,6 @@ public:
      @return minimal observable FSM which is equivalent to this FSM
      */
     Fsm minimise(bool storeOFSMTables = true);
-
-    /**
-     * Returns the output that is associated with "fail" (used for adaptive
-     * state counting).
-     * @return The output that is associated with "fail".
-     */
-    int getFailOutput() const;
 
     bool isCharSet(const std::shared_ptr<Tree>& w) const;
     void minimiseCharSet(const std::shared_ptr<Tree>& w);

@@ -379,7 +379,6 @@ presentationLayer(other.presentationLayer) {
     maxInput = other.maxInput;
     maxOutput = other.maxOutput;
     maxState = other.maxState;
-    failOutput = other.failOutput;
     initStateIdx = other.initStateIdx;
     minimal = other.minimal;
     
@@ -1003,7 +1002,6 @@ Fsm Fsm::transformToObservableFSM() const
         }
     }
     Fsm obsFsm(name + "_O", maxInput, maxOutput, nodeLst, obsPl);
-    obsFsm.failOutput = failOutput;
     return obsFsm;
 }
 
@@ -1065,7 +1063,6 @@ Fsm Fsm::minimiseObservableFSM(bool storeOFSMTables)
     /*Create the minimised FSM from the last OFSMTable defined and return it*/
     Fsm fsm = tbl->toFsm(name + "_MIN");
     fsm.minimal = True;
-    fsm.failOutput = failOutput;
     return fsm;
 }
 
@@ -1082,11 +1079,6 @@ Fsm Fsm::minimise(bool storeOFSMTables)
     }
     
     return minimiseObservableFSM(storeOFSMTables);
-}
-
-int Fsm::getFailOutput() const
-{
-    return failOutput;
 }
 
 bool Fsm::isCharSet(const shared_ptr<Tree>& w) const
@@ -3494,7 +3486,6 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
     }
     
     shared_ptr<Fsm> result = make_shared<Fsm>(fsmName,maxInput,maxOutput,lst,pl);
-    result->failOutput = failOutput;
     return result;
     
 }

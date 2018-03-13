@@ -261,43 +261,6 @@ vector<shared_ptr<OutputTrace>> FsmNode::getPossibleOutputs(const int x) const
     return result;
 }
 
-std::vector<std::shared_ptr<FsmNode>> FsmNode::getTraversedStates(const IOTrace& trace)
-{
-    VLOG(2) << "getTraversedStates()";
-    vector<shared_ptr<FsmNode>> result;
-    const InputTrace& inputTrace = trace.getInputTrace();
-    const OutputTrace& outputTrace = trace.getOutputTrace();
-    shared_ptr<FsmNode> currentNode = shared_from_this();
-    VLOG(2) << "currentNode: " << currentNode->getName();
-    for (size_t i = 0; i < inputTrace.get().size(); ++i)
-    {
-        int x = inputTrace.get().at(i);
-        int y = outputTrace.get().at(i);
-        VLOG(2) << "x: " << x << ", y: " << y;
-        if (x == FsmLabel::EPSILON && y == FsmLabel::EPSILON)
-        {
-            continue;
-        }
-        else if (x == FsmLabel::EPSILON || y == FsmLabel::EPSILON)
-        {
-            LOG(FATAL) << "There can't be an input/output pair with only one component being 'ε'";
-        }
-        unordered_set<shared_ptr<FsmNode>> targets = currentNode->afterAsSet(x, y);
-        if (targets.size() > 1)
-        {
-            LOG(FATAL) << "Cannot calculate traversed states for non-observable FSM.";
-        }
-        if (targets.size() == 0)
-        {
-            break;
-        }
-        currentNode = *targets.begin();
-        VLOG(2) << "new currentNode: " << currentNode->getName();
-        result.push_back(currentNode);
-    }
-    return result;
-}
-
 bool FsmNode::hasTransition(const int input, const int output) const
 {
     for (shared_ptr<FsmTransition> trans : transitions)
