@@ -1537,6 +1537,12 @@ IOListContainer Fsm::getRStateCharacterisationSet(shared_ptr<FsmNode> node) cons
         }
     }
     VLOG(1) << "SCS(" << node->getName() << ") = " << result;
+
+    VLOG(2) << "Node " << node->getName() << " is being distuingished from: ";
+    for (const shared_ptr<FsmNode>& n1 : nodes) {
+        VLOG(2) << "  " << n1->getName() << ": " << rDistinguishes(node, n1, result);
+    }
+
     return result;
 }
 
@@ -1566,6 +1572,12 @@ IOTreeContainer Fsm::getAdaptiveRStateCharacterisationSet(shared_ptr<FsmNode> no
         }
     }
     VLOG(1) << "SCS(" << node->getName() << ") = " << result;
+
+    VLOG(2) << "Node " << node->getName() << " is being r-distuingished from: ";
+    for (const shared_ptr<FsmNode>& n1 : nodes) {
+        VLOG(2) << "  " << n1->getName() << ": " << rDistinguishes(node, n1, result);
+    }
+
     return result;
 }
 
@@ -2164,8 +2176,8 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                             iut.addPossibleIOTraces(nodeIut, adaptiveTestCases, observedAdaptiveTracesIut);
                             spec.addPossibleIOTraces(nodeSpec, adaptiveTestCases, observedAdaptiveTracesSpec);
 
-                            VLOG(1) << "  observedAdaptiveTracesIut: " << observedAdaptiveTracesIut;
-                            VLOG(1) << "  observedAdaptiveTracesSpec: " << observedAdaptiveTracesSpec;
+                            VLOG(1) << "  observedAdaptiveTracesIut (" << nodeIut->getName() << "): " << observedAdaptiveTracesIut;
+                            VLOG(1) << "  observedAdaptiveTracesSpec (" << nodeSpec->getName() << "): " << observedAdaptiveTracesSpec;
 
                             bool failure = false;
                             for (auto traceIt = observedAdaptiveTracesIut.cbegin(); traceIt != observedAdaptiveTracesIut.cend(); ++traceIt)
@@ -2501,6 +2513,21 @@ bool Fsm::rDistinguishes(shared_ptr<FsmNode> nodeA,
     return false;
 }
 
+
+bool Fsm::rDistinguishes(std::shared_ptr<FsmNode> nodeA,
+                         std::shared_ptr<FsmNode> nodeB,
+                         const IOListContainer& testCases) const
+{
+    for (vector<int> list : *testCases.getIOLists())
+    {
+        if (rDistinguishes(nodeA, nodeB, list))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool Fsm::distinguishes(shared_ptr<FsmNode> nodeA,
                          shared_ptr<FsmNode> nodeB,
                          const IOTreeContainer& adaptiveTestCases) const
@@ -2531,6 +2558,31 @@ bool Fsm::rDistinguishes(shared_ptr<FsmNode> nodeA,
         for (OutputTrace& traceB : outputsB)
         {
             if (traceA == traceB)
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool Fsm::rDistinguishes(shared_ptr<FsmNode> nodeA,
+                         shared_ptr<FsmNode> nodeB,
+                         const vector<int>& list) const
+{
+    const InputTrace input = InputTrace(list, presentationLayer);
+
+    vector<shared_ptr<OutputTrace>> outA;
+    vector<shared_ptr<OutputTrace>> outB;
+
+    nodeA->getPossibleOutputs(input, outA);
+    nodeB->getPossibleOutputs(input, outB);
+
+    for (const shared_ptr<OutputTrace>& traceA: outA)
+    {
+        for (const shared_ptr<OutputTrace>& traceB: outB)
+        {
+            if (*traceA == *traceB)
             {
                 return false;
             }

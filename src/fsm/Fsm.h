@@ -620,6 +620,12 @@ public:
                       std::shared_ptr<FsmNode> nodeB,
                       const IOTreeContainer& adaptiveTestCases) const;
 
+
+    bool rDistinguishes(std::shared_ptr<FsmNode> nodeA,
+                      std::shared_ptr<FsmNode> nodeB,
+                      const IOListContainer& testCases) const;
+
+
     /**
      * Determines if the given adaptive test cases distinguish state `nodesA`
      * from state `nodeB`.
@@ -645,6 +651,10 @@ public:
     bool rDistinguishes(std::shared_ptr<FsmNode> nodeA,
                       std::shared_ptr<FsmNode> nodeB,
                       std::shared_ptr<InputOutputTree> adaptiveTestCase) const;
+
+    bool rDistinguishes(std::shared_ptr<FsmNode> nodeA,
+                        std::shared_ptr<FsmNode> nodeB,
+                        const std::vector<int>& list) const;
 
     /**
      * Determines if the given adaptive test case distinguishes state `nodesA`
