@@ -1206,7 +1206,7 @@ int main(int argc, char* argv[])
 */
     //TODO Analyze increasing memory usage with valgrind
     AdaptiveTestConfig config;
-    config.numFsm = 150000;
+    config.numFsm = 1000000;
 
     config.minInput = 1;
     config.maxInput = 10;
@@ -1215,13 +1215,13 @@ int main(int argc, char* argv[])
     config.maxOutput = 10;
 
     config.minStates = 1;
-    config.maxStates = 15;
+    config.maxStates = 10;
 
-    config.minTransFaults = 0;
-    config.maxTransFaults = 0;
+    config.minTransFaults = 1;
+    config.maxTransFaults = 1;
 
-    config.minOutFaults = 1;
-    config.maxOutFaults = 1;
+    config.minOutFaults = 0;
+    config.maxOutFaults = 0;
 
     config.dontTestReductions = true;
 
