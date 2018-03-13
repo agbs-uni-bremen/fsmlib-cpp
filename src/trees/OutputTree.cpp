@@ -32,44 +32,40 @@ InputTrace OutputTree::getInputTrace() const
 
 bool OutputTree::contains(OutputTree& ot)
 {
-    
-    vector<IOTrace> myOutputs;
-    vector<IOTrace> otherOutputs;
-    
-    toIOTrace(myOutputs);
-    ot.toIOTrace(otherOutputs);
-    
-    // Check whether every trace of ot is also contained as a trace in this.
-    for ( auto trc : otherOutputs ) {
-        
-        bool found = false;
-        
-        for ( auto myTrc : myOutputs ) {
-            if ( myTrc == trc ) {
-                found = true;
-                break;
-            }
-        }
-        
-        if ( not found ) return false;
-        
+    //Get the input traces
+    InputTrace myInputs = getInputTrace();
+    InputTrace otherInputs = ot.getInputTrace();
+    //Get all output traces
+    vector<OutputTrace> myOutputs = getOutputTraces();
+    vector<OutputTrace> otherOutputs = ot.getOutputTraces();
+    //If the input traces are not equal or this tree has less output traces
+    //than the other, this tree cannot contain the other.
+    if((not (myInputs == otherInputs))) {
+        return false;
     }
-    
-    return true;
-    
-#if 0
-    // This does not work for OutputTrees generated from unobservable FSMs
-    
-	/* If the associated input traces differ,
-	the output trees can never be equal*/
-	if (!(inputTrace == ot.inputTrace))
-	{
-		return false;
-	}
+    //Sort both sequences of output traces to obtain sorted sets of output
+    //traces ( O(nlog(n)) )
+    sort(myOutputs.begin(), myOutputs.end());
+    sort(otherOutputs.begin(), otherOutputs.end());
+    vector<OutputTrace>::const_iterator myLast = unique(myOutputs.begin(), myOutputs.end());
+    vector<OutputTrace>::const_iterator otherLast = unique(otherOutputs.begin(), otherOutputs.end());
+    //Return whether the set of output traces of this tree contains the set of
+    //output traces of the other ( O(n) )
+    return includes(myOutputs.cbegin(), myLast, otherOutputs.cbegin(), otherLast);
+}
 
-	return getRoot()->superTreeOf(ot.getRoot());
-#endif
-    
+vector<OutputTrace> OutputTree::getOutputTraces() const {
+    //Get all traces
+    auto lli = getIOLists().getIOLists();
+    vector<OutputTrace> traces;
+    //Reserve enough space in the result vector
+    traces.reserve(lli->size());
+    //Move each trace into the result vector and construct an OutputTrace for
+    //each
+    for(auto &trace : *lli) {
+        traces.emplace_back(std::move(trace), presentationLayer);
+    }
+    return traces;
 }
 
 void OutputTree::toDot(ostream& out) const

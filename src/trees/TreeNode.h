@@ -97,6 +97,7 @@ public:
 	@param leaves An empty list, it will be used to insert the leaves
 	*/
 	void calcLeaves(std::vector<std::shared_ptr<TreeNode>>& leaves);
+	void calcLeaves(std::vector<std::shared_ptr<TreeNode const>>& leaves) const;
 
 	/**
 	Add and edge to this node children
@@ -116,7 +117,7 @@ public:
 	@param node The node to be searched into the tree node's children target
 	@return The input needed to reach the tree node
 	*/
-	int getIO(const std::shared_ptr<TreeNode> node) const;
+	int getIO(std::shared_ptr<TreeNode const> node) const;
 
 	/**
 	Check whether or not this tree node has a specific edge or not
@@ -129,7 +130,7 @@ public:
 	Get the inputs needed to reach this specific tree node
 	@return The path
 	*/
-	std::vector<int> getPath();
+	std::vector<int> getPath() const;
 
 	/**
 	 * Compare with an other three node to see if it is a super tree of this one or not

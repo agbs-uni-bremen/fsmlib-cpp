@@ -40,7 +40,7 @@ string IOTrace::toRttString() const {
     
     vector<int> inputs = inputTrace.get();
     vector<int> outputs = outputTrace.get();
-    const std::shared_ptr<FsmPresentationLayer> pl = inputTrace.getPresentationLayer();
+    std::shared_ptr<FsmPresentationLayer const> pl = inputTrace.getPresentationLayer();
     
     for ( size_t i = 0; i < inputs.size(); i++ ) {
         ostringstream ossIn;
@@ -63,13 +63,16 @@ string IOTrace::toRttString() const {
 
 
 bool operator==(IOTrace const& trc1, IOTrace const& trc2) {
-    
-    return ( trc1.toRttString() == trc2.toRttString() );
-    
-    
+    return trc1.inputTrace == trc2.inputTrace and trc1.outputTrace == trc2.outputTrace;
 }
 
-
-
-
+bool IOTrace::operator<(IOTrace const &other) const {
+    if(inputTrace < other.inputTrace) {
+        return true;
+    }
+    if(other.inputTrace < inputTrace) {
+        return false;
+    }
+    return outputTrace < other.outputTrace;
+}
 

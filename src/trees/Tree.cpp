@@ -13,6 +13,13 @@ void Tree::calcLeaves()
 	root->calcLeaves(leaves);
 }
 
+vector<shared_ptr<TreeNode const>> Tree::calcLeaves() const
+{
+    vector<shared_ptr<TreeNode const>> result;
+	root->calcLeaves(result);
+    return result;
+}
+
 void Tree::remove(const shared_ptr<TreeNode> thisNode, const shared_ptr<TreeNode> otherNode)
 {
 	thisNode->deleteNode();
@@ -80,12 +87,11 @@ shared_ptr<TreeNode> Tree::getSubTree(shared_ptr< vector<int> > alpha) {
     return root->after(alpha->begin(),alpha->end());
 }
 
-IOListContainer Tree::getIOLists()
+IOListContainer Tree::getIOLists() const
 {
 	shared_ptr<vector<vector<int>>> ioll = make_shared<vector<vector<int>>>();
-	calcLeaves();
 
-	for (shared_ptr<TreeNode> n : leaves)
+	for (shared_ptr<TreeNode const> n : calcLeaves())
 	{
 		ioll->push_back(n->getPath());
 	}

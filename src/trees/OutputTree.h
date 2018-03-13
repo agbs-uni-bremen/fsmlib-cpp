@@ -46,6 +46,12 @@ public:
 
     InputTrace getInputTrace() const;
 
+    /**
+     * Returns a vector of all output traces stored in this tree
+     * @return The vector of output traces stored in this tree
+     */
+    std::vector<OutputTrace> getOutputTraces() const;
+
 	/**
 	 * Check whether this OutputTree instance is a superset of the output traces
 	 * contained in the other instance ot.

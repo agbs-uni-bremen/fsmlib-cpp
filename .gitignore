@@ -66,3 +66,6 @@ resources/pls-example/plsautocnd_I_MUT.ods
 resources/pls-example/plsautocndMUT.csv
 resources/pls-example/plsautocndMUT.ods
 resources/pls-example/plsautocndOut.csv
+src/main/main_BASE_2591.cpp
+src/main/main_LOCAL_2591.cpp
+src/main/main_REMOTE_2591.cpp

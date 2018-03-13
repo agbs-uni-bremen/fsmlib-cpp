@@ -59,5 +59,11 @@ public:
      */
     friend bool operator==(IOTrace const& trc1, IOTrace const& trc2);
     
+    /**
+     * Define a total order on IOTraces (used in sorting algorithms).
+     * @param trace to compare against
+     * @return True if this trace is defined to be less than the other trace, false otherwise
+     */
+    bool operator<(IOTrace const &other) const;
 };
 #endif //FSM_FSM_IOTRACE_H_

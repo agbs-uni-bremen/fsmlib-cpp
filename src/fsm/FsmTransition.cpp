@@ -30,7 +30,7 @@ FsmTransition::FsmTransition(const shared_ptr<FsmNode>  source,
 
 shared_ptr<FsmNode> FsmTransition::getSource()
 {
-	return source;
+    return source.lock();
 }
 
 void FsmTransition::setSource(shared_ptr<FsmNode> src) {
@@ -39,7 +39,7 @@ void FsmTransition::setSource(shared_ptr<FsmNode> src) {
 
 shared_ptr<FsmNode> FsmTransition::getTarget()
 {
-	return target;
+    return target.lock();
 }
 
 void FsmTransition::setTarget(shared_ptr<FsmNode> tgt) {

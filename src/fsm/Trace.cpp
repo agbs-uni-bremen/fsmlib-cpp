@@ -5,13 +5,13 @@
  */
 #include "fsm/Trace.h"
 
-Trace::Trace(const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+Trace::Trace(std::shared_ptr<FsmPresentationLayer const> presentationLayer)
 	: presentationLayer(presentationLayer)
 {
 
 }
 
-Trace::Trace(const std::vector<int>& trace, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+Trace::Trace(const std::vector<int>& trace, std::shared_ptr<FsmPresentationLayer const> presentationLayer)
 	: trace(trace), presentationLayer(presentationLayer)
 {
 
@@ -77,6 +77,10 @@ bool operator==(Trace const & trace1, std::vector<int> const & trace2)
         }
     }
     return true;
+}
+
+bool Trace::operator<(Trace const &other) const {
+    return trace < other.trace;
 }
 
 std::ostream & operator<<(std::ostream & out, const Trace & trace)

@@ -39,6 +39,7 @@ protected:
 	 * Calculate the leaves of the tree, calling calcLeaves on the root of the tree
 	 */
 	void calcLeaves();
+	std::vector<std::shared_ptr<TreeNode const>> calcLeaves() const;
 
 	//TODO
 	void remove(const std::shared_ptr<TreeNode> thisNode,
@@ -86,7 +87,7 @@ public:
      * @return vector of I/O lists, each list again represented
      *         as a vector.
      */
-	IOListContainer getIOLists();
+	IOListContainer getIOLists() const;
     
     /**
      * Get vector of all I/O lists in the tree, including all prefixes.
