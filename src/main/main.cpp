@@ -1057,6 +1057,18 @@ void adaptiveTest01(AdaptiveTestConfig& config)
                         CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing transition faults.";
                         continue;
                     }
+                    else
+                    {
+                        CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
+                        CLOG(INFO, logging::globalLogger) << "numInput: " << numInput + 1;
+                        CLOG(INFO, logging::globalLogger) << "numOutput: " << numOutput + 1;
+                        CLOG(INFO, logging::globalLogger) << "numOutFaults: " << numOutFaults;
+                        CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
+                        CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed: " << createRandomFsmSeed;
+                        CLOG(INFO, logging::globalLogger) << "createMutantSeed: " << createMutantSeed;
+                        CLOG(WARNING, logging::globalLogger) << "Could not create mutant. Skipping.";
+                        break;
+                    }
                 }
                 catch (too_many_output_faults& e)
                 {
