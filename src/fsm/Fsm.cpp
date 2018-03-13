@@ -1481,15 +1481,6 @@ void Fsm::calcRDistinguishableStates()
         // Setting flag for every node.
         node->getRDistinguishability()->hasBeenCalculated(true);
     }
-    for (auto node : nodes)
-    {
-        if (node->getRDistinguishability()->isNotRDistinguishable())
-        {
-            minimal = False;
-            return;
-        }
-    }
-    minimal = True;
     return;
 }
 
