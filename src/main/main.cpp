@@ -137,11 +137,7 @@ void test3() {
     cout << "TC-FSM-0002 Show that createMutant() injects a fault into the original FSM" << endl;
     
     
-<<<<<<< HEAD
     for ( size_t i = 0; i < 4; i++ ) {
-=======
-    for ( size_t i = 0; i < 3; i++ ) {
->>>>>>> 97213dff4820befaf3dd35461f0a6838b8c2a9f9
         shared_ptr<FsmPresentationLayer> pl =
         make_shared<FsmPresentationLayer>();
         shared_ptr<Fsm> fsm = Fsm::createRandomFsm("F",5,5,8,pl,(unsigned)i);
@@ -767,8 +763,6 @@ void wVersusT() {
     
 }
 
-<<<<<<< HEAD
-=======
 void test11() {
     
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>("garageIn.txt",
@@ -832,7 +826,6 @@ void test14() {
     fsmMin.toDot("NN_MIN");
     
 }
->>>>>>> 97213dff4820befaf3dd35461f0a6838b8c2a9f9
 
 
 void test15() {
@@ -858,47 +851,6 @@ void test15() {
     
     // Show that nonObs and obs have the same language.
     // We use brute force test that checks all traces of length n*m
-<<<<<<< HEAD
-    int n = nonObs->size();
-    int m = obs.size();
-    int theLen = n+m-1;
-    
-    IOListContainer allTrc = IOListContainer(nonObs->getMaxInput(),
-                                             1,
-                                             theLen,
-                                             pl);
-    
-    shared_ptr<vector<vector<int>>> allTrcLst = allTrc.getIOLists();
-    
-    cout << endl << "Number of traces: " << allTrcLst->size() << endl;
-    
-    int ctr = 0;
-    for ( auto trc : *allTrcLst ) {
-        
-        // Run the test case against both FSMs and compare
-        // the (nondeterministic) result
-        shared_ptr<InputTrace> iTr =
-        make_shared<InputTrace>(trc,pl);
-        OutputTree o1 = nonObs->apply(*iTr);
-        OutputTree o2 = obs.apply(*iTr);
-        
-        if ( o1 != o2 ) {
-            
-            assert("TC-DFSM-0015",
-                   o1 == o2,
-                   "Transformed FSM has same language as original FSM");
-            
-            cout << "o1 = " << o1 << endl;
-            cout << "o2 = " << o2 << endl;
-            return;
-            
-        }
-        
-        cerr << "No. " << ++ctr << endl;
-        cout << "o1 = " << endl << o1 << endl;
-        cout << "o2 = " << endl << o2 << endl;
-    }
-=======
     int n = (int)nonObs->size();
     int m = (int)obs.size();
     int theLen = n+m-1;
@@ -954,7 +906,6 @@ void faux() {
     Dfsm dMin = d->minimise();
     
     dMin.toDot("G0_MIN");
->>>>>>> 97213dff4820befaf3dd35461f0a6838b8c2a9f9
     
     
     
@@ -1028,10 +979,6 @@ int main(int argc, char** argv)
     test8();
     test9();
     test10();
-<<<<<<< HEAD
-    test15();
-
-=======
     test10b();
     test11();
     test13();
@@ -1040,7 +987,6 @@ int main(int argc, char** argv)
 
     faux();
 
->>>>>>> 97213dff4820befaf3dd35461f0a6838b8c2a9f9
     
     gdc_test1();
     
@@ -1096,13 +1042,10 @@ int main(int argc, char** argv)
     test8();
     test9();
     test10();
-<<<<<<< HEAD
-=======
     test10b();
     test11();
     test13();
     test14();
->>>>>>> 97213dff4820befaf3dd35461f0a6838b8c2a9f9
     test15();
     exit(0);
     
