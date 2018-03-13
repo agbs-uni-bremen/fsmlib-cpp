@@ -765,11 +765,11 @@ void wVersusT() {
 
 void test11() {
     
-    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>("garageIn.txt",
-                                                                            "garageOut.txt",
-                                                                            "garageState.txt");
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>("../../../resources/garageIn.txt",
+                                                                            "../../../resources/garageOut.txt",
+                                                                            "../../../resources/garageState.txt");
     
-    shared_ptr<Fsm> gdc = make_shared<Fsm>("garage.fsm",pl,"GDC");
+    shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/garage.fsm",pl,"GDC");
     
     
     gdc->toDot("GDC");
@@ -782,11 +782,11 @@ void test11() {
 
 void test12() {
     
-    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>("garageIn.txt",
-                                                                            "garageOut.txt",
-                                                                            "garageState.txt");
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>("../../../resources/garageIn.txt",
+                                                                            "../../../resources/garageOut.txt",
+                                                                            "../../../resources/garageState.txt");
     
-    shared_ptr<Dfsm> gdc = make_shared<Dfsm>("garage.fsm",pl,"GDC");
+    shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../../resources/garage.fsm",pl,"GDC");
     
     
     gdc->toDot("GDC");
@@ -801,7 +801,7 @@ void test13() {
     
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
     
-    shared_ptr<Dfsm> gdc = make_shared<Dfsm>("garage.fsm",pl,"GDC");
+    shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../../resources/garage.fsm",pl,"GDC");
     
     
     gdc->toDot("GDC");
@@ -817,7 +817,7 @@ void test14() {
     
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
     
-    shared_ptr<Fsm> fsm = make_shared<Fsm>("NN.fsm",pl,"NN");
+    shared_ptr<Fsm> fsm = make_shared<Fsm>("../../../resources/NN.fsm",pl,"NN");
     
     fsm->toDot("NN");
     
@@ -836,7 +836,7 @@ void test15() {
     
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
     
-    shared_ptr<Fsm> nonObs = make_shared<Fsm>("nonObservable.fsm",pl,"NON_OBS");
+    shared_ptr<Fsm> nonObs = make_shared<Fsm>("../../../resources/nonObservable.fsm",pl,"NON_OBS");
     
     
     nonObs->toDot("NON_OBS");
@@ -891,11 +891,11 @@ void faux() {
     
     
     shared_ptr<FsmPresentationLayer> pl =
-    make_shared<FsmPresentationLayer>("gillIn.txt",
-                                      "gillOut.txt",
-                                      "gillState.txt");
+    make_shared<FsmPresentationLayer>("../../../resources/gillIn.txt",
+                                      "../../../resources/gillOut.txt",
+                                      "../../../resources/gillState.txt");
     
-    shared_ptr<Dfsm> d = make_shared<Dfsm>("gill.fsm",
+    shared_ptr<Dfsm> d = make_shared<Dfsm>("../../../resources/gill.fsm",
                                            pl,
                                            "G0");
     
@@ -917,7 +917,7 @@ void test16() {
     Reader jReader;
     Value root;
     stringstream document;
-    ifstream inputFile("exp1.fsm");
+    ifstream inputFile("../../../resources/exp1.fsm");
     document << inputFile.rdbuf();
     inputFile.close();
     
@@ -935,7 +935,7 @@ void test16() {
     Reader jReader2;
     Value root2;
     stringstream document2;
-    ifstream inputFile2("exp2.fsm");
+    ifstream inputFile2("../../../resources/exp2.fsm");
     document2 << inputFile2.rdbuf();
     inputFile2.close();
     
