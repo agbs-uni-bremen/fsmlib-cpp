@@ -137,7 +137,7 @@ void test3() {
     cout << "TC-FSM-0002 Show that createMutant() injects a fault into the original FSM" << endl;
     
     
-    for ( size_t i = 0; i < 10; i++ ) {
+    for ( size_t i = 0; i < 4; i++ ) {
         shared_ptr<FsmPresentationLayer> pl =
         make_shared<FsmPresentationLayer>();
         shared_ptr<Fsm> fsm = Fsm::createRandomFsm("F",5,5,8,pl,i);
@@ -162,7 +162,7 @@ void test3() {
         
         cout << "TS SIZE (W-Method): " << iolc1.size() << endl;
         
-        if ( iolc1.size() > 100000) {
+        if ( iolc1.size() > 1000) {
             cout << "Skip this test case, since size is too big" << endl;
             continue;
         }
@@ -689,7 +689,72 @@ void wVersusT() {
     }
     
     
+}
+
+
+
+void test15() {
     
+    cout << "TC-DFSM-0015 Show that Fsm::transformToObservableFSM() produces an "
+    << "equivalent observable FSM"
+    << endl;
+    
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+    
+    shared_ptr<Fsm> nonObs = make_shared<Fsm>("nonObservable.fsm",pl,"NON_OBS");
+    
+    
+    nonObs->toDot("NON_OBS");
+    
+    Fsm obs = nonObs->transformToObservableFSM();
+    
+    obs.toDot("OBS");
+    
+    assert("TC-DFSM-0015",
+           obs.isObservable(),
+           "Transformed FSM is observable");
+    
+    // Show that nonObs and obs have the same language.
+    // We use brute force test that checks all traces of length n*m
+    int n = nonObs->size();
+    int m = obs.size();
+    int theLen = n+m-1;
+    
+    IOListContainer allTrc = IOListContainer(nonObs->getMaxInput(),
+                                             1,
+                                             theLen,
+                                             pl);
+    
+    shared_ptr<vector<vector<int>>> allTrcLst = allTrc.getIOLists();
+    
+    cout << endl << "Number of traces: " << allTrcLst->size() << endl;
+    
+    int ctr = 0;
+    for ( auto trc : *allTrcLst ) {
+        
+        // Run the test case against both FSMs and compare
+        // the (nondeterministic) result
+        shared_ptr<InputTrace> iTr =
+        make_shared<InputTrace>(trc,pl);
+        OutputTree o1 = nonObs->apply(*iTr);
+        OutputTree o2 = obs.apply(*iTr);
+        
+        if ( o1 != o2 ) {
+            
+            assert("TC-DFSM-0015",
+                   o1 == o2,
+                   "Transformed FSM has same language as original FSM");
+            
+            cout << "o1 = " << o1 << endl;
+            cout << "o2 = " << o2 << endl;
+            return;
+            
+        }
+        
+        cerr << "No. " << ++ctr << endl;
+        cout << "o1 = " << endl << o1 << endl;
+        cout << "o2 = " << endl << o2 << endl;
+    }
     
     
     
@@ -713,6 +778,8 @@ int main()
     test8();
     test9();
     test10();
+    test15();
+
     
     gdc_test1();
     
@@ -749,8 +816,7 @@ int main()
     test8();
     test9();
     test10();
-    
-
+    test15();
     exit(0);
     
 }
