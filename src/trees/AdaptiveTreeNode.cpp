@@ -59,9 +59,45 @@ std::vector<int> AdaptiveTreeNode::getOutputPath()
     return path;
 }
 
-bool AdaptiveTreeNode::superTreeOf(const std::shared_ptr<AdaptiveTreeNode>& otherNode) const
+bool AdaptiveTreeNode::superTreeOf(const shared_ptr<AdaptiveTreeNode>& otherNode) const
 {
-    return input == otherNode->getInput() && TreeNode::superTreeOf(otherNode);
+    if (input != otherNode->getInput())
+    {
+        return false;
+    }
+
+    if (children->size() < otherNode->children->size())
+    {
+        return false;
+    }
+
+    for (shared_ptr<TreeEdge> eOther : *otherNode->children)
+    {
+        int y = eOther->getIO();
+        bool yFound = false;
+
+        for (shared_ptr<TreeEdge> eMine : *children)
+        {
+            if (y == eMine->getIO())
+            {
+                const shared_ptr<AdaptiveTreeNode> targetMine = static_pointer_cast<AdaptiveTreeNode>(eMine->getTarget());
+                const shared_ptr<AdaptiveTreeNode> targetOther = static_pointer_cast<AdaptiveTreeNode>(eOther->getTarget());
+                if (!targetMine->superTreeOf(targetOther))
+                {
+                    return false;
+                }
+                yFound = true;
+                break;
+            }
+        }
+
+        /*If this node does not have an outgoing edge labelled with y, the nodes differ.*/
+        if (!yFound)
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 AdaptiveTreeNode* AdaptiveTreeNode::_clone() const
