@@ -19,7 +19,7 @@ private:
     vector<vector<shared_ptr<const IOTrace>>> allPossibleTraces;
     size_t current;
     size_t length;
-    vector<pair<size_t,size_t>> dm;
+    vector<pair<size_t,size_t>> pairs;
 
 public:
     /**

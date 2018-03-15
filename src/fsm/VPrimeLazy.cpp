@@ -23,14 +23,14 @@ VPrimeLazy::VPrimeLazy(const InputTraceSet& detStateCover, const Fsm& iut):
     }
 
     size_t i = allPossibleTraces.size();
-    dm.resize(i);
+    pairs.resize(i);
     size_t f = 1;
     size_t l = 0;
     while (i > 0)
     {
         --i;
         l = allPossibleTraces.at(i).size();
-        dm.at(i) = (make_pair(f, l));
+        pairs.at(i) = (make_pair(f, l));
         f *= l;
     }
     length = f;
@@ -44,7 +44,7 @@ IOTraceContainer VPrimeLazy::getVDoublePrime(size_t n) const
     while (i > 0)
     {
         --i;
-        size_t idx = n / dm.at(i).first % dm.at(i).second;
+        size_t idx = n / pairs.at(i).first % pairs.at(i).second;
         c.add(allPossibleTraces.at(i).at(idx));
     }
     return c;
