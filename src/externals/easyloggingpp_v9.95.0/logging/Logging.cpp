@@ -31,7 +31,7 @@ void logging::initLogging()
 
     char nowTextRaw[21];
     struct tm buf;
-    strftime(nowTextRaw, 21, "%Y-%m-%d--%H:%M:%S", localtime_r(&tNow, &buf));
+    strftime(nowTextRaw, 21, "%Y-%m-%d--%H-%M-%S", localtime_r(&tNow, &buf));
     string nowText(nowTextRaw);
 
 
