@@ -234,11 +234,11 @@ void Fsm::readFsmInitial (const string & fname)
     
 }
 
-void Fsm::readFsmFromDot (const string & fname)
+void Fsm::readFsmFromDot (const string & fname, const string name)
 {
 
-    maxInput = 0;
-    maxOutput = 0;
+    maxInput = -1;
+    maxOutput = -1;
     maxState = 0;
     initStateIdx = -1;
     int nodeIdCount = 0;
