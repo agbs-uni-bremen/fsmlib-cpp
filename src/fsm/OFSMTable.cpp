@@ -245,7 +245,7 @@ bool OFSMTable::compareColumns(int x1, int y1, int x2, int y2) {
 }
 
 
-Fsm OFSMTable::toFsm(const string & name) const
+Fsm OFSMTable::toFsm(const string & name, bool prependFsmName) const
 {
 	string minFsmName = name;
 	vector<shared_ptr<FsmNode>> nodeLst;
@@ -257,7 +257,11 @@ Fsm OFSMTable::toFsm(const string & name) const
      */
     vector<string> minState2String;
     for (int i = 0; i <= maxClassId(); ++i) {
-        string newName(minFsmName + " " + getMembers(i));
+        string newName(getMembers(i));
+        if (prependFsmName)
+        {
+            newName = minFsmName + " " + newName;
+        }
         minState2String.push_back(newName);
     }
     

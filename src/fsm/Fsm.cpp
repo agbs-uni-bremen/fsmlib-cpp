@@ -1086,7 +1086,7 @@ bool Fsm::isComplete() const
     return complete;
 }
 
-Fsm Fsm::minimiseObservableFSM(bool storeOFSMTables, const string& nameSuffix)
+Fsm Fsm::minimiseObservableFSM(bool storeOFSMTables, const string& nameSuffix, bool prependFsmName)
 {
     TIMED_FUNC(timerObj);
     if (storeOFSMTables)
@@ -1119,12 +1119,12 @@ Fsm Fsm::minimiseObservableFSM(bool storeOFSMTables, const string& nameSuffix)
     }
 
     /*Create the minimised FSM from the last OFSMTable defined and return it*/
-    Fsm fsm = tbl->toFsm(name + nameSuffix);
+    Fsm fsm = tbl->toFsm(name + nameSuffix, prependFsmName);
     fsm.minimal = True;
     return fsm;
 }
 
-Fsm Fsm::minimise(bool storeOFSMTables, const string& nameSuffixMin, const string& nameSuffixObs)
+Fsm Fsm::minimise(bool storeOFSMTables, const string& nameSuffixMin, const string& nameSuffixObs, bool prependFsmName)
 {
     TIMED_FUNC(timerObj);
     vector<shared_ptr<FsmNode>> uNodes;
@@ -1134,10 +1134,10 @@ Fsm Fsm::minimise(bool storeOFSMTables, const string& nameSuffixMin, const strin
     {
         LOG(INFO) << "Fsm is not observable. Converting.";
         return transformToObservableFSM(nameSuffixObs)
-                .minimiseObservableFSM(storeOFSMTables, nameSuffixMin);
+                .minimiseObservableFSM(storeOFSMTables, nameSuffixMin, prependFsmName);
     }
     
-    return minimiseObservableFSM(storeOFSMTables, nameSuffixMin);
+    return minimiseObservableFSM(storeOFSMTables, nameSuffixMin, prependFsmName);
 }
 
 bool Fsm::isCharSet(const shared_ptr<Tree>& w) const
@@ -2016,7 +2016,8 @@ size_t Fsm::lowerBound(const IOTrace& base,
     return result;
 }
 
-bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceContainer& observedTraces)
+bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
+                                IOTraceContainer& observedTraces, shared_ptr<IOTrace>& failTrace)
 {
     VLOG(1)<< "adaptiveStateCounting()";
     if (spec.isMinimal() != True)
@@ -2228,6 +2229,10 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                                 if (!observedAdaptiveTracesSpec.contains(trace))
                                 {
                                     LOG(INFO) << "  Specification does not contain " << *trace;
+                                    failTrace = make_shared<IOTrace>(*inputTrace, *outIut);
+                                    IOTrace traceCopy = IOTrace(*trace);
+                                    failTrace->append(traceCopy);
+                                    LOG(INFO) << "failTrace: " << *failTrace;
                                     failure = true;
                                     break;
                                 }
@@ -2293,6 +2298,8 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
 #endif
                     VLOG(1) << "Specification does not produce output " << *outIut << ".";
                     VLOG(1) << "IUT is not a reduction of the specification.";
+                    LOG(INFO) << "failTrace: " << *failTrace;
+                    failTrace = make_shared<IOTrace>(*inputTrace, *outIut);
                     return false;
                 }
             }
@@ -2669,7 +2676,6 @@ vector<vector<shared_ptr<FsmNode>>> Fsm::getMaximalSetsOfRDistinguishableStates(
     result.reserve(static_cast<size_t>(getMaxNodes()));
     for (shared_ptr<FsmNode> node : nodes)
     {
-        PERFORMANCE_CHECKPOINT(timerObj);
         VLOG(3) << "Looking for node " << node->getName();
         bool skip = false;
         for (vector<shared_ptr<FsmNode>>& set : result)

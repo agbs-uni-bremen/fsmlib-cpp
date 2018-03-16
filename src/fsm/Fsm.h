@@ -363,7 +363,7 @@ public:
      \pre This method can only be applied to an observable OFSM
      @return minimal observable FSM which is equivalent to this FSM
      */
-    Fsm minimiseObservableFSM(bool storeOFSMTables = true, const std::string& nameSuffix = "_MIN");
+    Fsm minimiseObservableFSM(bool storeOFSMTables = true, const std::string& nameSuffix = "_MIN", bool prependFsmName = true);
     
     /**
      Create the minimal observable FSM which is equivalent to this FSM.
@@ -373,7 +373,8 @@ public:
      */
     Fsm minimise(bool storeOFSMTables = true,
                  const std::string& nameSuffixMin = "_MIN",
-                 const std::string& nameSuffixObs = "_0");
+                 const std::string& nameSuffixObs = "_0",
+                 bool prependFsmName = true);
 
     bool isCharSet(const std::shared_ptr<Tree>& w) const;
     void minimiseCharSet(const std::shared_ptr<Tree>& w);
@@ -571,10 +572,13 @@ public:
      * @param iut The given IUT
      * @param observedTraces Return parameter for the observed traces during the test
      * suite creation.
+     * @param observedTraces Return parameter for the trace that caused a failure during the test
+     * suite creation.
      * @return `true`, if no failure has been observed during the creation of the test suite,
      * `false`, otherwise.
      */
-    static bool adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceContainer& observedTraces);
+    static bool adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
+                                      IOTraceContainer& observedTraces,  std::shared_ptr<IOTrace>& failTrace);
 
     /**
      * Determines if the given adaptive test cases distinguish all states from

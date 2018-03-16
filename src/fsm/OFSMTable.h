@@ -149,7 +149,7 @@ public:
 	one in a sequence of OFSMTable transformations, so that it really represents
 	the minimised FSM.
 	*/
-	Fsm toFsm(const std::string & name) const;
+    Fsm toFsm(const std::string & name, bool prependFsmName = true) const;
 
 	/**
 	Produce a stream given a tabular LaTeX representation of
