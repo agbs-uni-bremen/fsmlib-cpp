@@ -3290,10 +3290,11 @@ Fsm::createRandomFsm(const string & fsmName,
 }
 
 shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
-                                  const size_t numOutputFaults,
-                                  const size_t numTransitionFaults,
+                                  const int numOutputFaults,
+                                  const int numTransitionFaults,
                                   const bool keepObservability,
-                                  const unsigned seed){
+                                  const unsigned seed,
+                                  const shared_ptr<FsmPresentationLayer>& pLayer){
     TIMED_FUNC(timerObj);
 
     if (keepObservability && !isObservable())
@@ -3319,7 +3320,15 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
     LOG(DEBUG) << "numOutputFaults: " << numOutputFaults;
     LOG(DEBUG) << "numTransitionFaults: " << numTransitionFaults;
 
-    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>(*presentationLayer);
+    shared_ptr<FsmPresentationLayer> pl;
+    if (pLayer == nullptr)
+    {
+        pl = make_shared<FsmPresentationLayer>(*presentationLayer);
+    }
+    else
+    {
+        pl = make_shared<FsmPresentationLayer>(*pLayer);
+    }
 
     vector<shared_ptr<FsmTransition>> cantTouchThis;
     vector<shared_ptr<FsmTransition>> transitions;
@@ -3349,7 +3358,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
     }
     
     // Now add transition faults to the new machine
-    size_t createdTransitionFaults = 0;
+    int createdTransitionFaults = 0;
     bool addedFault = true;
     while (createdTransitionFaults < numTransitionFaults && addedFault)
     {
@@ -3418,7 +3427,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
     }
     
     // Now add output faults to the new machine
-    size_t createdOutputFaults = 0;
+    int createdOutputFaults = 0;
 
     addedFault = true;
     while (createdOutputFaults < numOutputFaults && addedFault)

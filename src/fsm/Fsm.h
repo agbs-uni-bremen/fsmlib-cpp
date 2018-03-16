@@ -250,10 +250,11 @@ public:
      *  specified, the same will hold for the mutant.
      */
     std::shared_ptr<Fsm> createMutant(const std::string & fsmName,
-                                      const size_t numOutputFaults,
-                                      const size_t numTransitionFaults,
+                                      const int numOutputFaults,
+                                      const int numTransitionFaults,
                                       const bool keepObservability = false,
-                                      const unsigned seed = 0);
+                                      const unsigned seed = 0,
+                                      const std::shared_ptr<FsmPresentationLayer>& pLayer = nullptr);
     
     
     /**
