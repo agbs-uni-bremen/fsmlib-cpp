@@ -2310,8 +2310,8 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
 #endif
                     VLOG(1) << "Specification does not produce output " << *outIut << ".";
                     VLOG(1) << "IUT is not a reduction of the specification.";
-                    LOG(INFO) << "failTrace: " << *failTrace;
                     failTrace = make_shared<IOTrace>(*inputTrace, *outIut);
+                    LOG(INFO) << "failTrace: " << *failTrace;
                     return false;
                 }
             }
