@@ -128,7 +128,8 @@ protected:
      */
     std::vector< std::unordered_set<int> > getEquivalentInputsFromPrimeMachine();
 
-    
+    void meetDegreeOfCompleteness(float degreeOfCompleteness, float maxDegreeOfNonDeterminism, bool observable);
+
 public:
     
     
@@ -237,11 +238,23 @@ public:
                     const int maxInput,
                     const int maxOutput,
                     const int maxState,
-                    const std::shared_ptr<FsmPresentationLayer>&
-                    presentationLayer,
+                    const std::shared_ptr<FsmPresentationLayer>& presentationLayer,
                     const bool observable = false,
                     const unsigned seed = 0);
-    
+
+
+    static std::shared_ptr<Fsm>
+    createRandomFsm(const std::string & fsmName,
+                    const int maxInput,
+                    const int maxOutput,
+                    const int maxState,
+                    const std::shared_ptr<FsmPresentationLayer>& presentationLayer,
+                    const float degreeOfCompleteness,
+                    const float maxDegreeOfNonDeterminism,
+                    const bool minimal,
+                    const bool observable,
+                    const unsigned seed = 0);
+
     /**
      *  Create a mutant of the FSM, producing output faults
      *  and/or transition faults only.
@@ -289,6 +302,10 @@ public:
     void resetColor();
     void toDot(const std::string & fname);
     
+    float getDegreeOfCompleteness() const;
+    float getDegreeOfNonDeterminism() const;
+    int getNumberOfDifferentInputTransitions() const;
+
     /**
      Create a new FSM that represents the intersection of this and the other FSM
      @param f the other FSM

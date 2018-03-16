@@ -273,6 +273,18 @@ bool FsmNode::hasTransition(const int input, const int output) const
     return false;
 }
 
+bool FsmNode::hasTransition(const int input) const
+{
+    for (shared_ptr<FsmTransition> trans : transitions)
+    {
+        if (trans->getLabel()->getInput() == input)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool FsmNode::isPossibleOutput(const int x, const int y) const
 {
     for (auto transition : transitions)
