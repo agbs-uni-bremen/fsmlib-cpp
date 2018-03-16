@@ -70,6 +70,7 @@ static const vector<string> csvHeaders = {
     "adaptiveStateCountingResult",
     "createRandomFsmSeed",
     "createMutantSeed",
+    "iterations",
     "durationMS",
     "durationM",
     "pass"
@@ -126,6 +127,7 @@ struct AdaptiveTestResult
     bool adaptiveStateCountingResult;
     unsigned createRandomFsmSeed = 0;
     unsigned createMutantSeed = 0;
+    int iterations = -1;
     long durationMS = -1;
     long durationM = -1;
     bool pass = 0;
@@ -262,6 +264,7 @@ void printTestResult(AdaptiveTestResult& result, bool log, bool csv, bool printT
         {
             CLOG(INFO, logging::globalLogger) << "observedTraces             : " << result.observedTraces;
         }
+        CLOG(INFO, logging::globalLogger) << "iterations                 : " << result.iterations;
         CLOG(INFO, logging::globalLogger) << "Calculation took " << result.durationMS << " ms ("
                                           << result.durationM << " minutes).";
     }
@@ -279,6 +282,7 @@ void printTestResult(AdaptiveTestResult& result, bool log, bool csv, bool printT
         csvOutput << "," << result.numTransFaults;
         csvOutput << "," << result.iutIsReduction;
         csvOutput << "," << result.adaptiveStateCountingResult;
+        csvOutput << "," << result.iterations;
         csvOutput << "," << result.durationMS;
         csvOutput << "," << result.pass;
         csvOutput << "," << result.createRandomFsmSeed;
@@ -321,7 +325,8 @@ void executeAdaptiveTest(Fsm& spec, Fsm& iut, size_t m, string intersectionName,
     }
 
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-    result.adaptiveStateCountingResult = Fsm::adaptiveStateCounting(specMin, iutMin, m, result.observedTraces, result.failTraceFound);
+    result.adaptiveStateCountingResult = Fsm::adaptiveStateCounting(specMin, iutMin, m,
+                                                                    result.observedTraces, result.failTraceFound, result.iterations);
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     result.durationMS = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     result.durationM = std::chrono::duration_cast<std::chrono::minutes>(end - start).count();

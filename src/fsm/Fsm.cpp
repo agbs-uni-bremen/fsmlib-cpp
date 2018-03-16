@@ -2017,7 +2017,9 @@ size_t Fsm::lowerBound(const IOTrace& base,
 }
 
 bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
-                                IOTraceContainer& observedTraces, shared_ptr<IOTrace>& failTrace)
+                                IOTraceContainer& observedTraces,
+                                shared_ptr<IOTrace>& failTrace,
+                                int& iterations)
 {
     VLOG(1)<< "adaptiveStateCounting()";
     if (spec.isMinimal() != True)
@@ -2093,8 +2095,10 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
      * do not meet the termination criterion.
      */
     InputTraceSet tC = detStateCover;
+    iterations = 0;
     while (tC.size() != 0)
     {
+        ++iterations;
         stringstream ss;
 #ifdef ENABLE_DEBUG_MACRO
         ss << "tC: ";

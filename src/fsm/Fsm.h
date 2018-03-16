@@ -578,7 +578,9 @@ public:
      * `false`, otherwise.
      */
     static bool adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
-                                      IOTraceContainer& observedTraces,  std::shared_ptr<IOTrace>& failTrace);
+                                      IOTraceContainer& observedTraces,
+                                      std::shared_ptr<IOTrace>& failTrace,
+                                      int& iterations);
 
     /**
      * Determines if the given adaptive test cases distinguish all states from
