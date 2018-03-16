@@ -35,21 +35,119 @@
 #include <stdio.h>
 
 using namespace std;
-using namespace Json;
+
+static const string ascTestDirectory = "../../../resources/asc-tests/";
+static const string ascTestResultDirectory = "../../../resources/asc-test-results/";
+
+static shared_ptr<FsmPresentationLayer> plTestSpec = make_shared<FsmPresentationLayer>(
+            ascTestDirectory + "adaptive-test-in.txt",
+            ascTestDirectory + "adaptive-test-out.txt",
+            ascTestDirectory + "adaptive-test-state-spec.txt");
+
+static shared_ptr<FsmPresentationLayer> plTestIut = make_shared<FsmPresentationLayer>(
+            ascTestDirectory + "adaptive-test-in.txt",
+            ascTestDirectory + "adaptive-test-out.txt",
+            ascTestDirectory + "adaptive-test-state-iut.txt");
+
+
+static const string testSepLine = "------------------------------------------------------------------";
+
+
+static const vector<string> csvHeaders = {
+   "testName",
+    "numStates",
+    "numInputs",
+    "numOutputs",
+    "numDReachableStates",
+    "numSetsOfMaximalRDistStates",
+    "numOutFaults",
+    "numTransFaults",
+    "iutIsReduction",
+    "failTraceFound",
+    "failTraceFoundSize",
+    "observedTracesSize",
+    "longestObservedTrace",
+    "adaptiveStateCountingResult",
+    "createRandomFsmSeed",
+    "createMutantSeed",
+    "durationMS",
+    "durationM",
+    "pass"
+};
+
+struct AdaptiveTestConfigDebug
+{
+    string prefix = "DEBUG";
+    int numStates;
+    int numInput;
+    int numOutput;
+    int numOutFaults;
+    int numTransFaults;
+    unsigned int createRandomFsmSeed;
+    unsigned int createMutantSeed;
+};
+
+struct AdaptiveTestConfig
+{
+
+    // Required
+    string testName;
+    int numFsm = -1;
+    int maxInput = -1;
+    int maxOutput = -1;
+    int maxStates = -1;
+    int maxOutFaults = -1;
+    int maxTransFaults = -1;
+
+    // Optional
+    int minStates = 2;
+    int minInput = 2;
+    int minOutput = 2;
+    int minOutFaults = 1;
+    int minTransFaults = 1;
+    unsigned int seed = 0;
+    bool dontTestReductions = false;
+};
+
+struct AdaptiveTestResult
+{
+    string testName;
+    int numStates = -2;
+    int numInputs = -2;
+    int numOutputs = -2;
+    int numDReachableStates = -1;
+    int numSetsOfMaximalRDistStates = -1;
+    int numOutFaults = -1;
+    int numTransFaults = -1;
+    bool iutIsReduction;
+    shared_ptr<IOTrace> failTraceFound;
+    IOTraceContainer observedTraces;
+    shared_ptr<IOTrace> longestObservedTrace;
+    bool adaptiveStateCountingResult;
+    unsigned createRandomFsmSeed = 0;
+    unsigned createMutantSeed = 0;
+    long durationMS = -1;
+    long durationM = -1;
+    bool pass = 0;
+    shared_ptr<Fsm> intersection;
+};
 
 void assertInconclusive(string tc, string comment = "") {
     
     string sVerdict("INCONCLUSIVE");
-    CLOG(INFO, logging::globalLogger) << sVerdict << ": " << tc << " : " << comment <<  endl;
-    
+    CLOG(INFO, logging::globalLogger) << sVerdict << ": " << tc << " : " << comment <<  endl;    
 }
 
 void assert(string tc, bool verdict, string comment = "") {
     
-    string sVerdict = (verdict) ? "PASS" : "FAIL";
-    CLOG(INFO, logging::globalLogger) << sVerdict << ": " << tc
-    << " : "
-    << comment <<  endl;
+    string out = (verdict) ? "PASS" : "FAIL";
+    out += ": " + tc;
+    if (!comment.empty())
+    {
+        out += ": " + comment;
+    }
+
+    CLOG(INFO, logging::globalLogger) << out <<  endl;
     
 }
 
@@ -68,131 +166,218 @@ void assertOnFail(string tc, bool verdict, string comment = "") {
 
 }
 
+void writeCsvHeader()
+{
+    string header = "";
+    size_t size = csvHeaders.size() - 1;
+    for (size_t i = 0; i <= size; ++i)
+    {
+        header += csvHeaders.at(i);
+        if (i != size)
+        {
+            header += ",";
+        }
+    }
+    CLOG(INFO, logging::csvLogger) << header;
+}
 
-bool executeAdaptiveTest(
+void printTestBegin(string name)
+{
+    CLOG(INFO, logging::globalLogger) << "#################### Test " << name << "####################";
+}
+
+void printSummary(const int& executed,
+                  const int& passed,
+                  const int& notExecuted,
+                  const long& durationS,
+                  const long& durationM)
+{
+    CLOG(INFO, logging::globalLogger) << "";
+    CLOG(INFO, logging::globalLogger) << "#################### SUMMARY ####################";
+    CLOG(INFO, logging::globalLogger) << "# Total tests  : " << executed;
+    CLOG(INFO, logging::globalLogger) << "# Passed       : " << passed;
+    CLOG(INFO, logging::globalLogger) << "# Failed       : " << executed - passed;
+    CLOG(INFO, logging::globalLogger) << "# Not executed : " << notExecuted;
+    CLOG(INFO, logging::globalLogger) << "# Duration     : " << durationS << " s (" << durationM << " min).";
+    CLOG(INFO, logging::globalLogger) << "#################################################";
+}
+
+void printTestConfig(const AdaptiveTestConfig& config, const int& diffStates, const int& subLoopIterations)
+{
+    CLOG(INFO, logging::globalLogger) << "numFsm: " << config.numFsm;
+    CLOG(INFO, logging::globalLogger) << "maxInput: " << config.maxInput + 1;
+    CLOG(INFO, logging::globalLogger) << "maxOutput: " << config.maxOutput + 1;
+    CLOG(INFO, logging::globalLogger) << "maxStates: " << config.maxStates + 1;
+
+    CLOG(INFO, logging::globalLogger) << "maxOutFaults: " << config.maxOutFaults;
+    CLOG(INFO, logging::globalLogger) << "maxTransFaults: " << config.maxTransFaults;
+    CLOG(INFO, logging::globalLogger) << "minOutFaults: " << config.minOutFaults;
+    CLOG(INFO, logging::globalLogger) << "minTransFaults: " << config.minTransFaults;
+    CLOG(INFO, logging::globalLogger) << "minInput: " << config.minInput + 1;
+    CLOG(INFO, logging::globalLogger) << "minOutput: " << config.minOutput + 1;
+    CLOG(INFO, logging::globalLogger) << "minStates: " << config.minStates + 1;
+    CLOG(INFO, logging::globalLogger) << "dontTestReductions: " << std::boolalpha << config.dontTestReductions;
+    CLOG(INFO, logging::globalLogger) << "seed: " << config.seed;
+
+    CLOG(INFO, logging::globalLogger) << "diffStates: " << diffStates;
+    CLOG(INFO, logging::globalLogger) << "subLoopIterations: " << subLoopIterations;
+}
+
+void printTestResult(AdaptiveTestResult& result, bool log, bool csv, bool printTraces)
+{
+    if (log)
+    {
+        CLOG(INFO, logging::globalLogger) << testSepLine;
+        CLOG(INFO, logging::globalLogger) << "Test                       : " << result.testName;
+        CLOG(INFO, logging::globalLogger) << "numStates                  : " << result.numStates;
+        CLOG(INFO, logging::globalLogger) << "numInputs                  : " << result.numInputs;
+        CLOG(INFO, logging::globalLogger) << "numOutputs                 : " << result.numOutputs;
+        CLOG(INFO, logging::globalLogger) << "numDReachableStates        : " << result.numDReachableStates;
+        CLOG(INFO, logging::globalLogger) << "numSetsOfMaximalRDistStates: " << result.numSetsOfMaximalRDistStates;
+        CLOG(INFO, logging::globalLogger) << "numOutFaults               : " << result.numOutFaults;
+        CLOG(INFO, logging::globalLogger) << "numTransFaults             : " << result.numTransFaults;
+        CLOG(INFO, logging::globalLogger) << "iutIsReduction             : " << std::boolalpha << result.iutIsReduction;
+        if (result.failTraceFound)
+        {
+            CLOG(INFO, logging::globalLogger) << "failTraceFound             : " << *result.failTraceFound;
+        }
+        else
+        {
+            CLOG(INFO, logging::globalLogger) << "failTraceFound             : None";
+        }
+        CLOG(INFO, logging::globalLogger) << "adaptiveStateCountingResult: " << std::boolalpha
+                                          << result.adaptiveStateCountingResult;
+        if (result.createRandomFsmSeed != 0)
+        {
+            CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed        : " << result.createRandomFsmSeed;
+        }
+        if (result.createMutantSeed != 0)
+        {
+            CLOG(INFO, logging::globalLogger) << "createMutantSeed           : " << result.createMutantSeed;
+        }
+        CLOG(INFO, logging::globalLogger) << "longestObservedTrace       : " << *result.longestObservedTrace;
+        CLOG(INFO, logging::globalLogger) << "length longestObservedTrace: " << result.longestObservedTrace->size();
+        CLOG(INFO, logging::globalLogger) << "observedTraces size        : " << result.observedTraces.size();
+        if (printTraces)
+        {
+            CLOG(INFO, logging::globalLogger) << "observedTraces             : " << result.observedTraces;
+        }
+        CLOG(INFO, logging::globalLogger) << "Calculation took " << result.durationMS << " ms ("
+                                          << result.durationM << " minutes).";
+    }
+
+    if (csv)
+    {
+        std::stringstream csvOutput;
+        csvOutput << result.testName;
+        csvOutput << "," << result.numStates;
+        csvOutput << "," << result.numInputs;
+        csvOutput << "," << result.numOutputs;
+        csvOutput << "," << result.numDReachableStates;
+        csvOutput << "," << result.numSetsOfMaximalRDistStates;
+        csvOutput << "," << result.numOutFaults;
+        csvOutput << "," << result.numTransFaults;
+        csvOutput << "," << result.iutIsReduction;
+        csvOutput << "," << result.adaptiveStateCountingResult;
+        csvOutput << "," << result.durationMS;
+        csvOutput << "," << result.pass;
+        csvOutput << "," << result.createRandomFsmSeed;
+        csvOutput << "," << result.createMutantSeed;
+        CLOG(INFO, logging::csvLogger) << csvOutput.str();
+    }
+}
+
+bool isReduction(Fsm& spec, Fsm& iut, string intersectionName, shared_ptr<Fsm>& intersection)
+{
+    Fsm inter = spec.intersect(iut, intersectionName);
+    intersection = make_shared<Fsm>(inter);
+    return !inter.hasFailure();
+}
+
+void executeAdaptiveTest(Fsm& spec, Fsm& iut, size_t m, string intersectionName, const bool& toDot, const bool& dontTestReductions, AdaptiveTestResult& result)
+{
+    Fsm specMin = spec.minimise(false, "", "", false);
+    Fsm iutMin = iut.minimise(false, "", "", false);
+
+    result.numStates = specMin.getMaxNodes();
+    result.numInputs = specMin.getMaxInput() + 1;
+    result.numOutputs = specMin.getMaxOutput() + 1;
+
+    result.iutIsReduction = isReduction(specMin, iutMin, intersectionName, result.intersection);
+
+
+    if (toDot)
+    {
+        spec.toDot(ascTestResultDirectory + spec.getName());
+        iut.toDot(ascTestResultDirectory + iut.getName());
+        specMin.toDot(ascTestResultDirectory + spec.getName() + "-min");
+        iutMin.toDot(ascTestResultDirectory + iut.getName() + "-min");
+        result.intersection->toDot(ascTestResultDirectory + result.intersection->getName());
+    }
+
+    if (result.iutIsReduction && dontTestReductions) {
+        CLOG(INFO, logging::globalLogger) << "Won't test this one, since it is a reduction.";
+        throw unexpected_reduction("Interrupting testing, since IUT is an unexcpected reduction of the specification.");
+    }
+
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    result.adaptiveStateCountingResult = Fsm::adaptiveStateCounting(specMin, iutMin, m, result.observedTraces, result.failTraceFound);
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    result.durationMS = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    result.durationM = std::chrono::duration_cast<std::chrono::minutes>(end - start).count();
+
+    result.pass = (result.iutIsReduction == result.adaptiveStateCountingResult);
+    result.numSetsOfMaximalRDistStates = static_cast<int>(specMin.getMaximalSetsOfRDistinguishableStates().size());
+    result.numDReachableStates = static_cast<int>(specMin.getDReachableStates().size());
+    result.longestObservedTrace = make_shared<IOTrace>(result.observedTraces.getLongestTrace());
+}
+
+
+void createAndExecuteAdaptiveTest(
         const string& prefix,
         const int numStates,
-        const int numInput,
-        const int numOutput,
-        const size_t numOutFaults,
-        const size_t numTransFaults,
+        const int numInputs,
+        const int numOutputs,
+        const int numOutFaults,
+        const int numTransFaults,
         const unsigned int createRandomFsmSeed,
         const unsigned int createMutantSeed,
-        const shared_ptr<FsmPresentationLayer>& pl,
+        const shared_ptr<FsmPresentationLayer>& plSpec,
+        const shared_ptr<FsmPresentationLayer>& plIut,
         const bool dontTestReductions,
-        bool& isReduction,
-        const string iteration = "")
+        AdaptiveTestResult& result)
 {
 
-    shared_ptr<FsmPresentationLayer> plCopy = make_shared<FsmPresentationLayer>(*pl);
-
     CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Creating FSM.";
-    shared_ptr<Fsm> spec = Fsm::createRandomFsm(prefix,
-                                                numInput,
-                                                numOutput,
+    shared_ptr<Fsm> spec = Fsm::createRandomFsm(prefix + "-spec",
+                                                numInputs,
+                                                numOutputs,
                                                 numStates,
-                                                plCopy,
+                                                plSpec,
                                                 true,
                                                 createRandomFsmSeed);
     CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Creating mutant.";
 
 
-    shared_ptr<Fsm> iut = spec->createMutant("mutant" + prefix,
+    shared_ptr<Fsm> iut = spec->createMutant(prefix + "-iut",
                                              numOutFaults,
                                              numTransFaults,
                                              true,
-                                             createMutantSeed);
+                                             createMutantSeed,
+                                             plIut);
 
-    CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
-    CLOG(INFO, logging::globalLogger) << "numInput: " << numInput + 1;
-    CLOG(INFO, logging::globalLogger) << "numOutput: " << numOutput + 1;
-    CLOG(INFO, logging::globalLogger) << "numOutFaults: " << numOutFaults;
-    CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
-    CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed: " << createRandomFsmSeed;
-    CLOG(INFO, logging::globalLogger) << "createMutantSeed: " << createMutantSeed;
-
-    Fsm specMin = spec->minimise(false);
-    Fsm iutMin = iut->minimise(false);
-    //Should not be in release:
-    Fsm intersect = spec->intersect(*iut);
-
-#ifdef ENABLE_DEBUG_MACRO
-    const string dotPrefix = "../../../resources/adaptive-test/" + spec->getName() + "-";
-    spec->toDot(dotPrefix + "spec");
-    iut->toDot(dotPrefix + "iut");
-    specMin.toDot(dotPrefix + "specMin");
-    iutMin.toDot(dotPrefix + "iutMin");
-
-    intersect.toDot(dotPrefix + "intersect");
-#endif
-
-    shared_ptr<IOTrace> failTrace;
-    isReduction = !intersect.hasFailure(failTrace);
-
-    if (failTrace)
-    {
-        failTrace = make_shared<IOTrace>(failTrace->removeLeadingEpsilons());
-    }
-
-    CLOG(INFO, logging::globalLogger) << "IUT is " + string((isReduction) ? "" : "NOT ") +
-                                         "a reduction of the specification.";
-
-    if (failTrace)
-    {
-        CLOG(INFO, logging::globalLogger) << "failTrace: " << *failTrace;
-        CLOG(INFO, logging::globalLogger) << "failTrace length: " << failTrace->size();
-    }
-
-    if (isReduction && dontTestReductions) {
-        CLOG(INFO, logging::globalLogger) << "Won't test this one, since it is a reduction.";
-        throw unexpected_reduction("Interrupting testing, since IUT is an unexcpected reduction of the specification.");
-    }
-    else
-    {
-        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Testing.";
-    }
-
-    IOTraceContainer observedTraces;
-    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-    bool result = Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces);
-
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    long durationMS = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    long durationMin = std::chrono::duration_cast<std::chrono::minutes>(end - start).count();
+    result.numStates = numStates + 1;
+    result.numInputs = numInputs + 1;
+    result.numOutputs = numOutputs + 1;
+    result.numOutFaults = numOutFaults;
+    result.numTransFaults = numTransFaults;
+    result.createRandomFsmSeed = createRandomFsmSeed;
+    result.createMutantSeed = createMutantSeed;
 
 
-
-    CLOG(INFO, logging::globalLogger) << "Calculation took " << durationMS << " ms (" << durationMin << " minutes).";
-    LOG(INFO) << "observedTraces: " << observedTraces;
-
-
-    std::stringstream csvOutput;
-    csvOutput << iteration;
-    csvOutput << "," << numStates + 1;
-    csvOutput << "," << numInput + 1;
-    csvOutput << "," << numOutput + 1;
-    csvOutput << "," << specMin.getDReachableStates().size();
-    csvOutput << "," << specMin.getMaximalSetsOfRDistinguishableStates().size();
-    csvOutput << "," << numOutFaults;
-    csvOutput << "," << numTransFaults;
-    csvOutput << "," << isReduction;
-    if (failTrace)
-    {
-        csvOutput << "," << failTrace->size();
-    }
-    else
-    {
-        csvOutput << ",-1";
-    }
-    csvOutput << "," << result;
-    csvOutput << "," << durationMS;
-    csvOutput << "," << (isReduction == result);
-    csvOutput << "," << createRandomFsmSeed;
-    csvOutput << "," << createMutantSeed;
-
-    CLOG(INFO, logging::csvLogger) << csvOutput.str();
-
-    return isReduction == result;
+    executeAdaptiveTest(*spec, *iut, static_cast<size_t>(iut->getMaxNodes()),
+                        prefix + "-intersect", false, dontTestReductions, result);
+    printTestResult(result, true, true, false);
 }
 
 unsigned int getRandomSeed()
@@ -218,48 +403,10 @@ int getRandom(std::mt19937& gen)
     return dis(gen);
 }
 
-struct AdaptiveTestConfigDebug
+void adaptiveTestRandom(AdaptiveTestConfig& config)
 {
-    string prefix = "DEBUG";
-    int numStates;
-    int numInput;
-    int numOutput;
-    size_t numOutFaults;
-    size_t numTransFaults;
-    unsigned int createRandomFsmSeed;
-    unsigned int createMutantSeed;
-};
-
-struct AdaptiveTestConfig
-{
-
-    // Required
-    int numFsm = -1;
-    int maxInput = -1;
-    int maxOutput = -1;
-    int maxStates = -1;
-    int maxOutFaults = -1;
-    int maxTransFaults = -1;
-
-    // Optional
-    int minStates = 2;
-    int minInput = 2;
-    int minOutput = 2;
-    int minOutFaults = 1;
-    int minTransFaults = 1;
-    unsigned int seed = 0;
-    bool dontTestReductions = false;
-};
-
-void adaptiveTest01(AdaptiveTestConfig& config)
-{
-    CLOG(INFO, logging::globalLogger) << "############## Adaptive Test 01 ##############";
+    printTestBegin(config.testName);
     std::chrono::steady_clock::time_point totalStart = std::chrono::steady_clock::now();
-
-    shared_ptr<FsmPresentationLayer> plTest =
-    make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
-            + "../../../resources/adaptive-test-out.txt",
-            + "../../../resources/adaptive-test-state.txt");
 
     if (config.numFsm < 0 ||
             config.maxInput < 0 ||
@@ -301,25 +448,7 @@ void adaptiveTest01(AdaptiveTestConfig& config)
 
     const int subLoopIterations = (config.numFsm < diffStates) ? 1 : 1 + ((config.numFsm - 1) / diffStates);
 
-    CLOG(INFO, logging::globalLogger) << "numFsm: " << config.numFsm;
-    CLOG(INFO, logging::globalLogger) << "maxInput: " << config.maxInput + 1;
-    CLOG(INFO, logging::globalLogger) << "maxOutput: " << config.maxOutput + 1;
-    CLOG(INFO, logging::globalLogger) << "maxStates: " << config.maxStates + 1;
-
-    CLOG(INFO, logging::globalLogger) << "maxOutFaults: " << config.maxOutFaults;
-    CLOG(INFO, logging::globalLogger) << "maxTransFaults: " << config.maxTransFaults;
-    CLOG(INFO, logging::globalLogger) << "minOutFaults: " << config.minOutFaults;
-    CLOG(INFO, logging::globalLogger) << "minTransFaults: " << config.minTransFaults;
-    CLOG(INFO, logging::globalLogger) << "minInput: " << config.minInput + 1;
-    CLOG(INFO, logging::globalLogger) << "minOutput: " << config.minOutput + 1;
-    CLOG(INFO, logging::globalLogger) << "minStates: " << config.minStates + 1;
-    CLOG(INFO, logging::globalLogger) << "dontTestReductions: " << std::boolalpha << config.dontTestReductions;
-    CLOG(INFO, logging::globalLogger) << "seed: " << config.seed;
-
-    CLOG(INFO, logging::globalLogger) << "diffStates: " << diffStates;
-    CLOG(INFO, logging::globalLogger) << "subLoopIterations: " << subLoopIterations;
-
-    TIMED_FUNC(timerObj);
+    printTestConfig(config, diffStates, subLoopIterations);
 
     int executed = 0;
     int passed = 0;
@@ -329,7 +458,8 @@ void adaptiveTest01(AdaptiveTestConfig& config)
         for (int j = 0; j < subLoopIterations; ++j)
         {
 
-            shared_ptr<FsmPresentationLayer> plCopy = make_shared<FsmPresentationLayer>(*plTest);
+            shared_ptr<FsmPresentationLayer> plTestSpecCopy = make_shared<FsmPresentationLayer>(*plTestSpec);
+            shared_ptr<FsmPresentationLayer> plTestIutCopy = make_shared<FsmPresentationLayer>(*plTestIut);
 
             stringstream ss;
             ss << setw(numberDigits) << setfill('0') << i;
@@ -341,8 +471,8 @@ void adaptiveTest01(AdaptiveTestConfig& config)
 
             int numInput = getRandom(config.minInput, config.maxInput, gen);
             int numOutput = getRandom(config.minOutput, config.maxOutput, gen);
-            size_t numOutFaults = static_cast<size_t>(getRandom(config.minOutFaults, config.maxOutFaults, gen));
-            size_t numTransFaults = static_cast<size_t>(getRandom(config.minTransFaults, config.maxTransFaults, gen));
+            int numOutFaults = getRandom(config.minOutFaults, config.maxOutFaults, gen);
+            int numTransFaults = getRandom(config.minTransFaults, config.maxTransFaults, gen);
 
             if (numOutput <= 1 && numOutFaults > 0)
             {
@@ -366,17 +496,14 @@ void adaptiveTest01(AdaptiveTestConfig& config)
             const unsigned int createMutantSeed = static_cast<unsigned int>(getRandom(gen));
 
             TIMED_SCOPE(timerBlkObj, "heavy-iter");
-            CLOG(INFO, logging::globalLogger) << "------------------------------------------------------------------";
-            CLOG(INFO, logging::globalLogger) << "i: " << iteration;
-
-            bool isReduction;
-            bool result;
+            AdaptiveTestResult result;
+            result.testName = config.testName + "-" + iteration;
 
             bool couldCreateMutant = false;
             while (!couldCreateMutant)
             {
                 try {
-                    result = executeAdaptiveTest(
+                    createAndExecuteAdaptiveTest(
                                 iteration,
                                 numStates,
                                 numInput,
@@ -385,10 +512,10 @@ void adaptiveTest01(AdaptiveTestConfig& config)
                                 numTransFaults,
                                 createRandomFsmSeed,
                                 createMutantSeed,
-                                plTest,
+                                plTestSpecCopy,
+                                plTestIutCopy,
                                 config.dontTestReductions,
-                                isReduction,
-                                iteration);
+                                result);
                     couldCreateMutant = true;
                 }
                 catch (unexpected_reduction& e)
@@ -399,7 +526,7 @@ void adaptiveTest01(AdaptiveTestConfig& config)
                 catch (too_many_transition_faults& e)
                 {
                     CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Could not create mutant.";
-                    if (numTransFaults - 1 >= static_cast<size_t>(config.minTransFaults) && numTransFaults - 1 > 0) {
+                    if (numTransFaults - 1 >= config.minTransFaults && numTransFaults - 1 > 0) {
                         --numTransFaults;
                         CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing transition faults.";
                         continue;
@@ -420,12 +547,12 @@ void adaptiveTest01(AdaptiveTestConfig& config)
                 catch (too_many_output_faults& e)
                 {
                     CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Could not create mutant.";
-                    if (numOutFaults - 1 >= static_cast<size_t>(config.minOutFaults) && numOutFaults - 1 > 0) {
+                    if (numOutFaults - 1 >= config.minOutFaults && numOutFaults - 1 > 0) {
                         --numOutFaults;
                         CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing output faults.";
                         continue;
                     }
-                    else if (numTransFaults - 1 >= static_cast<size_t>(config.minTransFaults) && numTransFaults - 1 > 0)
+                    else if (numTransFaults - 1 >= config.minTransFaults && numTransFaults - 1 > 0)
                     {
                         --numTransFaults;
                         CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing transition faults.";
@@ -451,13 +578,12 @@ void adaptiveTest01(AdaptiveTestConfig& config)
                 continue;
             }
 
-            if (result)
+            if (result.pass)
             {
                 ++passed;
             }
 
-            assertOnFail("TC-AT-01-" + iteration, result);
-
+            assertOnFail(result.testName, result.pass);
             ++executed;
             ++i;
         }
@@ -465,16 +591,9 @@ void adaptiveTest01(AdaptiveTestConfig& config)
 
     std::chrono::steady_clock::time_point totalEnd = std::chrono::steady_clock::now();
     long durationS = std::chrono::duration_cast<std::chrono::seconds>(totalEnd - totalStart).count();
-    long durationMin = std::chrono::duration_cast<std::chrono::minutes>(totalEnd - totalStart).count();
+    long durationM = std::chrono::duration_cast<std::chrono::minutes>(totalEnd - totalStart).count();
 
-    CLOG(INFO, logging::globalLogger) << "";
-    CLOG(INFO, logging::globalLogger) << "#################### SUMMARY ####################";
-    CLOG(INFO, logging::globalLogger) << "# Total tests  : " << executed;
-    CLOG(INFO, logging::globalLogger) << "# Passed       : " << passed;
-    CLOG(INFO, logging::globalLogger) << "# Failed       : " << executed - passed;
-    CLOG(INFO, logging::globalLogger) << "# Not executed : " << i - executed;
-    CLOG(INFO, logging::globalLogger) << "# Duration     : " << durationS << " s (" << durationMin << " min).";
-    CLOG(INFO, logging::globalLogger) << "#################################################";
+    printSummary(executed, passed, i - executed, durationS, durationM);
 }
 
 std::string getcwd() {
@@ -489,6 +608,42 @@ std::string getcwd() {
     return result;
 }
 
+void test00_00()
+{
+    AdaptiveTestResult result;
+    result.testName = "00-00";
+    printTestBegin(result.testName);
+    Fsm spec = Fsm(ascTestDirectory + "00/00-spec.dot", "00-00-spec");
+    Fsm iut = Fsm(ascTestDirectory + "00/00-iut.dot", "00-00-iut");
+    result.numOutFaults = 0;
+    result.numTransFaults = 0;
+    executeAdaptiveTest(spec, iut, static_cast<size_t>(iut.getMaxNodes()), "00-00-inter", true, false, result);
+    printTestResult(result, true, false, true);
+    assert(result.testName, result.pass);
+    CLOG(INFO, logging::globalLogger) << testSepLine;
+}
+
+void test00_01()
+{
+    AdaptiveTestResult result;
+    result.testName = "00-01";
+    printTestBegin(result.testName);
+    Fsm spec = Fsm(ascTestDirectory + "00/01-spec.dot", "00-01-spec");
+    Fsm iut = Fsm(ascTestDirectory + "00/01-iut.dot", "00-01-iut");
+
+    result.numOutFaults = 1;
+    result.numTransFaults = 0;
+    executeAdaptiveTest(spec, iut, static_cast<size_t>(iut.getMaxNodes()), "00-01-inter", true, false, result);
+    printTestResult(result, true, false, true);
+    assert(result.testName, result.pass);
+    CLOG(INFO, logging::globalLogger) << testSepLine;
+}
+
+void runAdaptiveStateCountingTests()
+{
+    test00_00();
+    test00_01();
+}
 
 
 int main(int argc, char* argv[])
@@ -502,6 +657,13 @@ int main(int argc, char* argv[])
 #else
     CLOG(INFO, logging::globalLogger) << "This is a release build!";
 #endif
+
+    /*
+    runAdaptiveStateCountingTests();
+    return 0;
+
+    */
+
 /*
     shared_ptr<FsmPresentationLayer> plSpec =
     make_shared<FsmPresentationLayer>("../../../resources/example-master-fehler.in",
@@ -536,8 +698,7 @@ int main(int argc, char* argv[])
     Fsm intersect = spec.intersect(iut);
     intersect.toDot(dotPrefix + "intersect");
 
-    shared_ptr<IOTrace> failTrace;
-    bool isReduction = !intersect.hasFailure(failTrace);
+    bool isReduction = !intersect.hasFailure();
 
     IOTraceContainer observedTraces;
     bool result = Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces);
@@ -553,16 +714,17 @@ int main(int argc, char* argv[])
 */
     //TODO Analyze increasing memory usage with valgrind
     AdaptiveTestConfig config;
-    config.numFsm = 1000000;
+    config.testName = "TRIAL";
+    config.numFsm = 10;
 
-    config.minInput = 1;
-    config.maxInput = 10;
+    config.minInput = 3;
+    config.maxInput = 3;
 
-    config.minOutput = 1;
-    config.maxOutput = 10;
+    config.minOutput = 3;
+    config.maxOutput = 3;
 
-    config.minStates = 1;
-    config.maxStates = 10;
+    config.minStates = 20;
+    config.maxStates = 23;
 
     config.minTransFaults = 1;
     config.maxTransFaults = 1;
@@ -574,10 +736,9 @@ int main(int argc, char* argv[])
 
     config.seed = 1337;
 
-    CLOG(INFO, logging::csvLogger) << "i,numStates,numInput,numOutput,numDReachable,numMaximalSetsOfRDistStates,numOutFaults,numTransFault,"
-                                      "isReduction,failTraceSize,result,durationMS,pass,createRandomFsmSeed,createMutantSeed";
+    writeCsvHeader();
 
-    bool debug = true;
+    bool debug = false;
     if (debug)
     {
         CLOG(INFO, logging::globalLogger) << "############## Debugging ##############";
@@ -591,12 +752,11 @@ int main(int argc, char* argv[])
         debugConfig.createRandomFsmSeed = 653887049;
         debugConfig.createMutantSeed = 1588831269;
 
-        shared_ptr<FsmPresentationLayer> plTest =
-        make_shared<FsmPresentationLayer>("../../../resources/adaptive-test-in.txt",
-                                          "../../../resources/adaptive-test-out.txt",
-                                          "../../../resources/adaptive-test-state.txt");
-        bool isReduction;
-        bool result = executeAdaptiveTest(
+        shared_ptr<FsmPresentationLayer> plTestSpecCopy = make_shared<FsmPresentationLayer>(*plTestSpec);
+        shared_ptr<FsmPresentationLayer> plTestIutCopy = make_shared<FsmPresentationLayer>(*plTestIut);
+
+        AdaptiveTestResult result;
+        createAndExecuteAdaptiveTest(
                     debugConfig.prefix,
                     debugConfig.numStates - 1,
                     debugConfig.numInput - 1,
@@ -605,14 +765,15 @@ int main(int argc, char* argv[])
                     debugConfig.numTransFaults,
                     debugConfig.createRandomFsmSeed,
                     debugConfig.createMutantSeed,
-                    plTest,
+                    plTestSpecCopy,
+                    plTestIutCopy,
                     false,
-                    isReduction);
-        assertOnFail("TC-AT-DEBUG", result);
+                    result);
+        assertOnFail(debugConfig.prefix, result.pass);
     }
     else
     {
-        adaptiveTest01(config);
+        adaptiveTestRandom(config);
     }
 
 	cout << endl << endl;
