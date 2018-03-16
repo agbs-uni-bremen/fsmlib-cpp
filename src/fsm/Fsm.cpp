@@ -2025,7 +2025,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
     }
     if (iut.isMinimal() != True)
     {
-        LOG(FATAL) << "Please ensure to minimize the specification before starting adaptive state counting.";
+        LOG(FATAL) << "Please ensure to minimize the IUT before starting adaptive state counting.";
     }
 #ifdef ENABLE_DEBUG_MACRO
 
@@ -2192,6 +2192,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m, IOTraceCont
                 observedTraces.add(make_shared<const IOTrace>(*inputTrace, *oTrace));
             }
 
+            VLOG(1) << "Checking produced outputs for failures";
             //Chek if the IUT has produced any output that can not be produced by the specification.
             for (size_t i = 0; i < producedOutputsIut.size(); ++i)
             {
@@ -2663,7 +2664,7 @@ IOTreeContainer Fsm::getAdaptiveRCharacterisationSet() const
 vector<vector<shared_ptr<FsmNode>>> Fsm::getMaximalSetsOfRDistinguishableStates() const
 {
     TIMED_FUNC(timerObj);
-    VLOG(1) << "getMaximalSetsOfRDistinguishableStates()";
+    VLOG(2) << "getMaximalSetsOfRDistinguishableStates()";
     vector<vector<shared_ptr<FsmNode>>> result;
     result.reserve(static_cast<size_t>(getMaxNodes()));
     for (shared_ptr<FsmNode> node : nodes)
