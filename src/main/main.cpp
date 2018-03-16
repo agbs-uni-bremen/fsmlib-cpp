@@ -15,6 +15,7 @@
 #include <fsm/Dfsm.h>
 #include <fsm/Fsm.h>
 #include <fsm/FsmNode.h>
+#include <fsm/FsmTransition.h>
 #include <fsm/IOTrace.h>
 #include <fsm/IOTraceContainer.h>
 #include <fsm/FsmPrintVisitor.h>
@@ -62,6 +63,8 @@ static const vector<string> csvHeaders = {
     "numSetsOfMaximalRDistStates",
     "numOutFaults",
     "numTransFaults",
+    "degreeOfCompleteness",
+    "degreeOfNonDeterminism",
     "iutIsReduction",
     "failTraceFound",
     "failTraceFoundSize",
@@ -120,6 +123,8 @@ struct AdaptiveTestResult
     int numSetsOfMaximalRDistStates = -1;
     int numOutFaults = -1;
     int numTransFaults = -1;
+    float degreeOfCompleteness = -1;
+    float degreeOfNonDeterminism = -1;
     bool iutIsReduction;
     shared_ptr<IOTrace> failTraceFound;
     IOTraceContainer observedTraces;
@@ -207,17 +212,18 @@ void printSummary(const int& executed,
 void printTestConfig(const AdaptiveTestConfig& config, const int& diffStates, const int& subLoopIterations)
 {
     CLOG(INFO, logging::globalLogger) << "numFsm: " << config.numFsm;
+    CLOG(INFO, logging::globalLogger) << "minInput: " << config.minInput + 1;
     CLOG(INFO, logging::globalLogger) << "maxInput: " << config.maxInput + 1;
+    CLOG(INFO, logging::globalLogger) << "minOutput: " << config.minOutput + 1;
     CLOG(INFO, logging::globalLogger) << "maxOutput: " << config.maxOutput + 1;
+    CLOG(INFO, logging::globalLogger) << "minStates: " << config.minStates + 1;
     CLOG(INFO, logging::globalLogger) << "maxStates: " << config.maxStates + 1;
 
-    CLOG(INFO, logging::globalLogger) << "maxOutFaults: " << config.maxOutFaults;
-    CLOG(INFO, logging::globalLogger) << "maxTransFaults: " << config.maxTransFaults;
     CLOG(INFO, logging::globalLogger) << "minOutFaults: " << config.minOutFaults;
+    CLOG(INFO, logging::globalLogger) << "maxOutFaults: " << config.maxOutFaults;
     CLOG(INFO, logging::globalLogger) << "minTransFaults: " << config.minTransFaults;
-    CLOG(INFO, logging::globalLogger) << "minInput: " << config.minInput + 1;
-    CLOG(INFO, logging::globalLogger) << "minOutput: " << config.minOutput + 1;
-    CLOG(INFO, logging::globalLogger) << "minStates: " << config.minStates + 1;
+    CLOG(INFO, logging::globalLogger) << "maxTransFaults: " << config.maxTransFaults;
+
     CLOG(INFO, logging::globalLogger) << "dontTestReductions: " << std::boolalpha << config.dontTestReductions;
     CLOG(INFO, logging::globalLogger) << "seed: " << config.seed;
 
@@ -238,7 +244,9 @@ void printTestResult(AdaptiveTestResult& result, bool log, bool csv, bool printT
         CLOG(INFO, logging::globalLogger) << "numSetsOfMaximalRDistStates: " << result.numSetsOfMaximalRDistStates;
         CLOG(INFO, logging::globalLogger) << "numOutFaults               : " << result.numOutFaults;
         CLOG(INFO, logging::globalLogger) << "numTransFaults             : " << result.numTransFaults;
-        CLOG(INFO, logging::globalLogger) << "iutIsReduction             : " << std::boolalpha << result.iutIsReduction;
+        CLOG(INFO, logging::globalLogger) << "degreeOfCompleteness       : " << result.degreeOfCompleteness;
+        CLOG(INFO, logging::globalLogger) << "degreeOfNonDeterminism     : " << result.degreeOfNonDeterminism;
+                CLOG(INFO, logging::globalLogger) << "iutIsReduction             : " << std::boolalpha << result.iutIsReduction;
         if (result.failTraceFound)
         {
             CLOG(INFO, logging::globalLogger) << "failTraceFound             : " << *result.failTraceFound;
@@ -280,6 +288,8 @@ void printTestResult(AdaptiveTestResult& result, bool log, bool csv, bool printT
         csvOutput << "," << result.numSetsOfMaximalRDistStates;
         csvOutput << "," << result.numOutFaults;
         csvOutput << "," << result.numTransFaults;
+        csvOutput << "," << result.degreeOfCompleteness;
+        csvOutput << "," << result.degreeOfNonDeterminism;
         csvOutput << "," << result.iutIsReduction;
 
         if (result.failTraceFound)
@@ -317,6 +327,9 @@ void executeAdaptiveTest(Fsm& spec, Fsm& iut, size_t m, string intersectionName,
     Fsm specMin = spec.minimise(false, "", "", false);
     Fsm iutMin = iut.minimise(false, "", "", false);
 
+    result.degreeOfCompleteness = specMin.getDegreeOfCompleteness();
+    result.degreeOfNonDeterminism = specMin.getDegreeOfNonDeterminism();
+
     result.numStates = specMin.getMaxNodes();
     result.numInputs = specMin.getMaxInput() + 1;
     result.numOutputs = specMin.getMaxOutput() + 1;
@@ -344,6 +357,11 @@ void executeAdaptiveTest(Fsm& spec, Fsm& iut, size_t m, string intersectionName,
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     result.durationMS = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     result.durationM = std::chrono::duration_cast<std::chrono::minutes>(end - start).count();
+
+    if (result.failTraceFound)
+    {
+        result.failTraceFound = make_shared<IOTrace>(result.failTraceFound->removeLeadingEpsilons());
+    }
 
     result.pass = (result.iutIsReduction == result.adaptiveStateCountingResult);
     result.numSetsOfMaximalRDistStates = static_cast<int>(specMin.getMaximalSetsOfRDistinguishableStates().size());
@@ -373,8 +391,12 @@ void createAndExecuteAdaptiveTest(
                                                 numOutputs,
                                                 numStates,
                                                 plSpec,
+                                                0.7f,
+                                                0.25f,
+                                                true,
                                                 true,
                                                 createRandomFsmSeed);
+
     CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Creating mutant.";
 
 
@@ -421,7 +443,7 @@ int getRandom(std::mt19937& gen)
     std::uniform_int_distribution<int> dis;
     return dis(gen);
 }
-
+//TODO Eine CSV-Datei für jede Test-Methode erstellen (ohne den Logger?).
 void adaptiveTestRandom(AdaptiveTestConfig& config)
 {
     printTestBegin(config.testName);
@@ -677,6 +699,7 @@ int main(int argc, char* argv[])
     CLOG(INFO, logging::globalLogger) << "This is a release build!";
 #endif
 
+
     /*
     runAdaptiveStateCountingTests();
     return 0;
@@ -731,7 +754,6 @@ int main(int argc, char* argv[])
 
     return 0;
 */
-    //TODO Analyze increasing memory usage with valgrind
     AdaptiveTestConfig config;
     config.testName = "TRIAL";
     config.numFsm = 10;
