@@ -774,7 +774,7 @@ void Fsm::toDot(const string & fname)
     out.close();
 }
 
-Fsm Fsm::intersect(const Fsm & f)
+Fsm Fsm::intersect(const Fsm & f, string name)
 {
     /*A list of node pairs which is used to control the breath-first search (BFS)*/
     vector<shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>> nodeList;
@@ -889,7 +889,12 @@ Fsm Fsm::intersect(const Fsm & f)
         }
     }
 
-    return Fsm(f.getName(), maxInput, maxOutput, fsmInterNodes, pl);
+    if (name.empty())
+    {
+        name = this->name + "x" + f.getName();
+    }
+
+    return Fsm(name, maxInput, maxOutput, fsmInterNodes, pl);
 }
 
 shared_ptr<Tree> Fsm::getStateCover()
@@ -963,7 +968,7 @@ void Fsm::apply(const InputTrace& input, vector<shared_ptr<OutputTrace>>& produc
     return getInitialState()->getPossibleOutputs(input, producedOutputs, reachedNodes);
 }
 
-Fsm Fsm::transformToObservableFSM() const
+Fsm Fsm::transformToObservableFSM(const string& nameSuffix) const
 {
     TIMED_FUNC(timerObj);
     VLOG(1) << "transformToObservableFSM()";
@@ -1054,7 +1059,7 @@ Fsm Fsm::transformToObservableFSM() const
             }
         }
     }
-    Fsm obsFsm(name + "_O", maxInput, maxOutput, nodeLst, obsPl);
+    Fsm obsFsm(name + nameSuffix, maxInput, maxOutput, nodeLst, obsPl);
     return obsFsm;
 }
 
@@ -1081,7 +1086,7 @@ bool Fsm::isComplete() const
     return complete;
 }
 
-Fsm Fsm::minimiseObservableFSM(bool storeOFSMTables)
+Fsm Fsm::minimiseObservableFSM(bool storeOFSMTables, const string& nameSuffix)
 {
     TIMED_FUNC(timerObj);
     if (storeOFSMTables)
@@ -1114,12 +1119,12 @@ Fsm Fsm::minimiseObservableFSM(bool storeOFSMTables)
     }
 
     /*Create the minimised FSM from the last OFSMTable defined and return it*/
-    Fsm fsm = tbl->toFsm(name + "_MIN");
+    Fsm fsm = tbl->toFsm(name + nameSuffix);
     fsm.minimal = True;
     return fsm;
 }
 
-Fsm Fsm::minimise(bool storeOFSMTables)
+Fsm Fsm::minimise(bool storeOFSMTables, const string& nameSuffixMin, const string& nameSuffixObs)
 {
     TIMED_FUNC(timerObj);
     vector<shared_ptr<FsmNode>> uNodes;
@@ -1128,10 +1133,11 @@ Fsm Fsm::minimise(bool storeOFSMTables)
     if (!isObservable())
     {
         LOG(INFO) << "Fsm is not observable. Converting.";
-        return transformToObservableFSM().minimiseObservableFSM(storeOFSMTables);
+        return transformToObservableFSM(nameSuffixObs)
+                .minimiseObservableFSM(storeOFSMTables, nameSuffixMin);
     }
     
-    return minimiseObservableFSM(storeOFSMTables);
+    return minimiseObservableFSM(storeOFSMTables, nameSuffixMin);
 }
 
 bool Fsm::isCharSet(const shared_ptr<Tree>& w) const

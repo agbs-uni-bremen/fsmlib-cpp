@@ -294,7 +294,7 @@ public:
      @param f the other FSM
      @return a new FSM which equals the intersection of this and f
      */
-    Fsm intersect(const Fsm & f);
+    Fsm intersect(const Fsm & f, std::string name = "");
 
     /**
      * Generate the state cover of an arbitrary FSM
@@ -335,7 +335,7 @@ public:
     /**
      *  Transform an FSM to its observable equivalent.
      */
-    Fsm transformToObservableFSM() const;
+    Fsm transformToObservableFSM(const std::string& nameSuffix = "_O") const;
     
     /**
      Check this FSM with respect to observability
@@ -363,7 +363,7 @@ public:
      \pre This method can only be applied to an observable OFSM
      @return minimal observable FSM which is equivalent to this FSM
      */
-    Fsm minimiseObservableFSM(bool storeOFSMTables = true);
+    Fsm minimiseObservableFSM(bool storeOFSMTables = true, const std::string& nameSuffix = "_MIN");
     
     /**
      Create the minimal observable FSM which is equivalent to this FSM.
@@ -371,7 +371,9 @@ public:
      first. The observable FSM is then minimised.
      @return minimal observable FSM which is equivalent to this FSM
      */
-    Fsm minimise(bool storeOFSMTables = true);
+    Fsm minimise(bool storeOFSMTables = true,
+                 const std::string& nameSuffixMin = "_MIN",
+                 const std::string& nameSuffixObs = "_0");
 
     bool isCharSet(const std::shared_ptr<Tree>& w) const;
     void minimiseCharSet(const std::shared_ptr<Tree>& w);
