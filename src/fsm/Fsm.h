@@ -464,7 +464,7 @@ public:
                              IOTraceContainer& iOTraceContainer,
                              const bool cleanTrailingEmptyTraces = true) const;
 
-    bool hasFailure(std::shared_ptr<IOTrace>& failTrace) const;
+    bool hasFailure() const;
 
     /**
      * Returns a set of input/output sequences that can be produced by this

@@ -1742,7 +1742,7 @@ void Fsm::addPossibleIOTraces(std::shared_ptr<FsmNode> node,
     }
 }
 
-bool Fsm::hasFailure(shared_ptr<IOTrace>& failTrace) const
+bool Fsm::hasFailure() const
 {
     for (const shared_ptr<FsmNode>& node : nodes)
     {
@@ -1769,9 +1769,8 @@ bool Fsm::hasFailure(shared_ptr<IOTrace>& failTrace) const
             }
             if (!foundTransition)
             {
-                VLOG(1) << "The IUT has transition " << otherTrans->str() << " in state " << otherNode->getName() << " but it is missing in the specification's state " << specNode->getName() << ".";
-                failTrace = node->getReachTrace();
-                failTrace->append(*otherTrans->getLabel()->toIOTrace());
+                VLOG(1) << "The IUT has transition " << otherTrans->str() << " in state " << otherNode->getName() <<
+                           " but it is missing in the specification's state " << specNode->getName() << ".";
                 return true;
             }
         }
