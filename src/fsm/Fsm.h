@@ -111,7 +111,7 @@ protected:
      * Reads a dot file and creates an FSM according to the dot definitions.
      * @param fname The path to the dot file.
      */
-    void readFsmFromDot (const std::string & fname);
+    void readFsmFromDot (const std::string & fname, const std::string name = "");
     
     std::string labelString(std::unordered_set<std::shared_ptr<FsmNode>>& lbl) const;
     

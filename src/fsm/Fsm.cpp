@@ -246,7 +246,77 @@ void Fsm::readFsmFromDot (const string & fname)
     initStateIdx = -1;
     presentationLayer = make_shared<FsmPresentationLayer>();
 
+    if (name.empty())
+    {
+        // Get FSM name from file name.
+        regex regFileName(".*\\/(.*?)(?:\\.\\w*)?");
+
+        cmatch matches;
+        regex_match(fname.c_str(), matches, regFileName);
+
+        if (matches.size() > 1)
+        {
+            this->name = matches[1];
+        }
+    }
+
+    regex regTransition("\\s*(\\d)\\s*->\\s*(\\d)\\s*\\[\\s*label=\"(.+)/(.+)\"\\s*\\]\\s*;");
+    // Get maxInput and maxOutput value
+    set<string> parsedInputs;
+    set<string> parsedOutputs;
+    map<string, int> inputStringsToIndex;
+    map<string, int> outputStringsToIndex;
     ifstream inputFile (fname);
+    if (inputFile.is_open())
+    {
+        string line;
+        while (getline (inputFile, line))
+        {
+            cmatch matches;
+            regex_match(line.c_str(), matches, regTransition);
+            if (matches.size() == 5)
+            {
+                string in = matches[3];
+                string out = matches[4];
+
+                if (in == to_string(FsmLabel::EPSILON) || out == to_string(FsmLabel::EPSILON))
+                {
+                    LOG(FATAL) << "The emty input is not being supported as input or output.";
+                }
+
+                parsedInputs.insert(in);
+                parsedOutputs.insert(out);
+            }
+        }
+        maxInput = static_cast<int>(parsedInputs.size() - 1);
+        maxOutput = static_cast<int>(parsedOutputs.size() - 1);
+        inputFile.close();
+    }
+    else
+    {
+        LOG(FATAL) << "Unable to open input file '" << fname << "'";
+    }
+
+    VLOG(1) << "maxInput: " << maxInput;
+    VLOG(1) << "maxOutput: " << maxOutput;
+
+    // Fill presentation layer with inputs
+    int i = 0;
+    for (string in : parsedInputs)
+    {
+        presentationLayer->addIn2String(in);
+        inputStringsToIndex.insert(make_pair(in, i++));
+    }
+    // Fill presentation layer with outputs
+    i = 0;
+    for (string out : parsedOutputs)
+    {
+        presentationLayer->addOut2String(out);
+        outputStringsToIndex.insert(make_pair(out, i++));
+    }
+
+    // Getting all nodes
+    inputFile.open(fname);
     if (inputFile.is_open())
     {
         string line;
@@ -263,11 +333,11 @@ void Fsm::readFsmFromDot (const string & fname)
             }
             cmatch matches;
             regex_match(line.c_str(), matches, regNode);
-            LOG(INFO) << "line:";
-            LOG(INFO) << "  " << line;
-            LOG(INFO) << "matches:";
+            VLOG(2) << "line:";
+            VLOG(2) << "  " << line;
+            VLOG(2) << "matches:";
             for (unsigned i=0; i<matches.size(); ++i) {
-                LOG(INFO) << "  " << matches[i];
+                VLOG(2) << "  " << matches[i];
             }
             if (matches.size() == 3)
             {
@@ -281,8 +351,10 @@ void Fsm::readFsmFromDot (const string & fname)
                 nodes.push_back(node);
                 existingNodes.insert(make_pair(nodeId, node));
                 maxState++;
+                VLOG(1) << "Found state " << node->getName() << ".";
                 if (nextIsInitial)
                 {
+                    VLOG(1) << "State " << node->getName() << " is initial state.";
                     initStateIdx = node->getId();
                     node->markAsInitial();
                     nextIsInitial = false;
@@ -290,62 +362,42 @@ void Fsm::readFsmFromDot (const string & fname)
                 }
             }
         }
-        inputFile.close ();
+        inputFile.close();
+    }
+    else
+    {
+        LOG(FATAL) << "Unable to open input file '" << fname << "'";
     }
 
     inputFile.open(fname);
     if (inputFile.is_open())
     {
         string line;
-        regex regTransition("\\s*(\\d)\\s*->\\s*(\\d)\\s*\\[\\s*label=\"(.+)/(.+)\"\\s*\\]\\s*;");
-        int inputCount = 0;
-        int outputCount = 0;
-        map<string, int> inputs;
-        map<string, int> outputs;
         while (getline (inputFile, line))
         {
             cmatch matches;
             regex_match(line.c_str(), matches, regTransition);
             if (matches.size() == 5)
             {
-                LOG(INFO) << matches[1] << " -" << matches[3] << "/" << matches[4] << "-> " << matches[2];
+                VLOG(1) << "Transition: " << matches[1] << " -- (" << matches[3] << "/" << matches[4] << ") --> " << matches[2];
                 int sourceId = stoi(matches[1]);
                 int targetId = stoi(matches[2]);
                 string input = matches[3];
                 string output = matches[4];
-                int in;
-                int out;
 
-                if(inputs.find(input) == inputs.end()) {
-                    maxInput++;
-                    in = inputCount++;
-                    presentationLayer->addIn2String(input);
-                    inputs.insert(make_pair(input, in));
-                }
-                else
-                {
-                    in = inputs.at(input);
-                }
-                if(outputs.find(output) == outputs.end()) {
-                    maxOutput++;
-                    out = outputCount++;
-                    presentationLayer->addOut2String(output);
-                    outputs.insert(make_pair(output, out));
-                }
-                else
-                {
-                    out = outputs.at(output);
-                }
+                int in = inputStringsToIndex.at(input);
+                int out = outputStringsToIndex.at(output);
 
                 shared_ptr<FsmLabel> label = make_shared<FsmLabel>(in, out, presentationLayer);
                 shared_ptr<FsmTransition> trans = make_shared<FsmTransition>(existingNodes.at(sourceId), existingNodes.at(targetId), label);
                 existingNodes.at(sourceId)->addTransition(trans);
             }
         }
+        inputFile.close();
     }
     else
     {
-        LOG(FATAL) << "Unable to open input file";
+        LOG(FATAL) << "Unable to open input file '" << fname << "'";
     }
 
 }
@@ -442,6 +494,7 @@ Fsm::Fsm(const std::string& dotFileName,
     const std::string& fsmName)
 {
     readFsmFromDot(dotFileName);
+    name = fsmName;
 }
 
 Fsm::Fsm(const string & fname,
