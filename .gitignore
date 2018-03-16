@@ -73,4 +73,7 @@ resources/pls-example/plsautocndOut.csv
 CMakeFiles
 
 src/CMakeLists.txt.user
-*.dot
+
+resources/adaptive-test/*.dot
+resources/asc-test-results/*.dot
+resources/example-master-fehler
