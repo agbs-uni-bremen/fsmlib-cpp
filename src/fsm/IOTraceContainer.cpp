@@ -150,6 +150,19 @@ vector<OutputTrace> IOTraceContainer::getOutputTraces() const
     return result;
 }
 
+IOTrace IOTraceContainer::getLongestTrace() const
+{
+    shared_ptr<const IOTrace> longest;
+    for (const shared_ptr<const IOTrace>& trace : list)
+    {
+        if (!longest || longest->size() < trace -> size())
+        {
+            longest = trace;
+        }
+    }
+    return IOTrace(*longest);
+}
+
 void IOTraceContainer::addUnique(std::vector<IOTraceContainer>& container, const IOTraceContainer& elem)
 {
     for (const IOTraceContainer& cont : container)
