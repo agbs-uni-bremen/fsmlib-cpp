@@ -750,7 +750,13 @@ bool FsmNode::isObservable() const
         
         for ( size_t other = t + 1; other < transitions.size(); other++ ) {
             auto otherLbl = transitions[other]->getLabel();
-            if ( *lbl == *otherLbl ) return false;
+            if ( *lbl == *otherLbl )
+            {
+                VLOG(1) << "Node " << getName() << " is not observable:";
+                VLOG(1) << "  " << transitions[t]->str();
+                VLOG(1) << "  " << transitions[other]->str();
+                return false;
+            }
         }
         
     }

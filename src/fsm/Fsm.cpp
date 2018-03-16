@@ -1827,8 +1827,8 @@ bool Fsm::hasFailure() const
             }
             if (!foundTransition)
             {
-                VLOG(1) << "The IUT has transition " << otherTrans->str() << " in state " << otherNode->getName() <<
-                           " but it is missing in the specification's state " << specNode->getName() << ".";
+                LOG(INFO) << "The IUT has transition " << otherTrans->str() << " in state " << otherNode->getName()
+                          << " but it is missing in the specification's state " << specNode->getName() << ".";
                 return true;
             }
         }
