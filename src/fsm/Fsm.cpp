@@ -655,6 +655,14 @@ vector<shared_ptr<FsmNode>> Fsm::calcDReachableStates(InputTraceSet& detStateCov
             {
                 VLOG(2) << "  " << presentationLayer->getOutId(n);
             }
+
+            if (successorNodes.size() == 0 || producedOutputs.size() == 0)
+            {
+                // The Fsm isn't completely specified;
+                continue;
+            }
+
+
             if (successorNodes.size() > 1)
             {
                 bool skip = false;
