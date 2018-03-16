@@ -70,7 +70,6 @@ void IOTraceContainer::add(OutputTree& tree)
 
 bool IOTraceContainer::contains(const shared_ptr<const IOTrace>& trace) const
 {
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(1));
     return list.find(trace) != list.end();
 }
 
