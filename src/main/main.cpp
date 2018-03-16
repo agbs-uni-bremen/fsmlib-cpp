@@ -54,7 +54,7 @@ static const string testSepLine = "---------------------------------------------
 
 
 static const vector<string> csvHeaders = {
-   "testName",
+    "testName",
     "numStates",
     "numInputs",
     "numOutputs",
@@ -281,12 +281,26 @@ void printTestResult(AdaptiveTestResult& result, bool log, bool csv, bool printT
         csvOutput << "," << result.numOutFaults;
         csvOutput << "," << result.numTransFaults;
         csvOutput << "," << result.iutIsReduction;
+
+        if (result.failTraceFound)
+        {
+            csvOutput << "," << *result.failTraceFound;
+            csvOutput << "," << result.failTraceFound->size();
+        }
+        else
+        {
+            csvOutput << ",";
+            csvOutput << ",";
+        }
+        csvOutput << "," << result.observedTraces.size();
+        csvOutput << "," << result.observedTraces.getLongestTrace().size();
         csvOutput << "," << result.adaptiveStateCountingResult;
-        csvOutput << "," << result.iterations;
-        csvOutput << "," << result.durationMS;
-        csvOutput << "," << result.pass;
         csvOutput << "," << result.createRandomFsmSeed;
         csvOutput << "," << result.createMutantSeed;
+        csvOutput << "," << result.iterations;
+        csvOutput << "," << result.durationMS;
+        csvOutput << "," << result.durationM;
+        csvOutput << "," << result.pass;
         CLOG(INFO, logging::csvLogger) << csvOutput.str();
     }
 }
