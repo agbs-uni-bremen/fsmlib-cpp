@@ -63,24 +63,32 @@ void logging::setLogfileSuffix(const std::string& suffix, const string& loggerId
 
     for (string id : *loggerIds)
     {
-        if (id == logging::globalLogger || id == logging::csvLogger || (loggerId != "" && id != loggerId))
+        if ((id == logging::globalLogger && loggerId != logging::globalLogger)
+                || (id == logging::csvLogger && loggerId != logging::csvLogger)
+                || (loggerId != "" && id != loggerId))
         {
             continue;
         }
         el::Logger* logger = el::Loggers::getLogger(id, false);
         string fileName = logger->configurations()->get(el::Level::Global, el::ConfigurationType::Filename)->value();
-        size_t lastindex = fileName.find_last_of("##");
-        if (lastindex != string::npos)
+        string fileExtension = "";
+        size_t poundIndex = fileName.find_last_of("##");
+        size_t dotIndex = fileName.find_last_of(".");
+        if (dotIndex != string::npos)
         {
-            fileName = fileName.substr(0, lastindex-1);
+            fileExtension = fileName.substr(dotIndex);
+        }
+        if (poundIndex != string::npos)
+        {
+            fileName = fileName.substr(0, poundIndex-1);
         } else {
-            lastindex = fileName.find_last_of(".");
-            if (lastindex != string::npos)
+            size_t dotIndex = fileName.find_last_of(".");
+            if (dotIndex != string::npos)
             {
-                fileName = fileName.substr(0, lastindex);
+                fileName = fileName.substr(0, dotIndex);
             }
         }
-        fileName += "##" + suffix + ".log";
+        fileName += "##" + suffix + fileExtension;
 
         el::Configurations newConf;
         newConf.set(el::Level::Global, el::ConfigurationType::Filename, fileName);
