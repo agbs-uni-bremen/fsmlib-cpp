@@ -3371,6 +3371,9 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
                                      const unsigned seed)
 {
     VLOG(1) << "createRandomFsm()";
+    VLOG(1) << "maxInput: " << maxInput;
+    VLOG(1) << "maxOutput: " << maxOutput;
+    VLOG(1) << "maxState: " << maxState;
     // Initialisation of random number generation
     if ( seed == 0 ) {
         unsigned int s = getRandomSeed();
@@ -3389,34 +3392,30 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
     VLOG(1) << "numIn: " << numIn;
     VLOG(1) << "numOut: " << numOut;
     VLOG(1) << "numStates: " << numStates;
+    VLOG(1) << "degreeOfCompleteness: " << degreeOfCompleteness;
+    VLOG(1) << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism;
 
     // Produce the nodes and put them into a vector.
-    // All nodes are marked 'white' by the costructor - this is now
-    // used to mark unreachable states which have to be made reachable
-    vector<shared_ptr<FsmNode> > nodes;
+    vector<shared_ptr<FsmNode>> createdNodes;
     vector<shared_ptr<FsmNode>> reachedNodes;
     vector<shared_ptr<FsmNode>> unReachedNodes;
-    for ( int n = 0; n < numStates; n++ ) {
-        shared_ptr<FsmNode> node = make_shared<FsmNode>(n,fsmName,pl);
-        nodes.push_back(node);
+    for (int n = 0; n < numStates; ++n) {
+        shared_ptr<FsmNode> node = make_shared<FsmNode>(n, fsmName, pl);
+        createdNodes.push_back(node);
         unReachedNodes.push_back(node);
     }
 
-    shared_ptr<Fsm> fsm = make_shared<Fsm>(fsmName, maxInput, maxOutput, nodes, pl);
+    shared_ptr<Fsm> fsm = make_shared<Fsm>(fsmName, maxInput, maxOutput, createdNodes, pl);
 
     // At index 0 of the vector, the initial state is stored, and
     // this is reachable
-    reachedNodes.push_back(nodes.at(0));
+    reachedNodes.push_back(createdNodes.at(0));
     unReachedNodes.erase(unReachedNodes.begin());
 
-    int numberOfTransitionsNeeded = static_cast<int>(ceil(degreeOfCompleteness * numStates * numIn));
     int numberOfTransitionsCreated = 0;
 
-    VLOG(2) << "For degreeOfCompleteness " << degreeOfCompleteness << " "
-            << numberOfTransitionsNeeded << " transitions will be created.";
-
     // Connecting all nodes.
-    while (reachedNodes.size() != nodes.size())
+    while (reachedNodes.size() != createdNodes.size())
     {
         // Select a reached node at random.
         size_t srcNodeIndex = static_cast<size_t>(rand()) % (reachedNodes.size());
@@ -3425,7 +3424,7 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
 
         const shared_ptr<FsmNode>& targetNode = unReachedNodes.back();
 
-        int input = rand() % numOut;
+        int input = rand() % numIn;
         int output = rand() % numOut;
 
         if (srcNode->hasTransition(input))
@@ -3440,6 +3439,7 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
             {
                 // Maximum degree of non-determinism reached.
                 VLOG(2) << "Won't add non-deterministic transition.";
+                //TODO Don't continue but select input randomly from allowed inputs
                 continue;
             }
             else
@@ -3470,17 +3470,42 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
     if (minimal)
     {
         Fsm fsmMin = fsm->minimise(false, "", "", false);
-        float degreeOfCompletenessMin = fsmMin.getDegreeOfCompleteness();
 
-        while (degreeOfCompletenessMin < degreeOfCompleteness)
+        float degreeOfCompletenessMin = fsmMin.getDegreeOfCompleteness();
+        size_t numStatesMin = fsmMin.size();
+
+        bool metDegreeOfCompleteness = (degreeOfCompletenessMin >= degreeOfCompleteness);
+        bool metNumberOfStates = (numStatesMin == static_cast<size_t>(numStates));
+
+        VLOG(2) << "metDegreeOfCompleteness: " << std::boolalpha << metDegreeOfCompleteness;
+        VLOG(2) << "metnumberOfStates: " << std::boolalpha << metNumberOfStates;
+        while (!metDegreeOfCompleteness || !metNumberOfStates)
         {
-            VLOG(2) << "Minimal FSM does not meet degree of completeness: "
-                    << degreeOfCompletenessMin << " < " << degreeOfCompleteness;
-            fsmMin.meetDegreeOfCompleteness(degreeOfCompleteness, maxDegreeOfNonDeterminism, observable);
+            if (!metNumberOfStates)
+            {
+                VLOG(2) << "Minimal FSM does not contain requested number of states: "
+                        << numStatesMin << " < " << numStates;
+                fsmMin.meetNumberOfStates(maxState, maxDegreeOfNonDeterminism, observable);
+            }
+            else if (!metDegreeOfCompleteness)
+            {
+                VLOG(2) << "Minimal FSM does not meet degree of completeness: "
+                        << degreeOfCompletenessMin << " < " << degreeOfCompleteness;
+                fsmMin.meetDegreeOfCompleteness(degreeOfCompleteness, maxDegreeOfNonDeterminism, observable);
+            }
             fsmMin = fsmMin.minimise(false, "", "", false);
             degreeOfCompletenessMin = fsmMin.getDegreeOfCompleteness();
+            numStatesMin = fsmMin.size();
+            metDegreeOfCompleteness = (degreeOfCompletenessMin >= degreeOfCompleteness);
+            metNumberOfStates = (numStatesMin == static_cast<size_t>(numStates));
+            VLOG(2) << "metDegreeOfCompleteness: " << std::boolalpha << metDegreeOfCompleteness;
+            VLOG(2) << "metnumberOfStates: " << std::boolalpha << metNumberOfStates;
         }
+        fsm = make_shared<Fsm>(fsmMin);
     }
+
+    VLOG(1) << "Created FSM with " << fsm->size() << " states and degreeOfCompleteness: "
+            << fsm->getDegreeOfCompleteness();
 
     return fsm;
 }
@@ -3816,7 +3841,7 @@ void Fsm::meetDegreeOfCompleteness(float degreeOfCompleteness, float maxDegreeOf
         const shared_ptr<FsmNode>& srcNode = nodes.at(srcNodeIndex);
         const shared_ptr<FsmNode>& targetNode = nodes.at(targetNodeIndex);
 
-        int input = rand() % numOut;
+        int input = rand() % numIn;
         int output = rand() % numOut;
 
         if (srcNode->hasTransition(input))
@@ -3848,6 +3873,84 @@ void Fsm::meetDegreeOfCompleteness(float degreeOfCompleteness, float maxDegreeOf
         VLOG(2) << "Created transition " << transition->str();
     }
     VLOG(2) << "numberOfTransitionsCreated: " << numberOfTransitionsCreated;
+}
+
+void Fsm::meetNumberOfStates(int maxState, float maxDegreeOfNonDeterminism, bool observable)
+{
+    VLOG(1) << "meetNumberOfStates()";
+    VLOG(1) << "maxState: " << maxState;
+
+    int numIn = maxInput + 1;
+    int numOut = maxOutput + 1;
+    int numStates = maxState + 1;
+
+    VLOG(1) << "numIn: " << numIn;
+    VLOG(1) << "numOut: " << numOut;
+    VLOG(1) << "numStates: " << numStates;
+
+    int currentNumberNodes = static_cast<int>(size());
+    int missingStates = numStates - currentNumberNodes;
+    VLOG(1) << "missingStates: " << missingStates;
+
+    // Produce the nodes and put them into a vector.
+    vector<shared_ptr<FsmNode>> createdNodes;
+    vector<shared_ptr<FsmNode>> unReachedNodes;
+    for (int n = currentNumberNodes; n < numStates; ++n) {
+        shared_ptr<FsmNode> node = make_shared<FsmNode>(n, name, presentationLayer);
+        createdNodes.push_back(node);
+        unReachedNodes.push_back(node);
+    }
+
+    int numberOfTransitionsCreated = getNumberOfDifferentInputTransitions();
+
+    // Connecting all nodes.
+    while (unReachedNodes.size() > 0)
+    {
+        // Select a reached node at random.
+        size_t srcNodeIndex = static_cast<size_t>(rand()) % (nodes.size());
+        const shared_ptr<FsmNode>& srcNode = nodes.at(srcNodeIndex);
+
+
+        const shared_ptr<FsmNode>& targetNode = unReachedNodes.back();
+
+        int input = rand() % numIn;
+        int output = rand() % numOut;
+
+        if (srcNode->hasTransition(input))
+        {
+            if (observable && srcNode->hasTransition(input, output))
+            {
+                // We want an observable FSM.
+                VLOG(2) << "Keeping FSM observable.";
+                continue;
+            }
+            if (maxDegreeOfNonDeterminism <= 0 || getDegreeOfNonDeterminism() >= maxDegreeOfNonDeterminism)
+            {
+                // Maximum degree of non-determinism reached.
+                VLOG(2) << "Won't add non-deterministic transition.";
+                continue;
+            }
+            else
+            {
+                VLOG(2) << "Adding non-deterministic transition.";
+            }
+        }
+
+        unReachedNodes.pop_back();
+
+        shared_ptr<FsmLabel> label = make_shared<FsmLabel>(input, output, presentationLayer);
+        shared_ptr<FsmTransition> transition = make_shared<FsmTransition>(srcNode, targetNode, label);
+        srcNode->addTransition(transition);
+
+        numberOfTransitionsCreated = getNumberOfDifferentInputTransitions();
+
+        nodes.push_back(targetNode);
+        VLOG(2) << "Created transition " << transition->str();
+    }
+
+    VLOG(2) << "Connected all nodes.";
+    VLOG(2) << "numberOfTransitionsCreated: " << numberOfTransitionsCreated;
+
 }
 
 std::vector< std::unordered_set<int> > Fsm::getEquivalentInputs() {

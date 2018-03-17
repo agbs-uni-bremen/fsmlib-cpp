@@ -129,6 +129,7 @@ protected:
     std::vector< std::unordered_set<int> > getEquivalentInputsFromPrimeMachine();
 
     void meetDegreeOfCompleteness(float degreeOfCompleteness, float maxDegreeOfNonDeterminism, bool observable);
+    void meetNumberOfStates(int maxState, float maxDegreeOfNonDeterminism, bool observable);
 
 public:
     
