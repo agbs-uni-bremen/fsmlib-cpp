@@ -8,13 +8,15 @@ using std::chrono::system_clock;
 
 const char* logging::fsmConversion = "fsm-conversion";
 const char* logging::globalLogger = "global-logger";
-const char* logging::csvLogger = "csv-logger";
+const char* logging::csvLoggerEveryIteration = "csv-logger-every-iteration";
+const char* logging::csvLoggerContext = "csv-logger-context";
 
 void logging::initLogging()
 {
     el::Loggers::getLogger(logging::fsmConversion);
     el::Loggers::getLogger(logging::globalLogger);
-    el::Loggers::getLogger(logging::csvLogger);
+    el::Loggers::getLogger(logging::csvLoggerEveryIteration);
+    el::Loggers::getLogger(logging::csvLoggerContext);
 
     const string loggerConfigDir = "../../../src/externals/easyloggingpp_v9.95.0";
 #ifdef ENABLE_DEBUG_MACRO
@@ -64,7 +66,8 @@ void logging::setLogfileSuffix(const std::string& suffix, const string& loggerId
     for (string id : *loggerIds)
     {
         if ((id == logging::globalLogger && loggerId != logging::globalLogger)
-                || (id == logging::csvLogger && loggerId != logging::csvLogger)
+                || (id == logging::csvLoggerEveryIteration && loggerId != logging::csvLoggerEveryIteration)
+                || (id == logging::csvLoggerContext && loggerId != logging::csvLoggerContext)
                 || (loggerId != "" && id != loggerId))
         {
             continue;
