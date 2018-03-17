@@ -131,7 +131,7 @@ public:
      */
     std::vector<OutputTrace> getOutputTraces() const;
 
-    IOTrace getLongestTrace() const;
+    std::shared_ptr<IOTrace> getLongestTrace() const;
 
     /**
      * Returns the size of the conteiner.
