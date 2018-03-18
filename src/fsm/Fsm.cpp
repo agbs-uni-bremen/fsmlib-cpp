@@ -4231,7 +4231,6 @@ void Fsm::accept(FsmVisitor& v) {
 
 
 bool Fsm::removeUnreachableNodes(std::vector<shared_ptr<FsmNode>>& unreachableNodes) {
-    TIMED_FUNC(timerObj);
     VLOG(2) << "removeUnreachableNodes()";
     vector<shared_ptr<FsmNode>> newNodes;
     FsmVisitor v;
