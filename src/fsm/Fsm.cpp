@@ -3969,17 +3969,19 @@ void Fsm::meetNumberOfStates(const int& maxState,
 
     // Produce the nodes and put them into a vector.
     vector<shared_ptr<FsmNode>> unReachedNodes;
-    for (int n = currentNumberNodes; n < numStates; ++n) {
+    unReachedNodes.reserve(static_cast<size_t>(missingStates));
+    int lowestId = currentNumberNodes;
+    int highestId = lowestId + missingStates - 1;
+    for (int n = highestId; n >=lowestId; --n) {
         shared_ptr<FsmNode> node = make_shared<FsmNode>(n, name, presentationLayer);
-        VLOG(2) << "Created node " << node->getName() << " with id " << n << "(" << node << ")";
+        VLOG(2) << "Created node " << node->getName() << " with id " << n << " (" << node << ")";
         unReachedNodes.push_back(node);
     }
 
     // Connecting all nodes.
     while (unReachedNodes.size() > 0)
     {
-        const shared_ptr<FsmNode>& targetNode = unReachedNodes.front();
-        unReachedNodes.erase(unReachedNodes.begin());
+        const shared_ptr<FsmNode>& targetNode = unReachedNodes.back();
         VLOG(2) << "targetNode: " << targetNode->getName();
 
         shared_ptr<FsmNode> srcNode;
@@ -3999,6 +4001,9 @@ void Fsm::meetNumberOfStates(const int& maxState,
                 VLOG(2) << "Selected transition: " << transition->str();
                 VLOG(2) << "Replacing target node " << transition->getTarget()->getName() << " with node " << targetNode->getName();
                 transition->setTarget(targetNode);
+                nodes.push_back(targetNode);
+                VLOG(2) << "Modified transition: " << transition->str();
+                unReachedNodes.pop_back();
             }
             else
             {
@@ -4010,6 +4015,7 @@ void Fsm::meetNumberOfStates(const int& maxState,
             shared_ptr<FsmTransition> transition = make_shared<FsmTransition>(srcNode, targetNode, label);
             srcNode->addTransition(transition);
             nodes.push_back(targetNode);
+            unReachedNodes.pop_back();
             VLOG(1) << "Created transition " << transition->str();
         }
     }
