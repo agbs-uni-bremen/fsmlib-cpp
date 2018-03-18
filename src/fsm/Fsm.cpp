@@ -3972,39 +3972,20 @@ void Fsm::meetNumberOfStates(const int& maxState,
     for (int n = currentNumberNodes; n < numStates; ++n) {
         shared_ptr<FsmNode> node = make_shared<FsmNode>(n, name, presentationLayer);
         VLOG(2) << "Created node " << node->getName() << " with id " << n << "(" << node << ")";
-        // Adding node now to FSM's nodes to ensure that its index in the array
-        // is the same as its ID.
-        nodes.push_back(node);
         unReachedNodes.push_back(node);
     }
 
     // Connecting all nodes.
     while (unReachedNodes.size() > 0)
     {
-        const shared_ptr<FsmNode>& targetNode = unReachedNodes.back();
-        unReachedNodes.pop_back();
+        const shared_ptr<FsmNode>& targetNode = unReachedNodes.front();
+        unReachedNodes.erase(unReachedNodes.begin());
         VLOG(2) << "targetNode: " << targetNode->getName();
 
         shared_ptr<FsmNode> srcNode;
         shared_ptr<FsmLabel> label;
 
-        VLOG(2) << "Collecting all nodes that have been reached yet:";
-        vector<shared_ptr<FsmNode>> allowedNodes;
-        for (const shared_ptr<FsmNode>& n : nodes)
-        {
-            if (find(unReachedNodes.begin(), unReachedNodes.end(), n) == unReachedNodes.end()
-                    && n != targetNode)
-            {
-                VLOG(2) << "  Adding node " << n->getName();
-                allowedNodes.push_back(n);
-            }
-            else
-            {
-                VLOG(2) << "  Discarding node " << n->getName();
-            }
-        }
-
-        selectRandomNodeAndCreateLabel(allowedNodes, maxDegreeOfNonDeterminism, observable, srcNode, label);
+        selectRandomNodeAndCreateLabel(nodes, maxDegreeOfNonDeterminism, observable, srcNode, label);
 
         // We could not find a source node or a valid label.
         if (!srcNode || !label)
@@ -4028,6 +4009,7 @@ void Fsm::meetNumberOfStates(const int& maxState,
         {
             shared_ptr<FsmTransition> transition = make_shared<FsmTransition>(srcNode, targetNode, label);
             srcNode->addTransition(transition);
+            nodes.push_back(targetNode);
             VLOG(1) << "Created transition " << transition->str();
         }
     }
@@ -4037,6 +4019,11 @@ void Fsm::meetNumberOfStates(const int& maxState,
     for (size_t i = 0; i < nodes.size(); ++i)
     {
         VLOG(2) << "Node at index " << i << " has ID " << nodes.at(i)->getId();
+        if (i != static_cast<size_t>(nodes.at(i)->getId()))
+        {
+            LOG(FATAL) << "Node at index " << i << " has ID " << nodes.at(i)->getId() << ". "
+                       << "This is an invalid internal state and should not happen!.";
+        }
     }
 
     VLOG(2) << "Connected all nodes.";
