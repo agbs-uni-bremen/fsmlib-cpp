@@ -285,6 +285,53 @@ bool FsmNode::hasTransition(const int input) const
     return false;
 }
 
+vector<int> FsmNode::getNotDefinedInputs(const int& maxInput) const
+{
+    VLOG(2) << "getNotDefinedInputs()";
+    vector<int> result;
+    for (int i = 0; i <= maxInput; ++i)
+    {
+        bool inputDefined = false;
+        for (const shared_ptr<FsmTransition>& t : transitions)
+        {
+            if (t->getLabel()->getInput() == i)
+            {
+                inputDefined = true;
+                break;
+            }
+        }
+        if (!inputDefined){
+            VLOG(2) << "  " << presentationLayer->getInId(static_cast<unsigned int>(i));
+            result.push_back(i);
+        }
+    }
+    return result;
+}
+
+vector<int> FsmNode::getNotDefinedOutputs(const int& input, const int& maxOutput) const
+{
+    VLOG(2) << "getNotDefinedOutputs() for input " << presentationLayer->getInId(static_cast<unsigned int>(input));
+    vector<int> result;
+    for (int o = 0; o <= maxOutput; ++o)
+    {
+        bool outputDefined = false;
+        for (const shared_ptr<FsmTransition>& t : transitions)
+        {
+            if (t->getLabel()->getInput() == input && t->getLabel()->getOutput() == o)
+            {
+                outputDefined = true;
+                break;
+            }
+        }
+        if (!outputDefined)
+        {
+            VLOG(2) << "  " << presentationLayer->getOutId(static_cast<unsigned int>(o));
+            result.push_back(o);
+        }
+    }
+    return result;
+}
+
 bool FsmNode::isPossibleOutput(const int x, const int y) const
 {
     for (auto transition : transitions)

@@ -128,8 +128,23 @@ protected:
      */
     std::vector< std::unordered_set<int> > getEquivalentInputsFromPrimeMachine();
 
-    void meetDegreeOfCompleteness(float degreeOfCompleteness, float maxDegreeOfNonDeterminism, bool observable);
-    void meetNumberOfStates(int maxState, float maxDegreeOfNonDeterminism, bool observable);
+    void addRandomTransitions(const float& maxDegreeOfNonDeterminism,
+                              const bool& observable);
+    void meetDegreeOfCompleteness(const float& degreeOfCompleteness,
+                                  const float& maxDegreeOfNonDeterminism,
+                                  const bool& observable);
+    void meetNumberOfStates(const int& maxState, const float& maxDegreeOfNonDeterminism, const bool& observable);
+    std::shared_ptr<FsmLabel> createRandomLabel(
+            const std::shared_ptr<FsmNode>& srcNode,
+            const float& maxDegreeOfNonDeterminism,
+            const bool& observable) const;
+
+    void selectRandomNodeAndCreateLabel(
+            std::vector<std::shared_ptr<FsmNode>> nodePool,
+            const float& maxDegreeOfNonDeterminism,
+            const bool& observable,
+            std::shared_ptr<FsmNode>& node,
+            std::shared_ptr<FsmLabel>& label) const;
 
 public:
     
@@ -304,6 +319,7 @@ public:
     void toDot(const std::string & fname);
     
     float getDegreeOfCompleteness() const;
+    int getNumberOfNotDefinedTransitions(const float& maxDegreeOfNonDeterminism) const;
     float getDegreeOfNonDeterminism() const;
     int getNumberOfDifferentInputTransitions() const;
 

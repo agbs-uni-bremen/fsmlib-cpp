@@ -127,6 +127,9 @@ public:
     bool hasTransition(const int input, const int output) const;
     bool hasTransition(const int input) const;
 
+    std::vector<int> getNotDefinedInputs(const int& maxInput) const;
+    std::vector<int> getNotDefinedOutputs(const int& input, const int& maxOutput) const;
+
     bool isPossibleOutput(const int x, const int y) const;
     bool isPossibleInput(const int x) const;
 
