@@ -65,8 +65,29 @@ ostream & operator<<(ostream& out, FsmTransition& transition)
 string FsmTransition::str()
 {
     stringstream out;
-    out << getSource()->getId() << " -> " << getTarget()->getId() << "[label=\"" << *label << "\"];"
-        << "  //" << getSource()->getName() << " -> " << getTarget()->getName();
+    if (auto src = getSource())
+    {
+        if (auto tar = getTarget())
+        {
+            out << src->getId() << " -> " << tar->getId() << "[label=\"" << *label << "\"];"
+                << "  //" << src->getName() << " -> " << tar->getName();
+        }
+        else
+        {
+            out << src->getId() << " -> " << "[label=\"" << *label << "\"];"
+                << "  //" << src->getName() << " -> ";
+        }
+    }
+    else if (auto tar = getTarget())
+    {
+        out << " -> " << tar->getId() << "[label=\"" << *label << "\"];"
+            << "  //" << " -> " << tar->getName();
+    }
+    else
+    {
+        out << " -> " << "[label=\"" << *label << "\"];"
+            << "  //" << " -> ";
+    }
     return out.str();
 }
 
