@@ -453,12 +453,18 @@ void logToCsv(const vector<vector<AdaptiveTestResult>>& resultsMatrix, const Csv
     size_t matrixHeight = 0;
     for (size_t i = 0; i < resultsMatrix.size(); ++i)
     {
+        size_t h = resultsMatrix.at(i).size();
         if (i == 0)
         {
-            matrixHeight = resultsMatrix.at(i).size();
-        } else if (matrixHeight != resultsMatrix.at(i).size())
+            matrixHeight = h;
+        }
+        else if (matrixHeight != h)
         {
-            CLOG(INFO, logging::globalLogger) << "The results matrix is not if consitent height.";
+            CLOG(WARNING, logging::globalLogger) << "The results matrix is not of consitent height.";
+            if (h > matrixHeight)
+            {
+                matrixHeight = h;
+            }
         }
     }
 
@@ -791,6 +797,20 @@ void createAndExecuteAdaptiveTest(
     result.createRandomFsmSeed = createRandomFsmSeed;
     result.createMutantSeed = createMutantSeed;
 
+    CLOG(INFO, logging::globalLogger) << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
+    CLOG(INFO, logging::globalLogger) << "Starting adaptive state counting.";
+    CLOG(INFO, logging::globalLogger) << "Name                     : " << result.testName;
+    CLOG(INFO, logging::globalLogger) << "numStates                : " << result.numStates;
+    CLOG(INFO, logging::globalLogger) << "numInputs                : " << result.numInputs;
+    CLOG(INFO, logging::globalLogger) << "numOutputs               : " << result.numOutputs;
+    CLOG(INFO, logging::globalLogger) << "numOutFaults             : " << result.numOutFaults;
+    CLOG(INFO, logging::globalLogger) << "numTransFaults           : " << result.numTransFaults;
+    CLOG(INFO, logging::globalLogger) << "degreeOfCompleteness     : " << degreeOfCompleteness;
+    CLOG(INFO, logging::globalLogger) << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism;
+    CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed      : " << result.createRandomFsmSeed;
+    CLOG(INFO, logging::globalLogger) << "createMutantSeed         : " << result.createMutantSeed;
+    CLOG(INFO, logging::globalLogger) << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
+
 
     executeAdaptiveTest(*spec, *iut, static_cast<size_t>(iut->getMaxNodes()),
                         prefix + "-intersect", loggingConfig.toDot, dontTestReductions, result);
@@ -953,16 +973,25 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                 continue;
                             }
 
-                            const unsigned int createRandomFsmSeed = static_cast<unsigned int>(getRandom(gen));
-                            const unsigned int createMutantSeed = static_cast<unsigned int>(getRandom(gen));
+                            unsigned int createRandomFsmSeed = static_cast<unsigned int>(getRandom(gen));
+                            unsigned int createMutantSeed = static_cast<unsigned int>(getRandom(gen));
 
                             TIMED_SCOPE(timerBlkObj, "heavy-iter");
                             AdaptiveTestResult result;
                             result.testName = config.testName + "-" + iteration;
 
                             bool couldCreateMutant = false;
+                            bool abort = false;
+                            bool newSeeds = false;
                             do
                             {
+                                if (newSeeds)
+                                {
+                                    CLOG_IF(VLOG_IS_ON(1), INFO, logging::globalLogger) << "Generating new seeds.";
+                                    createRandomFsmSeed = static_cast<unsigned int>(getRandom(gen));
+                                    createMutantSeed = static_cast<unsigned int>(getRandom(gen));
+                                    newSeeds = false;
+                                }
                                 try {
                                     createAndExecuteAdaptiveTest(
                                                 iteration,
@@ -991,42 +1020,62 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                 }
                                 catch (unexpected_reduction& e)
                                 {
-                                    CLOG(WARNING, logging::globalLogger) << "IUT is a reduction of the specification. Skipping.";
-                                    break;
+                                    CLOG(WARNING, logging::globalLogger) << "IUT is a reduction of the specification.";
+                                    if (config.forceTestParameters)
+                                    {
+                                        newSeeds = true;
+                                    }
+                                    else
+                                    {
+                                        abort = true;
+                                    }
                                 }
                                 catch (too_many_transition_faults& e)
                                 {
                                     CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Could not create mutant.";
-                                    if (numTransFaults - 1 >= config.minTransFaults && numTransFaults - 1 > 0) {
+                                    if (!config.forceTestParameters
+                                            && numTransFaults - 1 >= config.minTransFaults && numTransFaults - 1 > 0) {
                                         --numTransFaults;
                                         CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing transition faults.";
                                         continue;
                                     }
+                                    else if (config.forceTestParameters)
+                                    {
+                                        newSeeds = true;
+
+                                    }
                                     else
                                     {
-                                        break;
+                                        abort = true;
                                     }
                                 }
                                 catch (too_many_output_faults& e)
                                 {
                                     CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Could not create mutant.";
-                                    if (numOutFaults - 1 >= config.minOutFaults && numOutFaults - 1 > 0) {
+                                    if (!config.forceTestParameters
+                                            && numOutFaults - 1 >= config.minOutFaults && numOutFaults - 1 > 0) {
                                         --numOutFaults;
                                         CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing output faults.";
                                         continue;
                                     }
-                                    else if (numTransFaults - 1 >= config.minTransFaults && numTransFaults - 1 > 0)
+                                    else if (!config.forceTestParameters
+                                             && numTransFaults - 1 >= config.minTransFaults && numTransFaults - 1 > 0)
                                     {
                                         --numTransFaults;
                                         CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing transition faults.";
                                         continue;
                                     }
+                                    else if (config.forceTestParameters)
+                                    {
+                                        newSeeds = true;
+
+                                    }
                                     else
                                     {
-                                        break;
+                                        abort = true;
                                     }
                                 }
-                            } while (!couldCreateMutant && !config.forceTestParameters);
+                            } while (!couldCreateMutant && !abort);
                             if (!couldCreateMutant)
                             {
                                 ++i;
@@ -1037,6 +1086,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                 CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
                                 CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed: " << createRandomFsmSeed;
                                 CLOG(INFO, logging::globalLogger) << "createMutantSeed: " << createMutantSeed;
+                                //TODO
                                 CLOG(WARNING, logging::globalLogger) << "Could not create requested mutant. Skipping.";
                                 continue;
                             }
@@ -1176,7 +1226,7 @@ void test01_00()
 void test01_01()
 {
     AdaptiveTestConfig config;
-    config.testName = "ST-IF";
+    config.testName = "ST-RED";
     config.numFsm = 20000;
 
     config.minInput = 4;
@@ -1238,11 +1288,11 @@ int main(int argc, char* argv[])
     CLOG(INFO, logging::globalLogger) << "This is a release build!";
 #endif
 
-    /*
-    test01_00();
+
+    runAdaptiveStateCountingTests();
 
     return 0;
-    */
+
 
     /*
     runAdaptiveStateCountingTests();
