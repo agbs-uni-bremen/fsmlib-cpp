@@ -208,6 +208,7 @@ struct AdaptiveTestResult
     int numOutputs = -2;
     int numDReachableStates = -1;
     vector<vector<shared_ptr<FsmNode>>> setsOfMaximalRDistStates;
+    int numSetsOfMaximalRDistStates;
     int numOutFaults = -1;
     int numTransFaults = -1;
     float degreeOfCompleteness = -1;
@@ -215,6 +216,7 @@ struct AdaptiveTestResult
     bool iutIsReduction;
     shared_ptr<IOTrace> failTraceFound;
     IOTraceContainer observedTraces;
+    int numObservedTraces;
     shared_ptr<IOTrace> longestObservedTrace;
     bool adaptiveStateCountingResult;
     unsigned createRandomFsmSeed = 0;
@@ -223,7 +225,6 @@ struct AdaptiveTestResult
     long durationMS = -1;
     long durationM = -1;
     bool pass = 0;
-    shared_ptr<Fsm> intersection;
 };
 
 void assertInconclusive(string tc, string comment = "") {
@@ -277,7 +278,7 @@ string getFieldFromResult(const AdaptiveTestResult& result, const CsvField& fiel
         out << result.numDReachableStates;
         break;
     case CsvField::NUM_SETS_OF_MAXIMAL_R_DIST_STATES:
-        out << result.setsOfMaximalRDistStates.size();
+        out << result.numSetsOfMaximalRDistStates;
         break;
     case CsvField::NUM_OUT_FAULTS:
         out << result.numOutFaults;
@@ -315,7 +316,7 @@ string getFieldFromResult(const AdaptiveTestResult& result, const CsvField& fiel
         }
         break;
     case CsvField::OBSERVED_TRACES_SIZE:
-        out << result.observedTraces.size();
+        out << result.numObservedTraces;
         break;
     case CsvField::LONGEST_OBSERVED_TRACE:
         if (result.longestObservedTrace)
@@ -653,7 +654,7 @@ void printTestResult(AdaptiveTestResult& result, const CsvConfig& csvConfig, con
             }
         }
 
-        CLOG(INFO, logging::globalLogger) << "numSetsOfMaximalRDistStates: " << result.setsOfMaximalRDistStates.size();
+        CLOG(INFO, logging::globalLogger) << "numSetsOfMaximalRDistStates: " << result.numSetsOfMaximalRDistStates;
         CLOG(INFO, logging::globalLogger) << "numOutFaults               : " << result.numOutFaults;
         CLOG(INFO, logging::globalLogger) << "numTransFaults             : " << result.numTransFaults;
         CLOG(INFO, logging::globalLogger) << "degreeOfCompleteness       : " << result.degreeOfCompleteness;
@@ -679,7 +680,7 @@ void printTestResult(AdaptiveTestResult& result, const CsvConfig& csvConfig, con
         }
         CLOG(INFO, logging::globalLogger) << "longestObservedTrace       : " << *result.longestObservedTrace;
         CLOG(INFO, logging::globalLogger) << "length longestObservedTrace: " << result.longestObservedTrace->size();
-        CLOG(INFO, logging::globalLogger) << "observedTraces size        : " << result.observedTraces.size();
+        CLOG(INFO, logging::globalLogger) << "observedTraces size        : " << result.numObservedTraces;
         if (loggingConfig.printObservedTraces)
         {
             CLOG(INFO, logging::globalLogger) << "observedTraces             : " << result.observedTraces;
@@ -715,7 +716,8 @@ void executeAdaptiveTest(Fsm& spec, Fsm& iut, size_t m, string intersectionName,
     result.numInputs = specMin.getMaxInput() + 1;
     result.numOutputs = specMin.getMaxOutput() + 1;
 
-    result.iutIsReduction = isReduction(specMin, iutMin, intersectionName, result.intersection);
+    shared_ptr<Fsm> intersection;
+    result.iutIsReduction = isReduction(specMin, iutMin, intersectionName, intersection);
 
 
     if (toDot)
@@ -724,7 +726,7 @@ void executeAdaptiveTest(Fsm& spec, Fsm& iut, size_t m, string intersectionName,
         iut.toDot(ascTestResultDirectory + iut.getName());
         specMin.toDot(ascTestResultDirectory + spec.getName() + "-min");
         iutMin.toDot(ascTestResultDirectory + iut.getName() + "-min");
-        result.intersection->toDot(ascTestResultDirectory + result.intersection->getName());
+        intersection->toDot(ascTestResultDirectory + intersection->getName());
     }
 
     if (result.iutIsReduction && dontTestReductions) {
@@ -746,8 +748,10 @@ void executeAdaptiveTest(Fsm& spec, Fsm& iut, size_t m, string intersectionName,
 
     result.pass = (result.iutIsReduction == result.adaptiveStateCountingResult);
     result.setsOfMaximalRDistStates = specMin.getMaximalSetsOfRDistinguishableStates();
+    result.numSetsOfMaximalRDistStates = static_cast<int>(result.setsOfMaximalRDistStates.size());
     result.numDReachableStates = static_cast<int>(specMin.getDReachableStates().size());
     result.longestObservedTrace = result.observedTraces.getLongestTrace();
+    result.numObservedTraces = static_cast<int>(result.observedTraces.size());
 }
 
 
@@ -1021,6 +1025,9 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                                 config.loggingConfig,
                                                 result);
                                     couldCreateMutant = true;
+
+                                    result.setsOfMaximalRDistStates.clear();
+                                    result.observedTraces.clear();
 
                                     if (config.csvConfig.context != TestIteration::END)
                                     {
