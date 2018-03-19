@@ -242,7 +242,7 @@ void assert(string tc, bool verdict, string comment = "") {
         out += ": " + comment;
     }
 
-    CLOG(INFO, logging::globalLogger) << out <<  endl;
+    CLOG(INFO, logging::globalLogger) << out;
     
 }
 
@@ -911,11 +911,6 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
         config.seed = getRandomSeed();
     }
 
-    CLOG(INFO, logging::globalLogger) << "Seed: " << config.seed;
-
-    std::mt19937 gen(config.seed);
-
-
     const int numberDigits = ((config.numFsm <= 1)? 1 : static_cast<int>(log10(config.numFsm)) + 1);
 
 
@@ -930,28 +925,28 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
         CLOG(FATAL, logging::globalLogger) << "Please check the test parameters.";
     }
 
-    if (config.loggingConfig.logTestDetails)
-    {
-        printTestConfig(config);
-    }
-
     float divisor = (diffInput * diffOutput * diffStates * diffOutFaults * diffTransFaults);
     int innerIterations = static_cast<int>(ceil(static_cast<float>(config.numFsm) / divisor));
     int totalIterations = static_cast<int>(innerIterations * divisor);
 
+    if (config.loggingConfig.logTestDetails)
+    {
+        printTestConfig(config);
 
-    CLOG(INFO, logging::globalLogger) << "divisor: " << divisor;
-    CLOG(INFO, logging::globalLogger) << "innerIterations: " << innerIterations;
-    CLOG(INFO, logging::globalLogger) << "totalIterations: " << totalIterations;
-    CLOG(INFO, logging::globalLogger) << "";
+        CLOG(INFO, logging::globalLogger) << "Seed           : " << config.seed;
+        CLOG(INFO, logging::globalLogger) << "divisor        : " << divisor;
+        CLOG(INFO, logging::globalLogger) << "innerIterations: " << innerIterations;
+        CLOG(INFO, logging::globalLogger) << "totalIterations: " << totalIterations;
+        CLOG(INFO, logging::globalLogger) << "";
+        CLOG(INFO, logging::globalLogger) << "diffInput      : " << diffInput;
+        CLOG(INFO, logging::globalLogger) << "diffOutput     : " << diffOutput;
+        CLOG(INFO, logging::globalLogger) << "diffStates     : " << diffStates;
+        CLOG(INFO, logging::globalLogger) << "diffOutFaults  : " << diffOutFaults;
+        CLOG(INFO, logging::globalLogger) << "diffTransFaults: " << diffTransFaults;
+        CLOG(INFO, logging::globalLogger) << "";
+    }
 
-    CLOG(INFO, logging::globalLogger) << "diffInput: " << diffInput;
-    CLOG(INFO, logging::globalLogger) << "diffOutput: " << diffOutput;
-    CLOG(INFO, logging::globalLogger) << "diffStates: " << diffStates;
-    CLOG(INFO, logging::globalLogger) << "diffOutFaults: " << diffOutFaults;
-    CLOG(INFO, logging::globalLogger) << "diffTransFaults: " << diffTransFaults;
-
-    CLOG(INFO, logging::globalLogger) << "";
+    std::mt19937 gen(config.seed);
 
     int executed = 0;
     int passed = 0;
@@ -1142,7 +1137,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                 ++passed;
                             }
 
-                            assertOnFail(result.testName, result.pass);
+                            assert(result.testName, result.pass);
                             ++executed;
                             ++i;
                         }  // End inner loop
