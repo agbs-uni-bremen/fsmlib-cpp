@@ -862,7 +862,6 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
             config.maxStates < 0 ||
             config.maxOutFaults < 0 ||
             config.maxTransFaults < 0 ||
-            config.degreeOfCompleteness < 0 ||
             config.maxDegreeOfNonDeterminism < 0)
     {
         CLOG(FATAL, logging::globalLogger) << "Please provide all required parameters.";

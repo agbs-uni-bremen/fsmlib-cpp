@@ -3508,6 +3508,7 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
     int numIn = maxInput + 1;
     int numOut = maxOutput + 1;
     int numStates = maxState + 1;
+    const bool degreeOfCompletenessRequired = degreeOfCompleteness <= 0;
 
     VLOG(1) << "numIn: " << numIn;
     VLOG(1) << "numOut: " << numOut;
@@ -3558,10 +3559,11 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
     }
     VLOG(2) << "Connected all nodes.";
 
-
-
-    VLOG(2) << "Creating or removing transitions to comply with the given degree of completeness.";
-    fsm->meetDegreeOfCompleteness(degreeOfCompleteness, maxDegreeOfNonDeterminism, observable);
+    if (degreeOfCompletenessRequired)
+    {
+        VLOG(2) << "Creating or removing transitions to comply with the given degree of completeness.";
+        fsm->meetDegreeOfCompleteness(degreeOfCompleteness, maxDegreeOfNonDeterminism, observable);
+    }
 
     // Add some random transitions.
     // Only allow non-deterministic transitions, as we don't want to alter
@@ -4258,6 +4260,11 @@ bool Fsm::meetDegreeOfCompleteness(const float& degreeOfCompleteness,
 bool Fsm::doesMeetDegreeOfCompleteness(const float& degreeOfCompleteness, vector<shared_ptr<FsmNode>> nodePool) const
 {
     VLOG(2) << "doesMeetDegreeOfCompleteness()";
+
+    if (degreeOfCompleteness <= 0)
+    {
+        return true;
+    }
 
     if (nodePool.empty())
     {
