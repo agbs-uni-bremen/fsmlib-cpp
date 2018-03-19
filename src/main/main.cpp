@@ -63,6 +63,7 @@ enum class TestIteration
     STATE,
     OUTPUT_FAULT,
     TRANSITION_FAULT,
+    DEGREE_COMPLETENESS,
     END
 };
 
@@ -130,6 +131,7 @@ void initCsvIterations()
     csvIterations.insert(make_pair(TestIteration::STATE, "States"));
     csvIterations.insert(make_pair(TestIteration::OUTPUT_FAULT, "Outout Faults"));
     csvIterations.insert(make_pair(TestIteration::TRANSITION_FAULT, "Transition Faults"));
+    csvIterations.insert(make_pair(TestIteration::DEGREE_COMPLETENESS, "Degree of Completeness"));
 }
 
 void initialize()
@@ -149,6 +151,7 @@ struct CsvConfig
 struct LoggingConfig
 {
     bool toDot = false;
+    bool toFsm = false;
     bool logTestDetails = false;
     bool logTestResultsSummary = true;
     bool printSetsOfMaximalRDistStates = false;
@@ -183,8 +186,11 @@ struct AdaptiveTestConfig
     int maxOutFaults = -1;
     int maxTransFaults = -1;
 
-    float degreeOfCompleteness = -1;
-    float maxDegreeOfNonDeterminism = -1;
+    float minDegreeOfCompleteness = -1;
+    float maxDegreeOfCompleteness = -1;
+
+
+    float maxDegreeOfNonDeterminism = 1.0f;
 
     // Optional
     CsvConfig csvConfig;
@@ -225,6 +231,7 @@ struct AdaptiveTestResult
     long durationMS = -1;
     long durationM = -1;
     bool pass = 0;
+    int targetDegreeOfCompleteness;
 };
 
 void assertInconclusive(string tc, string comment = "") {
@@ -455,7 +462,7 @@ void logToCsv(const vector<vector<AdaptiveTestResult>>& resultsMatrix, const Csv
     int numStates = 0;
     int numOutputFaults = 0;
     int numTransitionFaults = 0;
-
+    int degreeCompleteness = 0;
 
     size_t matrixHeight = 0;
     for (size_t i = 0; i < resultsMatrix.size(); ++i)
@@ -494,6 +501,7 @@ void logToCsv(const vector<vector<AdaptiveTestResult>>& resultsMatrix, const Csv
                     numStates = result.numStates;
                     numOutputFaults= result.numOutFaults;
                     numTransitionFaults = result.numTransFaults;
+                    degreeCompleteness = result.targetDegreeOfCompleteness;
                 }
                 else if (config.context == TestIteration::INPUT && result.numInputs != numInputs)
                 {
@@ -519,6 +527,11 @@ void logToCsv(const vector<vector<AdaptiveTestResult>>& resultsMatrix, const Csv
                 {
                     CLOG(FATAL, logging::globalLogger)
                             << "Trying to log context, but number of transition faults differ.";
+                }
+                else if (config.context == TestIteration::DEGREE_COMPLETENESS && result.targetDegreeOfCompleteness != degreeCompleteness)
+                {
+                    CLOG(FATAL, logging::globalLogger)
+                            << "Trying to log context, but target degree of completeness differs.";
                 }
                 out.at(row) += getFieldFromResult(result, field) + csvSep;
             }
@@ -646,7 +659,8 @@ void printTestConfig(const AdaptiveTestConfig& config)
     CLOG(INFO, logging::globalLogger) << "minTransFaults: " << config.minTransFaults;
     CLOG(INFO, logging::globalLogger) << "maxTransFaults: " << config.maxTransFaults;
 
-    CLOG(INFO, logging::globalLogger) << "degreeOfCompleteness: " << config.degreeOfCompleteness;
+    CLOG(INFO, logging::globalLogger) << "minDegreeOfCompleteness: " << config.minDegreeOfCompleteness;
+    CLOG(INFO, logging::globalLogger) << "maxDegreeOfCompleteness: " << config.maxDegreeOfCompleteness;
     CLOG(INFO, logging::globalLogger) << "maxDegreeOfNonDeterminism: " << config.maxDegreeOfNonDeterminism;
 
     CLOG(INFO, logging::globalLogger) << "dontTestReductions: " << std::boolalpha << config.dontTestReductions;
@@ -733,7 +747,7 @@ bool isReduction(Fsm& spec, Fsm& iut, string intersectionName, shared_ptr<Fsm>& 
 }
 
 void executeAdaptiveTest(Fsm& spec, Fsm& iut, size_t m, string intersectionName,
-                         const bool& toDot, const bool& dontTestReductions, AdaptiveTestResult& result)
+                         const bool& toDot, const bool& toFsm, const bool& dontTestReductions, AdaptiveTestResult& result)
 {
     Fsm specMin = spec.minimise(false, "", "", false);
     Fsm iutMin = iut.minimise(false, "", "", false);
@@ -756,6 +770,16 @@ void executeAdaptiveTest(Fsm& spec, Fsm& iut, size_t m, string intersectionName,
         specMin.toDot(ascTestResultDirectory + spec.getName() + "-min");
         iutMin.toDot(ascTestResultDirectory + iut.getName() + "-min");
         intersection->toDot(ascTestResultDirectory + intersection->getName());
+    }
+    if (toFsm)
+    {
+        ofstream out(ascTestResultDirectory + spec.getName() + ".fsm");
+        spec.dumpFsm(out);
+        out.close();
+
+        out.open(ascTestResultDirectory + iut.getName() + ".fsm");
+        iut.dumpFsm(out);
+        out.close();
     }
 
     if (result.iutIsReduction && dontTestReductions) {
@@ -851,7 +875,7 @@ void createAndExecuteAdaptiveTest(
     }
 
     executeAdaptiveTest(*spec, *iut, static_cast<size_t>(iut->getMaxNodes()),
-                        prefix + "-intersect", loggingConfig.toDot, dontTestReductions, result);
+                        prefix + "-intersect", loggingConfig.toDot, loggingConfig.toFsm, dontTestReductions, result);
 
     printTestResult(result, csvConfig, loggingConfig);
 }
@@ -919,13 +943,14 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
     const int diffStates = config.maxStates - config.minStates + 1;
     const int diffOutFaults = config.maxOutFaults - config.minOutFaults + 1;
     const int diffTransFaults = config.maxTransFaults - config.minTransFaults + 1;
+    const int degreeOfCompletenessIterations = static_cast<int>(config.maxDegreeOfCompleteness - config.minDegreeOfCompleteness) * 10 + 1;
 
-    if (diffInput <= 0 || diffOutput <= 0 || diffStates <= 0 || diffOutFaults <= 0 || diffTransFaults <= 0)
+    if (diffInput <= 0 || diffOutput <= 0 || diffStates <= 0 || diffOutFaults <= 0 || diffTransFaults <= 0 || degreeOfCompletenessIterations <= 0)
     {
         CLOG(FATAL, logging::globalLogger) << "Please check the test parameters.";
     }
 
-    float divisor = (diffInput * diffOutput * diffStates * diffOutFaults * diffTransFaults);
+    float divisor = (diffInput * diffOutput * diffStates * diffOutFaults * diffTransFaults * degreeOfCompletenessIterations);
     int innerIterations = static_cast<int>(ceil(static_cast<float>(config.numFsm) / divisor));
     int totalIterations = static_cast<int>(innerIterations * divisor);
 
@@ -943,6 +968,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
         CLOG(INFO, logging::globalLogger) << "diffStates     : " << diffStates;
         CLOG(INFO, logging::globalLogger) << "diffOutFaults  : " << diffOutFaults;
         CLOG(INFO, logging::globalLogger) << "diffTransFaults: " << diffTransFaults;
+        CLOG(INFO, logging::globalLogger) << "degreeOfCompletenessIterations: " << degreeOfCompletenessIterations;
         CLOG(INFO, logging::globalLogger) << "";
     }
 
@@ -968,179 +994,196 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                 {
                     for (int ctTransFault = config.minTransFaults; ctTransFault <= config.maxTransFaults; ++ctTransFault)
                     {
-                        for (int ctInnerIt = 0; ctInnerIt < innerIterations; ++ctInnerIt)
+                        for (int degreeCount = 0; degreeCount < degreeOfCompletenessIterations; ++degreeCount)
                         {
-                            CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger)
-                                    << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-                            CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << ctInput << " "
-                                                                                << ctOutput << " "
-                                                                                << ctState << " "
-                                                                                << ctOutFault << " "
-                                                                                << ctTransFault << " "
-                                                                                << ctInnerIt;
+                            float degreeOfCompleteness;
 
-                            shared_ptr<FsmPresentationLayer> plTestSpecCopy = make_shared<FsmPresentationLayer>(*plTestSpec);
-                            shared_ptr<FsmPresentationLayer> plTestIutCopy = make_shared<FsmPresentationLayer>(*plTestIut);
-
-                            stringstream ss;
-                            ss << setw(numberDigits) << setfill('0') << i;
-                            string iteration = ss.str();
-
-                #ifdef ENABLE_DEBUG_MACRO
-                            logging::setLogfileSuffix(iteration);
-                #endif
-
-
-                            int numInputs = ctInput;
-                            int numOutputs = ctOutput;
-                            int numStates = ctState;
-                            int numOutFaults = ctOutFault;
-                            int numTransFaults = ctTransFault;
-
-
-                            if (numOutputs <= 1 && numOutFaults > 0)
+                            if (config.minDegreeOfCompleteness <= 0 || config.maxDegreeOfCompleteness <= 0)
                             {
-                                CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
-                                CLOG(INFO, logging::globalLogger) << "numInput: " << numInputs + 1;
-                                CLOG(INFO, logging::globalLogger) << "numOutput: " << numOutputs + 1;
-                                CLOG(INFO, logging::globalLogger) << "numOutFaults: " << numOutFaults;
-                                CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
-                                CLOG(WARNING, logging::globalLogger) << "Too little outputs. Can not create requested number of "
-                                                                     << "output faults. Could not create mutant. Skipping.";
+                                degreeOfCompleteness = -1;
+                            }
+                            else
+                            {
+                                float step = 0.1f;
+                                degreeOfCompleteness = config.minDegreeOfCompleteness + (step * degreeCount);
+                            }
+
+                            for (int ctInnerIt = 0; ctInnerIt < innerIterations; ++ctInnerIt)
+                            {
+                                CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger)
+                                        << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+                                CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << ctInput << " "
+                                                                                    << ctOutput << " "
+                                                                                    << ctState << " "
+                                                                                    << ctOutFault << " "
+                                                                                    << ctTransFault << " "
+                                                                                    << ctInnerIt;
+
+                                shared_ptr<FsmPresentationLayer> plTestSpecCopy = make_shared<FsmPresentationLayer>(*plTestSpec);
+                                shared_ptr<FsmPresentationLayer> plTestIutCopy = make_shared<FsmPresentationLayer>(*plTestIut);
+
+                                stringstream ss;
+                                ss << setw(numberDigits) << setfill('0') << i;
+                                string iteration = ss.str();
+
+                    #ifdef ENABLE_DEBUG_MACRO
+                                logging::setLogfileSuffix(iteration);
+                    #endif
+
+
+                                int numInputs = ctInput;
+                                int numOutputs = ctOutput;
+                                int numStates = ctState;
+                                int numOutFaults = ctOutFault;
+                                int numTransFaults = ctTransFault;
+
+
+                                if (numOutputs <= 1 && numOutFaults > 0)
+                                {
+                                    CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
+                                    CLOG(INFO, logging::globalLogger) << "numInput: " << numInputs + 1;
+                                    CLOG(INFO, logging::globalLogger) << "numOutput: " << numOutputs + 1;
+                                    CLOG(INFO, logging::globalLogger) << "numOutFaults: " << numOutFaults;
+                                    CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
+                                    CLOG(WARNING, logging::globalLogger) << "Too little outputs. Can not create requested number of "
+                                                                         << "output faults. Could not create mutant. Skipping.";
+                                    ++i;
+                                    continue;
+                                }
+
+                                unsigned int createRandomFsmSeed = static_cast<unsigned int>(getRandom(gen));
+                                unsigned int createMutantSeed = static_cast<unsigned int>(getRandom(gen));
+
+                                TIMED_SCOPE(timerBlkObj, "heavy-iter");
+                                AdaptiveTestResult result;
+                                result.testName = config.testName + "-" + iteration;
+
+                                bool couldCreateMutant = false;
+                                bool abort = false;
+                                bool newSeeds = false;
+                                do
+                                {
+                                    if (newSeeds)
+                                    {
+                                        CLOG_IF(VLOG_IS_ON(1), INFO, logging::globalLogger) << "Generating new seeds.";
+                                        createRandomFsmSeed = static_cast<unsigned int>(getRandom(gen));
+                                        createMutantSeed = static_cast<unsigned int>(getRandom(gen));
+                                        newSeeds = false;
+                                    }
+                                    try {
+                                        createAndExecuteAdaptiveTest(
+                                                    iteration,
+                                                    numStates,
+                                                    numInputs,
+                                                    numOutputs,
+                                                    numOutFaults,
+                                                    numTransFaults,
+                                                    degreeOfCompleteness,
+                                                    config.maxDegreeOfNonDeterminism,
+                                                    createRandomFsmSeed,
+                                                    createMutantSeed,
+                                                    plTestSpecCopy,
+                                                    plTestIutCopy,
+                                                    config.dontTestReductions,
+                                                    config.csvConfig,
+                                                    config.loggingConfig,
+                                                    result);
+                                        couldCreateMutant = true;
+
+                                        result.setsOfMaximalRDistStates.clear();
+                                        result.observedTraces.clear();
+                                        result.targetDegreeOfCompleteness = static_cast<int>((degreeOfCompleteness * 10)) * 10;
+
+                                        if (config.csvConfig.context != TestIteration::END)
+                                        {
+                                            innerCollectedResults.push_back(result);
+                                        }
+
+                                    }
+                                    catch (unexpected_reduction& e)
+                                    {
+                                        CLOG(WARNING, logging::globalLogger) << "IUT is a reduction of the specification.";
+                                        if (config.forceTestParameters)
+                                        {
+                                            newSeeds = true;
+                                        }
+                                        else
+                                        {
+                                            abort = true;
+                                        }
+                                    }
+                                    catch (too_many_transition_faults& e)
+                                    {
+                                        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Could not create mutant.";
+                                        if (!config.forceTestParameters
+                                                && numTransFaults - 1 >= config.minTransFaults && numTransFaults - 1 > 0) {
+                                            --numTransFaults;
+                                            CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing transition faults.";
+                                            continue;
+                                        }
+                                        else if (config.forceTestParameters)
+                                        {
+                                            newSeeds = true;
+
+                                        }
+                                        else
+                                        {
+                                            abort = true;
+                                        }
+                                    }
+                                    catch (too_many_output_faults& e)
+                                    {
+                                        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Could not create mutant.";
+                                        if (!config.forceTestParameters
+                                                && numOutFaults - 1 >= config.minOutFaults && numOutFaults - 1 > 0) {
+                                            --numOutFaults;
+                                            CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing output faults.";
+                                            continue;
+                                        }
+                                        else if (!config.forceTestParameters
+                                                 && numTransFaults - 1 >= config.minTransFaults && numTransFaults - 1 > 0)
+                                        {
+                                            --numTransFaults;
+                                            CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing transition faults.";
+                                            continue;
+                                        }
+                                        else if (config.forceTestParameters)
+                                        {
+                                            newSeeds = true;
+
+                                        }
+                                        else
+                                        {
+                                            abort = true;
+                                        }
+                                    }
+                                } while (!couldCreateMutant && !abort);
+                                if (!couldCreateMutant)
+                                {
+                                    ++i;
+                                    CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
+                                    CLOG(INFO, logging::globalLogger) << "numInput: " << numInputs + 1;
+                                    CLOG(INFO, logging::globalLogger) << "numOutput: " << numOutputs + 1;
+                                    CLOG(INFO, logging::globalLogger) << "numOutFaults: " << numOutFaults;
+                                    CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
+                                    CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed: " << createRandomFsmSeed;
+                                    CLOG(INFO, logging::globalLogger) << "createMutantSeed: " << createMutantSeed;
+                                    //TODO
+                                    CLOG(WARNING, logging::globalLogger) << "Could not create requested mutant. Skipping.";
+                                    continue;
+                                }
+
+                                if (result.pass)
+                                {
+                                    ++passed;
+                                }
+
+                                assert(result.testName, result.pass);
+                                ++executed;
                                 ++i;
-                                continue;
-                            }
+                            }  // End inner loop
 
-                            unsigned int createRandomFsmSeed = static_cast<unsigned int>(getRandom(gen));
-                            unsigned int createMutantSeed = static_cast<unsigned int>(getRandom(gen));
-
-                            TIMED_SCOPE(timerBlkObj, "heavy-iter");
-                            AdaptiveTestResult result;
-                            result.testName = config.testName + "-" + iteration;
-
-                            bool couldCreateMutant = false;
-                            bool abort = false;
-                            bool newSeeds = false;
-                            do
-                            {
-                                if (newSeeds)
-                                {
-                                    CLOG_IF(VLOG_IS_ON(1), INFO, logging::globalLogger) << "Generating new seeds.";
-                                    createRandomFsmSeed = static_cast<unsigned int>(getRandom(gen));
-                                    createMutantSeed = static_cast<unsigned int>(getRandom(gen));
-                                    newSeeds = false;
-                                }
-                                try {
-                                    createAndExecuteAdaptiveTest(
-                                                iteration,
-                                                numStates,
-                                                numInputs,
-                                                numOutputs,
-                                                numOutFaults,
-                                                numTransFaults,
-                                                config.degreeOfCompleteness,
-                                                config.maxDegreeOfNonDeterminism,
-                                                createRandomFsmSeed,
-                                                createMutantSeed,
-                                                plTestSpecCopy,
-                                                plTestIutCopy,
-                                                config.dontTestReductions,
-                                                config.csvConfig,
-                                                config.loggingConfig,
-                                                result);
-                                    couldCreateMutant = true;
-
-                                    result.setsOfMaximalRDistStates.clear();
-                                    result.observedTraces.clear();
-
-                                    if (config.csvConfig.context != TestIteration::END)
-                                    {
-                                        innerCollectedResults.push_back(result);
-                                    }
-
-                                }
-                                catch (unexpected_reduction& e)
-                                {
-                                    CLOG(WARNING, logging::globalLogger) << "IUT is a reduction of the specification.";
-                                    if (config.forceTestParameters)
-                                    {
-                                        newSeeds = true;
-                                    }
-                                    else
-                                    {
-                                        abort = true;
-                                    }
-                                }
-                                catch (too_many_transition_faults& e)
-                                {
-                                    CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Could not create mutant.";
-                                    if (!config.forceTestParameters
-                                            && numTransFaults - 1 >= config.minTransFaults && numTransFaults - 1 > 0) {
-                                        --numTransFaults;
-                                        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing transition faults.";
-                                        continue;
-                                    }
-                                    else if (config.forceTestParameters)
-                                    {
-                                        newSeeds = true;
-
-                                    }
-                                    else
-                                    {
-                                        abort = true;
-                                    }
-                                }
-                                catch (too_many_output_faults& e)
-                                {
-                                    CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Could not create mutant.";
-                                    if (!config.forceTestParameters
-                                            && numOutFaults - 1 >= config.minOutFaults && numOutFaults - 1 > 0) {
-                                        --numOutFaults;
-                                        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing output faults.";
-                                        continue;
-                                    }
-                                    else if (!config.forceTestParameters
-                                             && numTransFaults - 1 >= config.minTransFaults && numTransFaults - 1 > 0)
-                                    {
-                                        --numTransFaults;
-                                        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing transition faults.";
-                                        continue;
-                                    }
-                                    else if (config.forceTestParameters)
-                                    {
-                                        newSeeds = true;
-
-                                    }
-                                    else
-                                    {
-                                        abort = true;
-                                    }
-                                }
-                            } while (!couldCreateMutant && !abort);
-                            if (!couldCreateMutant)
-                            {
-                                ++i;
-                                CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
-                                CLOG(INFO, logging::globalLogger) << "numInput: " << numInputs + 1;
-                                CLOG(INFO, logging::globalLogger) << "numOutput: " << numOutputs + 1;
-                                CLOG(INFO, logging::globalLogger) << "numOutFaults: " << numOutFaults;
-                                CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
-                                CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed: " << createRandomFsmSeed;
-                                CLOG(INFO, logging::globalLogger) << "createMutantSeed: " << createMutantSeed;
-                                //TODO
-                                CLOG(WARNING, logging::globalLogger) << "Could not create requested mutant. Skipping.";
-                                continue;
-                            }
-
-                            if (result.pass)
-                            {
-                                ++passed;
-                            }
-
-                            assert(result.testName, result.pass);
-                            ++executed;
-                            ++i;
-                        }  // End inner loop
+                        } // End degree of completeness loop
 
                         if (loggingContext == TestIteration::TRANSITION_FAULT)
                         {
@@ -1211,11 +1254,11 @@ void trial(bool debug)
     config.testName = "TRIAL";
     config.numFsm = 1000;
 
-    config.minInput = 3;
-    config.maxInput = 3;
+    config.minInput = 4;
+    config.maxInput = 4;
 
-    config.minOutput = 3;
-    config.maxOutput = 3;
+    config.minOutput = 4;
+    config.maxOutput = 4;
 
     config.minStates = 10;
     config.maxStates = 10;
@@ -1226,7 +1269,6 @@ void trial(bool debug)
     config.minOutFaults = 1;
     config.maxOutFaults = 1;
 
-    config.degreeOfCompleteness = 0.6f;
     config.maxDegreeOfNonDeterminism = 1.0f;
 
     config.dontTestReductions = true;
@@ -1237,8 +1279,8 @@ void trial(bool debug)
     config.csvConfig.logEveryIteration = true;
 
     config.loggingConfig.logTestDetails = true;
-    config.loggingConfig.toDot = true;
-    config.loggingConfig.printSetsOfMaximalRDistStates = true;
+    config.loggingConfig.toDot = false;
+    config.loggingConfig.printSetsOfMaximalRDistStates = false;
 
     writeCsvHeader(config.csvConfig, logging::csvLoggerEveryIteration);
 
@@ -1305,7 +1347,7 @@ void test00_00()
     Fsm iut = Fsm(ascTestDirectory + "00/00-iut.dot", "00-00-iut");
     result.numOutFaults = 0;
     result.numTransFaults = 0;
-    executeAdaptiveTest(spec, iut, static_cast<size_t>(iut.getMaxNodes()), "00-00-inter", true, false, result);
+    executeAdaptiveTest(spec, iut, static_cast<size_t>(iut.getMaxNodes()), "00-00-inter", true, false, false, result);
     printTestResult(result, csvConfig, loggingConfig);
     assert(result.testName, result.pass);
     CLOG(INFO, logging::globalLogger) << testSepLine;
@@ -1327,7 +1369,7 @@ void test00_01()
 
     result.numOutFaults = 1;
     result.numTransFaults = 0;
-    executeAdaptiveTest(spec, iut, static_cast<size_t>(iut.getMaxNodes()), "00-01-inter", true, false, result);
+    executeAdaptiveTest(spec, iut, static_cast<size_t>(iut.getMaxNodes()), "00-01-inter", true, false, false, result);
     printTestResult(result, csvConfig, loggingConfig);
     assert(result.testName, result.pass);
     CLOG(INFO, logging::globalLogger) << testSepLine;
@@ -1337,10 +1379,10 @@ void test00_01()
  * Testing FSMs with number of states varying
  * and always one output fault.
  */
-void test01_00()
+void INF_STA()
 {
     AdaptiveTestConfig config;
-    config.testName = "ST-IF";
+    config.testName = "INF-STA";
     config.numFsm = 20000;
 
     config.minInput = 4;
@@ -1358,9 +1400,6 @@ void test01_00()
     config.minOutFaults = 1;
     config.maxOutFaults = 1;
 
-    config.degreeOfCompleteness = 0.6f;
-    config.maxDegreeOfNonDeterminism = 1.0f;
-
     config.dontTestReductions = true;
 
     config.loggingConfig.toDot = false;
@@ -1376,11 +1415,15 @@ void test01_00()
     adaptiveTestRandom(config);
 }
 
-void test01_01()
+/**
+ * Testing FSMs with number of states varying.
+ * IUTs are always a reduction of the specification.
+ */
+void RED_STA()
 {
     AdaptiveTestConfig config;
-    config.testName = "ST-RED";
-    config.numFsm = 20000;
+    config.testName = "RED-STA";
+    config.numFsm = 100;
 
     config.minInput = 4;
     config.maxInput = 4;
@@ -1397,12 +1440,10 @@ void test01_01()
     config.minOutFaults = 0;
     config.maxOutFaults = 0;
 
-    config.degreeOfCompleteness = 0.6f;
-    config.maxDegreeOfNonDeterminism = 1.0f;
-
     config.dontTestReductions = false;
 
     config.loggingConfig.toDot = false;
+    config.loggingConfig.toFsm = true;
     config.loggingConfig.printSetsOfMaximalRDistStates = false;
 
     config.csvConfig.logEveryIteration = true;
@@ -1410,20 +1451,177 @@ void test01_01()
     config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
     config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
 
-    config.seed = 3537;
+    config.seed = 785676;
 
     adaptiveTestRandom(config);
 }
 
+void RED_INP()
+{
+    AdaptiveTestConfig config;
+    config.testName = "RED-INP";
+    config.numFsm = 20000;
+
+    config.minInput = 2;
+    config.maxInput = 10;
+
+    config.minOutput = 4;
+    config.maxOutput = 4;
+
+    config.minStates = 10;
+    config.maxStates = 10;
+
+    config.minTransFaults = 0;
+    config.maxTransFaults = 0;
+
+    config.minOutFaults = 0;
+    config.maxOutFaults = 0;
+
+    config.dontTestReductions = false;
+
+    config.loggingConfig.toDot = false;
+    config.loggingConfig.printSetsOfMaximalRDistStates = false;
+
+    config.csvConfig.logEveryIteration = true;
+    config.csvConfig.context = TestIteration::INPUT;
+    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
+    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
+
+    config.seed = 546457;
+
+    adaptiveTestRandom(config);
+}
+
+void RED_OUTP()
+{
+    AdaptiveTestConfig config;
+    config.testName = "RED-OUTP";
+    config.numFsm = 20000;
+
+    config.minInput = 4;
+    config.maxInput = 4;
+
+    config.minOutput = 2;
+    config.maxOutput = 10;
+
+    config.minStates = 10;
+    config.maxStates = 10;
+
+    config.minTransFaults = 0;
+    config.maxTransFaults = 0;
+
+    config.minOutFaults = 0;
+    config.maxOutFaults = 0;
+
+    config.dontTestReductions = false;
+
+    config.loggingConfig.toDot = false;
+    config.loggingConfig.printSetsOfMaximalRDistStates = false;
+
+    config.csvConfig.logEveryIteration = true;
+    config.csvConfig.context = TestIteration::OUTPUT;
+    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
+    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
+
+    config.seed = 546457;
+
+    adaptiveTestRandom(config);
+}
+
+void RED_COMP()
+{
+    AdaptiveTestConfig config;
+    config.testName = "RED-OUTP";
+    config.numFsm = 20000;
+
+    config.minInput = 4;
+    config.maxInput = 4;
+
+    config.minOutput = 4;
+    config.maxOutput = 4;
+
+    config.minStates = 10;
+    config.maxStates = 10;
+
+    config.minTransFaults = 0;
+    config.maxTransFaults = 0;
+
+    config.minOutFaults = 0;
+    config.maxOutFaults = 0;
+
+    config.minDegreeOfCompleteness = 0.5f;
+    config.maxDegreeOfCompleteness = 1.0f;
+
+    config.dontTestReductions = false;
+
+    config.loggingConfig.toDot = false;
+    config.loggingConfig.printSetsOfMaximalRDistStates = false;
+
+    config.csvConfig.logEveryIteration = true;
+    config.csvConfig.context = TestIteration::OUTPUT;
+    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
+    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
+
+    config.seed = 546457;
+
+    adaptiveTestRandom(config);
+}
+
+
+/**
+ * Testing FSMs with number of inputs varying
+ * and always one output fault.
+ */
+void INF_INP()
+{
+    AdaptiveTestConfig config;
+    config.testName = "INP-INF-01";
+    config.numFsm = 100;
+
+    config.minInput = 1;
+    config.maxInput = 10;
+
+    config.minOutput = 4;
+    config.maxOutput = 4;
+
+    config.minStates = 1;
+    config.maxStates = 20;
+
+    config.minTransFaults = 0;
+    config.maxTransFaults = 0;
+
+    config.minOutFaults = 1;
+    config.maxOutFaults = 1;
+
+    config.dontTestReductions = true;
+
+    config.loggingConfig.toDot = false;
+    config.loggingConfig.printSetsOfMaximalRDistStates = false;
+
+    config.csvConfig.logEveryIteration = true;
+    config.csvConfig.context = TestIteration::INPUT;
+    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
+    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
+
+    config.seed = 7364746;
+
+    adaptiveTestRandom(config);
+}
+
+
 void runAdaptiveStateCountingTests()
 {
-    /*
-    test00_00();
-    test00_01();
-    */
+    // Input faults
+    INF_STA();
+    INF_INP();
 
-    test01_00();
-    test01_01();
+    // Reductions
+    RED_INP();
+    RED_OUTP();
+    RED_STA();
+
+    RED_COMP();
+
 }
 
 int main(int argc, char* argv[])
@@ -1441,15 +1639,12 @@ int main(int argc, char* argv[])
     CLOG(INFO, logging::globalLogger) << "This is a release build!";
 #endif
 
-    trial(false);
-
+    RED_STA();
     return 0;
 
     runAdaptiveStateCountingTests();
 
     return 0;
-
-    cout << endl << endl;
 }
 
 
