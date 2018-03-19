@@ -1395,64 +1395,7 @@ int main(int argc, char* argv[])
 
     return 0;
 
-
-    /*
-    runAdaptiveStateCountingTests();
-    return 0;
-
-    */
-
-/*
-    shared_ptr<FsmPresentationLayer> plSpec =
-    make_shared<FsmPresentationLayer>("../../../resources/example-master-fehler.in",
-                                      "../../../resources/example-master-fehler.out",
-                                      "../../../resources/example-master-fehler.state");
-
-    shared_ptr<FsmPresentationLayer> plIut =
-    make_shared<FsmPresentationLayer>("../../../resources/example-master-fehler.in",
-                                      "../../../resources/example-master-fehler.out",
-                                      "../../../resources/example-master-fehler-iut.state");
-
-
-    Fsm spec = Fsm("../../../resources/example-master-fehler.fsm", plSpec, "spec");
-    Fsm iut = Fsm("../../../resources/example-master-fehler-iut.fsm", plIut, "iut");
-
-    if (!spec.isCompletelyDefined()) {
-        LOG(FATAL) << "Specification is not completely defined.";
-    }
-    if (!iut.isCompletelyDefined()) {
-        LOG(FATAL) << "IUT is not completely defined.";
-    }
-
-    Fsm specMin = spec.minimise();
-    Fsm iutMin = iut.minimise();
-
-    const string dotPrefix = "../../../resources/example-master-fehler/";
-    spec.toDot(dotPrefix + "spec");
-    iut.toDot(dotPrefix + "iut");
-    specMin.toDot(dotPrefix + "specMin");
-    iutMin.toDot(dotPrefix + "iutMin");
-
-    Fsm intersect = spec.intersect(iut);
-    intersect.toDot(dotPrefix + "intersect");
-
-    bool isReduction = !intersect.hasFailure();
-
-    IOTraceContainer observedTraces;
-    bool result = Fsm::adaptiveStateCounting(specMin, iutMin, static_cast<size_t>(iutMin.getMaxNodes()), observedTraces);
-
-    CLOG(INFO, logging::globalLogger) << "isReduction: " << isReduction;
-    if (failTrace)
-    {
-        CLOG(INFO, logging::globalLogger) << "failTrace: " << *failTrace;
-    }
-    CLOG(INFO, logging::globalLogger) << "result: " << result;
-
-    return 0;
-*/
-
-
-	cout << endl << endl;
+    cout << endl << endl;
 }
 
 
