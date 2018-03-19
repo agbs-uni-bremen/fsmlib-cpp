@@ -449,7 +449,12 @@ void logToCsv(const vector<vector<AdaptiveTestResult>>& resultsMatrix, const Csv
     string contextHeader = csvIterations.at(config.context) + csvSep;
     string fieldHeader = csvSep;
 
+
+    int numInputs = 0;
+    int numOutputs = 0;
     int numStates = 0;
+    int numOutputFaults = 0;
+    int numTransitionFaults = 0;
 
 
     size_t matrixHeight = 0;
@@ -484,12 +489,36 @@ void logToCsv(const vector<vector<AdaptiveTestResult>>& resultsMatrix, const Csv
                 const AdaptiveTestResult& result = resultsMatrix.at(col).at(row);
                 if (row == 0)
                 {
+                    numInputs = result.numInputs;
+                    numOutputs = result.numOutputs;
                     numStates = result.numStates;
+                    numOutputFaults= result.numOutFaults;
+                    numTransitionFaults = result.numTransFaults;
                 }
-                else if (result.numStates != numStates)
+                else if (config.context == TestIteration::INPUT && result.numInputs != numInputs)
+                {
+                    CLOG(FATAL, logging::globalLogger)
+                            << "Trying to log context, but number of inputs differ.";
+                }
+                else if (config.context == TestIteration::OUTPUT && result.numOutputs != numOutputs)
+                {
+                    CLOG(FATAL, logging::globalLogger)
+                            << "Trying to log context, but number of outputs differ.";
+                }
+                else if (config.context == TestIteration::STATE && result.numStates != numStates)
                 {
                     CLOG(FATAL, logging::globalLogger)
                             << "Trying to log context, but number of states differ.";
+                }
+                else if (config.context == TestIteration::OUTPUT_FAULT && result.numOutFaults != numOutputFaults)
+                {
+                    CLOG(FATAL, logging::globalLogger)
+                            << "Trying to log context, but number of output faults differ.";
+                }
+                else if (config.context == TestIteration::TRANSITION_FAULT && result.numTransFaults != numTransitionFaults)
+                {
+                    CLOG(FATAL, logging::globalLogger)
+                            << "Trying to log context, but number of transition faults differ.";
                 }
                 out.at(row) += getFieldFromResult(result, field) + csvSep;
             }
@@ -1116,18 +1145,42 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                             assertOnFail(result.testName, result.pass);
                             ++executed;
                             ++i;
+                        }  // End inner loop
+
+                        if (loggingContext == TestIteration::TRANSITION_FAULT)
+                        {
+                            collectedResults.push_back(innerCollectedResults);
+                            innerCollectedResults = vector<AdaptiveTestResult>();
                         }
+                    }  // End trans faults
+
+                    if (loggingContext == TestIteration::OUTPUT_FAULT)
+                    {
+                        collectedResults.push_back(innerCollectedResults);
+                        innerCollectedResults = vector<AdaptiveTestResult>();
                     }
-                }
+                }  // End out faults
 
                 if (loggingContext == TestIteration::STATE)
                 {
                     collectedResults.push_back(innerCollectedResults);
                     innerCollectedResults = vector<AdaptiveTestResult>();
                 }
-            } // End States
+            } // End states
+
+            if (loggingContext == TestIteration::OUTPUT)
+            {
+                collectedResults.push_back(innerCollectedResults);
+                innerCollectedResults = vector<AdaptiveTestResult>();
+            }
+        } // End outputs
+
+        if (loggingContext == TestIteration::INPUT)
+        {
+            collectedResults.push_back(innerCollectedResults);
+            innerCollectedResults = vector<AdaptiveTestResult>();
         }
-    }
+    } // End inputs
 
 
     std::chrono::steady_clock::time_point totalEnd = std::chrono::steady_clock::now();
