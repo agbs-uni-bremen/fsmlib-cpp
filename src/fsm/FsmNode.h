@@ -67,9 +67,14 @@ public:
      * the same target node already exists, the new transition is silently ignored.
      */
 	void addTransition(std::shared_ptr<FsmTransition> transition);
+
+    bool removeTransition(const std::shared_ptr<FsmTransition>& transition);
+
+    void setTransitions(std::vector<std::shared_ptr<FsmTransition>> transitions);
     
     
     std::vector<std::shared_ptr<FsmTransition> >& getTransitions();
+    std::vector<std::shared_ptr<FsmTransition>> getDeterminisitcTransitions();
     int getId() const;
     void setId(const int id) { this->id = id; }
 	std::string getName() const;

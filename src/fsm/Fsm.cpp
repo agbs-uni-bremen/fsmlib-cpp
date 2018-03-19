@@ -782,35 +782,127 @@ void Fsm::toDot(const string & fname)
     out.close();
 }
 
-float Fsm::getDegreeOfCompleteness() const
+
+int Fsm::getNumberOfPossibleTransitions(vector<shared_ptr<FsmNode>> nodePool) const
 {
-    int numberOfTransitionsFound = getNumberOfDifferentInputTransitions();
-    float numberOfTransitionsPossible = (maxInput + 1.0f) * nodes.size();
+    if (nodePool.empty())
+    {
+        nodePool = nodes;
+    }
+    return (maxInput + 1) * (maxOutput + 1) * static_cast<int>(nodePool.size());
+}
+
+float Fsm::getDegreeOfCompleteness(int minus, vector<shared_ptr<FsmNode>> nodePool) const
+{
+    if (nodePool.empty())
+    {
+        nodePool = nodes;
+    }
+    int numberOfTransitionsFound = getNumberOfDifferentInputTransitions(nodePool) - minus;
+    float numberOfTransitionsPossible = (maxInput + 1.0f) * nodePool.size();
+    VLOG(2) << "  numberOfTransitionsFound: " << numberOfTransitionsFound;
+    VLOG(2) << "  numberOfTransitionsPossible: " << numberOfTransitionsPossible;
     return numberOfTransitionsFound / numberOfTransitionsPossible;
 }
 
-int Fsm::getNumberOfNotDefinedTransitions(const float& maxDegreeOfNonDeterminism) const
+int Fsm::getNumberOfNotDefinedTransitions(vector<shared_ptr<FsmNode>> nodePool) const
 {
+    if (nodePool.empty())
+    {
+        nodePool = nodes;
+    }
+    VLOG(2) << "getNumberOfNotDefinedTransitions()";
+    int numberOfTransitionsFound = getNumberOfDefinedTransitions(nodePool);
+    int numberOfTransitionsPossible = getNumberOfPossibleTransitions(nodePool);
+    int result = numberOfTransitionsPossible - numberOfTransitionsFound;
+    VLOG(2) << "  result: " << result;
+    return result;
+}
+
+int Fsm::getNumberOfDefinedTransitions(vector<shared_ptr<FsmNode>> nodePool) const
+{
+    if (nodePool.empty())
+    {
+        nodePool = nodes;
+    }
     int numberOfTransitionsFound = 0;
 
-    for (const shared_ptr<FsmNode>& n : nodes)
+    for (const shared_ptr<FsmNode>& n : nodePool)
     {
         numberOfTransitionsFound += n->getTransitions().size();
     }
-
-    int numberOfTransitionsPossible = (maxInput + 1) * (maxOutput + 1) * static_cast<int>(nodes.size());
-    numberOfTransitionsPossible *= maxDegreeOfNonDeterminism;
-    return numberOfTransitionsPossible - numberOfTransitionsFound;
+    return numberOfTransitionsFound;
 }
 
-float Fsm::getDegreeOfNonDeterminism() const
+int Fsm::getNumberOfNotDefinedNonDeterministicTransitions(vector<shared_ptr<FsmNode>> nodePool) const
+{
+    VLOG(2) << "getNumberOfNotDefinedNonDeterministicTransitions()";
+    if (nodePool.empty())
+    {
+        nodePool = nodes;
+    }
+    int numIn = maxInput + 1;
+    int numOut = maxOutput + 1;
+
+    int result = 0;
+
+    for (const shared_ptr<FsmNode>& n : nodePool)
+    {
+        for (int i = 0; i < numIn; ++i)
+        {
+            if (n->hasTransition(i))
+            {
+                for (int o = 0; o < numOut; ++o)
+                {
+                    if (!n->hasTransition(i, o))
+                    {
+                        ++result;
+                    }
+                }
+            }
+        }
+    }
+    VLOG(2) << "  result: " << result;
+    return result;
+}
+
+int Fsm::getNumberOfNotDefinedDeterministicTransitions(vector<shared_ptr<FsmNode>> nodePool) const
+{
+    VLOG(2) << "getNumberOfNotDefinedDeterministicTransitions()";
+    if (nodePool.empty())
+    {
+        nodePool = nodes;
+    }
+    int numIn = maxInput + 1;
+
+    int result = 0;
+
+    for (const shared_ptr<FsmNode>& n : nodePool)
+    {
+        for (int i = 0; i < numIn; ++i)
+        {
+            if (!n->hasTransition(i))
+            {
+                ++result;
+            }
+        }
+    }
+    VLOG(2) << "  result: " << result;
+    return result;
+}
+
+float Fsm::getDegreeOfNonDeterminism(vector<shared_ptr<FsmNode>> nodePool) const
 {
     VLOG(2) << "calcDegreeOfNondeterminism()";
+    if (nodePool.empty())
+    {
+        nodePool = nodes;
+    }
 
     float totalTransitions = 0;
     float numberNonDeterministicTransitions = 0;
 
-    for (const shared_ptr<FsmNode>& n : nodes)
+    for (const shared_ptr<FsmNode>& n : nodePool)
     {
         const vector<shared_ptr<FsmTransition>>& transitions = n->getTransitions();
         totalTransitions += transitions.size();
@@ -840,10 +932,14 @@ float Fsm::getDegreeOfNonDeterminism() const
     return result;
 }
 
-int Fsm::getNumberOfDifferentInputTransitions() const
+int Fsm::getNumberOfDifferentInputTransitions(vector<shared_ptr<FsmNode>> nodePool) const
 {
+    if (nodePool.empty())
+    {
+        nodePool = nodes;
+    }
     int result = 0;
-    for (const shared_ptr<FsmNode>& n : nodes)
+    for (const shared_ptr<FsmNode>& n : nodePool)
     {
         unordered_set<int> differentInputs;
         for (const shared_ptr<FsmTransition>& t : n->getTransitions())
@@ -3394,7 +3490,7 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
                                      const bool observable,
                                      const unsigned seed)
 {
-    VLOG(1) << "createRandomFsm()";
+    VLOG(1) << "**createRandomFsm()";
     VLOG(1) << "maxInput: " << maxInput;
     VLOG(1) << "maxOutput: " << maxOutput;
     VLOG(1) << "maxState: " << maxState;
@@ -3433,11 +3529,11 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
 
     // At index 0 of the vector, the initial state is stored, and
     // this is reachable
-    reachedNodes.push_back(createdNodes.at(0));
+    reachedNodes.push_back(fsm->nodes.at(0));
     unReachedNodes.erase(unReachedNodes.begin());
 
     // Connecting all nodes.
-    while (reachedNodes.size() != createdNodes.size())
+    while (reachedNodes.size() != fsm->nodes.size())
     {
 
         const shared_ptr<FsmNode>& targetNode = unReachedNodes.back();
@@ -3446,7 +3542,7 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
         shared_ptr<FsmNode> srcNode;
         shared_ptr<FsmLabel> label;
 
-        fsm->selectRandomNodeAndCreateLabel(reachedNodes, maxDegreeOfNonDeterminism, observable, srcNode, label);
+        fsm->selectRandomNodeAndCreateLabel(reachedNodes, maxDegreeOfNonDeterminism, false, observable, srcNode, label);
 
         // We could not find a source node or a valid label.
         if (!srcNode || !label)
@@ -3462,11 +3558,17 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
     }
     VLOG(2) << "Connected all nodes.";
 
-    VLOG(2) << "Creating transitions to comply with the given degree of completeness.";
+
+
+    VLOG(2) << "Creating or removing transitions to comply with the given degree of completeness.";
     fsm->meetDegreeOfCompleteness(degreeOfCompleteness, maxDegreeOfNonDeterminism, observable);
 
-    // Add some more random transitions
-    fsm->addRandomTransitions(maxDegreeOfNonDeterminism, observable);
+    // Add some random transitions.
+    // Only allow non-deterministic transitions, as we don't want to alter
+    // the degree of completeness.
+    VLOG(2) << "Adding random non-deterministic transitions.";
+    fsm->addRandomTransitions(maxDegreeOfNonDeterminism, true, observable, 1.0f);
+    fsm->addRandomTransitions(maxDegreeOfNonDeterminism, false, observable, 1.0f);
 
     if (minimal)
     {
@@ -3476,7 +3578,7 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
         float degreeOfCompletenessMin = fsmMin.getDegreeOfCompleteness();
         size_t numStatesMin = fsmMin.size();
 
-        bool metDegreeOfCompleteness = (degreeOfCompletenessMin >= degreeOfCompleteness);
+        bool metDegreeOfCompleteness = fsmMin.doesMeetDegreeOfCompleteness(degreeOfCompleteness);
         bool metNumberOfStates = (numStatesMin == static_cast<size_t>(numStates));
 
         VLOG(2) << "metDegreeOfCompleteness: " << std::boolalpha << metDegreeOfCompleteness;
@@ -3488,25 +3590,38 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
             {
                 VLOG(2) << "Minimal FSM does not contain requested number of states: "
                         << numStatesMin << " < " << numStates;
-                fsmMin.meetNumberOfStates(maxState, maxDegreeOfNonDeterminism, observable);
-                // Add some more random transitions, avoiding the new states added to
-                // be removed again during minimization.
-                fsmMin.addRandomTransitions(maxDegreeOfNonDeterminism, observable);
+                vector<shared_ptr<FsmNode>> newNodes;
+                fsmMin.meetNumberOfStates(maxState, maxDegreeOfNonDeterminism, observable, newNodes);
+                fsmMin.addRandomTransitions(maxDegreeOfNonDeterminism, false, observable, 1.0f, newNodes);
             }
             else if (!metDegreeOfCompleteness)
             {
                 VLOG(2) << "Minimal FSM does not meet degree of completeness: "
-                        << degreeOfCompletenessMin << " < " << degreeOfCompleteness;
+                        << degreeOfCompletenessMin << " != " << degreeOfCompleteness;
                 fsmMin.meetDegreeOfCompleteness(degreeOfCompleteness, maxDegreeOfNonDeterminism, observable);
+                fsm->addRandomTransitions(maxDegreeOfNonDeterminism, false, observable, 1.0f);
             }
+
             fsmMin = fsmMin.minimise(false, "", "", false);
             fsmMin.presentationLayer = pl;
             degreeOfCompletenessMin = fsmMin.getDegreeOfCompleteness();
             numStatesMin = fsmMin.size();
-            metDegreeOfCompleteness = (degreeOfCompletenessMin >= degreeOfCompleteness);
+            metDegreeOfCompleteness = fsmMin.doesMeetDegreeOfCompleteness(degreeOfCompleteness);
             metNumberOfStates = (numStatesMin == static_cast<size_t>(numStates));
             VLOG(2) << "metDegreeOfCompleteness: " << std::boolalpha << metDegreeOfCompleteness;
             VLOG(2) << "metnumberOfStates: " << std::boolalpha << metNumberOfStates;
+            if (metDegreeOfCompleteness && metNumberOfStates)
+            {
+                VLOG(2) << "Met requirements. Adding some more non-deterministic transitions.";
+                // Add some more non-determinsitic transitions.
+                fsmMin.addRandomTransitions(maxDegreeOfNonDeterminism, true, observable, 0.5f);
+                fsmMin = fsmMin.minimise(false, "", "", false);
+                fsmMin.presentationLayer = pl;
+                degreeOfCompletenessMin = fsmMin.getDegreeOfCompleteness();
+                numStatesMin = fsmMin.size();
+                metDegreeOfCompleteness = fsmMin.doesMeetDegreeOfCompleteness(degreeOfCompleteness);
+                metNumberOfStates = (numStatesMin == static_cast<size_t>(numStates));
+            }
         }
         fsm = make_shared<Fsm>(fsmMin);
     }
@@ -3651,7 +3766,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
 
     if (createdTransitionFaults < numTransitionFaults)
     {
-        LOG(ERROR) << "Could not create all requested transition faults.";
+        LOG(INFO) << "Could not create all requested transition faults.";
         throw too_many_transition_faults("Could not create all requested transition faults.");
     }
     
@@ -3763,7 +3878,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
     }
     if (createdOutputFaults < numOutputFaults)
     {
-        LOG(ERROR) << "Could not create all requested output faults.";
+        LOG(INFO) << "Could not create all requested output faults.";
         throw too_many_output_faults("Could not create all requested output faults.");
     }
     
@@ -3828,26 +3943,95 @@ Fsm::getEquivalentInputsFromPrimeMachine() {
 }
 
 void Fsm::addRandomTransitions(const float& maxDegreeOfNonDeterminism,
-                               const bool& observable)
+                               const bool& onlyNonDeterministic,
+                               const bool& observable,
+                               const float& factor,
+                               vector<shared_ptr<FsmNode>> nodePool)
 {
-    VLOG(1) << "addRandomTransitions()";
+    VLOG(1) << "**addRandomTransitions()";
+    VLOG(2) << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism;
+    VLOG(2) << "onlyNonDeterministic: " << onlyNonDeterministic;
+    VLOG(2) << "observable: " << observable;
+    VLOG(2) << "factor: " << factor;
 
-    const int numNodes = static_cast<int>(size());
-    const int numberOfNotDefinedTransitions = getNumberOfNotDefinedTransitions(maxDegreeOfNonDeterminism);
-
-    int numberTransitionsToCreate = rand() % (numberOfNotDefinedTransitions + 1);
-
-    if (!observable)
+    if (nodePool.empty())
     {
-        int transitionsPerNode = (rand() % ((maxInput + 1) * (maxOutput + 1))) + 1;
-        numberTransitionsToCreate = rand() % (numNodes * transitionsPerNode);
+        nodePool = nodes;
     }
 
-    VLOG(1) << "numNodes: " << numNodes;
-    VLOG(1) << "numberOfNotDefinedTransitions: " << numberOfNotDefinedTransitions;
-    VLOG(1) << "numberTransitionsToCreate: " << numberTransitionsToCreate;
+    const int numNodes = static_cast<int>(nodePool.size());
+    VLOG(2) << "numNodes: " << numNodes;
 
-    CLOG(INFO, logging::globalLogger) << "numberTransitionsToCreate: " << numberTransitionsToCreate;
+    int numberTransitionsToCreate = 0;
+
+
+
+    if (maxDegreeOfNonDeterminism > 0)
+    {
+        // There may be non-determinisitc transitions
+        VLOG(2) << "There may be non-determinisitc transitions.";
+        if (onlyNonDeterministic)
+        {
+            // We want to create only transitions, that add non-determinism
+            VLOG(2) << "We want to create only transitions, that add non-determinism.";
+            if (observable)
+            {
+                // But we have to keep observable
+                VLOG(2) << "But we have to keep observable.";
+                const int missing = static_cast<int>(floor(getNumberOfNotDefinedNonDeterministicTransitions(nodePool) * maxDegreeOfNonDeterminism));
+                numberTransitionsToCreate = rand() % (missing + 1);
+            }
+            else
+            {
+                // No need for observability
+                VLOG(2) << "No need for observability.";
+                int transitionsPerNode = (rand() % ((maxInput + 1) * (maxOutput + 1))) + 1;
+                numberTransitionsToCreate = rand() % (numNodes * transitionsPerNode);
+            }
+        }
+        else
+        {
+            // We can add all kind of transitions
+            VLOG(2) << "We can add all kind of transitions.";
+            if (observable)
+            {
+                VLOG(2) << "But we have to keep observable.";
+                // But we have to keep observable
+                const int missing = static_cast<int>(floor(getNumberOfNotDefinedTransitions(nodePool) * maxDegreeOfNonDeterminism));
+                numberTransitionsToCreate = rand() % (missing + 1);
+
+            }
+            else
+            {
+                // No need for observability
+                VLOG(2) << "No need for observability.";
+                int transitionsPerNode = (rand() % ((maxInput + 1) * (maxOutput + 1))) + 1;
+                numberTransitionsToCreate = rand() % (numNodes * transitionsPerNode);
+            }
+        }
+    }
+    else
+    {
+        // Only add transitions that keep the FSM deterministic
+        VLOG(2) << "Only add transitions that keep the FSM deterministic.";
+        if (onlyNonDeterministic)
+        {
+            // But add only non-deterministic transitions. Seriously?
+            LOG(FATAL) << "The parameter choice makes no sense. maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism
+                       << ", onlyNonDeterministic: " << boolalpha << onlyNonDeterministic;
+        }
+        // Add only transitions that keep the FSM deterministic.
+        // Observability doesn't matter in this case.
+        VLOG(2) << "Add only transitions that keep the FSM deterministic. "
+                << "Observability doesn't matter in this case.";
+        const int missing = getNumberOfNotDefinedDeterministicTransitions(nodePool);
+        numberTransitionsToCreate = rand() % (missing + 1);
+    }
+
+    numberTransitionsToCreate = static_cast<int>(ceil(numberTransitionsToCreate * factor));
+
+    //TODO Weiter
+    VLOG(1) << "numberTransitionsToCreate: " << numberTransitionsToCreate;
 
     int numberOfTransitionsCreated = 0;
 
@@ -3872,7 +4056,7 @@ void Fsm::addRandomTransitions(const float& maxDegreeOfNonDeterminism,
 
             VLOG(2) << "Trying to create transition to target node " << targetNode->getName();
 
-            selectRandomNodeAndCreateLabel(nodes, maxDegreeOfNonDeterminism, observable, srcNode, label);
+            selectRandomNodeAndCreateLabel(nodes, maxDegreeOfNonDeterminism, onlyNonDeterministic, observable, srcNode, label);
 
             // We could not find a source node or a valid label.
             if (!srcNode || !label)
@@ -3902,52 +4086,208 @@ void Fsm::addRandomTransitions(const float& maxDegreeOfNonDeterminism,
 
 }
 
-void Fsm::meetDegreeOfCompleteness(const float& degreeOfCompleteness,
+bool Fsm::meetDegreeOfCompleteness(const float& degreeOfCompleteness,
                                    const float& maxDegreeOfNonDeterminism,
-                                   const bool& observable)
+                                   const bool& observable,
+                                   vector<shared_ptr<FsmNode>> nodePool)
 {
-    VLOG(2) << "meetDegreeOfCompleteness()";
-    int numIn = maxInput + 1;
-    int numStates = maxState + 1;
+    VLOG(1) << "**meetDegreeOfCompleteness()";
 
-    int numberOfTransitionsNeeded = static_cast<int>(ceil(degreeOfCompleteness * numStates * numIn));
-    int numberOfTransitionsCreated = getNumberOfDifferentInputTransitions();
-
-    VLOG(2) << "numberOfTransitionsNeeded: " << numberOfTransitionsNeeded;
-    VLOG(2) << "numberOfTransitionsCreated: " << numberOfTransitionsCreated;
-
-    while (numberOfTransitionsCreated < numberOfTransitionsNeeded)
+    if (nodePool.empty())
     {
-        size_t targetNodeIndex = static_cast<size_t>(rand()) % (nodes.size());
-        const shared_ptr<FsmNode>& targetNode = nodes.at(targetNodeIndex);
-
-        shared_ptr<FsmNode> srcNode;
-        shared_ptr<FsmLabel> label;
-
-        selectRandomNodeAndCreateLabel(nodes, maxDegreeOfNonDeterminism, observable, srcNode, label);
-
-        // We could not find a source node or a valid label.
-        if (!srcNode || !label)
-        {
-            LOG(FATAL) << "meetDegreeOfCompleteness(): Could not create requested number of transitions. This shouldn't happen.";
-        }
-
-        shared_ptr<FsmTransition> transition = make_shared<FsmTransition>(srcNode, targetNode, label);
-        srcNode->addTransition(transition);
-
-        numberOfTransitionsCreated = getNumberOfDifferentInputTransitions();
-
-        VLOG(1) << "Created transition " << transition->str();
-        VLOG(2) << "numberOfTransitionsCreated: " << numberOfTransitionsCreated;
+        nodePool = nodes;
     }
-    VLOG(2) << "numberOfTransitionsCreated: " << numberOfTransitionsCreated;
+
+    float actualDegreeOfCompleteness = getDegreeOfCompleteness(0, nodePool);
+
+    bool metRequirement = false;
+    if (actualDegreeOfCompleteness < degreeOfCompleteness)
+    {
+        VLOG(2) << "Degree of completeness: " << actualDegreeOfCompleteness << " < " << degreeOfCompleteness;
+        VLOG(2) << "Going to add transitions.";
+        while (actualDegreeOfCompleteness < degreeOfCompleteness)
+        {
+            size_t targetNodeIndex = static_cast<size_t>(rand()) % (nodes.size());
+            const shared_ptr<FsmNode>& targetNode = nodes.at(targetNodeIndex);
+
+            shared_ptr<FsmNode> srcNode;
+            shared_ptr<FsmLabel> label;
+
+            selectRandomNodeAndCreateLabel(nodePool, maxDegreeOfNonDeterminism, false, observable, srcNode, label);
+
+            // We could not find a source node or a valid label.
+            if (!srcNode || !label)
+            {
+                LOG(FATAL) << "meetDegreeOfCompleteness(): Could not create requested number of transitions. This shouldn't happen.";
+            }
+
+            shared_ptr<FsmTransition> transition = make_shared<FsmTransition>(srcNode, targetNode, label);
+            srcNode->addTransition(transition);
+
+            VLOG(1) << "Created transition " << transition->str();
+            actualDegreeOfCompleteness = getDegreeOfCompleteness(0, nodePool);
+        }
+        metRequirement = true;
+    }
+    else if (actualDegreeOfCompleteness > degreeOfCompleteness)
+    {
+        VLOG(2) << "Degree of completeness: " << actualDegreeOfCompleteness << " > " << degreeOfCompleteness;
+        VLOG(2) << "Going to remove transitions.";
+        while (actualDegreeOfCompleteness >= degreeOfCompleteness && !metRequirement)
+        {
+
+            if (doesMeetDegreeOfCompleteness(degreeOfCompleteness, nodePool))
+            {
+                VLOG(1) << "Won't remove any transition, as degree of completeness would be too small afterwards.";
+                metRequirement = true;
+                break;
+            }
+
+            // We have to find a transition that would affect the degree of completeness
+            // when removing it. Therefore we have to find transitions per node, that are
+            // deterministic.
+            // If there isn't any, we have to remove several non-deterministic transitions
+            // from the same node.
+
+            // Select random node
+            vector<shared_ptr<FsmNode>> selectFrom = nodePool;
+            size_t nodeIdx ;
+            shared_ptr<FsmNode> node;
+            bool removedTransition = false;
+            while (!selectFrom.empty() && !removedTransition)
+            {
+                nodeIdx = static_cast<size_t>(rand()) % selectFrom.size();
+                node = selectFrom.at(nodeIdx);
+                VLOG(2) << "Selected node " << node->getName();
+                vector<shared_ptr<FsmTransition>> detTrans = node->getDeterminisitcTransitions();
+                VLOG(2) << "Found " << detTrans.size() << " deterministic transitions.";
+                if (!detTrans.empty())
+                {
+                    size_t transIndex = static_cast<size_t>(rand()) % detTrans.size();
+                    const shared_ptr<FsmTransition>& tr = detTrans.at(transIndex);
+                    VLOG(2) << "Removing transition " << tr->str();
+                    if (!node->removeTransition(tr))
+                    {
+                        LOG(FATAL) << "Could not remove transition " << tr->str() << " from node " << node->getName();
+                    }
+                    detTrans.erase(detTrans.begin()
+                                   + static_cast<vector<shared_ptr<FsmTransition>>::difference_type>(transIndex));
+                    removedTransition = true;
+                }
+                else
+                {
+                    // No deterministic transition found. Trying next node.
+                    VLOG(2) << "No deterministic transitions found. Trying next node.";
+                    selectFrom.erase(selectFrom.begin()
+                                     + static_cast<vector<shared_ptr<FsmTransition>>::difference_type>(nodeIdx));
+                }
+
+            }
+
+            if (removedTransition)
+            {
+                actualDegreeOfCompleteness = getDegreeOfCompleteness(0, nodePool);
+                continue;
+            }
+
+            VLOG(2) << "Could not find any node with deterministic transitions. "
+                    << "Going to remove several transitions instead.";
+
+            selectFrom = nodePool;
+            removedTransition = false;
+            while (!selectFrom.empty() && !removedTransition)
+            {
+                nodeIdx = static_cast<size_t>(rand()) % selectFrom.size();
+                node = selectFrom.at(nodeIdx);
+                VLOG(2) << "Selected node " << node->getName();
+                vector<shared_ptr<FsmTransition>> transitions = node->getTransitions();
+                VLOG(2) << "Found " << transitions.size() << " transitions.";
+                if (!transitions.empty())
+                {
+                    const shared_ptr<FsmTransition>& trans = transitions.at(static_cast<size_t>(rand()) % transitions.size());
+                    int input = trans->getLabel()->getInput();
+                    VLOG(2) << "Removing all transitions with input " << input;
+
+                    vector<shared_ptr<FsmTransition>> keepTrans;
+
+                    for (const shared_ptr<FsmTransition>& t : transitions)
+                    {
+                        if (t->getLabel()->getInput() != input)
+                        {
+                            keepTrans.push_back(t);
+                        }
+                        else
+                        {
+                            VLOG(2) << "Removing transition " << t->str();
+                        }
+                    }
+                    node->setTransitions(keepTrans);
+                    removedTransition = true;
+                }
+                else
+                {
+                    // No deterministic transition found. Trying next node.
+                    VLOG(2) << "No transitions found. Trying next node.";
+                    selectFrom.erase(selectFrom.begin()
+                                     + static_cast<vector<shared_ptr<FsmTransition>>::difference_type>(nodeIdx));
+                }
+
+            }
+
+            if (removedTransition)
+            {
+                actualDegreeOfCompleteness = getDegreeOfCompleteness(0, nodePool);
+                continue;
+            }
+            else
+            {
+                LOG(ERROR) << "Could not comply with the required degree of completeness.";
+                break;
+            }
+
+        }
+        if (!metRequirement)
+        {
+            LOG(ERROR) << "Could not comply with the required degree of completeness.";
+        }
+    }
+    VLOG(2) << "Finished with new degree of completeness: " << actualDegreeOfCompleteness;
+    return metRequirement;
+}
+
+bool Fsm::doesMeetDegreeOfCompleteness(const float& degreeOfCompleteness, vector<shared_ptr<FsmNode>> nodePool) const
+{
+    VLOG(2) << "doesMeetDegreeOfCompleteness()";
+
+    if (nodePool.empty())
+    {
+        nodePool = nodes;
+    }
+
+    if(VLOG_IS_ON(2))
+    {
+        VLOG(2) << "Current degree of completeness: " << getDegreeOfCompleteness(0, nodePool);
+    }
+
+    float newDegreeOfCompleteness = getDegreeOfCompleteness(1, nodePool);
+    if (newDegreeOfCompleteness < degreeOfCompleteness)
+    {
+        VLOG(2) << "Fsm does meet degree of completeness, as removing one transition would "
+                << "reduce degree to " << newDegreeOfCompleteness << " < " << degreeOfCompleteness;
+    }
+    else
+    {
+        VLOG(2) << "Fsm does not meet degree of completeness.";
+    }
+    return newDegreeOfCompleteness < degreeOfCompleteness;
 }
 
 void Fsm::meetNumberOfStates(const int& maxState,
                              const float& maxDegreeOfNonDeterminism,
-                             const bool& observable)
+                             const bool& observable,
+                             vector<shared_ptr<FsmNode>>& createdNodes)
 {
-    VLOG(1) << "meetNumberOfStates()";
+    VLOG(1) << "**meetNumberOfStates()";
     VLOG(2) << "maxState: " << maxState;
 
     int numIn = maxInput + 1;
@@ -3976,6 +4316,7 @@ void Fsm::meetNumberOfStates(const int& maxState,
         shared_ptr<FsmNode> node = make_shared<FsmNode>(n, name, presentationLayer);
         VLOG(2) << "Created node " << node->getName() << " with id " << n << " (" << node << ")";
         unReachedNodes.push_back(node);
+        createdNodes.push_back(node);
     }
 
     // Connecting all nodes.
@@ -3987,7 +4328,7 @@ void Fsm::meetNumberOfStates(const int& maxState,
         shared_ptr<FsmNode> srcNode;
         shared_ptr<FsmLabel> label;
 
-        selectRandomNodeAndCreateLabel(nodes, maxDegreeOfNonDeterminism, observable, srcNode, label);
+        selectRandomNodeAndCreateLabel(nodes, maxDegreeOfNonDeterminism, false, observable, srcNode, label);
 
         // We could not find a source node or a valid label.
         if (!srcNode || !label)
@@ -4035,14 +4376,15 @@ void Fsm::meetNumberOfStates(const int& maxState,
     VLOG(2) << "Connected all nodes.";
 }
 
-shared_ptr<FsmLabel> Fsm::createRandomLabel(const std::shared_ptr<FsmNode>& srcNode,
-                                         const float& maxDegreeOfNonDeterminism,
-                                         const bool& observable) const
+shared_ptr<FsmLabel> Fsm::createRandomLabel(const shared_ptr<FsmNode>& srcNode,
+                                            const float& maxDegreeOfNonDeterminism,
+                                            const bool& onlyNonDeterministic,
+                                            const bool& observable) const
 {
     VLOG(2) << "createRandomLabel()";
     const int numIn = maxInput + 1;
     const int numOut = maxOutput + 1;
-    const float degreeOfNonDeterminism = getDegreeOfNonDeterminism();
+    const float degreeOfNonDeterminism = getDegreeOfNonDeterminism(nodes);
 
     shared_ptr<FsmLabel> label;
 
@@ -4053,6 +4395,11 @@ shared_ptr<FsmLabel> Fsm::createRandomLabel(const std::shared_ptr<FsmNode>& srcN
         return label;
     }
 
+    if (onlyNonDeterministic && maxDegreeOfNonDeterminism <= 0)
+    {
+        LOG(FATAL) << "Invalid choice of parameters.";
+    }
+
     // Find valid input and output values.
     vector<int> allowedInputs;
     vector<int> allowedOutputs;
@@ -4061,6 +4408,11 @@ shared_ptr<FsmLabel> Fsm::createRandomLabel(const std::shared_ptr<FsmNode>& srcN
     {
         if (degreeOfNonDeterminism > maxDegreeOfNonDeterminism)
         {
+            if (onlyNonDeterministic)
+            {
+                LOG(FATAL) << "Requested to create only non-determinisitc lacels, "
+                           << "but the degree of non-determinism is already too high.";
+            }
             // Allow only inputs that are not defined in the source node,
             // but allow every output.
             // Observability isn't an issue in this case, since we choose only
@@ -4092,12 +4444,15 @@ shared_ptr<FsmLabel> Fsm::createRandomLabel(const std::shared_ptr<FsmNode>& srcN
         else
         {
             // We can still create non-deterministic transitions.
-            // All inputs are allowed.
-            VLOG(2) << "Non-determinsism allowed, therefore all inputs allowed:";
+            VLOG(2) << "Non-determinsism allowed. Allowed inputs:";
             for (int i = 0; i < numIn; ++i)
             {
-                VLOG(2) << "  " << presentationLayer->getInId(static_cast<unsigned int>(i));
-                allowedInputs.push_back(i);
+                // Check if we have to create non-deterministic transitions only.
+                if (!onlyNonDeterministic || srcNode->hasTransition(i))
+                {
+                    VLOG(2) << "  " << presentationLayer->getInId(static_cast<unsigned int>(i));
+                    allowedInputs.push_back(i);
+                }
             }
             if (observable)
             {
@@ -4167,8 +4522,9 @@ shared_ptr<FsmLabel> Fsm::createRandomLabel(const std::shared_ptr<FsmNode>& srcN
 }
 
 void Fsm::selectRandomNodeAndCreateLabel(
-        std::vector<std::shared_ptr<FsmNode>> nodePool,
+        const vector<shared_ptr<FsmNode>> srcNodePool,
         const float& maxDegreeOfNonDeterminism,
+        const bool& onlyNonDeterministic,
         const bool& observable,
         std::shared_ptr<FsmNode>& node,
         std::shared_ptr<FsmLabel>& label) const
@@ -4181,17 +4537,20 @@ void Fsm::selectRandomNodeAndCreateLabel(
     // Select a reached node at random.
     VLOG(2) << "Trying to find a source node. Allowed:";
     vector<shared_ptr<FsmNode>> allowedSourceNodes;
-    for (const shared_ptr<FsmNode>& n : nodePool)
+    for (const shared_ptr<FsmNode>& n : srcNodePool)
     {
-        allowedSourceNodes.push_back(n);
-        VLOG(2) << "  " << n->getName();
+        if (!onlyNonDeterministic || !n->getTransitions().empty())
+        {
+            allowedSourceNodes.push_back(n);
+            VLOG(2) << "  " << n->getName();
+        }
     }
     while ((!node || !label) && !allowedSourceNodes.empty())
     {
         size_t srcNodeIndex = static_cast<size_t>(rand()) % (allowedSourceNodes.size());
         node = allowedSourceNodes.at(srcNodeIndex);
         VLOG(2) << "Trying node " << node->getName();
-        label = createRandomLabel(node, maxDegreeOfNonDeterminism, observable);
+        label = createRandomLabel(node, maxDegreeOfNonDeterminism, onlyNonDeterministic, observable);
         if (!label)
         {
             // No label found. We have to try another source node

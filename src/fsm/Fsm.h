@@ -121,27 +121,35 @@ protected:
      * createMutant().
      */
     static unsigned int getRandomSeed();
-    
-    /** 
-     * calculate eqivalent inputs for an FSM which already is a prime 
-     * machine 
+
+    /**
+     * calculate eqivalent inputs for an FSM which already is a prime
+     * machine
      */
     std::vector< std::unordered_set<int> > getEquivalentInputsFromPrimeMachine();
 
     void addRandomTransitions(const float& maxDegreeOfNonDeterminism,
-                              const bool& observable);
-    void meetDegreeOfCompleteness(const float& degreeOfCompleteness,
+                              const bool& onlyNonDeterministic,
+                              const bool& observable,
+                              const float& factor,
+                              std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>());
+    bool meetDegreeOfCompleteness(const float& degreeOfCompleteness,
                                   const float& maxDegreeOfNonDeterminism,
-                                  const bool& observable);
-    void meetNumberOfStates(const int& maxState, const float& maxDegreeOfNonDeterminism, const bool& observable);
+                                  const bool& observable,
+                                  std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>());
+    bool doesMeetDegreeOfCompleteness(const float& degreeOfCompleteness, std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    void meetNumberOfStates(const int& maxState, const float& maxDegreeOfNonDeterminism, const bool& observable,
+                            std::vector<std::shared_ptr<FsmNode>>& createdNodes);
     std::shared_ptr<FsmLabel> createRandomLabel(
             const std::shared_ptr<FsmNode>& srcNode,
             const float& maxDegreeOfNonDeterminism,
+            const bool& onlyNonDeterministic,
             const bool& observable) const;
 
     void selectRandomNodeAndCreateLabel(
-            std::vector<std::shared_ptr<FsmNode>> nodePool,
+            const std::vector<std::shared_ptr<FsmNode>> srcNodePool,
             const float& maxDegreeOfNonDeterminism,
+            const bool& onlyNonDeterministic,
             const bool& observable,
             std::shared_ptr<FsmNode>& node,
             std::shared_ptr<FsmLabel>& label) const;
@@ -318,10 +326,14 @@ public:
     void resetColor();
     void toDot(const std::string & fname);
     
-    float getDegreeOfCompleteness() const;
-    int getNumberOfNotDefinedTransitions(const float& maxDegreeOfNonDeterminism) const;
-    float getDegreeOfNonDeterminism() const;
-    int getNumberOfDifferentInputTransitions() const;
+    float getDegreeOfCompleteness(int minus = 0, std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    int getNumberOfPossibleTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    int getNumberOfNotDefinedTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    int getNumberOfDefinedTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    int getNumberOfNotDefinedNonDeterministicTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    int getNumberOfNotDefinedDeterministicTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    float getDegreeOfNonDeterminism(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    int getNumberOfDifferentInputTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
 
     /**
      Create a new FSM that represents the intersection of this and the other FSM

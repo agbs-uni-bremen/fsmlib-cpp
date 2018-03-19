@@ -59,9 +59,44 @@ void FsmNode::addTransition(std::shared_ptr<FsmTransition> transition)
     transitions.push_back(transition);
 }
 
+bool FsmNode::removeTransition(const std::shared_ptr<FsmTransition>& t)
+{
+    auto it = find(transitions.begin(), transitions.end(), t);
+    if (it != transitions.end())
+    {
+        transitions.erase(it);
+        return true;
+    }
+    return false;
+}
+
+void FsmNode::setTransitions(std::vector<std::shared_ptr<FsmTransition>> transitions)
+{
+    this->transitions = transitions;
+}
+
 vector<shared_ptr<FsmTransition> >& FsmNode::getTransitions()
 {
     return transitions;
+}
+
+vector<shared_ptr<FsmTransition>> FsmNode::getDeterminisitcTransitions()
+{
+    vector<shared_ptr<FsmTransition>> result;
+    unordered_map<int, int> inputOccurences;
+    for (const shared_ptr<FsmTransition>& t : transitions)
+    {
+        inputOccurences[t->getLabel()->getInput()]++;
+    }
+
+    for (const shared_ptr<FsmTransition>& t : transitions)
+    {
+        if (inputOccurences.at(t->getLabel()->getInput()) == 1)
+        {
+            result.push_back(t);
+        }
+    }
+    return result;
 }
 
 int FsmNode::getId() const

@@ -149,7 +149,8 @@ struct CsvConfig
 struct LoggingConfig
 {
     bool toDot = false;
-    bool logTestResults = true;
+    bool logTestDetails = false;
+    bool logTestResultsSummary = true;
     bool printSetsOfMaximalRDistStates = false;
     bool printObservedTraces = false;
 };
@@ -581,7 +582,8 @@ void printTestBegin(string name)
     CLOG(INFO, logging::globalLogger) << "#################### Test " << name << " ####################";
 }
 
-void printSummary(const int& executed,
+void printSummary(const string& testName,
+                  const int& executed,
                   const int& passed,
                   const int& notExecuted,
                   const long& durationS,
@@ -589,6 +591,7 @@ void printSummary(const int& executed,
 {
     CLOG(INFO, logging::globalLogger) << "";
     CLOG(INFO, logging::globalLogger) << "#################### SUMMARY ####################";
+    CLOG(INFO, logging::globalLogger) << "# Test name    : " << testName;
     CLOG(INFO, logging::globalLogger) << "# Total tests  : " << executed;
     CLOG(INFO, logging::globalLogger) << "# Passed       : " << passed;
     CLOG(INFO, logging::globalLogger) << "# Failed       : " << executed - passed;
@@ -624,7 +627,7 @@ void printTestConfig(const AdaptiveTestConfig& config)
 
 void printTestResult(AdaptiveTestResult& result, const CsvConfig& csvConfig, const LoggingConfig& loggingConfig)
 {
-    if (loggingConfig.logTestResults)
+    if (loggingConfig.logTestDetails)
     {
         CLOG(INFO, logging::globalLogger) << testSepLine;
         CLOG(INFO, logging::globalLogger) << "Test                       : " << result.testName;
@@ -797,20 +800,22 @@ void createAndExecuteAdaptiveTest(
     result.createRandomFsmSeed = createRandomFsmSeed;
     result.createMutantSeed = createMutantSeed;
 
-    CLOG(INFO, logging::globalLogger) << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
-    CLOG(INFO, logging::globalLogger) << "Starting adaptive state counting.";
-    CLOG(INFO, logging::globalLogger) << "Name                     : " << result.testName;
-    CLOG(INFO, logging::globalLogger) << "numStates                : " << result.numStates;
-    CLOG(INFO, logging::globalLogger) << "numInputs                : " << result.numInputs;
-    CLOG(INFO, logging::globalLogger) << "numOutputs               : " << result.numOutputs;
-    CLOG(INFO, logging::globalLogger) << "numOutFaults             : " << result.numOutFaults;
-    CLOG(INFO, logging::globalLogger) << "numTransFaults           : " << result.numTransFaults;
-    CLOG(INFO, logging::globalLogger) << "degreeOfCompleteness     : " << degreeOfCompleteness;
-    CLOG(INFO, logging::globalLogger) << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism;
-    CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed      : " << result.createRandomFsmSeed;
-    CLOG(INFO, logging::globalLogger) << "createMutantSeed         : " << result.createMutantSeed;
-    CLOG(INFO, logging::globalLogger) << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
-
+    if (loggingConfig.logTestDetails)
+    {
+        CLOG(INFO, logging::globalLogger) << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
+        CLOG(INFO, logging::globalLogger) << "Starting adaptive state counting.";
+        CLOG(INFO, logging::globalLogger) << "Name                     : " << result.testName;
+        CLOG(INFO, logging::globalLogger) << "numStates                : " << result.numStates;
+        CLOG(INFO, logging::globalLogger) << "numInputs                : " << result.numInputs;
+        CLOG(INFO, logging::globalLogger) << "numOutputs               : " << result.numOutputs;
+        CLOG(INFO, logging::globalLogger) << "numOutFaults             : " << result.numOutFaults;
+        CLOG(INFO, logging::globalLogger) << "numTransFaults           : " << result.numTransFaults;
+        CLOG(INFO, logging::globalLogger) << "degreeOfCompleteness     : " << degreeOfCompleteness;
+        CLOG(INFO, logging::globalLogger) << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism;
+        CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed      : " << result.createRandomFsmSeed;
+        CLOG(INFO, logging::globalLogger) << "createMutantSeed         : " << result.createMutantSeed;
+        CLOG(INFO, logging::globalLogger) << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
+    }
 
     executeAdaptiveTest(*spec, *iut, static_cast<size_t>(iut->getMaxNodes()),
                         prefix + "-intersect", loggingConfig.toDot, dontTestReductions, result);
@@ -843,7 +848,10 @@ int getRandom(std::mt19937& gen)
 //TODO Eine CSV-Datei für jede Test-Methode erstellen (ohne den Logger?).
 void adaptiveTestRandom(AdaptiveTestConfig& config)
 {
-    printTestBegin(config.testName);
+    if (config.loggingConfig.logTestDetails)
+    {
+        printTestBegin(config.testName);
+    }
     newCsvFile(config.csvConfig, config.testName);
 
     std::chrono::steady_clock::time_point totalStart = std::chrono::steady_clock::now();
@@ -890,7 +898,10 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
         CLOG(FATAL, logging::globalLogger) << "Please check the test parameters.";
     }
 
-    printTestConfig(config);
+    if (config.loggingConfig.logTestDetails)
+    {
+        printTestConfig(config);
+    }
 
     float divisor = (diffInput * diffOutput * diffStates * diffOutFaults * diffTransFaults);
     int innerIterations = static_cast<int>(ceil(static_cast<float>(config.numFsm) / divisor));
@@ -1122,7 +1133,10 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
         logToCsv(collectedResults, config.csvConfig);
     }
 
-    printSummary(executed, passed, i - executed, durationS, durationM);
+    if (config.loggingConfig.logTestResultsSummary)
+    {
+        printSummary(config.testName, executed, passed, i - executed, durationS, durationM);
+    }
 }
 
 std::string getcwd() {
@@ -1137,13 +1151,98 @@ std::string getcwd() {
     return result;
 }
 
+void trial(bool debug)
+{
+    AdaptiveTestConfig config;
+    config.testName = "TRIAL";
+    config.numFsm = 1000;
+
+    config.minInput = 3;
+    config.maxInput = 3;
+
+    config.minOutput = 3;
+    config.maxOutput = 3;
+
+    config.minStates = 10;
+    config.maxStates = 10;
+
+    config.minTransFaults = 0;
+    config.maxTransFaults = 0;
+
+    config.minOutFaults = 1;
+    config.maxOutFaults = 1;
+
+    config.degreeOfCompleteness = 0.6f;
+    config.maxDegreeOfNonDeterminism = 1.0f;
+
+    config.dontTestReductions = true;
+    config.forceTestParameters = true;
+
+    config.seed = 1337;
+
+    config.csvConfig.logEveryIteration = true;
+
+    config.loggingConfig.logTestDetails = true;
+    config.loggingConfig.toDot = true;
+    config.loggingConfig.printSetsOfMaximalRDistStates = true;
+
+    writeCsvHeader(config.csvConfig, logging::csvLoggerEveryIteration);
+
+    if (debug)
+    {
+        CLOG(INFO, logging::globalLogger) << "############## Debugging ##############";
+
+        AdaptiveTestConfigDebug debugConfig;
+        debugConfig.numStates = 7;
+        debugConfig.numInput = 4;
+        debugConfig.numOutput = 4;
+        debugConfig.numOutFaults = 1;
+        debugConfig.numTransFaults = 0;
+        debugConfig.createRandomFsmSeed = 1104848806;
+        debugConfig.createMutantSeed = 1837447161;
+        debugConfig.degreeOfCompleteness = 0.6f;
+        debugConfig.maxDegreeOfNonDeterminism = 1.0f;
+        debugConfig.csvConfig.logEveryIteration = false;
+        debugConfig.loggingConfig.toDot = true;
+
+        shared_ptr<FsmPresentationLayer> plTestSpecCopy = make_shared<FsmPresentationLayer>(*plTestSpec);
+        shared_ptr<FsmPresentationLayer> plTestIutCopy = make_shared<FsmPresentationLayer>(*plTestIut);
+
+        AdaptiveTestResult result;
+
+        createAndExecuteAdaptiveTest(
+                    debugConfig.prefix,
+                    debugConfig.numStates - 1,
+                    debugConfig.numInput - 1,
+                    debugConfig.numOutput - 1,
+                    debugConfig.numOutFaults,
+                    debugConfig.numTransFaults,
+                    debugConfig.degreeOfCompleteness,
+                    debugConfig.maxDegreeOfNonDeterminism,
+                    debugConfig.createRandomFsmSeed,
+                    debugConfig.createMutantSeed,
+                    plTestSpecCopy,
+                    plTestIutCopy,
+                    false,
+                    debugConfig.csvConfig,
+                    debugConfig.loggingConfig,
+                    result);
+
+        assertOnFail(debugConfig.prefix, result.pass);
+    }
+    else
+    {
+        adaptiveTestRandom(config);
+    }
+}
+
 void test00_00()
 {
     CsvConfig csvConfig;
     csvConfig.logEveryIteration = false;
 
     LoggingConfig loggingConfig;
-    loggingConfig.logTestResults = true;
+    loggingConfig.logTestDetails = true;
 
     AdaptiveTestResult result;
     result.testName = "00-00";
@@ -1164,7 +1263,7 @@ void test00_01()
     csvConfig.logEveryIteration = false;
 
     LoggingConfig loggingConfig;
-    loggingConfig.logTestResults = true;
+    loggingConfig.logTestDetails = true;
 
     AdaptiveTestResult result;
     result.testName = "00-01";
@@ -1288,6 +1387,9 @@ int main(int argc, char* argv[])
     CLOG(INFO, logging::globalLogger) << "This is a release build!";
 #endif
 
+    trial(false);
+
+    return 0;
 
     runAdaptiveStateCountingTests();
 
@@ -1348,80 +1450,7 @@ int main(int argc, char* argv[])
 
     return 0;
 */
-    AdaptiveTestConfig config;
-    config.testName = "TRIAL";
-    config.numFsm = 10;
 
-    config.minInput = 3;
-    config.maxInput = 3;
-
-    config.minOutput = 3;
-    config.maxOutput = 3;
-
-    config.minStates = 20;
-    config.maxStates = 23;
-
-    config.minTransFaults = 1;
-    config.maxTransFaults = 1;
-
-    config.minOutFaults = 0;
-    config.maxOutFaults = 0;
-
-    config.dontTestReductions = true;
-
-    config.seed = 1337;
-
-    config.csvConfig.logEveryIteration = true;
-
-    writeCsvHeader(config.csvConfig, logging::csvLoggerEveryIteration);
-
-    bool debug = true;
-    if (debug)
-    {
-        CLOG(INFO, logging::globalLogger) << "############## Debugging ##############";
-
-        AdaptiveTestConfigDebug debugConfig;
-        debugConfig.numStates = 7;
-        debugConfig.numInput = 4;
-        debugConfig.numOutput = 4;
-        debugConfig.numOutFaults = 1;
-        debugConfig.numTransFaults = 0;
-        debugConfig.createRandomFsmSeed = 1104848806;
-        debugConfig.createMutantSeed = 1837447161;
-        debugConfig.degreeOfCompleteness = 0.6f;
-        debugConfig.maxDegreeOfNonDeterminism = 1.0f;
-        debugConfig.csvConfig.logEveryIteration = false;
-        debugConfig.loggingConfig.toDot = true;
-
-        shared_ptr<FsmPresentationLayer> plTestSpecCopy = make_shared<FsmPresentationLayer>(*plTestSpec);
-        shared_ptr<FsmPresentationLayer> plTestIutCopy = make_shared<FsmPresentationLayer>(*plTestIut);
-
-        AdaptiveTestResult result;
-
-        createAndExecuteAdaptiveTest(
-                    debugConfig.prefix,
-                    debugConfig.numStates - 1,
-                    debugConfig.numInput - 1,
-                    debugConfig.numOutput - 1,
-                    debugConfig.numOutFaults,
-                    debugConfig.numTransFaults,
-                    debugConfig.degreeOfCompleteness,
-                    debugConfig.maxDegreeOfNonDeterminism,
-                    debugConfig.createRandomFsmSeed,
-                    debugConfig.createMutantSeed,
-                    plTestSpecCopy,
-                    plTestIutCopy,
-                    false,
-                    debugConfig.csvConfig,
-                    debugConfig.loggingConfig,
-                    result);
-
-        assertOnFail(debugConfig.prefix, result.pass);
-    }
-    else
-    {
-        adaptiveTestRandom(config);
-    }
 
 	cout << endl << endl;
 }
