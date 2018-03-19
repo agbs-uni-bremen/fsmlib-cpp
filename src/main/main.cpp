@@ -184,8 +184,8 @@ struct AdaptiveTestConfig
     int maxOutFaults = -1;
     int maxTransFaults = -1;
 
-    float minDegreeOfCompleteness = -1;
-    float maxDegreeOfCompleteness = -1;
+    float minDegreeOfCompleteness = 1.0f;
+    float maxDegreeOfCompleteness = 1.0f;
 
 
     float maxDegreeOfNonDeterminism = 1.0f;
@@ -950,7 +950,12 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
     const int diffStates = config.maxStates - config.minStates + 1;
     const int diffOutFaults = config.maxOutFaults - config.minOutFaults + 1;
     const int diffTransFaults = config.maxTransFaults - config.minTransFaults + 1;
-    const int degreeOfCompletenessIterations = static_cast<int>(config.maxDegreeOfCompleteness - config.minDegreeOfCompleteness) * 10 + 1;
+    int degreeOfCompletenessIterations = 1;
+
+    if (config.minDegreeOfCompleteness > 0 && config.maxDegreeOfCompleteness <= 1)
+    {
+        degreeOfCompletenessIterations = static_cast<int>(config.maxDegreeOfCompleteness - config.minDegreeOfCompleteness) * 10 + 1;
+    }
 
     if (diffInput <= 0 || diffOutput <= 0 || diffStates <= 0 || diffOutFaults <= 0 || diffTransFaults <= 0 || degreeOfCompletenessIterations <= 0)
     {
@@ -1002,14 +1007,30 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                         {
                             float degreeOfCompleteness;
 
-                            if (config.minDegreeOfCompleteness <= 0 || config.maxDegreeOfCompleteness <= 0)
+                            if (config.minDegreeOfCompleteness <= 0 && config.maxDegreeOfCompleteness <= 0)
                             {
                                 degreeOfCompleteness = -1;
+                                CLOG(INFO, logging::globalLogger) << "Degree of completeness does not matter.";
+                            }
+                            else if (config.minDegreeOfCompleteness > 0 && config.maxDegreeOfCompleteness <= 0)
+                            {
+                                degreeOfCompleteness = config.minDegreeOfCompleteness +
+                                        static_cast<float>(rand()) / (static_cast <float> (RAND_MAX/(1.0f - config.minDegreeOfCompleteness)));
+                                CLOG(INFO, logging::globalLogger) << "Selected random degree of completeness with a minimal value of " <<
+                                                                     config.minDegreeOfCompleteness << ": " << degreeOfCompleteness;
+                            }
+                            else if (config.minDegreeOfCompleteness <= 0 && config.maxDegreeOfCompleteness <=1)
+                            {
+                                degreeOfCompleteness = 0.1f +
+                                        static_cast<float>(rand()) / (static_cast <float> (RAND_MAX/(1.0f - 0.1f)));
+                                CLOG(INFO, logging::globalLogger) << "Selected random degree of completeness with a maximal value of " <<
+                                                                     config.maxDegreeOfCompleteness << ": " << degreeOfCompleteness;
                             }
                             else
                             {
                                 float step = 0.1f;
                                 degreeOfCompleteness = config.minDegreeOfCompleteness + (step * degreeCount);
+                                CLOG(INFO, logging::globalLogger) << "Degree of completeness: " << degreeOfCompleteness;
                             }
 
                             for (int ctInnerIt = 0; ctInnerIt < innerIterations; ++ctInnerIt)
@@ -1441,8 +1462,6 @@ void RED_STA()
 
     config.dontTestReductions = false;
 
-    config.loggingConfig.toDot = false;
-    config.loggingConfig.toFsm = true;
     config.loggingConfig.printSetsOfMaximalRDistStates = false;
 
     config.csvConfig.logEveryIteration = true;

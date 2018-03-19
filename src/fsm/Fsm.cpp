@@ -3559,6 +3559,8 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
     }
     VLOG(2) << "Connected all nodes.";
 
+    fsm->addRandomTransitions(maxDegreeOfNonDeterminism, false, observable, 1.0f);
+
     if (degreeOfCompletenessRequired)
     {
         VLOG(2) << "Creating or removing transitions to comply with the given degree of completeness.";
@@ -3570,7 +3572,6 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
     // the degree of completeness.
     VLOG(2) << "Adding random non-deterministic transitions.";
     fsm->addRandomTransitions(maxDegreeOfNonDeterminism, true, observable, 1.0f);
-    fsm->addRandomTransitions(maxDegreeOfNonDeterminism, false, observable, 1.0f);
 
     if (minimal)
     {
@@ -3601,7 +3602,6 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
                 VLOG(2) << "Minimal FSM does not meet degree of completeness: "
                         << degreeOfCompletenessMin << " != " << degreeOfCompleteness;
                 fsmMin.meetDegreeOfCompleteness(degreeOfCompleteness, maxDegreeOfNonDeterminism, observable);
-                fsm->addRandomTransitions(maxDegreeOfNonDeterminism, false, observable, 1.0f);
             }
 
             fsmMin = fsmMin.minimise(false, "", "", false);
