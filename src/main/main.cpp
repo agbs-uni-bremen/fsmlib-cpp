@@ -87,6 +87,7 @@ enum class CsvField
     TEST_NAME,
     NUM_STATES,
     NUM_INPUTS,
+    NUM_OUTPUTS,
     NUM_D_REACHABLE_STATES,
     NUM_SETS_OF_MAXIMAL_R_DIST_STATES,
     NUM_OUT_FAULTS,
@@ -128,6 +129,7 @@ void initCsvHeaders()
     csvHeaders.insert(make_pair(CsvField::TEST_NAME, "testName"));
     csvHeaders.insert(make_pair(CsvField::NUM_STATES, "numStates"));
     csvHeaders.insert(make_pair(CsvField::NUM_INPUTS, "numInputs"));
+    csvHeaders.insert(make_pair(CsvField::NUM_INPUTS, "numOutputs"));
     csvHeaders.insert(make_pair(CsvField::NUM_D_REACHABLE_STATES, "numDReachableStates"));
     csvHeaders.insert(make_pair(CsvField::NUM_SETS_OF_MAXIMAL_R_DIST_STATES, "numSetsOfMaximalRDistStates"));
     csvHeaders.insert(make_pair(CsvField::NUM_OUT_FAULTS, "numOutFaults"));
@@ -309,6 +311,9 @@ string getFieldFromResult(const AdaptiveTestResult& result, const CsvField& fiel
         break;
     case CsvField::NUM_INPUTS:
         out << result.numInputs;
+        break;
+    case CsvField::NUM_OUTPUTS:
+        out << result.numOutputs;
         break;
     case CsvField::NUM_D_REACHABLE_STATES:
         out << result.numDReachableStates;
