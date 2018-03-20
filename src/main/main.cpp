@@ -502,7 +502,7 @@ void flushQueues(string testName)
         {
             string fieldName = csvHeaders.at(fieldIt.first);
             deque<string>& queue = fieldIt.second;
-            ofstream out(ascCsvDirectory + "Results-" + nowText + "-" + testName + "-" + fieldName + ".csv");
+            ofstream out(ascCsvDirectory + "Results-" + nowText + "-" + testName + "---" + fieldName + ".csv");
 
             for (const string& l : queue)
             {
@@ -725,7 +725,7 @@ void executeAdaptiveTest(Fsm& spec, Fsm& iut, size_t m, string intersectionName,
     }
 
     if (result.iutIsReduction && dontTestReductions) {
-        CLOG(INFO, logging::globalLogger) << "Won't test this one, since it is a reduction.";
+        CLOG_IF(VLOG_IS_ON(1), INFO, logging::globalLogger) << "Won't test this one, since it is a reduction.";
         throw unexpected_reduction("Interrupting testing, since IUT is an unexcpected reduction of the specification.");
     }
 
@@ -1108,7 +1108,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                     }
                                     catch (unexpected_reduction& e)
                                     {
-                                        CLOG(WARNING, logging::globalLogger) << "IUT is a reduction of the specification.";
+                                        CLOG_IF(VLOG_IS_ON(1), INFO, logging::globalLogger) << "IUT is a reduction of the specification.";
                                         if (config.forceTestParameters)
                                         {
                                             newSeeds = true;

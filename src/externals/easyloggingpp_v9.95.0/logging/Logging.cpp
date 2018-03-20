@@ -32,13 +32,13 @@ void logging::initLogging(const string& nowText)
         el::Logger* logger = el::Loggers::getLogger(id, false);
         string fileName = logger->configurations()->get(el::Level::Global, el::ConfigurationType::Filename)->value();
         string fileExtension = "";
-        size_t lastindex = fileName.find_last_of(".");
+        size_t lastindex = fileName.rfind(".");
         if (lastindex != string::npos)
         {
             fileExtension = fileName.substr(lastindex);
             fileName = fileName.substr(0, lastindex);
         }
-        fileName += "_" + nowText + fileExtension;
+        fileName += "-" + nowText + fileExtension;
         logger->configurations()->set(el::Level::Global, el::ConfigurationType::Filename, fileName);
         logger->reconfigure();
     }
@@ -49,6 +49,7 @@ void logging::setLogfileSuffix(const std::string& suffix, const string& loggerId
     std::vector<std::string>* loggerIds = new std::vector<std::string>();
     el::Loggers::populateAllLoggerIds(loggerIds);
     el::base::LogStreamsReferenceMap* streams = el::base::elStorage->registeredLoggers()->logStreamsReference();
+    const string sep = "---";
 
     for (string id : *loggerIds)
     {
@@ -61,23 +62,22 @@ void logging::setLogfileSuffix(const std::string& suffix, const string& loggerId
         el::Logger* logger = el::Loggers::getLogger(id, false);
         string fileName = logger->configurations()->get(el::Level::Global, el::ConfigurationType::Filename)->value();
         string fileExtension = "";
-        size_t doubleDashIndex = fileName.find_last_of("--");
-        size_t dotIndex = fileName.find_last_of(".");
+        size_t sepIndex = fileName.rfind(sep);
+        size_t dotIndex = fileName.rfind(".");
         if (dotIndex != string::npos)
         {
             fileExtension = fileName.substr(dotIndex);
         }
-        if (doubleDashIndex != string::npos)
+        if (sepIndex != string::npos)
         {
-            fileName = fileName.substr(0, doubleDashIndex-1);
+            fileName = fileName.substr(0, sepIndex);
         } else {
-            size_t dotIndex = fileName.find_last_of(".");
             if (dotIndex != string::npos)
             {
                 fileName = fileName.substr(0, dotIndex);
             }
         }
-        fileName += "--" + suffix + fileExtension;
+        fileName += sep + suffix + fileExtension;
 
         el::Configurations newConf;
         newConf.set(el::Level::Global, el::ConfigurationType::Filename, fileName);
