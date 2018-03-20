@@ -1056,6 +1056,8 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                 unsigned int createRandomFsmSeed = static_cast<unsigned int>(getRandom(gen));
                                 unsigned int createMutantSeed = static_cast<unsigned int>(getRandom(gen));
 
+                                float maxDegNonDet = config.maxDegreeOfNonDeterminism * static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+
                                 TIMED_SCOPE(timerBlkObj, "heavy-iter");
                                 AdaptiveTestResult result;
                                 result.testName = config.testName + "-" + iteration;
@@ -1082,7 +1084,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                                     numOutFaults,
                                                     numTransFaults,
                                                     degreeOfCompleteness,
-                                                    config.maxDegreeOfNonDeterminism,
+                                                    maxDegNonDet,
                                                     createRandomFsmSeed,
                                                     createMutantSeed,
                                                     plTestSpecCopy,
