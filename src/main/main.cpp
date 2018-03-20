@@ -1403,7 +1403,7 @@ void INF_STA()
 {
     AdaptiveTestConfig config;
     config.testName = "INF-STA";
-    config.numFsm = 24000;
+    config.numFsm = 20000;
 
     config.minInput = 4;
     config.maxInput = 4;
@@ -1412,7 +1412,7 @@ void INF_STA()
     config.maxOutput = 4;
 
     config.minStates = 1;
-    config.maxStates = 24;
+    config.maxStates = 20;
 
     config.minTransFaults = 0;
     config.maxTransFaults = 0;
@@ -1512,7 +1512,7 @@ void TRANSF_STA()
 {
     AdaptiveTestConfig config;
     config.testName = "TRANSF-STA";
-    config.numFsm = 23000;
+    config.numFsm = 19000;
 
     config.minInput = 4;
     config.maxInput = 4;
@@ -1521,7 +1521,7 @@ void TRANSF_STA()
     config.maxOutput = 4;
 
     config.minStates = 2;
-    config.maxStates = 24;
+    config.maxStates = 20;
 
     config.minTransFaults = 1;
     config.maxTransFaults = 1;
