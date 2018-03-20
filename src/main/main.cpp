@@ -129,7 +129,7 @@ void initCsvHeaders()
     csvHeaders.insert(make_pair(CsvField::TEST_NAME, "testName"));
     csvHeaders.insert(make_pair(CsvField::NUM_STATES, "numStates"));
     csvHeaders.insert(make_pair(CsvField::NUM_INPUTS, "numInputs"));
-    csvHeaders.insert(make_pair(CsvField::NUM_INPUTS, "numOutputs"));
+    csvHeaders.insert(make_pair(CsvField::NUM_OUTPUTS, "numOutputs"));
     csvHeaders.insert(make_pair(CsvField::NUM_D_REACHABLE_STATES, "numDReachableStates"));
     csvHeaders.insert(make_pair(CsvField::NUM_SETS_OF_MAXIMAL_R_DIST_STATES, "numSetsOfMaximalRDistStates"));
     csvHeaders.insert(make_pair(CsvField::NUM_OUT_FAULTS, "numOutFaults"));
@@ -1062,6 +1062,8 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                 AdaptiveTestResult result;
                                 result.testName = config.testName + "-" + iteration;
 
+                                CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "testName: " << result.testName;
+
                                 bool couldCreateMutant = false;
                                 bool abort = false;
                                 bool newSeeds = false;
@@ -1100,7 +1102,6 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                             writeResultToQueue(result, config.csvConfig.context, config.csvConfig.fieldsContext, ctInnerIt);
 
                                         }
-
                                         result.setsOfMaximalRDistStates.clear();
                                         result.observedTraces.clear();
 
@@ -1307,17 +1308,17 @@ void trial(bool debug)
         CLOG(INFO, logging::globalLogger) << "############## Debugging ##############";
 
         AdaptiveTestConfigDebug debugConfig;
-        debugConfig.numStates = 7;
+        debugConfig.numStates = 4;
         debugConfig.numInput = 4;
-        debugConfig.numOutput = 4;
-        debugConfig.numOutFaults = 1;
+        debugConfig.numOutput = 1;
+        debugConfig.numOutFaults = 0;
         debugConfig.numTransFaults = 0;
-        debugConfig.createRandomFsmSeed = 1104848806;
-        debugConfig.createMutantSeed = 1837447161;
-        debugConfig.degreeOfCompleteness = 0.6f;
-        debugConfig.maxDegreeOfNonDeterminism = 1.0f;
+        debugConfig.createRandomFsmSeed = 98824417;
+        debugConfig.createMutantSeed = 1642605748;
+        debugConfig.degreeOfCompleteness = 1.0f;
+        debugConfig.maxDegreeOfNonDeterminism = 0.508369f;
         debugConfig.csvConfig.logEveryIteration = false;
-        debugConfig.loggingConfig.toDot = true;
+        debugConfig.loggingConfig.toDot = false;
 
         shared_ptr<FsmPresentationLayer> plTestSpecCopy = make_shared<FsmPresentationLayer>(*plTestSpec);
         shared_ptr<FsmPresentationLayer> plTestIutCopy = make_shared<FsmPresentationLayer>(*plTestIut);
@@ -1402,7 +1403,7 @@ void INF_STA()
 {
     AdaptiveTestConfig config;
     config.testName = "INF-STA";
-    config.numFsm = 20000;
+    config.numFsm = 24000;
 
     config.minInput = 4;
     config.maxInput = 4;
@@ -1411,7 +1412,7 @@ void INF_STA()
     config.maxOutput = 4;
 
     config.minStates = 1;
-    config.maxStates = 20;
+    config.maxStates = 24;
 
     config.minTransFaults = 0;
     config.maxTransFaults = 0;
@@ -1421,13 +1422,12 @@ void INF_STA()
 
     config.dontTestReductions = true;
 
-    config.loggingConfig.toDot = false;
-    config.loggingConfig.printSetsOfMaximalRDistStates = false;
-
     config.csvConfig.logEveryIteration = true;
     config.csvConfig.context = TestIteration::STATE;
     config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
     config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
+    config.csvConfig.fieldsContext.push_back(CsvField::ITERATIONS);
+    config.csvConfig.fieldsContext.push_back(CsvField::LONGEST_OBSERVED_TRACE_SIZE);
 
     config.seed = 1337;
 
@@ -1435,49 +1435,14 @@ void INF_STA()
 }
 
 /**
- * Testing FSMs with number of states varying.
- * IUTs are always a reduction of the specification.
+ * Testing FSMs with number of inputs varying
+ * and always one output fault.
  */
-void RED_STA()
+void INF_INP()
 {
     AdaptiveTestConfig config;
-    config.testName = "RED-STA";
-    config.numFsm = 100;
-
-    config.minInput = 4;
-    config.maxInput = 4;
-
-    config.minOutput = 4;
-    config.maxOutput = 4;
-
-    config.minStates = 1;
-    config.maxStates = 10;
-
-    config.minTransFaults = 0;
-    config.maxTransFaults = 0;
-
-    config.minOutFaults = 0;
-    config.maxOutFaults = 0;
-
-    config.dontTestReductions = false;
-
-    config.loggingConfig.printSetsOfMaximalRDistStates = false;
-
-    config.csvConfig.logEveryIteration = true;
-    config.csvConfig.context = TestIteration::STATE;
-    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
-    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
-
-    config.seed = 785676;
-
-    adaptiveTestRandom(config);
-}
-
-void RED_INP()
-{
-    AdaptiveTestConfig config;
-    config.testName = "RED-INP";
-    config.numFsm = 20000;
+    config.testName = "INF-INP";
+    config.numFsm = 9000;
 
     config.minInput = 2;
     config.maxInput = 10;
@@ -1491,13 +1456,220 @@ void RED_INP()
     config.minTransFaults = 0;
     config.maxTransFaults = 0;
 
+    config.minOutFaults = 1;
+    config.maxOutFaults = 1;
+
+    config.dontTestReductions = true;
+
+    config.csvConfig.logEveryIteration = true;
+    config.csvConfig.context = TestIteration::INPUT;
+    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
+    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
+    config.csvConfig.fieldsContext.push_back(CsvField::ITERATIONS);
+    config.csvConfig.fieldsContext.push_back(CsvField::LONGEST_OBSERVED_TRACE_SIZE);
+
+    config.seed = 7364746;
+
+    adaptiveTestRandom(config);
+}
+
+void INF_OUTP()
+{
+    AdaptiveTestConfig config;
+    config.testName = "INF-OUTP";
+    config.numFsm = 9000;
+
+    config.minInput = 4;
+    config.maxInput = 4;
+
+    config.minOutput = 2;
+    config.maxOutput = 10;
+
+    config.minStates = 10;
+    config.maxStates = 10;
+
+    config.minTransFaults = 0;
+    config.maxTransFaults = 0;
+
+    config.minOutFaults = 1;
+    config.maxOutFaults = 1;
+
+    config.dontTestReductions = true;
+
+    config.csvConfig.logEveryIteration = true;
+    config.csvConfig.context = TestIteration::OUTPUT;
+    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
+    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
+    config.csvConfig.fieldsContext.push_back(CsvField::ITERATIONS);
+    config.csvConfig.fieldsContext.push_back(CsvField::LONGEST_OBSERVED_TRACE_SIZE);
+
+    config.seed = 895;
+
+    adaptiveTestRandom(config);
+}
+
+void TRANSF_STA()
+{
+    AdaptiveTestConfig config;
+    config.testName = "TRANSF-STA";
+    config.numFsm = 23000;
+
+    config.minInput = 4;
+    config.maxInput = 4;
+
+    config.minOutput = 4;
+    config.maxOutput = 4;
+
+    config.minStates = 2;
+    config.maxStates = 24;
+
+    config.minTransFaults = 1;
+    config.maxTransFaults = 1;
+
+    config.minOutFaults = 0;
+    config.maxOutFaults = 0;
+
+    config.dontTestReductions = true;
+
+    config.csvConfig.logEveryIteration = true;
+    config.csvConfig.context = TestIteration::STATE;
+    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
+    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
+    config.csvConfig.fieldsContext.push_back(CsvField::ITERATIONS);
+    config.csvConfig.fieldsContext.push_back(CsvField::LONGEST_OBSERVED_TRACE_SIZE);
+
+    config.seed = 7331;
+
+    adaptiveTestRandom(config);
+}
+
+void TRANSF_INP()
+{
+    AdaptiveTestConfig config;
+    config.testName = "TRANSF-INP";
+    config.numFsm = 9000;
+
+    config.minInput = 2;
+    config.maxInput = 10;
+
+    config.minOutput = 4;
+    config.maxOutput = 4;
+
+    config.minStates = 10;
+    config.maxStates = 10;
+
+    config.minTransFaults = 1;
+    config.maxTransFaults = 1;
+
+    config.minOutFaults = 0;
+    config.maxOutFaults = 0;
+
+    config.dontTestReductions = true;
+
+    config.csvConfig.logEveryIteration = true;
+    config.csvConfig.context = TestIteration::INPUT;
+    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
+    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
+    config.csvConfig.fieldsContext.push_back(CsvField::ITERATIONS);
+    config.csvConfig.fieldsContext.push_back(CsvField::LONGEST_OBSERVED_TRACE_SIZE);
+
+    config.seed = 89786;
+
+    adaptiveTestRandom(config);
+}
+
+void TRANSF_OUTP()
+{
+    AdaptiveTestConfig config;
+    config.testName = "TRANSF-OUTP";
+    config.numFsm = 9000;
+
+    config.minInput = 4;
+    config.maxInput = 4;
+
+    config.minOutput = 2;
+    config.maxOutput = 10;
+
+    config.minStates = 10;
+    config.maxStates = 10;
+
+    config.minTransFaults = 1;
+    config.maxTransFaults = 1;
+
+    config.minOutFaults = 0;
+    config.maxOutFaults = 0;
+
+    config.dontTestReductions = true;
+
+    config.csvConfig.logEveryIteration = true;
+    config.csvConfig.context = TestIteration::OUTPUT;
+    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
+    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
+    config.csvConfig.fieldsContext.push_back(CsvField::ITERATIONS);
+    config.csvConfig.fieldsContext.push_back(CsvField::LONGEST_OBSERVED_TRACE_SIZE);
+
+    config.seed = 101;
+
+    adaptiveTestRandom(config);
+}
+
+void RED_STA()
+{
+    AdaptiveTestConfig config;
+    config.testName = "RED-STA";
+    config.numFsm = 5000;
+
+    config.minInput = 2;
+    config.maxInput = 2;
+
+    config.minOutput = 2;
+    config.maxOutput = 2;
+
+    config.minStates = 1;
+    config.maxStates = 5;
+
+    config.minTransFaults = 0;
+    config.maxTransFaults = 0;
+
     config.minOutFaults = 0;
     config.maxOutFaults = 0;
 
     config.dontTestReductions = false;
 
-    config.loggingConfig.toDot = false;
-    config.loggingConfig.printSetsOfMaximalRDistStates = false;
+    config.csvConfig.logEveryIteration = true;
+    config.csvConfig.context = TestIteration::STATE;
+    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
+    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
+    config.csvConfig.fieldsContext.push_back(CsvField::ITERATIONS);
+    config.csvConfig.fieldsContext.push_back(CsvField::LONGEST_OBSERVED_TRACE_SIZE);
+
+    config.seed = 785676;
+
+    adaptiveTestRandom(config);
+}
+
+void RED_INP()
+{
+    AdaptiveTestConfig config;
+    config.testName = "RED-INP";
+    config.numFsm = 5000;
+
+    config.minInput = 1;
+    config.maxInput = 5;
+
+    config.minOutput = 2;
+    config.maxOutput = 2;
+
+    config.minStates = 4;
+    config.maxStates = 4;
+
+    config.minTransFaults = 0;
+    config.maxTransFaults = 0;
+
+    config.minOutFaults = 0;
+    config.maxOutFaults = 0;
+
+    config.dontTestReductions = false;
 
     config.csvConfig.logEveryIteration = true;
     config.csvConfig.context = TestIteration::INPUT;
@@ -1513,16 +1685,16 @@ void RED_OUTP()
 {
     AdaptiveTestConfig config;
     config.testName = "RED-OUTP";
-    config.numFsm = 20000;
+    config.numFsm = 5000;
 
-    config.minInput = 4;
-    config.maxInput = 4;
+    config.minInput = 2;
+    config.maxInput = 2;
 
-    config.minOutput = 2;
-    config.maxOutput = 10;
+    config.minOutput = 1;
+    config.maxOutput = 5;
 
-    config.minStates = 10;
-    config.maxStates = 10;
+    config.minStates = 4;
+    config.maxStates = 4;
 
     config.minTransFaults = 0;
     config.maxTransFaults = 0;
@@ -1532,95 +1704,12 @@ void RED_OUTP()
 
     config.dontTestReductions = false;
 
-    config.loggingConfig.toDot = false;
-    config.loggingConfig.printSetsOfMaximalRDistStates = false;
-
     config.csvConfig.logEveryIteration = true;
     config.csvConfig.context = TestIteration::OUTPUT;
     config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
     config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
 
-    config.seed = 546457;
-
-    adaptiveTestRandom(config);
-}
-
-void RED_COMP()
-{
-    AdaptiveTestConfig config;
-    config.testName = "RED-OUTP";
-    config.numFsm = 20000;
-
-    config.minInput = 4;
-    config.maxInput = 4;
-
-    config.minOutput = 4;
-    config.maxOutput = 4;
-
-    config.minStates = 10;
-    config.maxStates = 10;
-
-    config.minTransFaults = 0;
-    config.maxTransFaults = 0;
-
-    config.minOutFaults = 0;
-    config.maxOutFaults = 0;
-
-    config.minDegreeOfCompleteness = 0.5f;
-    config.maxDegreeOfCompleteness = 1.0f;
-
-    config.dontTestReductions = false;
-
-    config.loggingConfig.toDot = false;
-    config.loggingConfig.printSetsOfMaximalRDistStates = false;
-
-    config.csvConfig.logEveryIteration = true;
-    config.csvConfig.context = TestIteration::OUTPUT;
-    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
-    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
-
-    config.seed = 546457;
-
-    adaptiveTestRandom(config);
-}
-
-
-/**
- * Testing FSMs with number of inputs varying
- * and always one output fault.
- */
-void INF_INP()
-{
-    AdaptiveTestConfig config;
-    config.testName = "INP-INF-01";
-    config.numFsm = 100;
-
-    config.minInput = 1;
-    config.maxInput = 10;
-
-    config.minOutput = 4;
-    config.maxOutput = 4;
-
-    config.minStates = 1;
-    config.maxStates = 20;
-
-    config.minTransFaults = 0;
-    config.maxTransFaults = 0;
-
-    config.minOutFaults = 1;
-    config.maxOutFaults = 1;
-
-    config.dontTestReductions = true;
-
-    config.loggingConfig.toDot = false;
-    config.loggingConfig.printSetsOfMaximalRDistStates = false;
-
-    config.csvConfig.logEveryIteration = true;
-    config.csvConfig.context = TestIteration::INPUT;
-    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
-    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
-
-    config.seed = 7364746;
+    config.seed = 805645;
 
     adaptiveTestRandom(config);
 }
@@ -1631,39 +1720,32 @@ void runAdaptiveStateCountingTests()
     // Input faults
     INF_STA();
     INF_INP();
+    INF_OUTP();
+
+    // Transition faults
+    TRANSF_STA();
+    TRANSF_INP();
+    TRANSF_OUTP();
 
     // Reductions
+    RED_STA();
     RED_INP();
     RED_OUTP();
-    RED_STA();
-
-    RED_COMP();
-
 }
 
 int main(int argc, char* argv[])
 {
-//    locale::global( locale("") );
     START_EASYLOGGINGPP(argc, argv);
-
     nowText = initialize();
-
     logging::initLogging(nowText);
-
-
 
     CLOG(INFO, logging::globalLogger) << "%%%%%%%%%%%%%%%%%%%%%%%% Starting Application %%%%%%%%%%%%%%%%%%%%%%%%";
 #ifdef ENABLE_DEBUG_MACRO
     CLOG(INFO, logging::globalLogger) << "This is a debug build!";
-#else
-    CLOG(INFO, logging::globalLogger) << "This is a release build!";
 #endif
 
 //    trial(true);
 //    return 0;
-
-    INF_STA();
-    return 0;
 
     runAdaptiveStateCountingTests();
 
