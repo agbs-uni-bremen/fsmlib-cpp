@@ -1512,7 +1512,7 @@ void TRANSF_STA()
 {
     AdaptiveTestConfig config;
     config.testName = "TRANSF-STA";
-    config.numFsm = 19000;
+    config.numFsm = 13000;
 
     config.minInput = 4;
     config.maxInput = 4;
@@ -1521,7 +1521,7 @@ void TRANSF_STA()
     config.maxOutput = 4;
 
     config.minStates = 2;
-    config.maxStates = 20;
+    config.maxStates = 14;
 
     config.minTransFaults = 1;
     config.maxTransFaults = 1;
@@ -1547,16 +1547,16 @@ void TRANSF_INP()
 {
     AdaptiveTestConfig config;
     config.testName = "TRANSF-INP";
-    config.numFsm = 9000;
+    config.numFsm = 14000;
 
     config.minInput = 2;
-    config.maxInput = 10;
+    config.maxInput = 15;
 
-    config.minOutput = 4;
-    config.maxOutput = 4;
+    config.minOutput = 2;
+    config.maxOutput = 2;
 
-    config.minStates = 10;
-    config.maxStates = 10;
+    config.minStates = 5;
+    config.maxStates = 5;
 
     config.minTransFaults = 1;
     config.maxTransFaults = 1;
@@ -1582,16 +1582,16 @@ void TRANSF_OUTP()
 {
     AdaptiveTestConfig config;
     config.testName = "TRANSF-OUTP";
-    config.numFsm = 9000;
+    config.numFsm = 29000;
 
-    config.minInput = 4;
-    config.maxInput = 4;
+    config.minInput = 5;
+    config.maxInput = 5;
 
     config.minOutput = 2;
-    config.maxOutput = 10;
+    config.maxOutput = 30;
 
-    config.minStates = 10;
-    config.maxStates = 10;
+    config.minStates = 8;
+    config.maxStates = 8;
 
     config.minTransFaults = 1;
     config.maxTransFaults = 1;
@@ -1617,7 +1617,7 @@ void RED_STA()
 {
     AdaptiveTestConfig config;
     config.testName = "RED-STA";
-    config.numFsm = 5000;
+    config.numFsm = 4000;
 
     config.minInput = 2;
     config.maxInput = 2;
@@ -1626,7 +1626,7 @@ void RED_STA()
     config.maxOutput = 2;
 
     config.minStates = 1;
-    config.maxStates = 5;
+    config.maxStates = 4;
 
     config.minTransFaults = 0;
     config.maxTransFaults = 0;
@@ -1652,16 +1652,16 @@ void RED_INP()
 {
     AdaptiveTestConfig config;
     config.testName = "RED-INP";
-    config.numFsm = 5000;
+    config.numFsm = 3000;
 
     config.minInput = 1;
-    config.maxInput = 5;
+    config.maxInput = 3;
 
     config.minOutput = 2;
     config.maxOutput = 2;
 
-    config.minStates = 4;
-    config.maxStates = 4;
+    config.minStates = 3;
+    config.maxStates = 3;
 
     config.minTransFaults = 0;
     config.maxTransFaults = 0;
@@ -1685,16 +1685,16 @@ void RED_OUTP()
 {
     AdaptiveTestConfig config;
     config.testName = "RED-OUTP";
-    config.numFsm = 5000;
+    config.numFsm = 3000;
 
     config.minInput = 2;
     config.maxInput = 2;
 
     config.minOutput = 1;
-    config.maxOutput = 5;
+    config.maxOutput = 3;
 
-    config.minStates = 4;
-    config.maxStates = 4;
+    config.minStates = 3;
+    config.maxStates = 3;
 
     config.minTransFaults = 0;
     config.maxTransFaults = 0;
