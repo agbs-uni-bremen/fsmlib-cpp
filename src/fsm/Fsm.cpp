@@ -792,7 +792,7 @@ int Fsm::getNumberOfPossibleTransitions(vector<shared_ptr<FsmNode>> nodePool) co
     return (maxInput + 1) * (maxOutput + 1) * static_cast<int>(nodePool.size());
 }
 
-float Fsm::getDegreeOfCompleteness(int minus, vector<shared_ptr<FsmNode>> nodePool) const
+float Fsm::getDegreeOfCompleteness(const int& minus, vector<shared_ptr<FsmNode>> nodePool) const
 {
     VLOG(2) << "getDegreeOfCompleteness()";
     if (nodePool.empty())
@@ -831,7 +831,25 @@ int Fsm::getNumberOfNotDefinedDeterministicTransitions(vector<shared_ptr<FsmNode
     return result;
 }
 
-float Fsm::getDegreeOfNonDeterminism(vector<shared_ptr<FsmNode>> nodePool) const
+int Fsm::getNumberOfTotalTransitions(vector<shared_ptr<FsmNode>> nodePool) const
+{
+    VLOG(2) << "getNumberOfTotalTransitions()";
+
+    if (nodePool.empty())
+    {
+        nodePool = nodes;
+    }
+
+    int result = 0;
+    for (const shared_ptr<FsmNode>& n : nodePool)
+    {
+        result += n->getTransitions().size();
+    }
+    VLOG(2) << "  result: " << result;
+    return result;
+}
+
+float Fsm::getDegreeOfNonDeterminism(const int& diff, vector<shared_ptr<FsmNode>> nodePool) const
 {
     VLOG(2) << "calcDegreeOfNondeterminism()";
     if (nodePool.empty())
@@ -840,7 +858,7 @@ float Fsm::getDegreeOfNonDeterminism(vector<shared_ptr<FsmNode>> nodePool) const
     }
 
     float totalTransitions = 0;
-    float numberNonDeterministicTransitions = 0;
+    float numberNonDeterministicTransitions = diff;
 
     for (const shared_ptr<FsmNode>& n : nodePool)
     {
@@ -3518,14 +3536,23 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
         bool metDegreeOfCompleteness = fsmMin.doesMeetDegreeOfCompleteness(degreeOfCompleteness);
         bool metNumberOfStates = (numStatesMin == static_cast<size_t>(numStates));
 
+        int retryCount = 0;
         VLOG(2) << "metDegreeOfCompleteness: " << std::boolalpha << metDegreeOfCompleteness;
         VLOG(2) << "metnumberOfStates: " << std::boolalpha << metNumberOfStates;
         while (!metDegreeOfCompleteness || !metNumberOfStates)
         {
+            ++retryCount;
+            if (retryCount < 100)
+            {
+                LOG(WARNING) << "Could not create the requested FSM. Trying new seed.";
+                const unsigned int newSeed = static_cast<unsigned int>(rand());
+                return createRandomFsm(fsmName, maxInput, maxOutput, maxState, pl, observable, newSeed);
+
+            }
             VLOG(2) << "FSM does not meet all criteria yet.";
             if (!metNumberOfStates)
             {
-                VLOG(2) << "Minimal FSM does not contain requested number of states: "
+                VLOG(1) << "Minimal FSM does not contain requested number of states: "
                         << numStatesMin << " < " << numStates;
                 vector<shared_ptr<FsmNode>> newNodes;
                 fsmMin.meetNumberOfStates(maxState, maxDegreeOfNonDeterminism, observable, newNodes);
@@ -3533,7 +3560,7 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
             }
             else if (!metDegreeOfCompleteness)
             {
-                VLOG(2) << "Minimal FSM does not meet degree of completeness: "
+                VLOG(1) << "Minimal FSM does not meet degree of completeness: "
                         << degreeOfCompletenessMin << " != " << degreeOfCompleteness;
                 fsmMin.meetDegreeOfCompleteness(degreeOfCompleteness, maxDegreeOfNonDeterminism, observable);
             }
@@ -3570,9 +3597,9 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
         LOG(FATAL) << "Can not keep an FSM observable that is not already observable.";
     }
 
-    if (numOutputFaults > 0 && maxOutput <= 1)
+    if (numOutputFaults > 0 && maxOutput < 1)
     {
-        throw too_many_output_faults("Can not create output faults on FSMs with output alphabet size <= 1");
+        throw too_many_output_faults("Can not create output faults on FSMs with output alphabet size < 2");
     }
 
     if ( seed == 0 ) {
@@ -3870,22 +3897,35 @@ bool Fsm::moreTransitionsPossible(const float& maxDegreeOfNonDeterminism,
                              const bool& onlyNonDeterministic,
                              vector<shared_ptr<FsmNode>> nodePool) const
 {
-    float currentDegreeofNonDet = getDegreeOfNonDeterminism(nodePool);
-    int notDefDet = getNumberOfNotDefinedDeterministicTransitions();
+    VLOG(2) << "moreTransitionsPossible()";
+    const float newDegreeofNonDet = getDegreeOfNonDeterminism(1, nodePool);
+    const int notDefDet = getNumberOfNotDefinedDeterministicTransitions();
+    const int transPossible = getNumberOfPossibleTransitions(nodePool);
+    const int totalDefined = getNumberOfTotalTransitions(nodePool);
 
-    if (currentDegreeofNonDet >= maxDegreeOfNonDeterminism && notDefDet <= 0)
+    VLOG(2) << "newDegreeofNonDet: " << newDegreeofNonDet;
+    VLOG(2) << "notDefDet: " << notDefDet;
+    VLOG(2) << "transPossible: " << transPossible;
+    VLOG(2) << "totalDefined: " << totalDefined;
+
+    if (totalDefined >= transPossible)
     {
         return false;
     }
-    else if (currentDegreeofNonDet >= maxDegreeOfNonDeterminism && notDefDet > 0 && !onlyNonDeterministic)
+
+    if (newDegreeofNonDet >= maxDegreeOfNonDeterminism && notDefDet <= 0)
+    {
+        return false;
+    }
+    else if (newDegreeofNonDet >= maxDegreeOfNonDeterminism && notDefDet > 0 && !onlyNonDeterministic)
     {
         return true;
     }
-    else if (currentDegreeofNonDet >= maxDegreeOfNonDeterminism && notDefDet > 0 && onlyNonDeterministic)
+    else if (newDegreeofNonDet >= maxDegreeOfNonDeterminism && notDefDet > 0 && onlyNonDeterministic)
     {
         return false;
     }
-    else if (currentDegreeofNonDet < maxDegreeOfNonDeterminism)
+    else if (newDegreeofNonDet < maxDegreeOfNonDeterminism)
     {
         return true;
     }
@@ -3910,16 +3950,27 @@ void Fsm::addRandomTransitions(const float& maxDegreeOfNonDeterminism,
         nodePool = nodes;
     }
 
-    const int numStates = static_cast<int>(nodes.size());
+    if (VLOG_IS_ON(2))
+    {
+        VLOG(2) << "Add random transitions for nodes";
+        for (const shared_ptr<FsmNode>& n : nodePool)
+        {
+            VLOG(2) << "  " << n->getName() << " (" << n << ")";
+        }
+    }
+
+    const int numStates = static_cast<int>(nodePool.size());
     int numberOfTransitionsCreated = 0;
     bool keepGoing = moreTransitionsPossible(maxDegreeOfNonDeterminism, onlyNonDeterministic, nodePool);
     bool impossible = false;
 
     while (keepGoing && !impossible)
     {
+        VLOG(2) << "Allowed target nodes:";
         vector<shared_ptr<FsmNode>> allowedTargetNodes;
         for (const shared_ptr<FsmNode>& n : nodes)
         {
+            VLOG(2) << "  " << n->getName() << " (" << n << ")";
             allowedTargetNodes.push_back(n);
         }
 
@@ -3934,7 +3985,7 @@ void Fsm::addRandomTransitions(const float& maxDegreeOfNonDeterminism,
 
             VLOG(2) << "Trying to create transition to target node " << targetNode->getName();
 
-            selectRandomNodeAndCreateLabel(nodes, maxDegreeOfNonDeterminism, onlyNonDeterministic, observable, srcNode, label);
+            selectRandomNodeAndCreateLabel(nodePool, maxDegreeOfNonDeterminism, onlyNonDeterministic, observable, srcNode, label);
 
             // We could not find a source node or a valid label.
             if (!srcNode || !label)
@@ -4281,9 +4332,12 @@ shared_ptr<FsmLabel> Fsm::createRandomLabel(const shared_ptr<FsmNode>& srcNode,
                                             const bool& observable) const
 {
     VLOG(2) << "createRandomLabel()";
+
     const int numIn = maxInput + 1;
     const int numOut = maxOutput + 1;
-    const float degreeOfNonDeterminism = getDegreeOfNonDeterminism(nodes);
+
+    const bool couldAddMoreNonDet = getDegreeOfNonDeterminism(1, nodes) <= maxDegreeOfNonDeterminism;
+    VLOG(2) << "couldAddMoreNonDet: " << boolalpha << couldAddMoreNonDet;
 
     shared_ptr<FsmLabel> label;
 
@@ -4305,7 +4359,7 @@ shared_ptr<FsmLabel> Fsm::createRandomLabel(const shared_ptr<FsmNode>& srcNode,
     bool impossible = false;
     while (!label && !impossible)
     {
-        if (degreeOfNonDeterminism > maxDegreeOfNonDeterminism)
+        if (!couldAddMoreNonDet)
         {
             if (onlyNonDeterministic)
             {
@@ -4495,7 +4549,7 @@ void Fsm::accept(FsmVisitor& v) {
 
 
 bool Fsm::removeUnreachableNodes(std::vector<shared_ptr<FsmNode>>& unreachableNodes) {
-    VLOG(2) << "removeUnreachableNodes()";
+    VLOG(1) << "removeUnreachableNodes()";
     vector<shared_ptr<FsmNode>> newNodes;
     FsmVisitor v;
     

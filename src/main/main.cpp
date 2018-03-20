@@ -1040,7 +1040,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                 int numTransFaults = ctTransFault;
 
 
-                                if (numOutputs <= 1 && numOutFaults > 0)
+                                if (numOutputs < 1 && numOutFaults > 0)
                                 {
                                     CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
                                     CLOG(INFO, logging::globalLogger) << "numInput: " << numInputs + 1;

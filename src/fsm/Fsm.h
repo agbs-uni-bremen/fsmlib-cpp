@@ -160,6 +160,7 @@ protected:
 
     int getNumberOfPossibleTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
     int getNumberOfNotDefinedDeterministicTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    int getNumberOfTotalTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
 
 public:
     
@@ -333,8 +334,8 @@ public:
     void resetColor();
     void toDot(const std::string & fname);
     
-    float getDegreeOfCompleteness(int minus = 0, std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
-    float getDegreeOfNonDeterminism(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    float getDegreeOfCompleteness(const int& minus = 0, std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    float getDegreeOfNonDeterminism(const int& diff = 0, std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
     int getNumberOfDifferentInputTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
 
     /**
