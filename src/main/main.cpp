@@ -569,7 +569,6 @@ void printSummary(const string& testName,
                   const long& durationS,
                   const long& durationM)
 {
-    CLOG(INFO, logging::globalLogger) << "";
     CLOG(INFO, logging::globalLogger) << "#################### SUMMARY ####################";
     CLOG(INFO, logging::globalLogger) << "# Test name    : " << testName;
     CLOG(INFO, logging::globalLogger) << "# Total tests  : " << executed;
@@ -577,7 +576,7 @@ void printSummary(const string& testName,
     CLOG(INFO, logging::globalLogger) << "# Failed       : " << executed - passed;
     CLOG(INFO, logging::globalLogger) << "# Not executed : " << notExecuted;
     CLOG(INFO, logging::globalLogger) << "# Duration     : " << durationS << " s (" << durationM << " min).";
-    CLOG(INFO, logging::globalLogger) << "#################################################";
+    CLOG(INFO, logging::globalLogger) << "#################################################" << endl;
 }
 
 void printTestConfig(const AdaptiveTestConfig& config)
@@ -861,6 +860,7 @@ int getRandom(std::mt19937& gen)
 void adaptiveTestRandom(AdaptiveTestConfig& config)
 {
 
+    logging::setLogfileSuffix(config.testName, logging::testParameters);
     printTestBegin(config.testName);
     ofstream csvOut = newCsvFile(config.testName, config.csvConfig);
 
