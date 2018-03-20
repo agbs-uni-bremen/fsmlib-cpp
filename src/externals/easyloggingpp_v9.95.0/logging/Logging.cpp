@@ -1,22 +1,18 @@
-#include <string>
-#include <chrono>
+
 #include "logging/easylogging++.h"
 #include "logging/Logging.h"
 
 using namespace std;
-using std::chrono::system_clock;
 
 const char* logging::fsmConversion = "fsm-conversion";
 const char* logging::globalLogger = "global-logger";
-const char* logging::csvLoggerEveryIteration = "csv-logger-every-iteration";
-const char* logging::csvLoggerContext = "csv-logger-context";
+const char* logging::testParameters = "test-parameters";
 
-void logging::initLogging()
+void logging::initLogging(const string& nowText)
 {
     el::Loggers::getLogger(logging::fsmConversion);
     el::Loggers::getLogger(logging::globalLogger);
-    el::Loggers::getLogger(logging::csvLoggerEveryIteration);
-    el::Loggers::getLogger(logging::csvLoggerContext);
+    el::Loggers::getLogger(logging::testParameters);
 
     const string loggerConfigDir = "../../../src/externals/easyloggingpp_v9.95.0";
 #ifdef ENABLE_DEBUG_MACRO
@@ -27,15 +23,6 @@ void logging::initLogging()
     el::Loggers::configureFromGlobal((loggerConfigDir + "/Release.cfg").c_str());
 #endif
     //el::Loggers::reconfigureAllLoggers(logConfig);
-
-    const system_clock::time_point now = system_clock::now();
-    std::time_t tNow = system_clock::to_time_t(now);
-
-    char nowTextRaw[21];
-    struct tm buf;
-    strftime(nowTextRaw, 21, "%Y-%m-%d--%H-%M-%S", localtime_r(&tNow, &buf));
-    string nowText(nowTextRaw);
-
 
     std::vector<std::string>* loggerIds = new std::vector<std::string>();
     el::Loggers::populateAllLoggerIds(loggerIds);
@@ -66,8 +53,7 @@ void logging::setLogfileSuffix(const std::string& suffix, const string& loggerId
     for (string id : *loggerIds)
     {
         if ((id == logging::globalLogger && loggerId != logging::globalLogger)
-                || (id == logging::csvLoggerEveryIteration && loggerId != logging::csvLoggerEveryIteration)
-                || (id == logging::csvLoggerContext && loggerId != logging::csvLoggerContext)
+                || (id == logging::testParameters && loggerId != logging::testParameters)
                 || (loggerId != "" && id != loggerId))
         {
             continue;

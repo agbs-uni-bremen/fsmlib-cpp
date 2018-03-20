@@ -7,9 +7,8 @@ namespace logging
 {
     extern const char* fsmConversion;
     extern const char* globalLogger;
-    extern const char* csvLoggerEveryIteration;
-    extern const char* csvLoggerContext;
-    void initLogging();
+    extern const char* testParameters;
+    void initLogging(const std::string& nowText);
     void setLogfileSuffix(const std::string& suffix, const std::string& loggerId = "");
 }
 

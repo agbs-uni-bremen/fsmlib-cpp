@@ -4,6 +4,8 @@
  * Licensed under the EUPL V.1.1
  */
 
+#include <string>
+#include <chrono>
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -34,13 +36,18 @@
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
+#include <deque>
 
 using namespace std;
+using std::chrono::system_clock;
 
 static const string csvSep = ";";
 
+static string nowText;
+
 static const string ascTestDirectory = "../../../resources/asc-tests/";
 static const string ascTestResultDirectory = "../../../resources/asc-test-results/";
+static const string ascCsvDirectory = "../../../csv/";
 
 static shared_ptr<FsmPresentationLayer> plTestSpec = make_shared<FsmPresentationLayer>(
             ascTestDirectory + "adaptive-test-in.txt",
@@ -65,6 +72,15 @@ enum class TestIteration
     TRANSITION_FAULT,
     DEGREE_COMPLETENESS,
     END
+};
+
+struct TestIterationHash
+{
+    template <typename T>
+    std::size_t operator()(T t) const
+    {
+        return static_cast<std::size_t>(t);
+    }
 };
 
 enum class CsvField
@@ -95,8 +111,18 @@ enum class CsvField
     BEGIN = TEST_NAME
 };
 
+struct CsvFieldHash
+{
+    template <typename T>
+    std::size_t operator()(T t) const
+    {
+        return static_cast<std::size_t>(t);
+    }
+};
+
 static map<CsvField, string> csvHeaders;
 static map<TestIteration, string> csvIterations;
+static unordered_map<TestIteration, unordered_map<CsvField, deque<string>, CsvFieldHash>, TestIterationHash> csvContent;
 
 void initCsvHeaders()
 {
@@ -134,10 +160,17 @@ void initCsvIterations()
     csvIterations.insert(make_pair(TestIteration::DEGREE_COMPLETENESS, "Degree of Completeness"));
 }
 
-void initialize()
+string initialize()
 {
     initCsvHeaders();
     initCsvIterations();
+
+    const system_clock::time_point now = system_clock::now();
+    std::time_t tNow = system_clock::to_time_t(now);
+    char nowTextRaw[21];
+    struct tm buf;
+    strftime(nowTextRaw, 21, "%Y-%m-%d--%H-%M-%S", localtime_r(&tNow, &buf));
+    return string(nowTextRaw);
 }
 
 struct CsvConfig
@@ -229,7 +262,6 @@ struct AdaptiveTestResult
     long durationMS = -1;
     long durationM = -1;
     bool pass = 0;
-    int targetDegreeOfCompleteness;
 };
 
 void assertInconclusive(string tc, string comment = "") {
@@ -370,44 +402,7 @@ string getFieldFromResult(const AdaptiveTestResult& result, const CsvField& fiel
     return out.str();
 }
 
-void writeCsvHeader(const CsvConfig& config, const string& logger)
-{
-    string header = "";
-    if (logger == logging::csvLoggerEveryIteration)
-    {
-        size_t size = config.fieldsEveryIteration.size();
-        if (size == 0)
-        {
-            size = csvHeaders.size() - 1;
-            size_t i = 0;
-            for (const auto& pair : csvHeaders)
-            {
-                const string& h = pair.second;
-                header += h;
-                if (i++ != size)
-                {
-                    header += csvSep;
-                }
-            }
-        }
-        else
-        {
-            --size;
-            for (size_t i = 0; i <= size; ++i)
-            {
-                CsvField field = config.fieldsEveryIteration.at(i);
-                header += csvHeaders.at(field);
-                if (i != size)
-                {
-                    header += csvSep;
-                }
-            }
-        }
-        CLOG(INFO, logging::csvLoggerEveryIteration) << header;
-    }
-}
-
-void logToCsv(const AdaptiveTestResult& result, const CsvConfig& config)
+void logToCsv(ofstream& csvOut, const AdaptiveTestResult& result, const CsvConfig& config)
 {
     string output;
 
@@ -439,184 +434,123 @@ void logToCsv(const AdaptiveTestResult& result, const CsvConfig& config)
             }
         }
     }
-
-    CLOG(INFO, logging::csvLoggerEveryIteration) << output;
+    csvOut << output << endl;
 }
 
-
-void logToCsv(const vector<vector<AdaptiveTestResult>>& resultsMatrix, const CsvConfig& config)
+void initQueue(const TestIteration& context, const CsvField& field, const int& rows)
 {
-    if (config.context == TestIteration::END || config.fieldsContext.size() == 0)
+    deque<string> queue;
+    queue.push_back(csvIterations.at(context));
+
+    for (size_t r = 0; r <= static_cast<size_t>(rows); ++r)
     {
-        return;
+        queue.push_back("");
     }
+    csvContent[context][field] = queue;
+}
 
-    string contextHeader = csvIterations.at(config.context) + csvSep;
-    string fieldHeader = csvSep;
+void writeContextHeaderToQueue(const TestIteration& context, const CsvField& field, vector<string> values)
+{
+    deque<string>& queue = csvContent[context][field];
 
-
-    int numInputs = 0;
-    int numOutputs = 0;
-    int numStates = 0;
-    int numOutputFaults = 0;
-    int numTransitionFaults = 0;
-    int degreeCompleteness = 0;
-
-    size_t matrixHeight = 0;
-    for (size_t i = 0; i < resultsMatrix.size(); ++i)
+    string header;
+    for (const string& s : values)
     {
-        size_t h = resultsMatrix.at(i).size();
-        if (i == 0)
+        header += csvSep + s;
+    }
+    queue.at(0) += header;
+
+}
+
+void nextColumnInQueue(const TestIteration& context, const vector<CsvField>& fields)
+{
+    for (const CsvField& f : fields)
+    {
+        deque<string>& queue = csvContent[context][f];
+
+        for (size_t i = 1; i < queue.size(); ++i)
         {
-            matrixHeight = h;
+            queue.at(i) += csvSep;
         }
-        else if (matrixHeight != h)
+    }
+}
+
+void writeToQueue(const TestIteration& context, const CsvField& field,
+                  const int& row, const string& value)
+{
+    csvContent[context][field].at(static_cast<size_t>(row) + 1) += value;
+}
+
+void writeResultToQueue(const AdaptiveTestResult& result, const TestIteration& context,
+                        const vector<CsvField>& fields, const int& row)
+{
+    for (const CsvField& f : fields)
+    {
+        writeToQueue(context, f, row, getFieldFromResult(result, f));
+    }
+}
+
+void flushQueues(string testName)
+{
+    for (auto contextIt : csvContent)
+    {
+        for (auto fieldIt : contextIt.second)
         {
-            CLOG(WARNING, logging::globalLogger) << "The results matrix is not of consitent height.";
-            if (h > matrixHeight)
+            string fieldName = csvHeaders.at(fieldIt.first);
+            deque<string>& queue = fieldIt.second;
+            ofstream out(ascCsvDirectory + "Results-" + nowText + "-" + testName + "-" + fieldName + ".csv");
+
+            for (const string& l : queue)
             {
-                matrixHeight = h;
+                out << l << endl;
+            }
+
+            out.close();
+        }
+    }
+}
+
+void writeCsvHeader(ofstream& csvOut, const CsvConfig& config)
+{
+    string header = "";
+
+    size_t size = config.fieldsEveryIteration.size();
+    if (size == 0)
+    {
+        size = csvHeaders.size() - 1;
+        size_t i = 0;
+        for (const auto& pair : csvHeaders)
+        {
+            const string& h = pair.second;
+            header += h;
+            if (i++ != size)
+            {
+                header += csvSep;
             }
         }
     }
-
-    vector<string> out(matrixHeight, "");
-
-    for (size_t fieldIdx = 0; fieldIdx < config.fieldsContext.size(); ++fieldIdx)
+    else
     {
-        const CsvField& field = config.fieldsContext.at(fieldIdx);
-        const string& fieldName = csvHeaders.at(field);
-
-        for (size_t col = 0; col < resultsMatrix.size(); ++col)
+        --size;
+        for (size_t i = 0; i <= size; ++i)
         {
-            for (size_t row = 0; row < resultsMatrix.at(col).size(); ++row)
+            CsvField field = config.fieldsEveryIteration.at(i);
+            header += csvHeaders.at(field);
+            if (i != size)
             {
-                const AdaptiveTestResult& result = resultsMatrix.at(col).at(row);
-                if (row == 0)
-                {
-                    numInputs = result.numInputs;
-                    numOutputs = result.numOutputs;
-                    numStates = result.numStates;
-                    numOutputFaults= result.numOutFaults;
-                    numTransitionFaults = result.numTransFaults;
-                    degreeCompleteness = result.targetDegreeOfCompleteness;
-                }
-                else if (config.context == TestIteration::INPUT && result.numInputs != numInputs)
-                {
-                    CLOG(FATAL, logging::globalLogger)
-                            << "Trying to log context, but number of inputs differ.";
-                }
-                else if (config.context == TestIteration::OUTPUT && result.numOutputs != numOutputs)
-                {
-                    CLOG(FATAL, logging::globalLogger)
-                            << "Trying to log context, but number of outputs differ.";
-                }
-                else if (config.context == TestIteration::STATE && result.numStates != numStates)
-                {
-                    CLOG(FATAL, logging::globalLogger)
-                            << "Trying to log context, but number of states differ.";
-                }
-                else if (config.context == TestIteration::OUTPUT_FAULT && result.numOutFaults != numOutputFaults)
-                {
-                    CLOG(FATAL, logging::globalLogger)
-                            << "Trying to log context, but number of output faults differ.";
-                }
-                else if (config.context == TestIteration::TRANSITION_FAULT && result.numTransFaults != numTransitionFaults)
-                {
-                    CLOG(FATAL, logging::globalLogger)
-                            << "Trying to log context, but number of transition faults differ.";
-                }
-                else if (config.context == TestIteration::DEGREE_COMPLETENESS && result.targetDegreeOfCompleteness != degreeCompleteness)
-                {
-                    CLOG(FATAL, logging::globalLogger)
-                            << "Trying to log context, but target degree of completeness differs.";
-                }
-                out.at(row) += getFieldFromResult(result, field) + csvSep;
-            }
-            contextHeader += to_string(numStates) + csvSep;
-            fieldHeader += fieldName + csvSep;
-        }
-        for (size_t l = 0; l < out.size(); ++l)
-        {
-            out.at(l) += csvSep;
-        }
-        contextHeader += csvSep;
-        fieldHeader += csvSep;
-    }
-
-
-    CLOG(INFO, logging::csvLoggerContext) << fieldHeader;
-    CLOG(INFO, logging::csvLoggerContext) << contextHeader;
-    for (const string& o : out)
-    {
-        CLOG(INFO, logging::csvLoggerContext) << csvSep << o;
-    }
-}
-
-/*
-void logAveragesToCsv(const string& testName,
-                      const vector<AdaptiveTestResult>& results,
-                      const CsvConfig& csvConfig)
-{
-    const vector<CsvField>& fields = csvConfig.fields;
-
-    AdaptiveTestResult averageResult;
-    averageResult.testName = testName;
-
-    // Supported fields
-    float averageDurationMS = 0;
-
-    int numStates = 0;
-
-    for (size_t i = 0; i < results.size(); ++i)
-    {
-        const AdaptiveTestResult& result = results.at(i);
-        if (i == 0)
-        {
-            numStates = result.numStates;
-            averageResult.numStates = numStates;
-        }
-        else
-        {
-            // Check if average is requested on a field that makes no sense.
-            if (result.numStates != numStates)
-            {
-                CLOG(FATAL, logging::globalLogger)
-                        << "Trying to calculate an average, but number of states differ.";
+                header += csvSep;
             }
         }
-
-        if (find(fields.begin(), fields.end(), DURATION_MS) != fields.end())
-        {
-            averageDurationMS += (result.durationMS - averageDurationMS) / (i + 1);
-        }
     }
-
-    averageResult.durationMS = static_cast<long>(averageDurationMS);
-    averageResult.avgCount = static_cast<int>(results.size());
-
-    logToCsv(averageResult, csvConfig);
+    csvOut << header << endl;
 }
-*/
 
-
-void newCsvFile(CsvConfig csvConfig, const string& suffix)
+ofstream newCsvFile(string testName, const CsvConfig& csvConfig)
 {
-    CLOG_IF(VLOG_IS_ON(1), INFO, logging::globalLogger) << "newCsvFile()";
-    CLOG_IF(VLOG_IS_ON(1), INFO, logging::globalLogger) << "  suffix: " << suffix;
-
-    if (csvConfig.logEveryIteration)
-    {
-        logging::setLogfileSuffix(suffix, logging::csvLoggerEveryIteration);
-        writeCsvHeader(csvConfig, logging::csvLoggerEveryIteration);
-    }
-    if (csvConfig.context != TestIteration::END)
-    {
-        logging::setLogfileSuffix(suffix, logging::csvLoggerContext);
-        writeCsvHeader(csvConfig, logging::csvLoggerContext);
-    }
+    ofstream csvOut(ascCsvDirectory + "Results-" + nowText + "-" + testName + ".csv");
+    writeCsvHeader(csvOut, csvConfig);
+    return csvOut;
 }
-
 
 void printTestBegin(string name)
 {
@@ -731,8 +665,15 @@ void printTestResult(AdaptiveTestResult& result, const CsvConfig& csvConfig, con
 
     if (csvConfig.logEveryIteration)
     {
-        logToCsv(result, csvConfig);
+        logToCsv(csvOut, result, csvConfig);
     }
+}
+
+void printTestResult(AdaptiveTestResult& result, const CsvConfig& csvConfig,
+                     const LoggingConfig& loggingConfig)
+{
+    ofstream dummyout = ofstream();
+    printTestResult(result, csvConfig, loggingConfig, dummyout);
 }
 
 bool isReduction(Fsm& spec, Fsm& iut, string intersectionName, shared_ptr<Fsm>& intersection)
@@ -805,6 +746,7 @@ void executeAdaptiveTest(Fsm& spec, Fsm& iut, size_t m, string intersectionName,
 
 
 void createAndExecuteAdaptiveTest(
+        ofstream& csvOut,
         const string& prefix,
         const int numStates,
         const int numInputs,
@@ -885,7 +827,7 @@ void createAndExecuteAdaptiveTest(
     executeAdaptiveTest(*spec, *iut, static_cast<size_t>(iut->getMaxNodes()),
                         prefix + "-intersect", loggingConfig.toDot, loggingConfig.toFsm, dontTestReductions, result);
 
-    printTestResult(result, csvConfig, loggingConfig);
+    printTestResult(result, csvConfig, loggingConfig, csvOut);
 }
 
 unsigned int getRandomSeed()
@@ -910,13 +852,12 @@ int getRandom(std::mt19937& gen)
     std::uniform_int_distribution<int> dis;
     return dis(gen);
 }
-//TODO Eine CSV-Datei für jede Test-Methode erstellen (ohne den Logger?).
+
 void adaptiveTestRandom(AdaptiveTestConfig& config)
 {
 
     printTestBegin(config.testName);
-
-    newCsvFile(config.csvConfig, config.testName);
+    ofstream csvOut = newCsvFile(config.testName, config.csvConfig);
 
     std::chrono::steady_clock::time_point totalStart = std::chrono::steady_clock::now();
 
@@ -981,6 +922,15 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
     CLOG(INFO, logging::globalLogger) << "degreeOfCompletenessIterations: " << degreeOfCompletenessIterations;
     CLOG(INFO, logging::globalLogger) << "";
 
+    unordered_map<CsvField, vector<string>, CsvFieldHash> csvHeaderValues;
+    if (config.csvConfig.context != TestIteration::END)
+    {
+        for (const CsvField& f : config.csvConfig.fieldsContext)
+        {
+            initQueue(config.csvConfig.context, f, innerIterations);
+        }
+    }
+
     std::mt19937 gen(config.seed);
 
     int executed = 0;
@@ -989,22 +939,42 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
 
     const TestIteration& loggingContext = config.csvConfig.context;
 
-    vector<vector<AdaptiveTestResult>> collectedResults;
-
-    vector<AdaptiveTestResult> innerCollectedResults;
-
     for (int ctInput = config.minInput; ctInput <= config.maxInput; ++ctInput)
     {
+        if (loggingContext == TestIteration::INPUT)
+        {
+            nextColumnInQueue(config.csvConfig.context, config.csvConfig.fieldsContext);
+        }
         for (int ctOutput = config.minOutput; ctOutput <= config.maxOutput; ++ctOutput)
         {
+            if (loggingContext == TestIteration::OUTPUT)
+            {
+                nextColumnInQueue(config.csvConfig.context, config.csvConfig.fieldsContext);
+            }
             for (int ctState = config.minStates; ctState <= config.maxStates ; ++ctState)
             {
+                if (loggingContext == TestIteration::STATE)
+                {
+                    nextColumnInQueue(config.csvConfig.context, config.csvConfig.fieldsContext);
+                }
                 for (int ctOutFault = config.minOutFaults; ctOutFault <= config.maxOutFaults; ++ctOutFault)
                 {
+                    if (loggingContext == TestIteration::OUTPUT_FAULT)
+                    {
+                        nextColumnInQueue(config.csvConfig.context, config.csvConfig.fieldsContext);
+                    }
                     for (int ctTransFault = config.minTransFaults; ctTransFault <= config.maxTransFaults; ++ctTransFault)
                     {
+                        if (loggingContext == TestIteration::TRANSITION_FAULT)
+                        {
+                            nextColumnInQueue(config.csvConfig.context, config.csvConfig.fieldsContext);
+                        }
                         for (int degreeCount = 0; degreeCount < degreeOfCompletenessIterations; ++degreeCount)
                         {
+                            if (loggingContext == TestIteration::DEGREE_COMPLETENESS)
+                            {
+                                nextColumnInQueue(config.csvConfig.context, config.csvConfig.fieldsContext);
+                            }
                             float degreeOfCompleteness;
 
                             if (config.minDegreeOfCompleteness <= 0 && config.maxDegreeOfCompleteness <= 0)
@@ -1097,6 +1067,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                     }
                                     try {
                                         createAndExecuteAdaptiveTest(
+                                                    csvOut,
                                                     iteration,
                                                     numStates,
                                                     numInputs,
@@ -1115,14 +1086,14 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                                     result);
                                         couldCreateMutant = true;
 
-                                        result.setsOfMaximalRDistStates.clear();
-                                        result.observedTraces.clear();
-                                        result.targetDegreeOfCompleteness = static_cast<int>((degreeOfCompleteness * 10)) * 10;
-
                                         if (config.csvConfig.context != TestIteration::END)
                                         {
-                                            innerCollectedResults.push_back(result);
+                                            writeResultToQueue(result, config.csvConfig.context, config.csvConfig.fieldsContext, ctInnerIt);
+
                                         }
+
+                                        result.setsOfMaximalRDistStates.clear();
+                                        result.observedTraces.clear();
 
                                     }
                                     catch (unexpected_reduction& e)
@@ -1208,40 +1179,58 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                 ++i;
                             }  // End inner loop
 
+                            if (loggingContext == TestIteration::DEGREE_COMPLETENESS)
+                            {
+                                for (const CsvField& f : config.csvConfig.fieldsContext)
+                                {
+                                    csvHeaderValues[f].push_back(to_string(static_cast<int>((degreeOfCompleteness * 10)) * 10));
+                                }
+                            }
+
                         } // End degree of completeness loop
 
                         if (loggingContext == TestIteration::TRANSITION_FAULT)
                         {
-                            collectedResults.push_back(innerCollectedResults);
-                            innerCollectedResults = vector<AdaptiveTestResult>();
+                            for (const CsvField& f : config.csvConfig.fieldsContext)
+                            {
+                                csvHeaderValues[f].push_back(to_string(ctTransFault));
+                            }
                         }
                     }  // End trans faults
 
                     if (loggingContext == TestIteration::OUTPUT_FAULT)
                     {
-                        collectedResults.push_back(innerCollectedResults);
-                        innerCollectedResults = vector<AdaptiveTestResult>();
+                        for (const CsvField& f : config.csvConfig.fieldsContext)
+                        {
+                            csvHeaderValues[f].push_back(to_string(ctOutFault));
+                        }
                     }
                 }  // End out faults
 
                 if (loggingContext == TestIteration::STATE)
                 {
-                    collectedResults.push_back(innerCollectedResults);
-                    innerCollectedResults = vector<AdaptiveTestResult>();
+                    for (const CsvField& f : config.csvConfig.fieldsContext)
+                    {
+                        csvHeaderValues[f].push_back(to_string(ctState + 1));
+                    }
                 }
             } // End states
 
             if (loggingContext == TestIteration::OUTPUT)
             {
-                collectedResults.push_back(innerCollectedResults);
-                innerCollectedResults = vector<AdaptiveTestResult>();
+                for (const CsvField& f : config.csvConfig.fieldsContext)
+                {
+                    csvHeaderValues[f].push_back(to_string(ctOutput + 1));
+                }
             }
         } // End outputs
 
         if (loggingContext == TestIteration::INPUT)
         {
-            collectedResults.push_back(innerCollectedResults);
-            innerCollectedResults = vector<AdaptiveTestResult>();
+            for (const CsvField& f : config.csvConfig.fieldsContext)
+            {
+                csvHeaderValues[f].push_back(to_string(ctInput + 1));
+            }
         }
     } // End inputs
 
@@ -1250,12 +1239,12 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
     long durationS = std::chrono::duration_cast<std::chrono::seconds>(totalEnd - totalStart).count();
     long durationM = std::chrono::duration_cast<std::chrono::minutes>(totalEnd - totalStart).count();
 
-    if (config.csvConfig.context != TestIteration::END)
+    for (const CsvField& f : config.csvConfig.fieldsContext)
     {
-        logToCsv(collectedResults, config.csvConfig);
+        writeContextHeaderToQueue(config.csvConfig.context, f, csvHeaderValues[f]);
     }
 
-
+    flushQueues(config.testName);
     printSummary(config.testName, executed, passed, i - executed, durationS, durationM);
 }
 
@@ -1304,8 +1293,6 @@ void trial(bool debug)
     config.loggingConfig.toDot = false;
     config.loggingConfig.printSetsOfMaximalRDistStates = false;
 
-    writeCsvHeader(config.csvConfig, logging::csvLoggerEveryIteration);
-
     if (debug)
     {
         CLOG(INFO, logging::globalLogger) << "############## Debugging ##############";
@@ -1328,7 +1315,10 @@ void trial(bool debug)
 
         AdaptiveTestResult result;
 
+        ofstream dummyStream = ofstream();
+
         createAndExecuteAdaptiveTest(
+                    dummyStream,
                     debugConfig.prefix,
                     debugConfig.numStates - 1,
                     debugConfig.numInput - 1,
@@ -1646,18 +1636,24 @@ int main(int argc, char* argv[])
 {
 //    locale::global( locale("") );
     START_EASYLOGGINGPP(argc, argv);
-    logging::initLogging();
 
-    initialize();
+    nowText = initialize();
 
-    CLOG(INFO, logging::globalLogger) << "############## Starting Application ##############";
+    logging::initLogging(nowText);
+
+
+
+    CLOG(INFO, logging::globalLogger) << "%%%%%%%%%%%%%%%%%%%%%%%% Starting Application %%%%%%%%%%%%%%%%%%%%%%%%";
 #ifdef ENABLE_DEBUG_MACRO
     CLOG(INFO, logging::globalLogger) << "This is a debug build!";
 #else
     CLOG(INFO, logging::globalLogger) << "This is a release build!";
 #endif
 
-    RED_STA();
+//    trial(true);
+//    return 0;
+
+    INF_STA();
     return 0;
 
     runAdaptiveStateCountingTests();
