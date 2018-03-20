@@ -794,6 +794,7 @@ int Fsm::getNumberOfPossibleTransitions(vector<shared_ptr<FsmNode>> nodePool) co
 
 float Fsm::getDegreeOfCompleteness(int minus, vector<shared_ptr<FsmNode>> nodePool) const
 {
+    VLOG(2) << "getDegreeOfCompleteness()";
     if (nodePool.empty())
     {
         nodePool = nodes;
@@ -2160,7 +2161,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
     observedTraces.clear();
     LOG(INFO) << "m: " << m;
     /**
-     * Adaptive test cases for the product FSM (Ω).
+     * Adaptive test cases (Ω) for the specification FSM.
      */
     const IOTreeContainer& adaptiveTestCases = spec.getAdaptiveRCharacterisationSet();
     LOG(INFO) << "adaptiveTestCases: " << adaptiveTestCases;
@@ -2305,9 +2306,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
             VLOG(1) << ss.str();
             ss.str(std::string());
 #endif
-//            PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "apply inputTrace before insertion");
             observedOutputsTCElements.insert(make_pair(inputTrace, producedOutputsIut));
-//            PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "apply inputTrace after insertion");
 
             for (const shared_ptr<OutputTrace>& oTrace : producedOutputsIut)
             {
