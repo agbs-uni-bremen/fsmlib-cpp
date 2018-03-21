@@ -1838,7 +1838,7 @@ void RED_OUTP()
     config.minInput = 2;
     config.maxInput = 2;
 
-    config.minOutput = 1;
+    config.minOutput = 2;
     config.maxOutput = 3;
 
     config.minStates = 3;
