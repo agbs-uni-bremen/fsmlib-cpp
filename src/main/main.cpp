@@ -1487,10 +1487,10 @@ void INF_INP()
 {
     AdaptiveTestConfig config;
     config.testName = "INF-INP";
-    config.numFsm = 19000;
+    config.numFsm = 12000;
 
     config.minInput = 2;
-    config.maxInput = 20;
+    config.maxInput = 13;
 
     config.minOutput = 4;
     config.maxOutput = 4;
