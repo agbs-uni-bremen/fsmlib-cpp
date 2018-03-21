@@ -3642,8 +3642,10 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
             numStatesMin = fsmMin.size();
             metDegreeOfCompleteness = fsmMin.doesMeetDegreeOfCompleteness(degreeOfCompleteness);
             metNumberOfStates = (numStatesMin == static_cast<size_t>(numStates));
+            metNonDeterminism = (forceNonDeterminism && fsm->getNumberOfNonDeterministicTransitions() > 0);
             VLOG(2) << "metDegreeOfCompleteness: " << std::boolalpha << metDegreeOfCompleteness;
             VLOG(2) << "metnumberOfStates: " << std::boolalpha << metNumberOfStates;
+            VLOG(2) << "metNonDeterminism: " << std::boolalpha << metNonDeterminism;
         }
         fsm = make_shared<Fsm>(fsmMin);
     }
