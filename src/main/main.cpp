@@ -1835,6 +1835,14 @@ void runAdaptiveStateCountingTests()
     RED_OUTP();
 }
 
+void reRun()
+{
+    TRANSF_INP();
+    RED_STA();
+    RED_OUTP();
+    AEQ_OUTP();
+}
+
 int main(int argc, char* argv[])
 {
     START_EASYLOGGINGPP(argc, argv);
@@ -1848,6 +1856,9 @@ int main(int argc, char* argv[])
 
 //    trial(true);
 //    return 0;
+
+    reRun();
+    return 0;
 
     runAdaptiveStateCountingTests();
 
