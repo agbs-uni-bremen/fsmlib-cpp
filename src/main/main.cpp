@@ -1901,9 +1901,6 @@ int main(int argc, char* argv[])
 //    trial(true);
 //    return 0;
 
-    AEQ_OUTP();
-    return 0;
-
     runAdaptiveStateCountingTests();
 
     return 0;
