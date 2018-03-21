@@ -95,6 +95,7 @@ enum class CsvField
     DEGREE_OF_COMPLETENESS,
     DEGREE_OF_NON_DETERMINISM,
     IUT_IS_REDUCTION,
+    REMOVED_TRANSITIONS,
     FAIL_TRACE_FOUND,
     FAIL_TRACE_FOUND_SIZE,
     OBSERVED_TRACES_SIZE,
@@ -137,6 +138,7 @@ void initCsvHeaders()
     csvHeaders.insert(make_pair(CsvField::DEGREE_OF_COMPLETENESS, "degreeOfCompleteness"));
     csvHeaders.insert(make_pair(CsvField::DEGREE_OF_NON_DETERMINISM, "degreeOfNonDeterminism"));
     csvHeaders.insert(make_pair(CsvField::IUT_IS_REDUCTION, "iutIsReduction"));
+    csvHeaders.insert(make_pair(CsvField::REMOVED_TRANSITIONS, "removedTransitions"));
     csvHeaders.insert(make_pair(CsvField::FAIL_TRACE_FOUND, "failTraceFound"));
     csvHeaders.insert(make_pair(CsvField::FAIL_TRACE_FOUND_SIZE, "failTraceFoundSize"));
     csvHeaders.insert(make_pair(CsvField::OBSERVED_TRACES_SIZE, "observedTracesSize"));
@@ -200,6 +202,7 @@ struct AdaptiveTestConfigDebug
     int numTransFaults;
     unsigned int createRandomFsmSeed;
     unsigned int createMutantSeed;
+    bool createReduction;
     float degreeOfCompleteness;
     float maxDegreeOfNonDeterminism;
     CsvConfig csvConfig;
@@ -217,6 +220,8 @@ struct AdaptiveTestConfig
     int maxStates = -1;
     int maxOutFaults = -1;
     int maxTransFaults = -1;
+
+    bool createReduction = false;
 
     float minDegreeOfCompleteness = 1.0f;
     float maxDegreeOfCompleteness = 1.0f;
@@ -252,6 +257,7 @@ struct AdaptiveTestResult
     float degreeOfCompleteness = -1;
     float degreeOfNonDeterminism = -1;
     bool iutIsReduction;
+    int removedTransitions = -1;
     shared_ptr<IOTrace> failTraceFound;
     IOTraceContainer observedTraces;
     int numObservedTraces;
@@ -335,6 +341,9 @@ string getFieldFromResult(const AdaptiveTestResult& result, const CsvField& fiel
         break;
     case CsvField::IUT_IS_REDUCTION:
         out << result.iutIsReduction;
+        break;
+    case CsvField::REMOVED_TRANSITIONS:
+        out << result.removedTransitions;
         break;
     case CsvField::FAIL_TRACE_FOUND:
         if (result.failTraceFound)
@@ -637,7 +646,8 @@ void printTestResult(AdaptiveTestResult& result, const CsvConfig& csvConfig,
     CLOG(INFO, logging::testParameters) << "numTransFaults             : " << result.numTransFaults;
     CLOG(INFO, logging::testParameters) << "degreeOfCompleteness       : " << result.degreeOfCompleteness;
     CLOG(INFO, logging::testParameters) << "degreeOfNonDeterminism     : " << result.degreeOfNonDeterminism;
-            CLOG(INFO, logging::testParameters) << "iutIsReduction             : " << std::boolalpha << result.iutIsReduction;
+    CLOG(INFO, logging::testParameters) << "iutIsReduction             : " << std::boolalpha << result.iutIsReduction;
+    CLOG(INFO, logging::testParameters) << "removedTransitions         : " << result.removedTransitions;
     if (result.failTraceFound)
     {
         CLOG(INFO, logging::testParameters) << "failTraceFound             : " << *result.failTraceFound;
@@ -764,6 +774,7 @@ void createAndExecuteAdaptiveTest(
         const unsigned int createMutantSeed,
         const shared_ptr<FsmPresentationLayer>& plSpec,
         const shared_ptr<FsmPresentationLayer>& plIut,
+        const bool createReduction,
         const bool dontTestReductions,
         const CsvConfig& csvConfig,
         const LoggingConfig loggingConfig,
@@ -780,6 +791,7 @@ void createAndExecuteAdaptiveTest(
     CLOG(INFO, logging::testParameters) << "numTransFaults           : " << numTransFaults;
     CLOG(INFO, logging::testParameters) << "degreeOfCompleteness     : " << degreeOfCompleteness;
     CLOG(INFO, logging::testParameters) << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism;
+    CLOG(INFO, logging::testParameters) << "createReduction          : " << boolalpha << createReduction;
     CLOG(INFO, logging::testParameters) << "createRandomFsmSeed      : " << createRandomFsmSeed;
     CLOG(INFO, logging::testParameters) << "createMutantSeed         : " << createMutantSeed;
     CLOG(INFO, logging::testParameters) << "-------------------------------------------";
@@ -792,19 +804,28 @@ void createAndExecuteAdaptiveTest(
                                                 plSpec,
                                                 degreeOfCompleteness,
                                                 maxDegreeOfNonDeterminism,
+                                                createReduction,
                                                 true,
                                                 true,
                                                 createRandomFsmSeed);
 
     CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Creating mutant.";
 
-
-    shared_ptr<Fsm> iut = spec->createMutant(prefix + "-iut",
-                                             numOutFaults,
-                                             numTransFaults,
-                                             true,
-                                             createMutantSeed,
-                                             plIut);
+    shared_ptr<Fsm> iut;
+    if (createReduction)
+    {
+        iut = spec->createReduction(prefix + "-iut", true, result.removedTransitions, createMutantSeed, plIut);
+    }
+    else
+    {
+        iut = spec->createMutant(prefix + "-iut",
+                                 numOutFaults,
+                                 numTransFaults,
+                                 true,
+                                 createMutantSeed,
+                                 plIut);
+        result.removedTransitions = 0;
+    }
 
     result.numStates = numStates + 1;
     result.numInputs = numInputs + 1;
@@ -824,6 +845,8 @@ void createAndExecuteAdaptiveTest(
     CLOG(INFO, logging::testParameters) << "numTransFaults           : " << result.numTransFaults;
     CLOG(INFO, logging::testParameters) << "degreeOfCompleteness tgt : " << degreeOfCompleteness;
     CLOG(INFO, logging::testParameters) << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism;
+    CLOG(INFO, logging::testParameters) << "createReduction          : " << boolalpha << createReduction;
+    CLOG(INFO, logging::testParameters) << "removedTransitions       : " << result.removedTransitions;
     CLOG(INFO, logging::testParameters) << "createRandomFsmSeed      : " << result.createRandomFsmSeed;
     CLOG(INFO, logging::testParameters) << "createMutantSeed         : " << result.createMutantSeed;
     CLOG(INFO, logging::testParameters) << "-------------------------------------------";
@@ -906,6 +929,11 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
     if (diffInput <= 0 || diffOutput <= 0 || diffStates <= 0 || diffOutFaults <= 0 || diffTransFaults <= 0 || degreeOfCompletenessIterations <= 0)
     {
         CLOG(FATAL, logging::globalLogger) << "Please check the test parameters.";
+    }
+
+    if (config.maxDegreeOfNonDeterminism <= 0 && config.createReduction)
+    {
+        CLOG(FATAL, logging::globalLogger) << "Can't create reduction of a deterministic FSM.";
     }
 
     float divisor = (diffInput * diffOutput * diffStates * diffOutFaults * diffTransFaults * degreeOfCompletenessIterations);
@@ -1057,6 +1085,15 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                 unsigned int createMutantSeed = static_cast<unsigned int>(getRandom(gen));
 
                                 float maxDegNonDet = config.maxDegreeOfNonDeterminism * static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                                if (config.createReduction && maxDegNonDet < 0.5f)
+                                {
+                                    maxDegNonDet = 0.5f + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(0.5f - 1.0f)));
+                                    if (config.maxDegreeOfNonDeterminism < 0.5f || maxDegNonDet > config.maxDegreeOfNonDeterminism)
+                                    {
+                                        CLOG_IF(VLOG_IS_ON(2), WARNING, logging::globalLogger)
+                                                << "Chosen maximal degree of non-determinism very low. Adjusting.";
+                                    }
+                                }
 
                                 TIMED_SCOPE(timerBlkObj, "heavy-iter");
                                 AdaptiveTestResult result;
@@ -1064,7 +1101,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
 
                                 CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "testName: " << result.testName;
 
-                                bool couldCreateMutant = false;
+                                bool couldCreateIut = false;
                                 bool abort = false;
                                 bool newSeeds = false;
                                 do
@@ -1091,11 +1128,12 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                                     createMutantSeed,
                                                     plTestSpecCopy,
                                                     plTestIutCopy,
+                                                    config.createReduction,
                                                     config.dontTestReductions,
                                                     config.csvConfig,
                                                     config.loggingConfig,
                                                     result);
-                                        couldCreateMutant = true;
+                                        couldCreateIut = true;
 
                                         if (config.csvConfig.context != TestIteration::END)
                                         {
@@ -1163,8 +1201,13 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                             abort = true;
                                         }
                                     }
-                                } while (!couldCreateMutant && !abort);
-                                if (!couldCreateMutant)
+                                    catch (reduction_not_possible& e)
+                                    {
+                                        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Could not create reduction.";
+                                        newSeeds = true;
+                                    }
+                                } while (!couldCreateIut && !abort);
+                                if (!couldCreateIut)
                                 {
                                     ++i;
                                     CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
@@ -1315,6 +1358,7 @@ void trial(bool debug)
         debugConfig.numTransFaults = 0;
         debugConfig.createRandomFsmSeed = 98824417;
         debugConfig.createMutantSeed = 1642605748;
+        debugConfig.createReduction = false;
         debugConfig.degreeOfCompleteness = 1.0f;
         debugConfig.maxDegreeOfNonDeterminism = 0.508369f;
         debugConfig.csvConfig.logEveryIteration = false;
@@ -1341,6 +1385,7 @@ void trial(bool debug)
                     debugConfig.createMutantSeed,
                     plTestSpecCopy,
                     plTestIutCopy,
+                    debugConfig.createReduction,
                     false,
                     debugConfig.csvConfig,
                     debugConfig.loggingConfig,
@@ -1613,10 +1658,10 @@ void TRANSF_OUTP()
     adaptiveTestRandom(config);
 }
 
-void RED_STA()
+void AEQ_STA()
 {
     AdaptiveTestConfig config;
-    config.testName = "RED-STA";
+    config.testName = "AEQ-STA";
     config.numFsm = 4000;
 
     config.minInput = 2;
@@ -1626,7 +1671,7 @@ void RED_STA()
     config.maxOutput = 2;
 
     config.minStates = 1;
-    config.maxStates = 4;
+    config.maxStates = 3;
 
     config.minTransFaults = 0;
     config.maxTransFaults = 0;
@@ -1648,10 +1693,10 @@ void RED_STA()
     adaptiveTestRandom(config);
 }
 
-void RED_INP()
+void AEQ_INP()
 {
     AdaptiveTestConfig config;
-    config.testName = "RED-INP";
+    config.testName = "AEQ-INP";
     config.numFsm = 3000;
 
     config.minInput = 1;
@@ -1681,10 +1726,10 @@ void RED_INP()
     adaptiveTestRandom(config);
 }
 
-void RED_OUTP()
+void AEQ_OUTP()
 {
     AdaptiveTestConfig config;
-    config.testName = "RED-OUTP";
+    config.testName = "AEQ-OUTP";
     config.numFsm = 3000;
 
     config.minInput = 2;
@@ -1714,6 +1759,110 @@ void RED_OUTP()
     adaptiveTestRandom(config);
 }
 
+void RED_STA()
+{
+    AdaptiveTestConfig config;
+    config.testName = "RED-STA";
+    config.numFsm = 3000;
+
+    config.minInput = 2;
+    config.maxInput = 2;
+
+    config.minOutput = 2;
+    config.maxOutput = 2;
+
+    config.minStates = 1;
+    config.maxStates = 3;
+
+    config.minTransFaults = 0;
+    config.maxTransFaults = 0;
+
+    config.minOutFaults = 0;
+    config.maxOutFaults = 0;
+
+    config.createReduction = true;
+    config.dontTestReductions = false;
+
+    config.csvConfig.logEveryIteration = true;
+    config.csvConfig.context = TestIteration::STATE;
+    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
+    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
+    config.csvConfig.fieldsContext.push_back(CsvField::ITERATIONS);
+    config.csvConfig.fieldsContext.push_back(CsvField::LONGEST_OBSERVED_TRACE_SIZE);
+
+    config.seed = 4334;
+
+    adaptiveTestRandom(config);
+}
+
+void RED_INP()
+{
+    AdaptiveTestConfig config;
+    config.testName = "RED-INP";
+    config.numFsm = 3000;
+
+    config.minInput = 1;
+    config.maxInput = 3;
+
+    config.minOutput = 2;
+    config.maxOutput = 2;
+
+    config.minStates = 3;
+    config.maxStates = 3;
+
+    config.minTransFaults = 0;
+    config.maxTransFaults = 0;
+
+    config.minOutFaults = 0;
+    config.maxOutFaults = 0;
+
+    config.createReduction = true;
+    config.dontTestReductions = false;
+
+    config.csvConfig.logEveryIteration = true;
+    config.csvConfig.context = TestIteration::INPUT;
+    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
+    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
+
+    config.seed = 56457;
+
+    adaptiveTestRandom(config);
+}
+
+void RED_OUTP()
+{
+    AdaptiveTestConfig config;
+    config.testName = "RED-OUTP";
+    config.numFsm = 3000;
+
+    config.minInput = 2;
+    config.maxInput = 2;
+
+    config.minOutput = 1;
+    config.maxOutput = 3;
+
+    config.minStates = 3;
+    config.maxStates = 3;
+
+    config.minTransFaults = 0;
+    config.maxTransFaults = 0;
+
+    config.minOutFaults = 0;
+    config.maxOutFaults = 0;
+
+    config.createReduction = true;
+    config.dontTestReductions = false;
+
+    config.csvConfig.logEveryIteration = true;
+    config.csvConfig.context = TestIteration::OUTPUT;
+    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
+    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
+
+    config.seed = 7896774;
+
+    adaptiveTestRandom(config);
+}
+
 
 void runAdaptiveStateCountingTests()
 {
@@ -1726,6 +1875,11 @@ void runAdaptiveStateCountingTests()
     TRANSF_STA();
     TRANSF_INP();
     TRANSF_OUTP();
+
+    // Equivalence
+    AEQ_STA();
+    AEQ_INP();
+    AEQ_OUTP();
 
     // Reductions
     RED_STA();
@@ -1746,6 +1900,9 @@ int main(int argc, char* argv[])
 
 //    trial(true);
 //    return 0;
+
+    AEQ_OUTP();
+    return 0;
 
     runAdaptiveStateCountingTests();
 

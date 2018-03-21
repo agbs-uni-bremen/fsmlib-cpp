@@ -49,6 +49,11 @@ unexpected_reduction::unexpected_reduction(const std::string& msg): runtime_erro
 
 }
 
+reduction_not_possible::reduction_not_possible(const std::string& msg): runtime_error(msg)
+{
+
+}
+
 shared_ptr<FsmNode> Fsm::newNode(const int id, const shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>& p, const shared_ptr<FsmPresentationLayer>& pl)
 {
     string nodeName = string("(" + p->first->getName() + to_string(p->first->getId()) + ","
@@ -424,20 +429,27 @@ string Fsm::labelString(unordered_set<shared_ptr<FsmNode>>& lbl) const
 
 Fsm::Fsm() { }
 
-Fsm::Fsm(const Fsm& other):
-name(other.name), currentParsedNode(nullptr), characterisationSet(nullptr),
-presentationLayer(other.presentationLayer) {
-    
+Fsm::Fsm(const Fsm& other): Fsm(other, other.name, other.presentationLayer)
+{
+
+}
+
+Fsm::Fsm(const Fsm& other,
+    const std::string& fsmName,
+    const std::shared_ptr<FsmPresentationLayer>& presentationLayer):
+    name(fsmName), currentParsedNode(nullptr), characterisationSet(nullptr),
+    presentationLayer(presentationLayer)
+{
     maxInput = other.maxInput;
     maxOutput = other.maxOutput;
     maxState = other.maxState;
     initStateIdx = other.initStateIdx;
     minimal = other.minimal;
-    
+
     for ( int n = 0; n <= maxState; n++ ) {
         nodes.push_back(make_shared<FsmNode>(n,name,presentationLayer));
     }
-    
+
     // Now add transitions that correspond exactly to the transitions in
     // this FSM
     for ( int n = 0; n <= maxState; n++ ) {
@@ -451,10 +463,9 @@ presentationLayer(other.presentationLayer) {
             theNewFsmNodeSrc->addTransition(newTr);
         }
     }
-    
+
     // Mark the initial node
     nodes[initStateIdx]->markAsInitial();
-    
 }
 
 Fsm::Fsm(const shared_ptr<FsmPresentationLayer>& presentationLayer)
@@ -831,6 +842,36 @@ int Fsm::getNumberOfNotDefinedDeterministicTransitions(vector<shared_ptr<FsmNode
     return result;
 }
 
+int Fsm::getNumberOfNonDeterministicTransitions(vector<shared_ptr<FsmNode>> nodePool) const
+{
+    VLOG(2) << "getNumberOfDeterministicTransitions()";
+    if (nodePool.empty())
+    {
+        nodePool = nodes;
+    }
+    int result = 0;
+    for (const shared_ptr<FsmNode>& n : nodePool)
+    {
+        const vector<shared_ptr<FsmTransition>>& transitions = n->getTransitions();
+
+        unordered_map<int, int> inputOccurences;
+        for (const shared_ptr<FsmTransition>& t : transitions)
+        {
+            inputOccurences[t->getLabel()->getInput()]++;
+        }
+
+        for (const shared_ptr<FsmTransition>& t : transitions)
+        {
+            if (inputOccurences.at(t->getLabel()->getInput()) > 1)
+            {
+                ++result;
+            }
+        }
+    }
+    VLOG(2) << "  result: " << result;
+    return result;
+}
+
 int Fsm::getNumberOfTotalTransitions(vector<shared_ptr<FsmNode>> nodePool) const
 {
     VLOG(2) << "getNumberOfTotalTransitions()";
@@ -846,6 +887,17 @@ int Fsm::getNumberOfTotalTransitions(vector<shared_ptr<FsmNode>> nodePool) const
         result += n->getTransitions().size();
     }
     VLOG(2) << "  result: " << result;
+    return result;
+}
+
+vector<shared_ptr<FsmTransition>> Fsm::getNonDeterministicTransitions() const
+{
+    vector<shared_ptr<FsmTransition>> result;
+    for (const shared_ptr<FsmNode>& n : nodes)
+    {
+        vector<shared_ptr<FsmTransition>> r = n->getNonDeterminisitcTransitions();
+        result.insert(result.end(), r.begin(), r.end());
+    }
     return result;
 }
 
@@ -3435,16 +3487,17 @@ Fsm::createRandomFsm(const string & fsmName,
     
 }
 
-shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
-                                     const int maxInput,
-                                     const int maxOutput,
-                                     const int maxState,
+shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
+                                     const int& maxInput,
+                                     const int& maxOutput,
+                                     const int& maxState,
                                      const std::shared_ptr<FsmPresentationLayer>& pl,
-                                     const float degreeOfCompleteness,
-                                     const float maxDegreeOfNonDeterminism,
-                                     const bool minimal,
-                                     const bool observable,
-                                     const unsigned seed)
+                                     const float& degreeOfCompleteness,
+                                     const float& maxDegreeOfNonDeterminism,
+                                     const bool& forceNonDeterminism,
+                                     const bool& minimal,
+                                     const bool& observable,
+                                     const unsigned& seed)
 {
     VLOG(1) << "**createRandomFsm()";
     VLOG(1) << "maxInput: " << maxInput;
@@ -3471,6 +3524,12 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
     VLOG(1) << "numStates: " << numStates;
     VLOG(1) << "degreeOfCompleteness: " << degreeOfCompleteness;
     VLOG(1) << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism;
+    VLOG(1) << "forceNonDeterminism: " << boolalpha << forceNonDeterminism;
+
+    if (forceNonDeterminism && numOut < 2)
+    {
+        LOG(FATAL) << "Can not create non-determinism with less than two output symbols.";
+    }
 
     // Produce the nodes and put them into a vector.
     vector<shared_ptr<FsmNode>> createdNodes;
@@ -3523,6 +3582,11 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
         fsm->meetDegreeOfCompleteness(degreeOfCompleteness, maxDegreeOfNonDeterminism, observable);
     }
 
+    if(forceNonDeterminism && fsm->getNumberOfNonDeterministicTransitions() < 1)
+    {
+        fsm->addRandomTransitions(maxDegreeOfNonDeterminism, true, observable, 1.0f);
+    }
+
     if (minimal)
     {
         VLOG(2) << "Fsm has to be minimal. Minimizing. Num states: " << fsm->size();
@@ -3535,11 +3599,13 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
 
         bool metDegreeOfCompleteness = fsmMin.doesMeetDegreeOfCompleteness(degreeOfCompleteness);
         bool metNumberOfStates = (numStatesMin == static_cast<size_t>(numStates));
+        bool metNonDeterminism = (forceNonDeterminism && fsm->getNumberOfNonDeterministicTransitions() > 0);
 
         int retryCount = 0;
         VLOG(2) << "metDegreeOfCompleteness: " << std::boolalpha << metDegreeOfCompleteness;
         VLOG(2) << "metnumberOfStates: " << std::boolalpha << metNumberOfStates;
-        while (!metDegreeOfCompleteness || !metNumberOfStates)
+        VLOG(2) << "metNonDeterminism: " << std::boolalpha << metNonDeterminism;
+        while (!metDegreeOfCompleteness || !metNumberOfStates || !metNonDeterminism)
         {
             ++retryCount;
             if (retryCount < 100)
@@ -3563,6 +3629,11 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string & fsmName,
                 VLOG(1) << "Minimal FSM does not meet degree of completeness: "
                         << degreeOfCompletenessMin << " != " << degreeOfCompleteness;
                 fsmMin.meetDegreeOfCompleteness(degreeOfCompleteness, maxDegreeOfNonDeterminism, observable);
+            }
+            else if (!metNonDeterminism)
+            {
+                VLOG(1) << "Minimal FSM is not non-deterministic.";
+                fsm->addRandomTransitions(maxDegreeOfNonDeterminism, true, observable, 1.0f);
             }
 
             fsmMin = fsmMin.minimise(false, "", "", false);
@@ -3836,6 +3907,70 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
     shared_ptr<Fsm> result = make_shared<Fsm>(fsmName,maxInput,maxOutput,lst,pl);
     return result;
     
+}
+
+shared_ptr<Fsm> Fsm::createReduction(const string& fsmName,
+                                     const bool& force,
+                                     int& removedTransitions,
+                                     const unsigned seed,
+                                     const std::shared_ptr<FsmPresentationLayer>& pLayer) const
+{
+    VLOG(1) << "**createReduction()";
+    if ( seed == 0 ) {
+        unsigned int s = getRandomSeed();
+        srand(s);
+        LOG(DEBUG) << "createReduction seed: " << s;
+    }
+    else {
+        srand(seed);
+        LOG(DEBUG) << "createReduction seed: " << seed;
+    }
+
+    VLOG(2) << "Fsm:";
+    VLOG(2) << *this;
+
+    shared_ptr<FsmPresentationLayer> pl;
+    if (pLayer == nullptr)
+    {
+        pl = make_shared<FsmPresentationLayer>(*presentationLayer);
+    }
+    else
+    {
+        pl = make_shared<FsmPresentationLayer>(*pLayer);
+    }
+
+    removedTransitions = 0;
+
+    shared_ptr<Fsm> red = make_shared<Fsm>(*this, fsmName, pl);
+
+    vector<shared_ptr<FsmTransition>> nonDetTransitions = red->getNonDeterministicTransitions();
+
+    if (nonDetTransitions.empty() && force)
+    {
+        VLOG(1) << "Could not create reduction.";
+        throw reduction_not_possible("There are no deterministic transitions.");
+    }
+
+    bool keepGoing = true;
+    while (!nonDetTransitions.empty() && keepGoing)
+    {
+        size_t idx = static_cast<size_t>(rand()) % nonDetTransitions.size();
+        const shared_ptr<FsmTransition>& transition = nonDetTransitions.at(idx);
+        VLOG(2) << "Removing transition " << transition->str();
+        transition->getSource()->removeTransition(transition);
+        ++removedTransitions;
+
+        nonDetTransitions = red->getNonDeterministicTransitions();
+        size_t size = nonDetTransitions.size();
+        int mod = 10 * static_cast<int>(ceil(size * size / 2.0f));
+        VLOG(2) << "size: " << size;
+        VLOG(2) << "mod: " << mod;
+        keepGoing = (mod == 0) ? false : (rand() % mod) > 7;
+        VLOG(2) << "keepGoing: " << boolalpha << keepGoing;
+    }
+
+    return red;
+
 }
 
 

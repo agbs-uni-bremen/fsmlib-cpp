@@ -60,6 +60,12 @@ public:
     unexpected_reduction(const std::string& msg);
 };
 
+class reduction_not_possible : public std::runtime_error
+{
+public:
+    reduction_not_possible(const std::string& msg);
+};
+
 class Fsm
 {
 protected:
@@ -160,7 +166,10 @@ protected:
 
     int getNumberOfPossibleTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
     int getNumberOfNotDefinedDeterministicTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    int getNumberOfNonDeterministicTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
     int getNumberOfTotalTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+
+    std::vector<std::shared_ptr<FsmTransition>> getNonDeterministicTransitions() const;
 
 public:
     
@@ -170,6 +179,10 @@ public:
      *  point to any nodes, transitions, or labels of the old FSM
      */
     Fsm(const Fsm& other);
+
+    Fsm(const Fsm& other,
+        const std::string& fsmName,
+        const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
     
     /**
      *  Constructor creating an FSM from file - used only internally
@@ -277,15 +290,16 @@ public:
 
     static std::shared_ptr<Fsm>
     createRandomFsm(const std::string & fsmName,
-                    const int maxInput,
-                    const int maxOutput,
-                    const int maxState,
+                    const int& maxInput,
+                    const int& maxOutput,
+                    const int& maxState,
                     const std::shared_ptr<FsmPresentationLayer>& presentationLayer,
-                    const float degreeOfCompleteness,
-                    const float maxDegreeOfNonDeterminism,
-                    const bool minimal,
-                    const bool observable,
-                    const unsigned seed = 0);
+                    const float& degreeOfCompleteness,
+                    const float& maxDegreeOfNonDeterminism,
+                    const bool& forceNonDeterminism,
+                    const bool& minimal,
+                    const bool& observable,
+                    const unsigned& seed = 0);
 
     /**
      *  Create a mutant of the FSM, producing output faults
@@ -300,6 +314,12 @@ public:
                                       const bool keepObservability = false,
                                       const unsigned seed = 0,
                                       const std::shared_ptr<FsmPresentationLayer>& pLayer = nullptr);
+
+    std::shared_ptr<Fsm> createReduction(const std::string& fsmName,
+                                         const bool& force,
+                                         int& removedTransitions,
+                                         const unsigned seed = 0,
+                                         const std::shared_ptr<FsmPresentationLayer>& pLayer = nullptr) const;
     
     
     /**

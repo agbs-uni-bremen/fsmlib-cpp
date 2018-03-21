@@ -80,7 +80,7 @@ vector<shared_ptr<FsmTransition> >& FsmNode::getTransitions()
     return transitions;
 }
 
-vector<shared_ptr<FsmTransition>> FsmNode::getDeterminisitcTransitions()
+vector<shared_ptr<FsmTransition>> FsmNode::getDeterminisitcTransitions() const
 {
     vector<shared_ptr<FsmTransition>> result;
     unordered_map<int, int> inputOccurences;
@@ -92,6 +92,25 @@ vector<shared_ptr<FsmTransition>> FsmNode::getDeterminisitcTransitions()
     for (const shared_ptr<FsmTransition>& t : transitions)
     {
         if (inputOccurences.at(t->getLabel()->getInput()) == 1)
+        {
+            result.push_back(t);
+        }
+    }
+    return result;
+}
+
+vector<shared_ptr<FsmTransition>> FsmNode::getNonDeterminisitcTransitions() const
+{
+    vector<shared_ptr<FsmTransition>> result;
+    unordered_map<int, int> inputOccurences;
+    for (const shared_ptr<FsmTransition>& t : transitions)
+    {
+        inputOccurences[t->getLabel()->getInput()]++;
+    }
+
+    for (const shared_ptr<FsmTransition>& t : transitions)
+    {
+        if (inputOccurences.at(t->getLabel()->getInput()) > 1)
         {
             result.push_back(t);
         }

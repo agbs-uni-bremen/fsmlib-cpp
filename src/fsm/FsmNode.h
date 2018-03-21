@@ -74,7 +74,8 @@ public:
     
     
     std::vector<std::shared_ptr<FsmTransition> >& getTransitions();
-    std::vector<std::shared_ptr<FsmTransition>> getDeterminisitcTransitions();
+    std::vector<std::shared_ptr<FsmTransition>> getDeterminisitcTransitions() const;
+    std::vector<std::shared_ptr<FsmTransition>> getNonDeterminisitcTransitions() const;
     int getId() const;
     void setId(const int id) { this->id = id; }
 	std::string getName() const;
