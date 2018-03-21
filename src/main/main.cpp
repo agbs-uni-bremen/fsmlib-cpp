@@ -1592,16 +1592,16 @@ void TRANSF_INP()
 {
     AdaptiveTestConfig config;
     config.testName = "TRANSF-INP";
-    config.numFsm = 14000;
+    config.numFsm = 29000;
 
     config.minInput = 2;
-    config.maxInput = 15;
+    config.maxInput = 30;
 
-    config.minOutput = 2;
-    config.maxOutput = 2;
+    config.minOutput = 5;
+    config.maxOutput = 5;
 
-    config.minStates = 5;
-    config.maxStates = 5;
+    config.minStates = 8;
+    config.maxStates = 8;
 
     config.minTransFaults = 1;
     config.maxTransFaults = 1;
@@ -1662,7 +1662,7 @@ void AEQ_STA()
 {
     AdaptiveTestConfig config;
     config.testName = "AEQ-STA";
-    config.numFsm = 4000;
+    config.numFsm = 40000;
 
     config.minInput = 2;
     config.maxInput = 2;
@@ -1763,7 +1763,7 @@ void RED_STA()
 {
     AdaptiveTestConfig config;
     config.testName = "RED-STA";
-    config.numFsm = 3000;
+    config.numFsm = 30000;
 
     config.minInput = 2;
     config.maxInput = 2;
@@ -1839,7 +1839,7 @@ void RED_OUTP()
     config.maxInput = 2;
 
     config.minOutput = 2;
-    config.maxOutput = 3;
+    config.maxOutput = 4;
 
     config.minStates = 3;
     config.maxStates = 3;
