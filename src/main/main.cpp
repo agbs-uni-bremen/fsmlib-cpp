@@ -1632,7 +1632,7 @@ void AEQ_STA()
 {
     AdaptiveTestConfig config;
     config.testName = "AEQ-STA";
-    config.numFsm = 40000;
+    config.numFsm = 4000;
 
     config.minInput = 2;
     config.maxInput = 2;
@@ -1722,7 +1722,7 @@ void RED_STA()
 {
     AdaptiveTestConfig config;
     config.testName = "RED-STA";
-    config.numFsm = 30000;
+    config.numFsm = 3000;
 
     config.minInput = 2;
     config.maxInput = 2;
