@@ -3599,7 +3599,7 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
 
         bool metDegreeOfCompleteness = fsmMin.doesMeetDegreeOfCompleteness(degreeOfCompleteness);
         bool metNumberOfStates = (numStatesMin == static_cast<size_t>(numStates));
-        bool metNonDeterminism = (forceNonDeterminism && fsm->getNumberOfNonDeterministicTransitions() > 0);
+        bool metNonDeterminism = (!forceNonDeterminism || fsm->getNumberOfNonDeterministicTransitions() > 0);
 
         int retryCount = 0;
         VLOG(2) << "metDegreeOfCompleteness: " << std::boolalpha << metDegreeOfCompleteness;
@@ -3608,11 +3608,12 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
         while (!metDegreeOfCompleteness || !metNumberOfStates || !metNonDeterminism)
         {
             ++retryCount;
-            if (retryCount < 100)
+            if (retryCount > 15)
             {
                 LOG(WARNING) << "Could not create the requested FSM. Trying new seed.";
                 const unsigned int newSeed = static_cast<unsigned int>(rand());
-                return createRandomFsm(fsmName, maxInput, maxOutput, maxState, pl, observable, newSeed);
+                return createRandomFsm(fsmName, maxInput, maxOutput, maxState, pl, degreeOfCompleteness, maxDegreeOfNonDeterminism,
+                                       forceNonDeterminism, minimal, observable, newSeed);
 
             }
             VLOG(2) << "FSM does not meet all criteria yet.";
@@ -3632,7 +3633,8 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
             }
             else if (!metNonDeterminism)
             {
-                VLOG(1) << "Minimal FSM is not non-deterministic.";
+                VLOG(1) << "Minimal FSM is not non-deterministic:";
+                VLOG(2) << fsmMin;
                 fsm->addRandomTransitions(maxDegreeOfNonDeterminism, true, observable, 1.0f);
             }
 
@@ -3642,7 +3644,7 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
             numStatesMin = fsmMin.size();
             metDegreeOfCompleteness = fsmMin.doesMeetDegreeOfCompleteness(degreeOfCompleteness);
             metNumberOfStates = (numStatesMin == static_cast<size_t>(numStates));
-            metNonDeterminism = (forceNonDeterminism && fsm->getNumberOfNonDeterministicTransitions() > 0);
+            metNonDeterminism = (!forceNonDeterminism || fsm->getNumberOfNonDeterministicTransitions() > 0);
             VLOG(2) << "metDegreeOfCompleteness: " << std::boolalpha << metDegreeOfCompleteness;
             VLOG(2) << "metnumberOfStates: " << std::boolalpha << metNumberOfStates;
             VLOG(2) << "metNonDeterminism: " << std::boolalpha << metNonDeterminism;
