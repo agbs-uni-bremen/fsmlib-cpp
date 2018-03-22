@@ -4153,7 +4153,7 @@ void Fsm::addRandomTransitions(const float& maxDegreeOfNonDeterminism,
             VLOG(2) << "numberOfTransitionsCreated: " << numberOfTransitionsCreated;
         }
 
-        keepGoing = moreTransitionsPossible(maxDegreeOfNonDeterminism, onlyNonDeterministic, nodePool);
+        keepGoing = !impossible && moreTransitionsPossible(maxDegreeOfNonDeterminism, onlyNonDeterministic, nodePool);
         if (keepGoing)
         {
             float observableFactor = (observable) ? 1.0f : 1.75f;
