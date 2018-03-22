@@ -1057,7 +1057,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                 string iteration = ss.str();
 
                     #ifdef ENABLE_DEBUG_MACRO
-                                logging::setLogfileSuffix(iteration);
+                                logging::setLogfileSuffix(config.testName + "-" + iteration);
                     #endif
 
 
@@ -1217,7 +1217,6 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                     CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
                                     CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed: " << createRandomFsmSeed;
                                     CLOG(INFO, logging::globalLogger) << "createMutantSeed: " << createMutantSeed;
-                                    //TODO
                                     CLOG(WARNING, logging::globalLogger) << "Could not create requested mutant. Skipping.";
                                     continue;
                                 }

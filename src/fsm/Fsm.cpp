@@ -3611,6 +3611,8 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
             if (retryCount > 15)
             {
                 LOG(WARNING) << "Could not create the requested FSM. Trying new seed.";
+                CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger)
+                        << "Could not create the requested FSM. Trying new seed.";
                 const unsigned int newSeed = static_cast<unsigned int>(rand());
                 return createRandomFsm(fsmName, maxInput, maxOutput, maxState, pl, degreeOfCompleteness, maxDegreeOfNonDeterminism,
                                        forceNonDeterminism, minimal, observable, newSeed);
@@ -4139,7 +4141,7 @@ void Fsm::addRandomTransitions(const float& maxDegreeOfNonDeterminism,
 
         if (!srcNode || !label)
         {
-            LOG(ERROR) << "Could not create requested number of transitions.";
+            LOG(ERROR) << "Could not create transition.";
             impossible = true;
         }
         else
