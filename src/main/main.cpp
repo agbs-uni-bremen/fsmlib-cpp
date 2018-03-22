@@ -698,7 +698,7 @@ bool isReduction(Fsm& spec, Fsm& iut, string intersectionName, shared_ptr<Fsm>& 
     return !inter.hasFailure();
 }
 
-void executeAdaptiveTest(Fsm& spec, Fsm& iut, size_t m, string intersectionName,
+void executeAdaptiveTest(const string& testName, Fsm& spec, Fsm& iut, size_t m, string intersectionName,
                          const bool& toDot, const bool& toFsm, const bool& dontTestReductions, AdaptiveTestResult& result)
 {
     Fsm specMin = spec.minimise(false, "", "", false);
@@ -717,11 +717,11 @@ void executeAdaptiveTest(Fsm& spec, Fsm& iut, size_t m, string intersectionName,
 
     if (toDot)
     {
-        spec.toDot(ascTestResultDirectory + spec.getName());
-        iut.toDot(ascTestResultDirectory + iut.getName());
-        specMin.toDot(ascTestResultDirectory + spec.getName() + "-min");
-        iutMin.toDot(ascTestResultDirectory + iut.getName() + "-min");
-        intersection->toDot(ascTestResultDirectory + intersection->getName());
+        spec.toDot(ascTestResultDirectory + testName + "-" + spec.getName());
+        iut.toDot(ascTestResultDirectory + testName + "-"  + iut.getName());
+        specMin.toDot(ascTestResultDirectory + testName + "-"  + spec.getName() + "-min");
+        iutMin.toDot(ascTestResultDirectory + testName + "-"  + iut.getName() + "-min");
+        intersection->toDot(ascTestResultDirectory + testName + "-"  + intersection->getName());
     }
     if (toFsm)
     {
@@ -851,7 +851,7 @@ void createAndExecuteAdaptiveTest(
     CLOG(INFO, logging::testParameters) << "createMutantSeed         : " << result.createMutantSeed;
     CLOG(INFO, logging::testParameters) << "-------------------------------------------";
 
-    executeAdaptiveTest(*spec, *iut, static_cast<size_t>(iut->getMaxNodes()),
+    executeAdaptiveTest(result.testName, *spec, *iut, static_cast<size_t>(iut->getMaxNodes()),
                         prefix + "-intersect", loggingConfig.toDot, loggingConfig.toFsm, dontTestReductions, result);
 
     printTestResult(result, csvConfig, loggingConfig, csvOut);
@@ -1413,7 +1413,7 @@ void test00_00()
     Fsm iut = Fsm(ascTestDirectory + "00/00-iut.dot", "00-00-iut");
     result.numOutFaults = 0;
     result.numTransFaults = 0;
-    executeAdaptiveTest(spec, iut, static_cast<size_t>(iut.getMaxNodes()), "00-00-inter", true, false, false, result);
+    executeAdaptiveTest(result.testName, spec, iut, static_cast<size_t>(iut.getMaxNodes()), "00-00-inter", true, false, false, result);
     printTestResult(result, csvConfig, loggingConfig);
     assert(result.testName, result.pass);
     CLOG(INFO, logging::globalLogger) << testSepLine;
@@ -1434,7 +1434,7 @@ void test00_01()
 
     result.numOutFaults = 1;
     result.numTransFaults = 0;
-    executeAdaptiveTest(spec, iut, static_cast<size_t>(iut.getMaxNodes()), "00-01-inter", true, false, false, result);
+    executeAdaptiveTest(result.testName, spec, iut, static_cast<size_t>(iut.getMaxNodes()), "00-01-inter", true, false, false, result);
     printTestResult(result, csvConfig, loggingConfig);
     assert(result.testName, result.pass);
     CLOG(INFO, logging::globalLogger) << testSepLine;
