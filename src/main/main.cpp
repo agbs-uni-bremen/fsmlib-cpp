@@ -1468,11 +1468,6 @@ void INF_STA()
     config.dontTestReductions = true;
 
     config.csvConfig.logEveryIteration = true;
-    config.csvConfig.context = TestIteration::STATE;
-    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
-    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
-    config.csvConfig.fieldsContext.push_back(CsvField::ITERATIONS);
-    config.csvConfig.fieldsContext.push_back(CsvField::LONGEST_OBSERVED_TRACE_SIZE);
 
     config.seed = 1337;
 
@@ -1507,11 +1502,6 @@ void INF_INP()
     config.dontTestReductions = true;
 
     config.csvConfig.logEveryIteration = true;
-    config.csvConfig.context = TestIteration::INPUT;
-    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
-    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
-    config.csvConfig.fieldsContext.push_back(CsvField::ITERATIONS);
-    config.csvConfig.fieldsContext.push_back(CsvField::LONGEST_OBSERVED_TRACE_SIZE);
 
     config.seed = 7364746;
 
@@ -1542,11 +1532,6 @@ void INF_OUTP()
     config.dontTestReductions = true;
 
     config.csvConfig.logEveryIteration = true;
-    config.csvConfig.context = TestIteration::OUTPUT;
-    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
-    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
-    config.csvConfig.fieldsContext.push_back(CsvField::ITERATIONS);
-    config.csvConfig.fieldsContext.push_back(CsvField::LONGEST_OBSERVED_TRACE_SIZE);
 
     config.seed = 895;
 
@@ -1577,11 +1562,6 @@ void TRANSF_STA()
     config.dontTestReductions = true;
 
     config.csvConfig.logEveryIteration = true;
-    config.csvConfig.context = TestIteration::STATE;
-    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
-    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
-    config.csvConfig.fieldsContext.push_back(CsvField::ITERATIONS);
-    config.csvConfig.fieldsContext.push_back(CsvField::LONGEST_OBSERVED_TRACE_SIZE);
 
     config.seed = 7331;
 
@@ -1612,11 +1592,6 @@ void TRANSF_INP()
     config.dontTestReductions = true;
 
     config.csvConfig.logEveryIteration = true;
-    config.csvConfig.context = TestIteration::INPUT;
-    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
-    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
-    config.csvConfig.fieldsContext.push_back(CsvField::ITERATIONS);
-    config.csvConfig.fieldsContext.push_back(CsvField::LONGEST_OBSERVED_TRACE_SIZE);
 
     config.seed = 89786;
 
@@ -1647,11 +1622,6 @@ void TRANSF_OUTP()
     config.dontTestReductions = true;
 
     config.csvConfig.logEveryIteration = true;
-    config.csvConfig.context = TestIteration::OUTPUT;
-    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
-    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
-    config.csvConfig.fieldsContext.push_back(CsvField::ITERATIONS);
-    config.csvConfig.fieldsContext.push_back(CsvField::LONGEST_OBSERVED_TRACE_SIZE);
 
     config.seed = 101;
 
@@ -1682,11 +1652,6 @@ void AEQ_STA()
     config.dontTestReductions = false;
 
     config.csvConfig.logEveryIteration = true;
-    config.csvConfig.context = TestIteration::STATE;
-    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
-    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
-    config.csvConfig.fieldsContext.push_back(CsvField::ITERATIONS);
-    config.csvConfig.fieldsContext.push_back(CsvField::LONGEST_OBSERVED_TRACE_SIZE);
 
     config.seed = 785676;
 
@@ -1717,9 +1682,6 @@ void AEQ_INP()
     config.dontTestReductions = false;
 
     config.csvConfig.logEveryIteration = true;
-    config.csvConfig.context = TestIteration::INPUT;
-    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
-    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
 
     config.seed = 546457;
 
@@ -1750,9 +1712,6 @@ void AEQ_OUTP()
     config.dontTestReductions = false;
 
     config.csvConfig.logEveryIteration = true;
-    config.csvConfig.context = TestIteration::OUTPUT;
-    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
-    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
 
     config.seed = 805645;
 
@@ -1784,11 +1743,6 @@ void RED_STA()
     config.dontTestReductions = false;
 
     config.csvConfig.logEveryIteration = true;
-    config.csvConfig.context = TestIteration::STATE;
-    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
-    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
-    config.csvConfig.fieldsContext.push_back(CsvField::ITERATIONS);
-    config.csvConfig.fieldsContext.push_back(CsvField::LONGEST_OBSERVED_TRACE_SIZE);
 
     config.seed = 4334;
 
@@ -1820,9 +1774,6 @@ void RED_INP()
     config.dontTestReductions = false;
 
     config.csvConfig.logEveryIteration = true;
-    config.csvConfig.context = TestIteration::INPUT;
-    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
-    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
 
     config.seed = 56457;
 
@@ -1854,9 +1805,6 @@ void RED_OUTP()
     config.dontTestReductions = false;
 
     config.csvConfig.logEveryIteration = true;
-    config.csvConfig.context = TestIteration::OUTPUT;
-    config.csvConfig.fieldsContext.push_back(CsvField::DURATION_MS);
-    config.csvConfig.fieldsContext.push_back(CsvField::OBSERVED_TRACES_SIZE);
 
     config.seed = 7896774;
 
