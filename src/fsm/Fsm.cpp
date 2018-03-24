@@ -3590,6 +3590,7 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
     if (minimal)
     {
         VLOG(2) << "Fsm has to be minimal. Minimizing. Num states: " << fsm->size();
+        VLOG(2) << *fsm;
         Fsm fsmMin = fsm->minimise(false, "", "", false);
         fsmMin.presentationLayer = pl;
         VLOG(2) << "Num states after minimizing: " << fsmMin.size();
@@ -3616,7 +3617,8 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
                                        forceNonDeterminism, minimal, observable, newSeed);
 
             }
-            VLOG(2) << "FSM does not meet all criteria yet.";
+            VLOG(2) << "FSM does not meet all criteria yet:";
+            VLOG(2) << fsmMin;
             if (!metNumberOfStates)
             {
                 VLOG(1) << "Minimal FSM does not contain requested number of states: "
@@ -3633,8 +3635,7 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
             }
             else if (!metNonDeterminism)
             {
-                VLOG(1) << "Minimal FSM is not non-deterministic:";
-                VLOG(2) << fsmMin;
+                VLOG(1) << "Minimal FSM is not non-deterministic.";
                 fsm->addRandomTransitions(maxDegreeOfNonDeterminism, true, observable, 1.0f);
             }
 

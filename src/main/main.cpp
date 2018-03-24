@@ -1087,7 +1087,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                 float maxDegNonDet = config.maxDegreeOfNonDeterminism * static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
                                 if (config.createReduction && maxDegNonDet < 0.5f)
                                 {
-                                    maxDegNonDet = 0.5f + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(0.5f - 1.0f)));
+                                    maxDegNonDet = 0.5f + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(1.0f - 0.5f)));
                                     if (config.maxDegreeOfNonDeterminism < 0.5f || maxDegNonDet > config.maxDegreeOfNonDeterminism)
                                     {
                                         CLOG_IF(VLOG_IS_ON(2), WARNING, logging::globalLogger)
@@ -1444,10 +1444,10 @@ void test00_01()
  * Testing FSMs with number of states varying
  * and always one output fault.
  */
-void INF_STA()
+void OUTF_STA()
 {
     AdaptiveTestConfig config;
-    config.testName = "INF-STA";
+    config.testName = "OUTF-STA";
     config.numFsm = 20000;
 
     config.minInput = 4;
@@ -1478,20 +1478,20 @@ void INF_STA()
  * Testing FSMs with number of inputs varying
  * and always one output fault.
  */
-void INF_INP()
+void OUTF_INP()
 {
     AdaptiveTestConfig config;
-    config.testName = "INF-INP";
-    config.numFsm = 12000;
+    config.testName = "OUTF-INP";
+    config.numFsm = 35000;
 
-    config.minInput = 2;
-    config.maxInput = 13;
+    config.minInput = 1;
+    config.maxInput = 35;
 
     config.minOutput = 4;
     config.maxOutput = 4;
 
-    config.minStates = 10;
-    config.maxStates = 10;
+    config.minStates = 5;
+    config.maxStates = 5;
 
     config.minTransFaults = 0;
     config.maxTransFaults = 0;
@@ -1508,20 +1508,20 @@ void INF_INP()
     adaptiveTestRandom(config);
 }
 
-void INF_OUTP()
+void OUTF_OUTP()
 {
     AdaptiveTestConfig config;
-    config.testName = "INF-OUTP";
-    config.numFsm = 19000;
+    config.testName = "OUTF-OUTP";
+    config.numFsm = 34000;
 
     config.minInput = 4;
     config.maxInput = 4;
 
     config.minOutput = 2;
-    config.maxOutput = 20;
+    config.maxOutput = 35;
 
-    config.minStates = 10;
-    config.maxStates = 10;
+    config.minStates = 5;
+    config.maxStates = 5;
 
     config.minTransFaults = 0;
     config.maxTransFaults = 0;
@@ -1572,16 +1572,16 @@ void TRANSF_INP()
 {
     AdaptiveTestConfig config;
     config.testName = "TRANSF-INP";
-    config.numFsm = 29000;
+    config.numFsm = 35000;
 
-    config.minInput = 2;
-    config.maxInput = 30;
+    config.minInput = 1;
+    config.maxInput = 35;
 
-    config.minOutput = 5;
-    config.maxOutput = 5;
+    config.minOutput = 4;
+    config.maxOutput = 4;
 
-    config.minStates = 8;
-    config.maxStates = 8;
+    config.minStates = 5;
+    config.maxStates = 5;
 
     config.minTransFaults = 1;
     config.maxTransFaults = 1;
@@ -1602,16 +1602,16 @@ void TRANSF_OUTP()
 {
     AdaptiveTestConfig config;
     config.testName = "TRANSF-OUTP";
-    config.numFsm = 29000;
+    config.numFsm = 34000;
 
-    config.minInput = 5;
-    config.maxInput = 5;
+    config.minInput = 4;
+    config.maxInput = 4;
 
     config.minOutput = 2;
-    config.maxOutput = 30;
+    config.maxOutput = 35;
 
-    config.minStates = 8;
-    config.maxStates = 8;
+    config.minStates = 5;
+    config.maxStates = 5;
 
     config.minTransFaults = 1;
     config.maxTransFaults = 1;
@@ -1632,7 +1632,7 @@ void AEQ_STA()
 {
     AdaptiveTestConfig config;
     config.testName = "AEQ-STA";
-    config.numFsm = 4000;
+    config.numFsm = 3000;
 
     config.minInput = 2;
     config.maxInput = 2;
@@ -1662,16 +1662,16 @@ void AEQ_INP()
 {
     AdaptiveTestConfig config;
     config.testName = "AEQ-INP";
-    config.numFsm = 3000;
+    config.numFsm = 25000;
 
     config.minInput = 1;
-    config.maxInput = 3;
+    config.maxInput = 25;
 
     config.minOutput = 2;
     config.maxOutput = 2;
 
-    config.minStates = 3;
-    config.maxStates = 3;
+    config.minStates = 2;
+    config.maxStates = 2;
 
     config.minTransFaults = 0;
     config.maxTransFaults = 0;
@@ -1692,16 +1692,16 @@ void AEQ_OUTP()
 {
     AdaptiveTestConfig config;
     config.testName = "AEQ-OUTP";
-    config.numFsm = 3000;
+    config.numFsm = 24000;
 
     config.minInput = 2;
     config.maxInput = 2;
 
-    config.minOutput = 1;
-    config.maxOutput = 3;
+    config.minOutput = 2;
+    config.maxOutput = 25;
 
-    config.minStates = 3;
-    config.maxStates = 3;
+    config.minStates = 2;
+    config.maxStates = 2;
 
     config.minTransFaults = 0;
     config.maxTransFaults = 0;
@@ -1753,16 +1753,16 @@ void RED_INP()
 {
     AdaptiveTestConfig config;
     config.testName = "RED-INP";
-    config.numFsm = 3000;
+    config.numFsm = 25000;
 
     config.minInput = 1;
-    config.maxInput = 3;
+    config.maxInput = 25;
 
     config.minOutput = 2;
     config.maxOutput = 2;
 
-    config.minStates = 3;
-    config.maxStates = 3;
+    config.minStates = 2;
+    config.maxStates = 2;
 
     config.minTransFaults = 0;
     config.maxTransFaults = 0;
@@ -1784,16 +1784,16 @@ void RED_OUTP()
 {
     AdaptiveTestConfig config;
     config.testName = "RED-OUTP";
-    config.numFsm = 3000;
+    config.numFsm = 24000;
 
     config.minInput = 2;
     config.maxInput = 2;
 
     config.minOutput = 2;
-    config.maxOutput = 4;
+    config.maxOutput = 25;
 
-    config.minStates = 3;
-    config.maxStates = 3;
+    config.minStates = 2;
+    config.maxStates = 2;
 
     config.minTransFaults = 0;
     config.maxTransFaults = 0;
@@ -1815,9 +1815,9 @@ void RED_OUTP()
 void runAdaptiveStateCountingTests()
 {
     // Input faults
-    INF_STA();
-    INF_INP();
-    INF_OUTP();
+    OUTF_STA();
+    OUTF_INP();
+    OUTF_OUTP();
 
     // Transition faults
     TRANSF_STA();
@@ -1835,14 +1835,6 @@ void runAdaptiveStateCountingTests()
     RED_OUTP();
 }
 
-void reRun()
-{
-    TRANSF_INP();
-    RED_STA();
-    RED_OUTP();
-    AEQ_OUTP();
-}
-
 int main(int argc, char* argv[])
 {
     START_EASYLOGGINGPP(argc, argv);
@@ -1853,12 +1845,6 @@ int main(int argc, char* argv[])
 #ifdef ENABLE_DEBUG_MACRO
     CLOG(INFO, logging::globalLogger) << "This is a debug build!";
 #endif
-
-//    trial(true);
-//    return 0;
-
-    reRun();
-    return 0;
 
     runAdaptiveStateCountingTests();
 
