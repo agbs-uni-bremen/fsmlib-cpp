@@ -962,6 +962,35 @@ void test16() {
     
 }
 
+bool checkDistinguishingCond(const std::vector<shared_ptr<FsmNode>> &nodes, Dfsm &minimized) {
+	for (size_t i = 0; i < nodes.size() - 1; ++i) {
+		for (size_t j = i + 1; j < nodes.size(); ++j) {
+			if (!minimized.distinguishable(*nodes[i], *nodes[j])) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+void testMinimise() {
+	auto pl = make_shared<FsmPresentationLayer>();
+	auto dfsm = make_shared<Dfsm>("DFSM", 50, 5, 5, pl);
+	Dfsm minimized = dfsm->minimise();
+	std::vector<shared_ptr<FsmNode>> unreachableNodes;
+
+	// check for unreachable nodes
+	assert("TC-DFSM-XXXX",
+		not minimized.removeUnreachableNodes(unreachableNodes),
+		"Minimized Dfsm doesn't contain unreachable nodes");
+
+	// check if states are distinguishable
+	assert("TC-DFSM-XXXX",
+		checkDistinguishingCond(minimized.getNodes(), minimized),
+		"Each node pair of the minimized Dfsm is distinguishable");
+
+}
+
 
 int main(int argc, char** argv)
 {
@@ -1032,21 +1061,22 @@ int main(int argc, char** argv)
     
 #endif
 
-    test1();
-    test2();
-    test3();
-    test4();
-    test5();
-    test6();
-    test7();
-    test8();
-    test9();
-    test10();
-    test10b();
-    test11();
-    test13();
-    test14();
-    test15();
+	testMinimise();
+    //test1();
+    //test2();
+    //test3();
+    //test4();
+    //test5();
+    //test6();
+    //test7();
+    //test8();
+    //test9();
+    //test10();
+    //test10b();
+    //test11();
+    //test13();
+    //test14();
+    //test15();
     exit(0);
     
 }
