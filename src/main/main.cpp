@@ -962,7 +962,8 @@ void test16() {
     
 }
 
-bool checkDistinguishingCond(const std::vector<shared_ptr<FsmNode>> &nodes, Dfsm &minimized) {
+bool checkDistinguishingCond(Dfsm &minimized) {
+	const std::vector<shared_ptr<FsmNode>> nodes = minimized.getNodes();
 	for (size_t i = 0; i < nodes.size() - 1; ++i) {
 		for (size_t j = i + 1; j < nodes.size(); ++j) {
 			if (!minimized.distinguishable(*nodes[i], *nodes[j])) {
@@ -972,6 +973,7 @@ bool checkDistinguishingCond(const std::vector<shared_ptr<FsmNode>> &nodes, Dfsm
 	}
 	return true;
 }
+
 
 void testMinimise() {
 	auto pl = make_shared<FsmPresentationLayer>();
@@ -986,9 +988,13 @@ void testMinimise() {
 
 	// check if states are distinguishable
 	assert("TC-DFSM-XXXX",
-		checkDistinguishingCond(minimized.getNodes(), minimized),
+		checkDistinguishingCond(minimized),
 		"Each node pair of the minimized Dfsm is distinguishable");
 
+	// check language equality
+	assert("TC-DFSM-XXXX",
+		minimized.intersect(*dfsm).isCompletelyDefined(),
+		"Language of minimized Dfsm equals language of unminimized Dfsm");
 }
 
 
