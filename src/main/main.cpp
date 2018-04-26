@@ -976,25 +976,55 @@ bool checkDistinguishingCond(Dfsm &minimized) {
 
 
 void testMinimise() {
+	cout << "TC-DFSM-0017 Show that Dfsm::minimise() produces an "
+		<< "equivalent minimal FSM"
+		<< endl;
+
 	auto pl = make_shared<FsmPresentationLayer>();
 	auto dfsm = make_shared<Dfsm>("DFSM", 50, 5, 5, pl);
 	Dfsm minimized = dfsm->minimise();
 	std::vector<shared_ptr<FsmNode>> unreachableNodes;
 
 	// check for unreachable nodes
-	assert("TC-DFSM-XXXX",
+	assert("TC-DFSM-0017",
 		not minimized.removeUnreachableNodes(unreachableNodes),
 		"Minimized Dfsm doesn't contain unreachable nodes");
 
 	// check if states are distinguishable
-	assert("TC-DFSM-XXXX",
+	assert("TC-DFSM-0017",
 		checkDistinguishingCond(minimized),
 		"Each node pair of the minimized Dfsm is distinguishable");
 
 	// check language equality
-	assert("TC-DFSM-XXXX",
+	assert("TC-DFSM-0017",
 		minimized.intersect(*dfsm).isCompletelyDefined(),
 		"Language of minimized Dfsm equals language of unminimized Dfsm");
+}
+
+void testWMethod() {
+	cout << "TC-DFSM-0018 Show that Dfsm implModel only passes W-Method Testsuite "
+		<< "if intersection is completely defined"
+		<< endl;
+
+	auto pl = make_shared<FsmPresentationLayer>();
+	auto refModel = make_shared<Dfsm>("refModel", 50, 5, 5, pl);
+	auto implModel = make_shared<Dfsm>("implModel", 50, 5, 5, pl);
+	IOListContainer iolc = refModel->wMethod(0);
+
+	// check language equality with W-Method Testsuite
+	bool equal = true;
+	for (auto trc : *(iolc.getIOLists())) {
+		shared_ptr<InputTrace> iTr =
+			make_shared<InputTrace>(trc, pl);
+		if (not implModel->pass(refModel->applyDet(*iTr))) {
+			equal = false;
+			break;
+		}
+	}
+
+	assert("TC-DFSM-0018",
+		refModel->intersect(*implModel).isCompletelyDefined() == equal,
+		"implModel passes W-Method Testsuite if and only if intersection is completely defined");
 }
 
 
@@ -1068,6 +1098,7 @@ int main(int argc, char** argv)
 #endif
 
 	testMinimise();
+	testWMethod();
     //test1();
     //test2();
     //test3();
