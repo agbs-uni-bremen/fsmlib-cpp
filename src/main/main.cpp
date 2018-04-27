@@ -1027,6 +1027,64 @@ void testWMethod() {
 		"implModel passes W-Method Testsuite if and only if intersection is completely defined");
 }
 
+//void testIntersect() {
+//	cout << "TC-DFSM-0019 Show that Fsm::intersect() produces FSM which accepts intersection "
+//		<< "of the languages from the original FSMs"
+//		<< endl;
+//
+//	auto pl = make_shared<FsmPresentationLayer>();
+//	auto m1 = Fsm::createRandomFsm("M1", 2, 2, 3, pl);
+//	auto m2 = Fsm::createRandomFsm("M2", 2, 2, 3, pl);
+//	Fsm intersection = m1->intersect(*m2);
+//	int length = m1->size() * m2->size();
+//
+//	// show that every trace of length n*m in language of intersection is in language of m1 and m2 
+//	IOListContainer iolc = IOListContainer(m1->getMaxInput(),
+//			1,
+//			length,
+//			pl);
+//}
+
+bool equalSetOfOutputTrees(std::vector<OutputTree> &otv1, std::vector<OutputTree> &otv2) {
+	if (otv1.size() != otv2.size()) {
+		return false;
+	}
+	for (size_t i = 0; i < otv1.size(); ++i) {
+		if (otv1[i] != otv2[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+void testCharacterisationSet() {
+	auto pl = make_shared<FsmPresentationLayer>();
+	auto m1 = Fsm::createRandomFsm("M1", 3, 3, 10, pl)->minimise();
+	IOListContainer iolc = m1.getCharacterisationSet();
+
+	// calculate output trees for every node
+	std::vector<std::vector<OutputTree>> outputTrees;
+	for (const auto &node : m1.getNodes()) {		
+		std::vector<OutputTree> traces;
+		for (const auto trc : *(iolc.getIOLists())) {
+			shared_ptr<InputTrace> iTr =
+				make_shared<InputTrace>(trc, pl);
+			traces.push_back(node->apply(*iTr));
+		}
+		outputTrees.push_back(traces);
+	}
+
+	// check if vector contains equal sets of output trees
+	for (size_t i = 0; i < m1.getNodes().size() - 1; ++i) {
+		for (size_t j = i + 1; j < m1.getNodes().size(); ++j) {
+			if (equalSetOfOutputTrees(outputTrees[i], outputTrees[j])) {
+				std::cout << "============= FAIL ==============" << std::endl;
+			}
+		}
+	}
+	std::cout << "============= PASS ============" << std::endl;
+}
+
 
 int main(int argc, char** argv)
 {
@@ -1097,8 +1155,9 @@ int main(int argc, char** argv)
     
 #endif
 
-	testMinimise();
-	testWMethod();
+	/*testMinimise();
+	testWMethod();*/
+	testCharacterisationSet();
     //test1();
     //test2();
     //test3();
