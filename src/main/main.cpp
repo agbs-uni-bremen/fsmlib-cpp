@@ -1058,6 +1058,9 @@ bool equalSetOfOutputTrees(std::vector<OutputTree> &otv1, std::vector<OutputTree
 }
 
 void testCharacterisationSet() {
+	cout << "TC-FSM-0019 Show that calculated characterisation set "
+		<< "distinguishes each pair of FSM states"
+		<< endl;
 	auto pl = make_shared<FsmPresentationLayer>();
 	auto m1 = Fsm::createRandomFsm("M1", 3, 3, 10, pl)->minimise();
 	IOListContainer iolc = m1.getCharacterisationSet();
@@ -1083,6 +1086,20 @@ void testCharacterisationSet() {
 		}
 	}
 	std::cout << "============= PASS ============" << std::endl;
+}
+
+void testGetDistTraces() {
+	cout << "TC-DFSM-0020 Show that calculated distinguishing traces "
+		<< "in fact distinguish states"
+		<< endl;
+
+	auto pl = make_shared<FsmPresentationLayer>();
+	auto m = make_shared<Dfsm>("M", 50, 5, 5, pl);
+	for (size_t i = 0; i < m->size() - 1; ++i) {
+		for (size_t j = i + 1; j < m->size(); ++j) {
+			auto distTraces = m->getDistTraces(*(m->getNodes()[i]), *(m->getNodes()[j]));
+		}
+	}
 }
 
 
