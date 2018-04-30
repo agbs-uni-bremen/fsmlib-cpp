@@ -1088,6 +1088,27 @@ void testCharacterisationSet() {
 	std::cout << "============= PASS ============" << std::endl;
 }
 
+bool checkDistTracesForEachNodePair(Dfsm &m) {
+	m.calculateDistMatrix();
+	for (size_t i = 0; i < m.size() - 1; ++i) {
+		for (size_t j = i + 1; j < m.size(); ++j) {
+			auto ni = m.getNodes().at(i);
+			auto nj = m.getNodes().at(j);
+			auto distTraces = m.getDistTraces(*ni, *nj);
+			for (auto trc : distTraces) {
+				shared_ptr<InputTrace> iTr =
+					make_shared<InputTrace>(*trc, m.getPresentationLayer());
+				OutputTree oti = ni->apply(*iTr);
+				OutputTree otj = nj->apply(*iTr);
+				if (oti == otj) {
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+}
+
 void testGetDistTraces() {
 	cout << "TC-DFSM-0020 Show that calculated distinguishing traces "
 		<< "in fact distinguish states"
@@ -1095,11 +1116,11 @@ void testGetDistTraces() {
 
 	auto pl = make_shared<FsmPresentationLayer>();
 	auto m = make_shared<Dfsm>("M", 50, 5, 5, pl);
-	for (size_t i = 0; i < m->size() - 1; ++i) {
-		for (size_t j = i + 1; j < m->size(); ++j) {
-			auto distTraces = m->getDistTraces(*(m->getNodes()[i]), *(m->getNodes()[j]));
-		}
-	}
+
+	assert("TC-DFSM-0020",
+		checkDistTracesForEachNodePair(*m),
+		"Each calculated distinguishing trace produces unequal set of output traces");
+
 }
 
 
@@ -1174,7 +1195,8 @@ int main(int argc, char** argv)
 
 	/*testMinimise();
 	testWMethod();*/
-	testCharacterisationSet();
+	//testCharacterisationSet();
+	testGetDistTraces();
     //test1();
     //test2();
     //test3();
