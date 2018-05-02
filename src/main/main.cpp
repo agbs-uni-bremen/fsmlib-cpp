@@ -1129,38 +1129,18 @@ void testHMethod() {
 		<< endl;
 
 	auto pl = make_shared<FsmPresentationLayer>();
-	std::cout << "0" << std::endl;
 	auto refModel = make_shared<Dfsm>("refModel", 50, 5, 5, pl)->minimise();
-	std::cout << "1" << std::endl;
-//	shared_ptr<Fsm> implModel = make_shared<Fsm>(refModel.createMutant("mutant", 3, 3)->minimise());
+	Fsm implModel = refModel.createMutant("mutant", 10, 10)->minimise();
 
-	// this should still be deterministic and completely specified
-	Fsm implModel = refModel.createMutant("mutant", 3, 3)->minimise();
-	
-	//auto implModel = std::dynamic_pointer_cast<Dfsm>(fsm);
-	//auto implModel = make_shared<Dfsm>("implModel", 50, 5, 5, pl)->minimise();
-	std::cout << "2" << std::endl;
+	// refModel and implModel have to be compl. specified, deterministic and minimal
+	// implModel should have at most the same size as refModel
 	IOListContainer iolc = refModel.hMethodOnMinimisedDfsm(0);
-	std::cout << "3" << std::endl;
 	TestSuite ts1 = refModel.createTestSuite(iolc);
 	TestSuite ts2 = implModel.createTestSuite(iolc);
-
-	// check language equality with H-Method Testsuite
-	//bool equal = true;
-	//for (auto trc : *(iolc.getIOLists())) {
-	//	shared_ptr<InputTrace> iTr =
-	//		make_shared<InputTrace>(trc, pl);
-	//	if (not implModel.pass(refModel.applyDet(*iTr))) {
-	//		equal = false;
-	//		break;
-	//	}
-	//}
-	std::cout << "4" << std::endl;
 
 	assert("TC-DFSM-0021",
 		refModel.intersect(implModel).isCompletelyDefined() == ts1.isEquivalentTo(ts2),
 		"implModel passes H-Method Testsuite if and only if intersection is completely defined");
-	std::cout << "5" << std::endl;
 }
 
 
