@@ -1130,7 +1130,7 @@ void testHMethod() {
 
 	auto pl = make_shared<FsmPresentationLayer>();
 	auto refModel = make_shared<Dfsm>("refModel", 50, 5, 5, pl)->minimise();
-	Fsm implModel = refModel.createMutant("mutant", 10, 10)->minimise();
+	Fsm implModel = refModel.createMutant("mutant", 2, 2)->minimise();
 
 	// refModel and implModel have to be compl. specified, deterministic and minimal
 	// implModel should have at most the same size as refModel
@@ -1141,6 +1141,27 @@ void testHMethod() {
 	assert("TC-DFSM-0021",
 		refModel.intersect(implModel).isCompletelyDefined() == ts1.isEquivalentTo(ts2),
 		"implModel passes H-Method Testsuite if and only if intersection is completely defined");
+}
+
+void testWpMethodWithDfsm() {
+	cout << "TC-DFSM-0022 Show that Dfsm implModel only passes Wp-Method Testsuite "
+		<< "if intersection is completely defined"
+		<< endl;
+
+	auto pl = make_shared<FsmPresentationLayer>();
+	auto refModel = make_shared<Dfsm>("refModel", 50, 5, 5, pl)->minimise();
+	Fsm implModel = refModel.createMutant("mutant", 1, 1)->minimise();
+
+	// refModel required to be minimised and observable
+	// implModel required to have at most 0 additional states compared to refModel (both are prime machines)
+	IOListContainer iolc = refModel.wpMethodOnMinimisedDfsm(0);
+	TestSuite ts1 = refModel.createTestSuite(iolc);
+	TestSuite ts2 = implModel.createTestSuite(iolc);
+
+	// refModel and implModel required to be deterministic and completely specified
+	assert("TC-DFSM-0022",
+		refModel.intersect(implModel).isCompletelyDefined() == ts1.isEquivalentTo(ts2),
+		"implModel passes Wp-Method Testsuite if and only if intersection is completely defined");
 }
 
 
@@ -1217,7 +1238,8 @@ int main(int argc, char** argv)
 	testWMethod();*/
 	//testCharacterisationSet();
 	//testGetDistTraces();
-	testHMethod();
+	//testHMethod();
+	testWpMethodWithDfsm();
     //test1();
     //test2();
     //test3();
