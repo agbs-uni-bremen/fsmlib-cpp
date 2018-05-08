@@ -1027,23 +1027,122 @@ void testWMethod() {
 		"implModel passes W-Method Testsuite if and only if intersection is completely defined");
 }
 
+// Checks if tr1 is a prefix of tr2.
+bool isPrefix(const std::vector<int> &tr1, const std::vector<int> &tr2) {
+	if (tr1.size() > tr2.size()) {
+		return false;
+	}
+	for (size_t i = 0; i < tr1.size(); ++i) {
+		if (tr1[i] != tr2[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+//Checks if ot1 is part of ot2. This is only the case if the InputTrace of ot1 is a prefix
+//of the InputTrace of ot2 and if every OutputTrace of ot1 is a prefix of an OutputTrace
+//of ot2.
+bool containsOuputTree(OutputTree &ot1, OutputTree &ot2) {
+	InputTrace it1 = ot1.getInputTrace();
+	InputTrace it2 = ot2.getInputTrace();
+	if (not isPrefix(it1.get(), it2.get())) {
+		return false;
+	}
+
+	for (OutputTrace &outTr1 : ot1.getOutputTraces()) {
+		bool prefix(false);
+		for (OutputTrace &outTr2 : ot2.getOutputTraces()) {
+			if (isPrefix(outTr1.get(), outTr2.get())) {
+				prefix = true;
+				break;
+			}
+		}
+		if (not prefix) {
+			return false;
+		}
+	}
+	return true;
+}
+
 //void testIntersect() {
 //	cout << "TC-DFSM-0019 Show that Fsm::intersect() produces FSM which accepts intersection "
 //		<< "of the languages from the original FSMs"
 //		<< endl;
 //
 //	auto pl = make_shared<FsmPresentationLayer>();
-//	auto m1 = Fsm::createRandomFsm("M1", 2, 2, 3, pl);
-//	auto m2 = Fsm::createRandomFsm("M2", 2, 2, 3, pl);
-//	Fsm intersection = m1->intersect(*m2);
-//	int length = m1->size() * m2->size();
+//	auto m1 = make_shared<Dfsm>("refModel", 3, 3, 3, pl)->minimise();
+//	auto m2 = m1.createMutant("mutant", 2, 2)->minimise();
+//	Fsm intersection = m1.intersect(m2).minimise();
 //
-//	// show that every trace of length n*m in language of intersection is in language of m1 and m2 
-//	IOListContainer iolc = IOListContainer(m1->getMaxInput(),
+//	std::cout << "m1.isDeterministic(): " << m1.isDeterministic() << std::endl;
+//	std::cout << "m1.isCompletelyDefined(): " << m1.isCompletelyDefined() << std::endl;
+//
+//	std::cout << "m2.isDeterministic(): " << m2.isDeterministic() << std::endl;
+//	std::cout << "m2.isCompletelyDefined(): " << m2.isCompletelyDefined() << std::endl;
+//
+//	std::cout << "intersection.isDeterministic(): " << intersection.isDeterministic() << std::endl;
+//	std::cout << "intersection.isCompletelyDefined(): " << intersection.isCompletelyDefined() << std::endl;
+//
+//	std::cout << "m1.size(): " << m1.size();
+//	std::cout << "intersection.size(): " << intersection.size();
+//
+//	// show that every trace of length n+m-1 in language of intersection is in language of m1 and m2 
+//	IOListContainer iolc = IOListContainer(m1.getMaxInput(),
 //			1,
-//			length,
+//			intersection.size() + m1.size() - 1,
 //			pl);
+//
+//	std::cout << "iolc created" << std::endl;
+//
+//	int c = 0;
+//	for (auto trc : *(iolc.getIOLists())) {
+//		if (c++ >= 10) break;
+//		shared_ptr<InputTrace> iTr =
+//			make_shared<InputTrace>(trc, pl);
+//		OutputTree ot1 = intersection.apply(*iTr);
+//		OutputTree ot2 = m1.apply(*iTr);
+//		OutputTree ot3 = m2.apply(*iTr);		
+//
+//		std::cout << "ot2.contains(ot1): " << ot2.contains(ot1) << std::endl;
+//		std::cout << "ot3.contains(ot1): " << ot3.contains(ot1) << std::endl;
+//
+//		std::cout << "containsOuputTree(ot1, ot2)" << containsOuputTree(ot1, ot2) << std::endl;
+//		std::cout << "containsOuputTree(ot1, ot3)" << containsOuputTree(ot1, ot3) << std::endl;
+//
+//		std::cout << "intersection tr:\t" << ot1 << std::endl;
+//		std::cout << std::endl;
+//		std::cout << "ot2:\t\t\t" << ot2 << std::endl;
+//		std::cout << std::endl;
+//		std::cout << "ot3:\t\t\t" << ot3 << std::endl;
+//	}
 //}
+
+void testIntersectionCharacteristics() {
+	auto pl = make_shared<FsmPresentationLayer>();
+	auto m1 = make_shared<Dfsm>("m1", 10, 3, 3, pl)->minimise();
+	auto m2 = m1.createMutant("m2", 2, 2);
+
+	assert("TC-DFSM-0019b",
+		m1.intersect(*m2).isDeterministic(),
+		"m1 or m2 deterministic => product automata deterministic");
+
+	auto m3 = Fsm::createRandomFsm("m3", 3, 3, 3, pl);
+	auto m4 = Fsm::createRandomFsm("m4", 3, 3, 3, pl);
+	Fsm intersection = m3->intersect(*m4);
+	if (not intersection.isDeterministic()) {
+		assert("TC-DFSM-0019b",
+			(not m3->isDeterministic()) and (not m4->isDeterministic()),
+			"product automata of m3 and m4 nondeterministic => m3 and m4 nondeterministic");
+	}
+	if (intersection.isCompletelyDefined()) {
+		assert("TC-DFSM-0019b",
+			m3->isCompletelyDefined() and m4->isCompletelyDefined(),
+			"product automata of m3 and m4 completely specified => m3 and m4 completely specified");
+	}
+
+	// TODO: m1 or m2 incomplete specified => product automata incomplete specified
+}
 
 bool equalSetOfOutputTrees(std::vector<OutputTree> &otv1, std::vector<OutputTree> &otv2) {
 	if (otv1.size() != otv2.size()) {
@@ -1239,7 +1338,8 @@ int main(int argc, char** argv)
 	//testCharacterisationSet();
 	//testGetDistTraces();
 	//testHMethod();
-	testWpMethodWithDfsm();
+	//testWpMethodWithDfsm(); 
+	testIntersectionCharacteristics();
     //test1();
     //test2();
     //test3();
