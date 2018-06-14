@@ -16,7 +16,7 @@ DFSMTable::DFSMTable(const int numStates,
 	rows.insert(rows.end(), numStates, nullptr);
 }
 
-void DFSMTable::setRow(const int n, const std::shared_ptr<DFSMTableRow> r)
+void DFSMTable::setRow(const int n, const std::shared_ptr<DFSMTableRow>& r)
 {
 	rows [n] = r;//insertion
 }

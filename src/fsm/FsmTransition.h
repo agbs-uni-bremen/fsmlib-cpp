@@ -43,9 +43,9 @@ public:
 	@param target The node where the transition go
 	@param label The label of this transition
 	*/
-	FsmTransition(const std::shared_ptr<FsmNode>  source,
-                  const std::shared_ptr<FsmNode>  target,
-                  const std::shared_ptr<FsmLabel> label);
+    FsmTransition(const std::shared_ptr<FsmNode>& source,
+                  const std::shared_ptr<FsmNode>& target,
+                  const std::shared_ptr<FsmLabel>& label);
 
 	/**
 	 * Getter for the source
@@ -90,5 +90,7 @@ public:
 	@return The standard output stream used, to allow user to cascade <<
 	*/
 	friend std::ostream & operator<<(std::ostream & out, FsmTransition & transition);
+
+    std::string str();
 };
 #endif //FSM_FSM_FSMTRANSITION_H_

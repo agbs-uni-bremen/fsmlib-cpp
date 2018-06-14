@@ -3,6 +3,28 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.8.11)
 
 #set the name of the project
 PROJECT (fsm)
+#####################################################################
+#Setting debug macro if this is a DEBUG build
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DENABLE_DEBUG_MACRO")
+
+#####################################################################
+# Adding flag, in order to auto configure the Easylogging++ logger
+add_definitions(-DAUTO_INITIALIZE_EASYLOGGINGPP)
+
+#####################################################################
+# Configure logger
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_definitions(-DELPP_FEATURE_PERFORMANCE_TRACKING)
+    add_definitions(-DELPP_LOGGING_FLAGS_FROM_ARG)
+    #add_definitions(-DELPP_PERFORMANCE_MICROSECONDS)
+endif()
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_definitions(-DELPP_FEATURE_PERFORMANCE_TRACKING)
+    #add_definitions(-DELPP_PERFORMANCE_MICROSECONDS)
+endif()
 
 #####################################################################
 #enable warning for MSVC and gcc
@@ -43,6 +65,7 @@ endif(gui)
 #set the root source diectory as include directory
 include_directories (${CMAKE_SOURCE_DIR})
 include_directories (${CMAKE_SOURCE_DIR}/externals/jsoncpp-0.10.0/include)
+include_directories (SYSTEM ${CMAKE_SOURCE_DIR}/externals/easyloggingpp_v9.95.0)
 include_directories (${CMAKE_BINARY_DIR})
 
 #add every subdirectory to cmake
@@ -56,6 +79,7 @@ add_subdirectory (harness)
 add_subdirectory (example)
 add_subdirectory (generator)
 add_subdirectory (checker)
+add_subdirectory (cloneable)
 
 if(gui)
 	add_subdirectory (window)
@@ -78,3 +102,5 @@ configure_file (../resources/fsmGillA7.in								window/fsmGillA7.in								COPY
 configure_file (../resources/fsmGillA7.out								window/fsmGillA7.out								COPYONLY)
 configure_file (../resources/fsmGillA7.state							window/fsmGillA7.state							COPYONLY)
 endif(gui)
+
+include(cppcheck.cmake)

@@ -43,13 +43,15 @@ private:
      * the successor list otherwise.
      */
     std::vector<int> nextLst(const int maxInput, const std::vector<int>& lst) const;
+
+    void removeRealPrefixes(const Trace & trc);
 public:
     /**
      * Create a new IOListContainer (test cases)
      * @param iolLst The list of input traces
      * @param presentationLayer The presentation layer to use
      */
-    IOListContainer(const std::shared_ptr<std::vector<std::vector<int>>> iolLst, const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    IOListContainer(const std::shared_ptr<std::vector<std::vector<int>>>& iolLst, const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
     
     /**
      * Create an IOListContainer with input traces from length minLength
@@ -64,9 +66,9 @@ public:
     IOListContainer(const int maxInput,
                     const int minLength,
                     const int maxLength,
-                    const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+                    const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
     
-    IOListContainer(const std::shared_ptr<FsmPresentationLayer>
+    IOListContainer(const std::shared_ptr<FsmPresentationLayer>&
                         presentationLayer);
     
     /**
@@ -81,11 +83,17 @@ public:
      */
     void add(const Trace & trc);
 
+    void addUnique(const Trace& trc);
+
+    void addUniqueRemovePrefixes(const Trace & trc);
+
     /**
      * Getter for the size of the IOListContainer
      * @return The size of the IOListContainer
      */
     int size() const;
+
+    static bool contains(const std::shared_ptr<std::vector<std::vector<int>>>& ioll, const std::vector<int>& trace);
     
     /**
      * Output the IOListContainer to a standard output stream

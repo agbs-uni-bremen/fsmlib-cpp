@@ -11,19 +11,19 @@
 
 using namespace std;
 
-PkTable::PkTable(const int numStates, const int maxInput, const shared_ptr<FsmPresentationLayer> presentationLayer)
+PkTable::PkTable(const int numStates, const int maxInput, const shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: s2c(numStates), maxInput(maxInput), presentationLayer(presentationLayer)
 {
 	rows.insert(rows.end(), numStates, nullptr);
 }
 
-PkTable::PkTable(const int numStates, const int maxInput, const vector<shared_ptr<PkTableRow>> rows, const shared_ptr<FsmPresentationLayer> presentationLayer)
+PkTable::PkTable(const int numStates, const int maxInput, const vector<shared_ptr<PkTableRow>>& rows, const shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: rows(rows), s2c(numStates), maxInput(maxInput), presentationLayer(presentationLayer)
 {
 
 }
 
-void PkTable::setRow(const int s, const shared_ptr<PkTableRow> row)
+void PkTable::setRow(const int s, const shared_ptr<PkTableRow>& row)
 {
 	rows[s] = row;
 }

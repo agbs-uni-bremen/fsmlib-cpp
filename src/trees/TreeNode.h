@@ -12,10 +12,12 @@
 
 #include "trees/IOListContainer.h"
 #include "trees/TreeEdge.h"
+#include "cloneable/ICloneable.h"
 
-class TreeNode : public std::enable_shared_from_this<TreeNode>
+class TreeNode : public std::enable_shared_from_this<TreeNode>, public ICloneable
 {
 protected:
+    TreeNode(const TreeNode* other);
 	/**
 	The parent of this node
 	*/
@@ -50,7 +52,7 @@ public:
 	Set the node to this one parent
 	@param pparent The node which will be the parent of this one
 	*/
-	void setParent(const std::weak_ptr<TreeNode> parent);
+    void setParent(const std::weak_ptr<TreeNode>& parent);
 
 	/**
 	Getter for the parent
@@ -90,7 +92,7 @@ public:
 	Remove a tree node from this node's children target
 	@param node The target to remove
 	*/
-	void remove(const std::shared_ptr<TreeNode> node);
+    void remove(const std::shared_ptr<TreeNode>& node);
 
 	/**
 	Calc the list of leaves of this tree
@@ -103,7 +105,7 @@ public:
 	Add and edge to this node children
 	@param edge The edge to be added
 	*/
-	void add(const std::shared_ptr<TreeEdge> edge);
+    void add(const std::shared_ptr<TreeEdge>& edge);
 
 	/**
 	Check whether or not this tree node had any child or not
@@ -117,14 +119,14 @@ public:
 	@param node The node to be searched into the tree node's children target
 	@return The input needed to reach the tree node
 	*/
-	int getIO(std::shared_ptr<TreeNode const> node) const;
+    int getIO(const std::shared_ptr<TreeNode const>& node) const;
 
 	/**
 	Check whether or not this tree node has a specific edge or not
 	@param edge The edge to be searched into the tree node's children
 	@return The tree edge if found, nullptr otherwise
 	*/
-	std::shared_ptr<TreeEdge> hasEdge(const std::shared_ptr<TreeEdge> edge) const;
+    std::shared_ptr<TreeEdge> hasEdge(const std::shared_ptr<TreeEdge>& edge) const;
 
 	/**
 	Get the inputs needed to reach this specific tree node
@@ -140,7 +142,7 @@ public:
      * @note This operation really checks trees for isomorphic structure. This is not
      *       adequate when applied to output tree nodes resulting from non-observable FSMs.
 	 */
-	bool superTreeOf(const std::shared_ptr<TreeNode> otherNode) const;
+    bool superTreeOf(const std::shared_ptr<TreeNode>& otherNode) const;
 
 	/**
 	Compare two tree node to check if they are the same or not
@@ -149,6 +151,7 @@ public:
 	@return true if they are the same, false otherwise
 	*/
 	friend bool operator==(TreeNode const & treeNode1, TreeNode const & treeNode2);
+    friend bool operator!=(TreeNode const & treeNode1, TreeNode const & treeNode2);
 
 	/**
 	Conditional addition of a new edge emanating from this node:
@@ -193,10 +196,23 @@ public:
 	input trace against the tree.
 	*/
 	std::shared_ptr<TreeNode> after(std::vector<int>::const_iterator lstIte, const std::vector<int>::const_iterator end);
+
+    std::shared_ptr<TreeNode> after(const int y) const;
+
+    /**
+     * Determines wether this node has an edge with the given output.
+     * @param y The given output
+     * @return {@code true}, if there is an outgoing edge with the given output,
+     * {@code false} otherwise.
+     */
+    bool isDefined(int y) const;
     
     
     void calcSize(size_t& theSize);
     
+    virtual TreeNode* _clone() const;
+    std::shared_ptr<TreeNode> Clone() const;
+
     /**
      * Perform in-order traversal and add resulting I/O-lists into
      * vector of I/O-lists.
