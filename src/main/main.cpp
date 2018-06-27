@@ -1264,6 +1264,145 @@ void testWpMethodWithDfsm() {
 }
 
 
+//===================================== TreeNode Tests ===================================================
+
+// tests TreeNode::add(const int x). Checks if new TreeEdge is created for given input.
+void testTreeNodeAddConstInt1(){
+	int io = 1;
+	shared_ptr<TreeNode> n1 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> ref = n1->add(io);
+	assert("TC-TreeNode-NNNN",
+		static_cast<shared_ptr<TreeNode>>(ref->getParent()) == n1,
+		"parent of new node is old node");
+
+	bool containedInChildren = false;
+	for (shared_ptr<TreeEdge> e : *(n1->getChildren())) {
+		if (e->getIO() == io && e->getTarget() == ref) {
+			containedInChildren = true;
+		}
+	}
+	assert("TC-TreeNode-NNNN",
+		containedInChildren,
+		"after call to TreeNode::add(x) there has to be a child labeled with x");
+}
+
+// tests TreeNode::add(const int x). Checks if no new TreeEdge is created if TreeEdge with matching io label
+// already exists.
+void testTreeNodeAddConstInt2() {
+	int io = 1;
+	shared_ptr<TreeNode> n1 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> child1 = n1->add(io);
+	int oldNumChilds = n1->getChildren()->size();
+	shared_ptr<TreeNode> child2 = n1->add(io);
+	int newNumChilds = n1->getChildren()->size();
+	assert("TC-TreeNode-NNNN",
+		child2 == child1,
+		"TreeNode::add(x) returns reference to target node of existing TreeEdge with matching io");
+	assert("TC-TreeNode-NNNN",
+		oldNumChilds == newNumChilds,
+		"TreeNode::add(x) doesn't add new TreeEdge if TreeEdge with matching io already exists");
+}
+
+// tests TreeNode::add(const int x). Checks if new TreeEdge is created for given input. TreeNode already has children, but none with matching
+// io label.
+void testTreeNodeAddConstInt3() {
+	shared_ptr<TreeNode> n1 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> child1 = n1->add(1);
+	shared_ptr<TreeNode> child2 = n1->add(2);
+	assert("TC-TreeNode-NNNN",
+		child1 != child2,
+		"calling TreeNode::add(x) and TreeNode::add(y) with x != y returns two different nodes");
+
+
+	assert("TC-TreeNode-NNNN",
+		n1->getChildren()->size() == 2,
+		"number of TreeEdges contained in children attribute matches number of actually added values");
+}
+
+// tests operator==(TreeNode const & treeNode1, TreeNode const & treeNode2)  (positive case)
+void testTreeNodeEqualOperator1() {
+	shared_ptr<TreeNode> n1 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> n2 = make_shared<TreeNode>();
+	assert("TC-TreeNode-NNNN",
+		*n1 == *n2,
+		"operator== returns true if both nodes are equal");
+
+	shared_ptr<TreeNode> n11 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> n21 = make_shared<TreeNode>();
+	n1->add(make_shared<TreeEdge>(1, n11));
+	n2->add(make_shared<TreeEdge>(1, n21));
+	assert("TC-TreeNode-NNNN",
+		*n1 == *n2,
+		"operator== returns true if both nodes are equal");
+
+	shared_ptr<TreeNode> n12 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> n22 = make_shared<TreeNode>();
+	n1->add(make_shared<TreeEdge>(2, n12));
+	n2->add(make_shared<TreeEdge>(2, n22));
+	assert("TC-TreeNode-NNNN",
+		*n1 == *n2,
+		"operator== returns true if both nodes are equal");
+
+	shared_ptr<TreeNode> n111 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> n112 = make_shared<TreeNode>();
+	n11->add(make_shared<TreeEdge>(1, n111));
+	n11->add(make_shared<TreeEdge>(2, n112));
+	shared_ptr<TreeNode> n211 = make_shared<TreeNode>();	
+	shared_ptr<TreeNode> n212 = make_shared<TreeNode>();
+	n21->add(make_shared<TreeEdge>(1, n211));
+	n21->add(make_shared<TreeEdge>(2, n212));
+
+	assert("TC-TreeNode-NNNN",
+		*n1 == *n2,
+		"operator== returns true if both nodes are equal");
+}
+
+// tests operator==(TreeNode const & treeNode1, TreeNode const & treeNode2)  (negative case)
+void testTreeNodeEqualOperator2() {
+	shared_ptr<TreeNode> n1 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> n2 = make_shared<TreeNode>();
+	n1->deleteSingleNode();
+	assert("TC-TreeNode-NNNN",
+		!(*n1 == *n2),
+		"operator== returns false if only one of the TreeNode instances is marked as deleted");
+
+	n1 = make_shared<TreeNode>();
+	n2 = make_shared<TreeNode>();
+	n2->add(make_shared<TreeEdge>(1, make_shared<TreeNode>()));
+	assert("TC-TreeNode-NNNN",
+		!(*n1 == *n2),
+		"operator== returns false if the compared TreeNode instances have different number of children");
+
+	n1->add(make_shared<TreeEdge>(2, make_shared<TreeNode>()));
+	assert("TC-TreeNode-NNNN",
+		!(*n1 == *n2) && n1->getChildren()->size() == n2->getChildren()->size(),
+		"operator== returns false if both TreeNode instances have same number of children but edges are labeled differently");
+
+	n1 = make_shared<TreeNode>();
+	n2 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> n11 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> n21 = make_shared<TreeNode>();
+	n1->add(make_shared<TreeEdge>(1, n11));
+	n2->add(make_shared<TreeEdge>(1, n21));
+	n11->add(make_shared<TreeEdge>(1, make_shared<TreeNode>()));
+	assert("TC-TreeNode-NNNN",
+		!(*n1 == *n2) && n11->getChildren()->size() != n21->getChildren()->size(),
+		"operator== returns false if two corresponding childs of both TreeNode instances differ in the number of children");
+
+	n21->add(make_shared<TreeEdge>(2, make_shared<TreeNode>()));
+	assert("TC-TreeNode-NNNN",
+		!(*n1 == *n2) && n11->getChildren()->size() == n21->getChildren()->size(),
+		"operator== returns false if two corresponding childs of both TreeNode instances differ in the labeling of their children");
+
+	n11->add(make_shared<TreeEdge>(2, make_shared<TreeNode>()));
+	n21->add(make_shared<TreeEdge>(1, make_shared<TreeNode>()));
+	n11->deleteSingleNode();
+	assert("TC-TreeNode-NNNN",
+		!(*n1 == *n2),
+		"operator== returns false if two corresponding childs differ in beeing marked as deleted");
+}
+
+
 int main(int argc, char** argv)
 {
     
@@ -1332,6 +1471,8 @@ int main(int argc, char** argv)
     fsmObs.toDot(fsmObs.getName());
     
 #endif
+	//testTreeNodeAddConstInt3();
+	testTreeNodeEqualOperator2();
 
 	/*testMinimise();
 	testWMethod();*/
@@ -1339,7 +1480,7 @@ int main(int argc, char** argv)
 	//testGetDistTraces();
 	//testHMethod();
 	//testWpMethodWithDfsm(); 
-	testIntersectionCharacteristics();
+	//testIntersectionCharacteristics();
     //test1();
     //test2();
     //test3();
