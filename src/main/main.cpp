@@ -1462,12 +1462,90 @@ void testTreeNodeCalcLeaves() {
 		&& std::find(leaves.cbegin(), leaves.cend(), grandChild2) != leaves.cend()
 		&& std::find(leaves.cbegin(), leaves.cend(), grandChild3) != leaves.cend(),
 		"calcLeaves() called on root with three leave-grandchilds adds these leave-grandchilds");
+}
 
-	//std::cout << "root: " << root << std::endl;
-	//std::cout << "child1: " << child1 << std::endl;
-	//std::cout << "child2: " << child2 << std::endl;
-	//std::cout << "leaves[0]: " << leaves[0] << std::endl;
-	//std::cout << "leaves[1]: " << leaves[1] << std::endl;
+// extracts all TreeNodes reachable from given node.
+void extractAllTreeNodes(shared_ptr<TreeNode> node, std::vector<shared_ptr<TreeNode>> & nodes) {
+	nodes.push_back(node);
+	for (const auto &edge : *(node->getChildren())) {
+		extractAllTreeNodes(edge->getTarget(), nodes);
+	}
+}
+
+// extracts all TreeEdges reachable from given node.
+void extractAllTreeEdges(shared_ptr<TreeNode> node, std::vector<shared_ptr<TreeEdge>> & edges) {
+	for (const auto &edge : *(node->getChildren())) {
+		edges.push_back(edge);
+		extractAllTreeEdges(edge->getTarget(), edges);
+	}
+}
+
+// only called with TreeNodes which are known to be equal (*original == *copy).
+// checks if no TreeNode and no TreeEdge is contained in both trees.
+bool isDeepCopyOfEqualNode(shared_ptr<TreeNode> original, shared_ptr<TreeNode> copy) {
+	std::vector<shared_ptr<TreeNode>> originalNodes;
+	extractAllTreeNodes(original, originalNodes);
+	std::vector<shared_ptr<TreeNode>> copyNodes;
+	std::cout << "originalNodes.size(): " << originalNodes.size() << std::endl;
+	
+	extractAllTreeNodes(copy, copyNodes);
+	std::cout << "copyNodes.size(): " << copyNodes.size() << std::endl;
+	for (shared_ptr<TreeNode> node : originalNodes) {
+		for (shared_ptr<TreeNode> cnode : copyNodes) {
+			if (node == cnode) {
+				return false;
+			}
+		}
+	}
+
+	//std::vector<shared_ptr<TreeEdge>> originalEdges;
+	//extractAllTreeEdges(original, originalEdges);
+	//std::vector<shared_ptr<TreeEdge>> copyEdges;
+	//extractAllTreeEdges(copy, copyEdges);
+	//for (shared_ptr<TreeEdge> edge : originalEdges) {
+	//	for (shared_ptr<TreeEdge> cedge : copyEdges) {
+	//		if (edge == cedge) {
+	//			return false;
+	//		}
+	//	}
+	//}
+}
+
+// tests TreeNode::clone() const
+void testTreeNodeClone() {
+	shared_ptr<TreeNode> root = make_shared<TreeNode>();
+	shared_ptr<TreeNode> clone = root->clone();
+	assert("TC-TreeNode-NNNN",
+		(*root == *clone) && isDeepCopyOfEqualNode(root, clone),    //(root != clone),
+		"clone equals original and clone is deep copy");
+
+	shared_ptr<TreeNode> child1 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, child1));
+	clone = root->clone();
+	assert("TC-TreeNode-NNNN",
+		(*root == *clone) && isDeepCopyOfEqualNode(root, clone),
+		"clone equals original and clone is deep copy");
+
+	shared_ptr<TreeNode> child2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(2, child2));
+	clone = root->clone();
+	assert("TC-TreeNode-NNNN",
+		(*root == *clone) && isDeepCopyOfEqualNode(root, clone),
+		"clone equals original and clone is deep copy");
+
+	shared_ptr<TreeNode> grandChild1 = make_shared<TreeNode>();
+	child1->add(make_shared<TreeEdge>(1, grandChild1));
+	clone = root->clone();
+	assert("TC-TreeNode-NNNN",
+		(*root == *clone) && isDeepCopyOfEqualNode(root, clone),
+		"clone equals original and clone is deep copy");
+
+	shared_ptr<TreeNode> grandChild2 = make_shared<TreeNode>();
+	child1->add(make_shared<TreeEdge>(2, grandChild2));
+	clone = root->clone();
+	assert("TC-TreeNode-NNNN",
+		(*root == *clone) && isDeepCopyOfEqualNode(root, clone),
+		"clone equals original and clone is deep copy");
 }
 
 
@@ -1545,6 +1623,7 @@ int main(int argc, char** argv)
 	//testTreeNodeEqualOperator1();
 	//testTreeNodeEqualOperator2();
 	//testTreeNodeCalcLeaves();
+	testTreeNodeClone();
 
 	/*testMinimise();
 	testWMethod();*/
