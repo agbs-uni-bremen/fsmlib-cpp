@@ -21,6 +21,8 @@
 #include <trees/TestSuite.h>
 #include "json/json.h"
 
+#include <algorithm>
+
 
 using namespace std;
 using namespace Json;
@@ -1400,6 +1402,72 @@ void testTreeNodeEqualOperator2() {
 	assert("TC-TreeNode-NNNN",
 		!(*n1 == *n2),
 		"operator== returns false if two corresponding childs differ in beeing marked as deleted");
+
+	n21->deleteSingleNode();
+	assert("TC-TreeNode-NNNN",
+		(*n1 == *n2),
+		"operator== returns true if both instances are equal");
+}
+
+// tests TreeNode::calcLeaves(vector<shared_ptr<TreeNode const>>& leaves) const
+void testTreeNodeCalcLeaves() {
+	shared_ptr<TreeNode> root = make_shared<TreeNode>();
+	std::vector<shared_ptr<TreeNode>> leaves;
+	root->calcLeaves(leaves);
+	assert("TC-TreeNode-NNNN",
+		leaves.size() == 1 && leaves[0] == root,
+		"calcLeaves() called on leave adds this leave");
+
+	leaves = std::vector<shared_ptr<TreeNode>>();
+	shared_ptr<TreeNode> child1 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, child1));
+	root->calcLeaves(leaves);
+	assert("TC-TreeNode-NNNN",
+		leaves.size() == 1 && leaves[0] == child1,
+		"calcLeaves() called on parent with leave-child adds this leave-child");
+
+	leaves = std::vector<shared_ptr<TreeNode>>();
+	shared_ptr<TreeNode> child2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(2, child2));
+	root->calcLeaves(leaves);
+	assert("TC-TreeNode-NNNN",
+		leaves.size() == 2 && std::find(leaves.cbegin(), leaves.cend(), child1) != leaves.cend() 
+		&& std::find(leaves.cbegin(), leaves.cend(), child2) != leaves.cend(),
+		"calcLeaves() called on parent with leave-childs adds all leave-childs");
+
+	leaves = std::vector<shared_ptr<TreeNode>>();
+	shared_ptr<TreeNode> grandChild1 = make_shared<TreeNode>();
+	child1->add(make_shared<TreeEdge>(1, grandChild1));
+	root->calcLeaves(leaves);
+	assert("TC-TreeNode-NNNN",
+		leaves.size() == 2 && std::find(leaves.cbegin(), leaves.cend(), grandChild1) != leaves.cend()
+		&& std::find(leaves.cbegin(), leaves.cend(), child2) != leaves.cend(),
+		"calcLeaves() called on parent with leave-child and leave-grandchild adds leave-child and leave-grandchild");
+
+	leaves = std::vector<shared_ptr<TreeNode>>();
+	shared_ptr<TreeNode> grandChild2 = make_shared<TreeNode>();
+	child2->add(make_shared<TreeEdge>(1, grandChild2));
+	root->calcLeaves(leaves);
+	assert("TC-TreeNode-NNNN",
+		leaves.size() == 2 && std::find(leaves.cbegin(), leaves.cend(), grandChild1) != leaves.cend()
+		&& std::find(leaves.cbegin(), leaves.cend(), grandChild2) != leaves.cend(),
+		"calcLeaves() called on root with two leave-grandchilds adds both leave-grandchilds");
+
+	leaves = std::vector<shared_ptr<TreeNode>>();
+	shared_ptr<TreeNode> grandChild3 = make_shared<TreeNode>();
+	child2->add(make_shared<TreeEdge>(3, grandChild3));
+	root->calcLeaves(leaves);
+	assert("TC-TreeNode-NNNN",
+		leaves.size() == 3 && std::find(leaves.cbegin(), leaves.cend(), grandChild1) != leaves.cend()
+		&& std::find(leaves.cbegin(), leaves.cend(), grandChild2) != leaves.cend()
+		&& std::find(leaves.cbegin(), leaves.cend(), grandChild3) != leaves.cend(),
+		"calcLeaves() called on root with three leave-grandchilds adds these leave-grandchilds");
+
+	//std::cout << "root: " << root << std::endl;
+	//std::cout << "child1: " << child1 << std::endl;
+	//std::cout << "child2: " << child2 << std::endl;
+	//std::cout << "leaves[0]: " << leaves[0] << std::endl;
+	//std::cout << "leaves[1]: " << leaves[1] << std::endl;
 }
 
 
@@ -1471,8 +1539,12 @@ int main(int argc, char** argv)
     fsmObs.toDot(fsmObs.getName());
     
 #endif
+	//testTreeNodeAddConstInt1();
+	//testTreeNodeAddConstInt2();
 	//testTreeNodeAddConstInt3();
-	testTreeNodeEqualOperator2();
+	//testTreeNodeEqualOperator1();
+	//testTreeNodeEqualOperator2();
+	//testTreeNodeCalcLeaves();
 
 	/*testMinimise();
 	testWMethod();*/
