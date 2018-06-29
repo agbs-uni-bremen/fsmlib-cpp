@@ -1548,6 +1548,42 @@ void testTreeNodeClone() {
 		"clone equals original and clone is deep copy");
 }
 
+// tests TreeNode::getPath() const
+void testTreeNodeGetPath() {
+	shared_ptr<TreeNode> root = make_shared<TreeNode>();
+	std::vector<int> expected = {};
+	assert("TC-TreeNode-NNNN",
+		expected == root->getPath(),
+		"getPath invoked on root returns empty list");
+
+	shared_ptr<TreeNode> child1 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, child1));
+	expected = {1};
+	assert("TC-TreeNode-NNNN",
+		expected == child1->getPath(),
+		"getPath invoked on child returns list containing only the input needed to reach it");
+
+	shared_ptr<TreeNode> child2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(2, child2));
+	expected = { 2 };
+	assert("TC-TreeNode-NNNN",
+		expected == child2->getPath(),
+		"getPath invoked on child returns list containing only the input needed to reach it");
+
+	shared_ptr<TreeNode> grandChild1 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> grandChild2 = make_shared<TreeNode>();
+	child1->add(make_shared<TreeEdge>(1, grandChild1));
+	child1->add(make_shared<TreeEdge>(2, grandChild2));
+	expected = { 1, 1 };
+	assert("TC-TreeNode-NNNN",
+		expected == grandChild1->getPath(),
+		"getPath invoked on grandchild returns list containing only the two inputs needed to reach it");
+
+	expected = { 1, 2 };
+	assert("TC-TreeNode-NNNN",
+		expected == grandChild2->getPath(),
+		"getPath invoked on grandchild returns list containing only the two inputs needed to reach it");
+}
 
 int main(int argc, char** argv)
 {
@@ -1623,7 +1659,8 @@ int main(int argc, char** argv)
 	//testTreeNodeEqualOperator1();
 	//testTreeNodeEqualOperator2();
 	//testTreeNodeCalcLeaves();
-	testTreeNodeClone();
+	//testTreeNodeClone();
+	testTreeNodeGetPath();
 
 	/*testMinimise();
 	testWMethod();*/
