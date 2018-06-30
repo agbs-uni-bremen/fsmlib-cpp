@@ -1585,6 +1585,106 @@ void testTreeNodeGetPath() {
 		"getPath invoked on grandchild returns list containing only the two inputs needed to reach it");
 }
 
+// tests TreeNode::superTreeOf(const shared_ptr<TreeNode> otherNode) const.
+// negative case
+void testTreeNodeSuperTreeOf1() {
+	shared_ptr<TreeNode> root = make_shared<TreeNode>();
+	shared_ptr<TreeNode> rootOther = make_shared<TreeNode>();
+	shared_ptr<TreeNode> childOther1 = make_shared<TreeNode>();
+	rootOther->add(make_shared<TreeEdge>(1, childOther1));
+	assert("TC-TreeNode-NNNN",
+		!root->superTreeOf(rootOther),
+		"superTreeOf() returns false if rootOther has more children than root");
+
+	shared_ptr<TreeNode> childOther2 = make_shared<TreeNode>();
+	rootOther->add(make_shared<TreeEdge>(2, childOther2));
+	assert("TC-TreeNode-NNNN",
+		!root->superTreeOf(rootOther),
+		"superTreeOf() returns false if rootOther has more children than root");
+
+	shared_ptr<TreeNode> child1 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, child1));
+	assert("TC-TreeNode-NNNN",
+		!root->superTreeOf(rootOther),
+		"superTreeOf() returns false if rootOther has more children than root");
+
+	shared_ptr<TreeNode> grandChildOther1 = make_shared<TreeNode>();
+	childOther2->add(make_shared<TreeEdge>(1, grandChildOther1));
+	assert("TC-TreeNode-NNNN",
+		!root->superTreeOf(rootOther),
+		"superTreeOf() returns false if rootOther has more children than root");
+
+	shared_ptr<TreeNode> child2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(2, child2));
+	assert("TC-TreeNode-NNNN",
+		!root->superTreeOf(rootOther),
+		"superTreeOf() returns false if one corresponding child of root and rootOther has different number of childs");
+
+	//-----------------------------------------------------------------------------------------------
+
+	root = make_shared<TreeNode>();
+	rootOther = make_shared<TreeNode>();
+	child1 = make_shared<TreeNode>();
+	childOther1 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, child1));
+	rootOther->add(make_shared<TreeEdge>(2, childOther1));
+	assert("TC-TreeNode-NNNN",
+		!root->superTreeOf(rootOther),
+		"superTreeOf() returns false if rootOther has TreeEdge with label not existent in root");
+
+	child2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(2, child2));
+	childOther2 = make_shared<TreeNode>();
+	rootOther->add(make_shared<TreeEdge>(3, childOther2));
+	assert("TC-TreeNode-NNNN",
+		!root->superTreeOf(rootOther),
+		"superTreeOf() returns false if rootOther has TreeEdge with label not existent in root");
+}
+
+// tests TreeNode::superTreeOf(const shared_ptr<TreeNode> otherNode) const.
+// positive case
+void testTreeNodeSuperTreeOf2() {
+	shared_ptr<TreeNode> root = make_shared<TreeNode>();
+	shared_ptr<TreeNode> rootOther = make_shared<TreeNode>();
+	assert("TC-TreeNode-NNNN",
+		root->superTreeOf(rootOther),
+		"superTreeOf() returns true if root and rootOther are equal");
+
+	shared_ptr<TreeNode> child1 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, child1));
+	assert("TC-TreeNode-NNNN",
+		root->superTreeOf(rootOther),
+		"superTreeOf() returns true if root contains rootOther");
+
+	shared_ptr<TreeNode> child2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(2, child2));
+	shared_ptr<TreeNode> childOther1 = make_shared<TreeNode>();
+	rootOther->add(make_shared<TreeEdge>(1, childOther1));
+	assert("TC-TreeNode-NNNN",
+		root->superTreeOf(rootOther),
+		"superTreeOf() returns true if root contains rootOther");
+
+	shared_ptr<TreeNode> childOther2 = make_shared<TreeNode>();
+	rootOther->add(make_shared<TreeEdge>(2, childOther2));
+	assert("TC-TreeNode-NNNN",
+		root->superTreeOf(rootOther) && *root == *rootOther,
+		"superTreeOf() returns true if root and rootOther are equal");
+
+	shared_ptr<TreeNode> grandChild1 = make_shared<TreeNode>();
+	child1->add(make_shared<TreeEdge>(1, grandChild1));
+	assert("TC-TreeNode-NNNN",
+		root->superTreeOf(rootOther),
+		"superTreeOf() returns true if root contains rootOther");
+
+	shared_ptr<TreeNode> grandChild2 = make_shared<TreeNode>();
+	child1->add(make_shared<TreeEdge>(2, grandChild2));
+	shared_ptr<TreeNode> grandChildOther1 = make_shared<TreeNode>();
+	childOther1->add(make_shared<TreeEdge>(2, grandChildOther1));
+	assert("TC-TreeNode-NNNN",
+		root->superTreeOf(rootOther),
+		"superTreeOf() returns true if root contains rootOther");
+}
+
 int main(int argc, char** argv)
 {
     
@@ -1660,7 +1760,9 @@ int main(int argc, char** argv)
 	//testTreeNodeEqualOperator2();
 	//testTreeNodeCalcLeaves();
 	//testTreeNodeClone();
-	testTreeNodeGetPath();
+	//testTreeNodeGetPath();
+	//testTreeNodeSuperTreeOf1();
+	testTreeNodeSuperTreeOf2();
 
 	/*testMinimise();
 	testWMethod();*/
