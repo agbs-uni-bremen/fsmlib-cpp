@@ -1685,6 +1685,49 @@ void testTreeNodeSuperTreeOf2() {
 		"superTreeOf() returns true if root contains rootOther");
 }
 
+void testTreeNodeTraverse() {
+	shared_ptr<TreeNode> root = make_shared<TreeNode>();
+	std::vector<int> v;
+	std::shared_ptr<std::vector<std::vector<int>>> ioll = make_shared<std::vector<std::vector<int>>>();
+	root->traverse(v, ioll);
+	assert("TC-TreeNode-NNNN",
+		v.size() == 0 && ioll->size() == 1 && ioll->at(0) == v,
+		"traverse() called on leave doesn't add inputs to current input vector v but adds v to ioll");
+
+	v.clear();
+	ioll->clear();
+	shared_ptr<TreeNode> child1 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, child1));
+	shared_ptr<TreeNode> child2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(2, child2));
+	root->traverse(v, ioll);
+	const std::vector<int> e1 = {};
+	const std::vector<int> e2 = { 1 };
+	const std::vector<int> e3 = { 2 };
+	assert("TC-TreeNode-NNNN",
+		ioll->size() == 3 && std::find(ioll->cbegin(), ioll->cend(), e1) != ioll->cend()
+		&& std::find(ioll->cbegin(), ioll->cend(), e2) != ioll->cend()
+		&& std::find(ioll->cbegin(), ioll->cend(), e3) != ioll->cend(),
+		"traverse() called on node n adds all int paths from n to leaves of the tree");
+
+	v.clear();
+	ioll->clear();
+	shared_ptr<TreeNode> grandChild1 = make_shared<TreeNode>();
+	child1->add(make_shared<TreeEdge>(1, grandChild1));
+	shared_ptr<TreeNode> grandChild2 = make_shared<TreeNode>();
+	child1->add(make_shared<TreeEdge>(2, grandChild2));
+	root->traverse(v, ioll);
+	const std::vector<int> e4 = { 1,1 };
+	const std::vector<int> e5 = { 1,2 };
+	assert("TC-TreeNode-NNNN",
+		ioll->size() == 5 && std::find(ioll->cbegin(), ioll->cend(), e1) != ioll->cend()
+		&& std::find(ioll->cbegin(), ioll->cend(), e2) != ioll->cend()
+		&& std::find(ioll->cbegin(), ioll->cend(), e3) != ioll->cend()
+		&& std::find(ioll->cbegin(), ioll->cend(), e4) != ioll->cend()
+		&& std::find(ioll->cbegin(), ioll->cend(), e5) != ioll->cend(),
+		"traverse() called on node n adds all int paths from n to leaves of the tree");
+}
+
 int main(int argc, char** argv)
 {
     
@@ -1762,7 +1805,8 @@ int main(int argc, char** argv)
 	//testTreeNodeClone();
 	//testTreeNodeGetPath();
 	//testTreeNodeSuperTreeOf1();
-	testTreeNodeSuperTreeOf2();
+	//testTreeNodeSuperTreeOf2();
+	testTreeNodeTraverse();
 
 	/*testMinimise();
 	testWMethod();*/
