@@ -1685,6 +1685,7 @@ void testTreeNodeSuperTreeOf2() {
 		"superTreeOf() returns true if root contains rootOther");
 }
 
+// tests TreeNode::traverse(vector<int>& v,shared_ptr<vector<vector<int>>> ioll)
 void testTreeNodeTraverse() {
 	shared_ptr<TreeNode> root = make_shared<TreeNode>();
 	std::vector<int> v;
@@ -1701,31 +1702,128 @@ void testTreeNodeTraverse() {
 	shared_ptr<TreeNode> child2 = make_shared<TreeNode>();
 	root->add(make_shared<TreeEdge>(2, child2));
 	root->traverse(v, ioll);
-	const std::vector<int> e1 = {};
+	/*const std::vector<int> e1 = {};
 	const std::vector<int> e2 = { 1 };
-	const std::vector<int> e3 = { 2 };
+	const std::vector<int> e3 = { 2 };*/
 	assert("TC-TreeNode-NNNN",
-		ioll->size() == 3 && std::find(ioll->cbegin(), ioll->cend(), e1) != ioll->cend()
-		&& std::find(ioll->cbegin(), ioll->cend(), e2) != ioll->cend()
-		&& std::find(ioll->cbegin(), ioll->cend(), e3) != ioll->cend(),
+		ioll->size() == 3 && std::find(ioll->cbegin(), ioll->cend(), root->getPath()) != ioll->cend()
+		&& std::find(ioll->cbegin(), ioll->cend(), child1->getPath()) != ioll->cend()
+		&& std::find(ioll->cbegin(), ioll->cend(), child2->getPath()) != ioll->cend(),
 		"traverse() called on node n adds all int paths from n to leaves of the tree");
 
 	v.clear();
 	ioll->clear();
 	shared_ptr<TreeNode> grandChild1 = make_shared<TreeNode>();
-	child1->add(make_shared<TreeEdge>(1, grandChild1));
+	child1->add(make_shared<TreeEdge>(3, grandChild1));
 	shared_ptr<TreeNode> grandChild2 = make_shared<TreeNode>();
-	child1->add(make_shared<TreeEdge>(2, grandChild2));
+	child1->add(make_shared<TreeEdge>(4, grandChild2));
 	root->traverse(v, ioll);
-	const std::vector<int> e4 = { 1,1 };
-	const std::vector<int> e5 = { 1,2 };
+	//const std::vector<int> e4 = { 1,3 };
+	//const std::vector<int> e5 = { 1,4 };
 	assert("TC-TreeNode-NNNN",
-		ioll->size() == 5 && std::find(ioll->cbegin(), ioll->cend(), e1) != ioll->cend()
-		&& std::find(ioll->cbegin(), ioll->cend(), e2) != ioll->cend()
-		&& std::find(ioll->cbegin(), ioll->cend(), e3) != ioll->cend()
-		&& std::find(ioll->cbegin(), ioll->cend(), e4) != ioll->cend()
-		&& std::find(ioll->cbegin(), ioll->cend(), e5) != ioll->cend(),
+		ioll->size() == 5 && std::find(ioll->cbegin(), ioll->cend(), root->getPath()) != ioll->cend()
+		&& std::find(ioll->cbegin(), ioll->cend(), child1->getPath()) != ioll->cend()
+		&& std::find(ioll->cbegin(), ioll->cend(), child2->getPath()) != ioll->cend()
+		&& std::find(ioll->cbegin(), ioll->cend(), grandChild1->getPath()) != ioll->cend()
+		&& std::find(ioll->cbegin(), ioll->cend(), grandChild2->getPath()) != ioll->cend(),
 		"traverse() called on node n adds all int paths from n to leaves of the tree");
+}
+
+// tests TreeNode::deleteNode()
+void testTreeNodeDeleteNode() {
+	shared_ptr<TreeNode> root = make_shared<TreeNode>();
+	root->deleteNode();
+	assert("TC-TreeNode-NNNN",
+		root->isDeleted(),
+		"deleteNode() called on root marks root as deleted");
+
+	// parent (root) with one child (leaf). child gets deleted
+	root = make_shared<TreeNode>();
+	shared_ptr<TreeNode> child1 = make_shared<TreeNode>();
+	shared_ptr<TreeEdge> rootToChild1 = make_shared<TreeEdge>(1, child1);
+	root->add(rootToChild1);
+	child1->deleteNode();
+	assert("TC-TreeNode-NNNN",
+		!(root->isDeleted())
+		&& child1->isDeleted()
+		&& std::find(root->getChildren()->cbegin(), root->getChildren()->cend(), rootToChild1) == root->getChildren()->cend(),
+		"deleteNode() called on child marks child as deleted, removes child from children list of parent and doesn't mark parent as deleted");
+
+	// parent (root) with one child (leaf). parent gets deleted
+	root = make_shared<TreeNode>();
+	child1 = make_shared<TreeNode>();
+	rootToChild1 = make_shared<TreeEdge>(1, child1);
+	root->add(rootToChild1);
+	root->deleteNode();
+	assert("TC-TreeNode-NNNN",
+		root->isDeleted()
+		&& !(child1->isDeleted())
+		&& std::find(root->getChildren()->cbegin(), root->getChildren()->cend(), rootToChild1) != root->getChildren()->cend(),
+		"deleteNode() called on parent of undeleted child marks parent as deleted but doesn't change children");
+
+	// parent (root) with two children (leaves) child1 and child2. child2 gets deleted
+	root = make_shared<TreeNode>();
+	child1 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> child2 = make_shared<TreeNode>();
+	rootToChild1 = make_shared<TreeEdge>(1, child1);
+	shared_ptr<TreeEdge> rootToChild2 = make_shared<TreeEdge>(2, child2);
+	root->add(rootToChild1);
+	root->add(rootToChild2);
+	child2->deleteNode();
+	assert("TC-TreeNode-NNNN",
+		!(root->isDeleted())
+		&& !(child1->isDeleted())
+		&& child2->isDeleted()
+		&& std::find(root->getChildren()->cbegin(), root->getChildren()->cend(), rootToChild1) != root->getChildren()->cend()
+		&& std::find(root->getChildren()->cbegin(), root->getChildren()->cend(), rootToChild2) == root->getChildren()->cend(),
+		"deleteNode() called on child2 (leaf) marks child2 as deleted, removes it from child list of its parent and doesn't change the other child");
+
+	// root has child1 as only child. child1 has grandChild1 as only child, which is a leaf. child1 gets deleted.
+	root = make_shared<TreeNode>();
+	child1 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> grandChild1 = make_shared<TreeNode>();
+	rootToChild1 = make_shared<TreeEdge>(1, child1);
+	shared_ptr<TreeEdge> child1ToGrandChild1 = make_shared<TreeEdge>(1, grandChild1);
+	root->add(rootToChild1);
+	child1->add(child1ToGrandChild1);
+	child1->deleteNode();
+	assert("TC-TreeNode-NNNN",
+		!(root->isDeleted())
+		&& child1->isDeleted()
+		&& !(grandChild1->isDeleted())
+		&& std::find(root->getChildren()->cbegin(), root->getChildren()->cend(), rootToChild1) != root->getChildren()->cend()
+		&& std::find(child1->getChildren()->cbegin(), child1->getChildren()->cend(), child1ToGrandChild1) != child1->getChildren()->cend(),
+		"deleteNode() called on child (non leaf) marks it as deleted but doesn't change parent or grandchilds of parent");
+	
+	// root has child1 as only child. child1 has grandChild1 as only child, which is a leaf. child1 is already deleted.
+	// In the next step grandChild1 gets deleted
+	grandChild1->deleteNode();
+	assert("TC-TreeNode-NNNN",
+		!(root->isDeleted())
+		&& child1->isDeleted()
+		&& grandChild1->isDeleted()
+		&& std::find(root->getChildren()->cbegin(), root->getChildren()->cend(), rootToChild1) == root->getChildren()->cend()
+		&& std::find(child1->getChildren()->cbegin(), child1->getChildren()->cend(), child1ToGrandChild1) == child1->getChildren()->cend(),
+		"deleteNode() called on child (leaf) with already deleted parent marks this child as deleted, removes it from "
+		"list of childs from its parent and removes parent from child list of parents parent");
+
+	// root has child1 as only child. child1 has grandChild1 as only child, which is a leaf. grandChild1 gets deleted.
+	root = make_shared<TreeNode>();
+	child1 = make_shared<TreeNode>();
+	grandChild1 = make_shared<TreeNode>();
+	rootToChild1 = make_shared<TreeEdge>(1, child1);
+	child1ToGrandChild1 = make_shared<TreeEdge>(1, grandChild1);
+	root->add(rootToChild1);
+	child1->add(child1ToGrandChild1);
+	grandChild1->deleteNode();
+	assert("TC-TreeNode-NNNN",
+		!(root->isDeleted())
+		&& !(child1->isDeleted())
+		&& grandChild1->isDeleted()
+		&& std::find(root->getChildren()->cbegin(), root->getChildren()->cend(), rootToChild1) != root->getChildren()->cend()
+		&& std::find(child1->getChildren()->cbegin(), child1->getChildren()->cend(), child1ToGrandChild1) == child1->getChildren()->cend(),
+		"deleteNode() called on child (leaf) with already non deleted parent marks this child as deleted, removes it from "
+		"list of childs from its parent and doesn't delete parent");
 }
 
 int main(int argc, char** argv)
@@ -1806,7 +1904,8 @@ int main(int argc, char** argv)
 	//testTreeNodeGetPath();
 	//testTreeNodeSuperTreeOf1();
 	//testTreeNodeSuperTreeOf2();
-	testTreeNodeTraverse();
+	//testTreeNodeTraverse();
+	testTreeNodeDeleteNode();
 
 	/*testMinimise();
 	testWMethod();*/
