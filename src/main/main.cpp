@@ -1321,6 +1321,83 @@ void testTreeNodeAddConstInt3() {
 		"number of TreeEdges contained in children attribute matches number of actually added values");
 }
 
+// tests addToThisNode(const std::vector<int> &lst) ( add(std::vector<int>::const_iterator lstIte, const std::vector<int>::const_iterator end) respectivly)
+void testAddToThisNode() {
+	shared_ptr<TreeNode> root = make_shared<TreeNode>();
+	//shared_ptr<TreeNode> copy = root->clone();
+	std::vector<int> inputs = {};
+	root->addToThisNode(inputs);
+	assert("TC-TreeNode-NNNN",
+		root->isLeaf(),
+		"addToThisNode() doesn't change tree if vector is empty");
+
+	// root is leaf. input vector contains only one element
+	inputs = { 1 };
+	root->addToThisNode(inputs);
+	assert("TC-TreeNode-NNNN",
+		root->getChildren()->size() == 1
+		&& root->getChildren()->at(0)->getIO() == 1
+		&& root->getChildren()->at(0)->getTarget()->isLeaf(),
+		"addToThisNode({1}) called on root (leaf) adds only one edge labeled by correct input. Target node is leaf");
+
+	// root is no leaf (one edge labeled with 1; child is leaf). input vector contains two elements and shares no prefix with 
+	// path starting at root.
+	inputs = { 2,3 };
+	shared_ptr<TreeEdge> e1 = make_shared<TreeEdge>(1, make_shared<TreeNode>());
+	shared_ptr<TreeEdge> e2 = make_shared<TreeEdge>(2, make_shared<TreeNode>());
+	shared_ptr<TreeEdge> e3 = make_shared<TreeEdge>(3, make_shared<TreeNode>());
+	root->addToThisNode(inputs);
+	assert("TC-TreeNode-NNNN",		
+		root->getChildren()->size() == 2
+		&& root->hasEdge(e1) != nullptr
+		&& root->hasEdge(e2) != nullptr
+		&& root->hasEdge(e2)->getTarget()->getChildren()->size() == 1
+		&& root->hasEdge(e2)->getTarget()->hasEdge(e3) != nullptr
+		&& root->hasEdge(e2)->getTarget()->hasEdge(e3)->getTarget()->isLeaf(),
+		"addToThisNode({2,3}) called on root (non leaf) adds only new edge to root labeled by 2. Target node gets edge with label 3 targeting leaf node");
+
+	// root has one edge labeled with 1. child is leaf. vector contains two elements and shares prefix with path starting at root
+	root = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, make_shared<TreeNode>()));
+	inputs = { 1,2 };
+	root->addToThisNode(inputs);
+	assert("TC-TreeNode-NNNN",
+		root->getChildren()->size() == 1
+		&& root->getChildren()->at(0)->getIO() == 1
+		&& root->getChildren()->at(0)->getTarget()->getChildren()->size() == 1
+		&& root->getChildren()->at(0)->getTarget()->getChildren()->at(0)->getIO() == 2
+		&& root->getChildren()->at(0)->getTarget()->getChildren()->at(0)->getTarget()->isLeaf(),
+		"addToThisNode() called with vector sharing prefix with path starting at root doesn't add new edges for this prefix. "
+		"result contains path represented by vector.");
+
+	// root has two edges (1-edge, 2-edge). target of 1-edge has one edge (2-edge). vector equals path contained in this tree. 
+	root = make_shared<TreeNode>();
+	shared_ptr<TreeNode> child1 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> child2 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> grandChild = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, child1));
+	root->add(make_shared<TreeEdge>(2, child2));
+	child1->add(make_shared<TreeEdge>(2, grandChild));
+	shared_ptr<TreeNode> copy = root->clone();
+	inputs = { 1,2 };
+	root->addToThisNode(inputs);
+	assert("TC-TreeNode-NNNN",
+		(*root == *copy),
+		"addToThisNode() doesn't change tree if vector equals path contained in tree emanating from root");
+
+	// root is leaf. vector contains two elements
+	root = make_shared<TreeNode>();
+	inputs = { 1,2 };
+	root->addToThisNode(inputs);
+	assert("TC-TreeNode-NNNN",
+		root->getChildren()->size() == 1
+		&& root->getChildren()->at(0)->getIO() == inputs.at(0)
+		&& root->getChildren()->at(0)->getTarget()->getChildren()->size() == 1
+		&& root->getChildren()->at(0)->getTarget()->getChildren()->at(0)->getIO() == inputs.at(1)
+		&& root->getChildren()->at(0)->getTarget()->getChildren()->at(0)->getTarget()->isLeaf(),
+		"addToThisNode() called on leaf adds path reoresented by vector.");
+}
+
 // tests operator==(TreeNode const & treeNode1, TreeNode const & treeNode2)  (positive case)
 void testTreeNodeEqualOperator1() {
 	shared_ptr<TreeNode> n1 = make_shared<TreeNode>();
@@ -1968,7 +2045,8 @@ int main(int argc, char** argv)
 	//testTreeNodeSuperTreeOf2();
 	//testTreeNodeTraverse();
 	//testTreeNodeDeleteNode();
-	testTreeNodeDeleteSingleNode();
+	//testTreeNodeDeleteSingleNode();
+	testAddToThisNode();
 
 	/*testMinimise();
 	testWMethod();*/
