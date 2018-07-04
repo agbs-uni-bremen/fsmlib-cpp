@@ -1395,7 +1395,265 @@ void testAddToThisNode() {
 		&& root->getChildren()->at(0)->getTarget()->getChildren()->size() == 1
 		&& root->getChildren()->at(0)->getTarget()->getChildren()->at(0)->getIO() == inputs.at(1)
 		&& root->getChildren()->at(0)->getTarget()->getChildren()->at(0)->getTarget()->isLeaf(),
-		"addToThisNode() called on leaf adds path reoresented by vector.");
+		"addToThisNode() called on leaf adds path represented by vector.");
+}
+
+// helper prints vector<int>
+void printVector(vector<int> & vec) {
+	std::cout << "[";
+	for (int i : vec) {
+		std::cout << i << " ";
+	}
+	std::cout << "]\n";
+}
+
+// helper to print vector<vector<int>>
+void printVectors(shared_ptr<vector<vector<int>>> vectors) {
+	for (vector<int> &vec : *vectors) {
+		printVector(vec);
+	}
+	std::cout << "\n";
+}
+
+// checks if every path contained in cloneIoll extended by every path in ioLstPtr is contained in rootIoll.
+bool containsExpectedPaths(shared_ptr<vector<vector<int>>> cloneIoll, shared_ptr<vector<vector<int>>> rootIoll, shared_ptr<std::vector<std::vector<int>>> iolLstPtr) {
+	printVectors(cloneIoll);
+	printVectors(rootIoll);
+	printVectors(iolLstPtr);
+	for (vector<int> &clonePath : *cloneIoll) {
+		for (vector<int> &extendingPath : *iolLstPtr) {
+			vector<int> expectedPath(clonePath);
+			std::cout << " expected vorher:";
+			printVector(expectedPath);
+			expectedPath.insert(expectedPath.cend(), extendingPath.cbegin(), extendingPath.cend());
+			std::cout << " expected nachher:";
+			printVector(expectedPath);
+			if (find(rootIoll->cbegin(), rootIoll->cend(), expectedPath) == rootIoll->cend()) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+// checks if every path of leaves is a result of a concatenation of a path from cloneIoll and a path from iolLstPtr.
+bool containsNoUnexpectedPath(shared_ptr<vector<vector<int>>> cloneIoll, std::vector<std::shared_ptr<TreeNode>>& leaves, shared_ptr<std::vector<std::vector<int>>> iolLstPtr) {
+	// first build all possible concatenations and save them
+	vector<vector<int>> concatenations;
+	for (vector<int> &clonePath : *cloneIoll) {
+		for (vector<int> &extendingPath : *iolLstPtr) {
+			std::vector<int> concatenation(clonePath);
+			concatenation.insert(concatenation.cend(), extendingPath.cbegin(), extendingPath.cend());
+			concatenations.push_back(concatenation);
+		}
+	}
+
+	// now check if every path from leaves is contained in concatenations
+	for (shared_ptr<TreeNode> leave : leaves) {
+		std::vector<int> path = leave->getPath();
+		if (find(concatenations.cbegin(), concatenations.cend(), path) == concatenations.cend()) {
+			return false;
+		}
+	}
+	return true;
+}
+
+// tests add(const IOListContainer & tcl)
+void testTreeNodeAddIOListContainer() {
+	// root is leaf. iolc contains only one trace which is empty.
+	shared_ptr<TreeNode> root = make_shared<TreeNode>();
+	shared_ptr<TreeNode> clone = root->clone();
+	std::vector<int> ioTrace1 = {};
+	std::vector<std::vector<int>> ioLst = { ioTrace1 };
+	shared_ptr<std::vector<std::vector<int>>> iolLstPtr = make_shared < std::vector<std::vector<int>>>(ioLst);
+	shared_ptr<FsmPresentationLayer> presentationLayer = make_shared<FsmPresentationLayer>();	
+	root->add(IOListContainer(iolLstPtr, presentationLayer));
+	assert("TC-TreeNode-NNNN",
+		root->superTreeOf(clone)
+		&& (*root == *clone),
+		"add(IOListContainer &iolc) called on leaf doesn't change tree if iolc only contains empty traces");
+
+	// root is leaf. iolc contains only one trace which consists only of one input.
+	root = make_shared<TreeNode>();
+	clone = root->clone();
+	ioTrace1 = { 1 };
+	ioLst = { ioTrace1 };
+	iolLstPtr = make_shared < std::vector<std::vector<int>>>(ioLst);
+	presentationLayer = make_shared<FsmPresentationLayer>();
+
+	shared_ptr<vector<vector<int>>> cloneIoll = make_shared<vector<vector<int>>>();
+	std::vector<int> rootV;
+	clone->traverse(rootV, cloneIoll);
+
+	root->add(IOListContainer(iolLstPtr, presentationLayer));
+	shared_ptr<vector<vector<int>>> rootIoll = make_shared<vector<vector<int>>>();
+	std::vector<int> cloneV;
+	root->traverse(cloneV, rootIoll);
+	vector<shared_ptr<TreeNode>> leaves;
+	root->calcLeaves(leaves);
+
+	assert("TC-TreeNode-NNNN",
+		root->superTreeOf(clone)
+		&& containsExpectedPaths(cloneIoll, rootIoll, iolLstPtr), //containsNoUnexpectedPath(cloneIoll, leaves, iolLstPtr)
+		"add(IOListContainer &iolc) result is super tree of old tree and result contains the expected paths");
+	assert("TC-TreeNode-NNNN",
+		containsNoUnexpectedPath(cloneIoll, leaves, iolLstPtr),
+		"add(IOListContainer &iolc) result contains only expected paths");
+
+	// root is leaf. iolc contains two traces. Each trace contains only one element (differing)
+	root = make_shared<TreeNode>();
+	clone = root->clone();
+	ioTrace1 = { 1 };
+	std::vector<int> ioTrace2;
+	ioTrace2 = { 2 };
+	ioLst = { ioTrace1, ioTrace2 };
+	iolLstPtr = make_shared < std::vector<std::vector<int>>>(ioLst);
+	presentationLayer = make_shared<FsmPresentationLayer>();
+
+	cloneIoll = make_shared<vector<vector<int>>>();
+	rootV.clear();
+	clone->traverse(rootV, cloneIoll);
+
+	root->add(IOListContainer(iolLstPtr, presentationLayer));
+	rootIoll = make_shared<vector<vector<int>>>();
+	cloneV.clear();
+	root->traverse(cloneV, rootIoll);
+	leaves.clear();
+	root->calcLeaves(leaves);
+
+	assert("TC-TreeNode-NNNN",
+		root->superTreeOf(clone)
+		&& containsExpectedPaths(cloneIoll, rootIoll, iolLstPtr),
+		"add(IOListContainer &iolc) result is super tree of old tree and result contains the expected paths");
+	assert("TC-TreeNode-NNNN",
+		containsNoUnexpectedPath(cloneIoll, leaves, iolLstPtr),
+		"add(IOListContainer &iolc) result contains only expected paths");
+
+
+	// root is leaf. iolc contains two paths. first path consists of two elements. second path consists of one element.
+	root = make_shared<TreeNode>();
+	clone = root->clone();
+	ioTrace1 = { 1,2 };
+	ioTrace2 = { 2 };
+	ioLst = { ioTrace1, ioTrace2 };
+	iolLstPtr = make_shared < std::vector<std::vector<int>>>(ioLst);
+	presentationLayer = make_shared<FsmPresentationLayer>();
+
+	cloneIoll = make_shared<vector<vector<int>>>();
+	rootV.clear();
+	clone->traverse(rootV, cloneIoll);
+
+	root->add(IOListContainer(iolLstPtr, presentationLayer));
+	rootIoll = make_shared<vector<vector<int>>>();
+	cloneV.clear();
+	root->traverse(cloneV, rootIoll);
+
+	assert("TC-TreeNode-NNNN",
+		root->superTreeOf(clone)
+		&& containsExpectedPaths(cloneIoll, rootIoll, iolLstPtr),
+		"add(IOListContainer &iolc) result is super tree of old tree and result contains the expected paths");
+
+	//// root is leaf. iolc contains two paths. first path consists of two elements. second path consists of one element.
+	//root = make_shared<TreeNode>();
+	//clone = root->clone();
+	//ioTrace1 = { 1,2 };
+	//ioTrace2 = { 1 };
+	//ioLst = { ioTrace1, ioTrace2 };
+	//iolLstPtr = make_shared < std::vector<std::vector<int>>>(ioLst);
+	//presentationLayer = make_shared<FsmPresentationLayer>();
+
+	//cloneIoll = make_shared<vector<vector<int>>>();
+	//rootV.clear();
+	//clone->traverse(rootV, cloneIoll);
+
+	//root->add(IOListContainer(iolLstPtr, presentationLayer));
+	//std::cout << "root->getChildren()->size(): " << root->getChildren()->size() << std::endl;
+	//rootIoll = make_shared<vector<vector<int>>>();
+	//cloneV.clear();
+	//root->traverse(cloneV, rootIoll);
+
+	//assert("TC-TreeNode-NNNN",
+	//	root->superTreeOf(clone)
+	//	&& containsExpectedPaths(cloneIoll, rootIoll, iolLstPtr),
+	//	"add(IOListContainer &iolc) result is super tree of old tree and result contains the expected paths");
+
+	// root has two childs (leaves). iolc contains one paths, which doesn't share a prefix with a path already contained in tree.
+	root = make_shared<TreeNode>();
+	shared_ptr<TreeNode> child1 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> child2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, child1));
+	root->add(make_shared<TreeEdge>(2, child2));
+	clone = root->clone();
+	ioTrace1 = { 3 };
+	ioLst = { ioTrace1 };
+	iolLstPtr = make_shared < std::vector<std::vector<int>>>(ioLst);
+	presentationLayer = make_shared<FsmPresentationLayer>();
+
+	cloneIoll = make_shared<vector<vector<int>>>();
+	rootV.clear();
+	clone->traverse(rootV, cloneIoll);
+
+	root->add(IOListContainer(iolLstPtr, presentationLayer));
+	rootIoll = make_shared<vector<vector<int>>>();
+	cloneV.clear();
+	root->traverse(cloneV, rootIoll);
+
+	assert("TC-TreeNode-NNNN",
+		root->superTreeOf(clone)
+		&& containsExpectedPaths(cloneIoll, rootIoll, iolLstPtr),
+		"add(IOListContainer &iolc) result is super tree of old tree and result contains the expected paths");
+
+	// root has two childs (leaves). iolc contains one path, which is equals to a path already contained in tree.
+	root = make_shared<TreeNode>();
+	child1 = make_shared<TreeNode>();
+	child2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, child1));
+	root->add(make_shared<TreeEdge>(2, child2));
+	clone = root->clone();
+	ioTrace1 = { 1 };
+	ioLst = { ioTrace1 };
+	iolLstPtr = make_shared < std::vector<std::vector<int>>>(ioLst);
+	presentationLayer = make_shared<FsmPresentationLayer>();
+
+	cloneIoll = make_shared<vector<vector<int>>>();
+	rootV.clear();
+	clone->traverse(rootV, cloneIoll);
+
+	root->add(IOListContainer(iolLstPtr, presentationLayer));
+	rootIoll = make_shared<vector<vector<int>>>();
+	cloneV.clear();
+	root->traverse(cloneV, rootIoll);
+
+	assert("TC-TreeNode-NNNN",
+		root->superTreeOf(clone)
+		&& containsExpectedPaths(cloneIoll, rootIoll, iolLstPtr),
+		"add(IOListContainer &iolc) result is super tree of old tree and result contains the expected paths");
+
+	// root has two childs (leaves). iolc contains one path, which has a prefix already contained in tree.
+	root = make_shared<TreeNode>();
+	child1 = make_shared<TreeNode>();
+	child2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, child1));
+	root->add(make_shared<TreeEdge>(2, child2));
+	clone = root->clone();
+	ioTrace1 = { 1, 2 };
+	ioLst = { ioTrace1 };
+	iolLstPtr = make_shared < std::vector<std::vector<int>>>(ioLst);
+	presentationLayer = make_shared<FsmPresentationLayer>();
+
+	cloneIoll = make_shared<vector<vector<int>>>();
+	rootV.clear();
+	clone->traverse(rootV, cloneIoll);
+
+	root->add(IOListContainer(iolLstPtr, presentationLayer));
+	rootIoll = make_shared<vector<vector<int>>>();
+	cloneV.clear();
+	root->traverse(cloneV, rootIoll);
+
+	assert("TC-TreeNode-NNNN",
+		root->superTreeOf(clone)
+		&& containsExpectedPaths(cloneIoll, rootIoll, iolLstPtr),
+		"add(IOListContainer &iolc) result is super tree of old tree and result contains the expected paths");
 }
 
 // tests operator==(TreeNode const & treeNode1, TreeNode const & treeNode2)  (positive case)
@@ -2046,7 +2304,8 @@ int main(int argc, char** argv)
 	//testTreeNodeTraverse();
 	//testTreeNodeDeleteNode();
 	//testTreeNodeDeleteSingleNode();
-	testAddToThisNode();
+	//testAddToThisNode();
+	testTreeNodeAddIOListContainer();
 
 	/*testMinimise();
 	testWMethod();*/
