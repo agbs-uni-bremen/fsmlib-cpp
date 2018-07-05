@@ -1438,6 +1438,10 @@ bool containsExpectedPaths(shared_ptr<vector<vector<int>>> cloneIoll, shared_ptr
 
 // checks if every path of leaves is a result of a concatenation of a path from cloneIoll and a path from iolLstPtr.
 bool containsNoUnexpectedPath(shared_ptr<vector<vector<int>>> cloneIoll, std::vector<std::shared_ptr<TreeNode>>& leaves, shared_ptr<std::vector<std::vector<int>>> iolLstPtr) {
+	std::cout << "============================================================================" << std::endl;
+	printVectors(cloneIoll);
+	printVectors(iolLstPtr);
+
 	// first build all possible concatenations and save them
 	vector<vector<int>> concatenations;
 	for (vector<int> &clonePath : *cloneIoll) {
@@ -1448,13 +1452,20 @@ bool containsNoUnexpectedPath(shared_ptr<vector<vector<int>>> cloneIoll, std::ve
 		}
 	}
 
+	std::cout << "concatenations: " << std::endl;
+	printVectors(make_shared<vector<vector<int>>>(concatenations));
+
 	// now check if every path from leaves is contained in concatenations
 	for (shared_ptr<TreeNode> leave : leaves) {
 		std::vector<int> path = leave->getPath();
+		std::cout << "path: ";
+		printVector(path);
 		if (find(concatenations.cbegin(), concatenations.cend(), path) == concatenations.cend()) {
 			return false;
 		}
 	}
+
+	std::cout << "============================================================================" << std::endl;
 	return true;
 }
 
@@ -2244,6 +2255,160 @@ void testTreeNodeDeleteSingleNode() {
 		"list of childs of its parent but doesn't remove parent from child list of parents parent");
 }
 
+// tests TreeNode::tentativeAddToThisNode(std::vector<int>::const_iterator start, std::vector<int>::const_iterator stop, std::shared_ptr<TreeNode>& n)
+void testTreeNodeTentativeAddToThisNode() {
+	// case 1: path is already contained in tree -> returns 0
+
+	// root is leaf and inpPath is empty
+	shared_ptr<TreeNode> ref = make_shared<TreeNode>();
+	shared_ptr<TreeNode> root = make_shared<TreeNode>();
+	vector<int> inpPath = {};
+	assert("TC-TreeNode-NNNN",
+		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 0
+		&& ref == root,
+		"tentativeAddToThisNode() returns 0 if path is already contained in tree");
+
+	// root has two children (leaves). inpPath contains one element (already contained as a label)
+	ref = make_shared<TreeNode>();
+	root = make_shared<TreeNode>();
+	shared_ptr<TreeNode> c1 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> c2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, c1));
+	root->add(make_shared<TreeEdge>(2, c2));
+	inpPath = { 1 };
+	assert("TC-TreeNode-NNNN",
+		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 0
+		&& ref == c1,
+		"tentativeAddToThisNode() returns 0 if path is already contained in tree");
+
+	// root has two childs (c1 and c2). c1 is a leaf. c2 has two childs (gc1 and gc2). Both are leaves. inpPath contains one element (already contained as a label)
+	ref = make_shared<TreeNode>();
+	root = make_shared<TreeNode>();
+	c1 = make_shared<TreeNode>();
+	c2 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> gc1 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> gc2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, c1));
+	root->add(make_shared<TreeEdge>(2, c2));
+	c2->add(make_shared<TreeEdge>(1, gc1));
+	c2->add(make_shared<TreeEdge>(2, gc2));
+	inpPath = { 2 };
+	assert("TC-TreeNode-NNNN",
+		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 0
+		&& ref == c2,
+		"tentativeAddToThisNode() returns 0 if path is already contained in tree");
+
+	// root has two childs (c1 and c2). c1 is a leaf. c2 has two childs (gc1 and gc2). Both are leaves. inpPath (2 elements) is already contained in tree.
+	ref = make_shared<TreeNode>();
+	root = make_shared<TreeNode>();
+	c1 = make_shared<TreeNode>();
+	c2 = make_shared<TreeNode>();
+	gc1 = make_shared<TreeNode>();
+	gc2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, c1));
+	root->add(make_shared<TreeEdge>(2, c2));
+	c2->add(make_shared<TreeEdge>(1, gc1));
+	c2->add(make_shared<TreeEdge>(2, gc2));
+	inpPath = { 2, 1 };
+	assert("TC-TreeNode-NNNN",
+		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 0
+		&& ref == gc1,
+		"tentativeAddToThisNode() returns 0 if path is already contained in tree");
+
+	// case 2: prefix of path reaches leaf of tree (no new branch needed) -> returns 1
+
+	// root is leaf. path contains one element
+	ref = make_shared<TreeNode>();
+	root = make_shared<TreeNode>();
+	inpPath = { 1 };
+	assert("TC-TreeNode-NNNN",
+		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 1
+		&& ref == root,
+		"tentativeAddToThisNode() returns 1 if a prefix of the path reaches a leaf "
+		"and adding the path would require to extend the tree");
+
+	// root has two childs (c1 and c2). c1 and c2 are leaves. inpPath contains two elements.
+	ref = make_shared<TreeNode>();
+	root = make_shared<TreeNode>();
+	c1 = make_shared<TreeNode>();
+	c2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, c1));
+	root->add(make_shared<TreeEdge>(2, c2));
+	//std::cout << "root leaf:" << root->isLeaf() << std::endl;
+	//std::cout << "root children size: " << root->getChildren()->size() << std::endl;
+	//std::cout << "c1 children size: " << c1->getChildren()->size() << std::endl;
+	//std::cout << "c2 children size: " << c2->getChildren()->size() << std::endl;
+	inpPath = { 1,2 };
+	assert("TC-TreeNode-NNNN",
+		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 1
+		&& ref == c1,
+		"tentativeAddToThisNode() returns 1 if a prefix of the path reaches a leaf "
+		"and adding the path would require to extend the tree");
+
+	// root has two childs (c1 and c2). c1 is a leaf. c2 has two childs (gc1 and gc2). Both are leaves. inpPath (3 elements) 
+	ref = make_shared<TreeNode>();
+	root = make_shared<TreeNode>();
+	c1 = make_shared<TreeNode>();
+	c2 = make_shared<TreeNode>();
+	gc1 = make_shared<TreeNode>();
+	gc2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, c1));
+	root->add(make_shared<TreeEdge>(2, c2));
+	c2->add(make_shared<TreeEdge>(1, gc1));
+	c2->add(make_shared<TreeEdge>(2, gc2));
+	inpPath = { 2, 1, 2 };
+
+	assert("TC-TreeNode-NNNN",
+		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 1
+		&& ref == gc1,
+		"tentativeAddToThisNode() returns 1 if a prefix of the path reaches a leaf "
+		"and adding the path would require to extend the tree");
+
+	// case 3: no prefix of path reaches leaf of tree (new branch needed) -> returns 2
+
+	// root is has child c1. c1 is a leaf. path contains one element
+	ref = make_shared<TreeNode>();
+	root = make_shared<TreeNode>();
+	c1 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, c1));
+	inpPath = { 2 };
+
+	assert("TC-TreeNode-NNNN",
+		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 2
+		&& ref == root,
+		"tentativeAddToThisNode() returns 2 if no prefix of the path reaches a leaf "
+		"and adding the path would require to create a new branch");
+
+	// root is has childs c1 and c2. c1 is a leaf. c2 has two childs gc1 and gc2. gc1 and gc2 are leaves.
+	// inpPath contains 2 elements.
+	ref = make_shared<TreeNode>();
+	root = make_shared<TreeNode>();
+	c1 = make_shared<TreeNode>();
+	c2 = make_shared<TreeNode>();
+	gc1 = make_shared<TreeNode>();
+	gc2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, c1));
+	root->add(make_shared<TreeEdge>(2, c2));
+	c2->add(make_shared<TreeEdge>(1, gc1));
+	c2->add(make_shared<TreeEdge>(2, gc2));
+	inpPath = { 2, 3 };
+
+	assert("TC-TreeNode-NNNN",
+		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 2
+		&& ref == c2,
+		"tentativeAddToThisNode() returns 2 if no prefix of the path reaches a leaf "
+		"and adding the path would require to create a new branch");
+
+	// root is has childs c1 and c2. c1 is a leaf. c2 has two childs gc1 and gc2. gc1 and gc2 are leaves.
+	// inpPath contains 3 elements.
+	inpPath = { 2, 3, 2};
+	assert("TC-TreeNode-NNNN",
+		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 2
+		&& ref == c2,
+		"tentativeAddToThisNode() returns 2 if no prefix of the path reaches a leaf "
+		"and adding the path would require to create a new branch");
+}
+
 int main(int argc, char** argv)
 {
     
@@ -2326,7 +2491,8 @@ int main(int argc, char** argv)
 	//testTreeNodeDeleteNode();
 	//testTreeNodeDeleteSingleNode();
 	//testAddToThisNode();
-	testTreeNodeAddIOListContainer();
+	//testTreeNodeAddIOListContainer();
+	testTreeNodeTentativeAddToThisNode();
 
 	/*testMinimise();
 	testWMethod();*/
