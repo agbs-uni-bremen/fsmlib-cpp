@@ -34,7 +34,7 @@ void assertInconclusive(string tc, string comment = "") {
     
 }
 
-void assert(string tc, bool verdict, string comment = "") {
+void fsmlib_assert(string tc, bool verdict, string comment = "") {
     
     string sVerdict = (verdict) ? "PASS" : "FAIL";
     cout << sVerdict << ": " << tc
@@ -71,7 +71,7 @@ void test1() {
     
     vector<int> vIn = t.getInputTrace().get();
     vector<int> vOut = t.getOutputTrace().get();
-    assert("TC-DFSM-0001",vIn.size() == 4
+    fsmlib_assert("TC-DFSM-0001",vIn.size() == 4
            and vOut.size() == 4
            and vOut[0] == 2
            and vOut[1] == 0
@@ -84,7 +84,7 @@ void test1() {
     InputTrace j(inp,pl);
     IOTrace u = d.applyDet(j);
     cout << "IOTrace u = " << u << endl;
-    assert("TC-DFSM-0001",
+    fsmlib_assert("TC-DFSM-0001",
            u.getOutputTrace().get().size() == 0 and
            u.getInputTrace().get().size() == 0,
            "For input trace 9, the output trace is empty.");
@@ -107,7 +107,7 @@ void test2() {
     
     // Check using diff, that the dot-files of both FSMs
     // are identical
-    assert("TC-FSM-0001", 0 == system("diff f1.dot f1Copy.dot"),
+    fsmlib_assert("TC-FSM-0001", 0 == system("diff f1.dot f1Copy.dot"),
            "dot-files of original and copied FSM are identical");
     
     cout << "Show that original FSM and deep copy are equivalent, "
@@ -126,7 +126,7 @@ void test2() {
     TestSuite t1 = f1Min.createTestSuite(iolc);
     TestSuite t2 = f2Min.createTestSuite(iolc);
     
-    assert("TC-FSM-0001",
+    fsmlib_assert("TC-FSM-0001",
            t2.isEquivalentTo(t1),
            "Original FSM and its deep copy pass the same W-Method test suite");
     
@@ -172,7 +172,7 @@ void test3() {
         TestSuite t1 = fsmMin.createTestSuite(iolc1);
         TestSuite t2 = fsmMutantMin.createTestSuite(iolc1);
         
-        assert("TC-FSM-0002", not t2.isEquivalentTo(t1),
+        fsmlib_assert("TC-FSM-0002", not t2.isEquivalentTo(t1),
                "Original FSM and mutant do not produce the same test suite results - tests are created by W-Method");
         
         IOListContainer iolc2 = fsmMin.wpMethod(m);
@@ -192,11 +192,11 @@ void test3() {
         TestSuite t1wp = fsmMin.createTestSuite(iolc2);
         TestSuite t2wp = fsmMutantMin.createTestSuite(iolc2);
         
-        assert("TC-FSM-0002",
+        fsmlib_assert("TC-FSM-0002",
                not t2wp.isEquivalentTo(t1wp),
                "Original FSM and mutant do not produce the same test suite results - tests are created by Wp-Method");
         
-        assert("TC-FSM-0002",
+        fsmlib_assert("TC-FSM-0002",
                t1wp.size() <= t1.size(),
                "Wp-Method test suite size less or equal to W-Method size");
         
@@ -232,7 +232,7 @@ void test4() {
         if ( sc->size() != (size_t)f->getMaxNodes() + 1 ) {
             cout << "Size of state cover: " << sc->size()
             << " Number of states in FSM: " << f->getMaxNodes() + 1 << endl;
-            assert("TC-FSM-0004",
+            fsmlib_assert("TC-FSM-0004",
                    sc->size() <= (size_t)f->getMaxNodes() + 1,
                    "Size of state cover must be less or equal than number of FSM states");
         }
@@ -249,7 +249,7 @@ void test4() {
         for ( std::shared_ptr<FsmNode> n : f->getNodes() ) {
             if ( not n->hasBeenVisited() ) {
                 havePassed = false;
-                assert("TC-FSM-0004",
+                fsmlib_assert("TC-FSM-0004",
                        n->hasBeenVisited(),
                        "State cover failed to visit node " + n->getName());
                 
@@ -283,7 +283,7 @@ void test4() {
     }
     
     if ( havePassed ) {
-        assert("TC-FSM-0004",
+        fsmlib_assert("TC-FSM-0004",
                true,
                "State cover reaches all states");
     }
@@ -324,19 +324,19 @@ void test5() {
         cout << " }" << endl;
     }
     
-    assert("TC-FSM-0005",
+    fsmlib_assert("TC-FSM-0005",
            v.size() == 3,
            "For TC-FSM-0005.fsm, there are 3 classes of equivalent inputs.");
     
-    assert("TC-FSM-0005",
+    fsmlib_assert("TC-FSM-0005",
            v[0].size() == 1 and v[0].find(0) != v[0].end(),
            "Class 0 only contains input 0.");
     
-    assert("TC-FSM-0005",
+    fsmlib_assert("TC-FSM-0005",
            v[1].size() == 1 and v[1].find(1) != v[1].end(),
            "Class 1 only contains input 1.");
     
-    assert("TC-FSM-0005",
+    fsmlib_assert("TC-FSM-0005",
            v[2].size() == 2 and
            v[2].find(2) != v[2].end() and
            v[2].find(3) != v[2].end(),
@@ -348,7 +348,7 @@ void test5() {
     fsm->toDot("fsmGillA7");
     v = fsm->getEquivalentInputs();
     
-    assert("TC-FSM-0005",
+    fsmlib_assert("TC-FSM-0005",
            v.size() == 3,
            "For fsmGillA7, there are 3 input classes.");
     
@@ -360,7 +360,7 @@ void test5() {
         }
     }
     
-    assert("TC-FSM-0005",
+    fsmlib_assert("TC-FSM-0005",
            ok,
            "For fsmGillA7, class x just contains input x.");
     
@@ -468,12 +468,12 @@ void test9() {
             cout << "Removed unreachable node: " << n->getName() << endl;
         }
         
-        assert("TC-FSM-0009",
+        fsmlib_assert("TC-FSM-0009",
                uNodes.size() == 2 and (oldSize - d->size()) == 2,
                "All unreachable states have been removed");
     }
     else {
-        assert("TC-FSM-0009",
+        fsmlib_assert("TC-FSM-0009",
                false,
                "Expected removeUnreachableNodes() to return FALSE");
     }
@@ -538,7 +538,7 @@ void test10() {
             
             if ( not areDistinguished ) {
                 
-                assert("TC-FSM-0010",
+                fsmlib_assert("TC-FSM-0010",
                        false,
                        "All nodes of minimised DFSM must be distinguishable");
                 cout << "Could not distinguish nodes "
@@ -552,7 +552,7 @@ void test10() {
     }
     
     if ( allNodesDistinguished ) {
-        assert("TC-FSM-0010",
+        fsmlib_assert("TC-FSM-0010",
                true,
                "All nodes of minimised DFSM must be distinguishable");
     }
@@ -606,7 +606,7 @@ void test10b() {
             
             if ( not areDistinguished ) {
                 
-                assert("TC-FSM-1010",
+                fsmlib_assert("TC-FSM-1010",
                        false,
                        "All nodes of minimised DFSM must be distinguishable");
                 cout << "Could not distinguish nodes "
@@ -620,7 +620,7 @@ void test10b() {
     }
     
     if ( allNodesDistinguished ) {
-        assert("TC-FSM-1010",
+        fsmlib_assert("TC-FSM-1010",
                true,
                "All nodes of minimised DFSM must be distinguishable");
     }
@@ -663,7 +663,7 @@ void gdc_test1() {
     
     testSuite->save("testsuite.txt");
     
-    assert("TC-GDC-0001",
+    fsmlib_assert("TC-GDC-0001",
             0 == system("diff testsuite.txt ../../../resources/gdc-testsuite.txt"),
            "Expected GDC test suite and generated suite are identical");
     
@@ -847,7 +847,7 @@ void test15() {
     
     obs.toDot("OBS");
     
-    assert("TC-DFSM-0015",
+    fsmlib_assert("TC-DFSM-0015",
            obs.isObservable(),
            "Transformed FSM is observable");
     
@@ -875,7 +875,7 @@ void test15() {
         
         if ( o1 != o2 ) {
             
-            assert("TC-DFSM-0015",
+            fsmlib_assert("TC-DFSM-0015",
                    o1 == o2,
                    "Transformed FSM has same language as original FSM");
             
