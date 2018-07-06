@@ -350,7 +350,10 @@ int TreeNode::tentativeAddToThisNode(vector<int>::const_iterator start,
     // is labelled with inout *start
     int x = *start;
     for ( auto e : *children ) {
-        if ( e->getIO() == x ) return tentativeAddToThisNode(++start,stop);
+		if (e->getIO() == x) {
+			shared_ptr<TreeNode> next = e->getTarget();
+			return next->tentativeAddToThisNode(++start, stop);
+		}
     }
     
     // Adding this trace requires a new branch in the tree,
