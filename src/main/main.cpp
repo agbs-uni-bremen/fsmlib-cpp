@@ -988,17 +988,17 @@ void testMinimise() {
 	std::vector<shared_ptr<FsmNode>> unreachableNodes;
 
 	// check for unreachable nodes
-	assert("TC-DFSM-0017",
+	fsmlib_assert("TC-DFSM-0017",
 		not minimized.removeUnreachableNodes(unreachableNodes),
 		"Minimized Dfsm doesn't contain unreachable nodes");
 
 	// check if states are distinguishable
-	assert("TC-DFSM-0017",
+	fsmlib_assert("TC-DFSM-0017",
 		checkDistinguishingCond(minimized),
 		"Each node pair of the minimized Dfsm is distinguishable");
 
 	// check language equality
-	assert("TC-DFSM-0017",
+	fsmlib_assert("TC-DFSM-0017",
 		minimized.intersect(*dfsm).isCompletelyDefined(),
 		"Language of minimized Dfsm equals language of unminimized Dfsm");
 }
@@ -1024,7 +1024,7 @@ void testWMethod() {
 		}
 	}
 
-	assert("TC-DFSM-0018",
+	fsmlib_assert("TC-DFSM-0018",
 		refModel->intersect(*implModel).isCompletelyDefined() == equal,
 		"implModel passes W-Method Testsuite if and only if intersection is completely defined");
 }
@@ -1125,7 +1125,7 @@ void testIntersectionCharacteristics() {
 	auto m1 = make_shared<Dfsm>("m1", 10, 3, 3, pl)->minimise();
 	auto m2 = m1.createMutant("m2", 2, 2);
 
-	assert("TC-DFSM-0019b",
+	fsmlib_assert("TC-DFSM-0019b",
 		m1.intersect(*m2).isDeterministic(),
 		"m1 or m2 deterministic => product automata deterministic");
 
@@ -1133,12 +1133,12 @@ void testIntersectionCharacteristics() {
 	auto m4 = Fsm::createRandomFsm("m4", 3, 3, 3, pl);
 	Fsm intersection = m3->intersect(*m4);
 	if (not intersection.isDeterministic()) {
-		assert("TC-DFSM-0019b",
+		fsmlib_assert("TC-DFSM-0019b",
 			(not m3->isDeterministic()) and (not m4->isDeterministic()),
 			"product automata of m3 and m4 nondeterministic => m3 and m4 nondeterministic");
 	}
 	if (intersection.isCompletelyDefined()) {
-		assert("TC-DFSM-0019b",
+		fsmlib_assert("TC-DFSM-0019b",
 			m3->isCompletelyDefined() and m4->isCompletelyDefined(),
 			"product automata of m3 and m4 completely specified => m3 and m4 completely specified");
 	}
@@ -1218,7 +1218,7 @@ void testGetDistTraces() {
 	auto pl = make_shared<FsmPresentationLayer>();
 	auto m = make_shared<Dfsm>("M", 50, 5, 5, pl);
 
-	assert("TC-DFSM-0020",
+	fsmlib_assert("TC-DFSM-0020",
 		checkDistTracesForEachNodePair(*m),
 		"Each calculated distinguishing trace produces unequal set of output traces");
 
@@ -1239,7 +1239,7 @@ void testHMethod() {
 	TestSuite ts1 = refModel.createTestSuite(iolc);
 	TestSuite ts2 = implModel.createTestSuite(iolc);
 
-	assert("TC-DFSM-0021",
+	fsmlib_assert("TC-DFSM-0021",
 		refModel.intersect(implModel).isCompletelyDefined() == ts1.isEquivalentTo(ts2),
 		"implModel passes H-Method Testsuite if and only if intersection is completely defined");
 }
@@ -1260,7 +1260,7 @@ void testWpMethodWithDfsm() {
 	TestSuite ts2 = implModel.createTestSuite(iolc);
 
 	// refModel and implModel required to be deterministic and completely specified
-	assert("TC-DFSM-0022",
+	fsmlib_assert("TC-DFSM-0022",
 		refModel.intersect(implModel).isCompletelyDefined() == ts1.isEquivalentTo(ts2),
 		"implModel passes Wp-Method Testsuite if and only if intersection is completely defined");
 }
@@ -1273,7 +1273,7 @@ void testTreeNodeAddConstInt1(){
 	int io = 1;
 	shared_ptr<TreeNode> n1 = make_shared<TreeNode>();
 	shared_ptr<TreeNode> ref = n1->add(io);
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		static_cast<shared_ptr<TreeNode>>(ref->getParent()) == n1,
 		"parent of new node is old node");
 
@@ -1283,7 +1283,7 @@ void testTreeNodeAddConstInt1(){
 			containedInChildren = true;
 		}
 	}
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		containedInChildren,
 		"after call to TreeNode::add(x) there has to be a child labeled with x");
 }
@@ -1297,10 +1297,10 @@ void testTreeNodeAddConstInt2() {
 	int oldNumChilds = n1->getChildren()->size();
 	shared_ptr<TreeNode> child2 = n1->add(io);
 	int newNumChilds = n1->getChildren()->size();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		child2 == child1,
 		"TreeNode::add(x) returns reference to target node of existing TreeEdge with matching io");
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		oldNumChilds == newNumChilds,
 		"TreeNode::add(x) doesn't add new TreeEdge if TreeEdge with matching io already exists");
 }
@@ -1311,12 +1311,12 @@ void testTreeNodeAddConstInt3() {
 	shared_ptr<TreeNode> n1 = make_shared<TreeNode>();
 	shared_ptr<TreeNode> child1 = n1->add(1);
 	shared_ptr<TreeNode> child2 = n1->add(2);
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		child1 != child2,
 		"calling TreeNode::add(x) and TreeNode::add(y) with x != y returns two different nodes");
 
 
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		n1->getChildren()->size() == 2,
 		"number of TreeEdges contained in children attribute matches number of actually added values");
 }
@@ -1327,14 +1327,14 @@ void testAddToThisNode() {
 	//shared_ptr<TreeNode> copy = root->clone();
 	std::vector<int> inputs = {};
 	root->addToThisNode(inputs);
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->isLeaf(),
 		"addToThisNode() doesn't change tree if vector is empty");
 
 	// root is leaf. input vector contains only one element
 	inputs = { 1 };
 	root->addToThisNode(inputs);
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->getChildren()->size() == 1
 		&& root->getChildren()->at(0)->getIO() == 1
 		&& root->getChildren()->at(0)->getTarget()->isLeaf(),
@@ -1347,7 +1347,7 @@ void testAddToThisNode() {
 	shared_ptr<TreeEdge> e2 = make_shared<TreeEdge>(2, make_shared<TreeNode>());
 	shared_ptr<TreeEdge> e3 = make_shared<TreeEdge>(3, make_shared<TreeNode>());
 	root->addToThisNode(inputs);
-	assert("TC-TreeNode-NNNN",		
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->getChildren()->size() == 2
 		&& root->hasEdge(e1) != nullptr
 		&& root->hasEdge(e2) != nullptr
@@ -1361,7 +1361,7 @@ void testAddToThisNode() {
 	root->add(make_shared<TreeEdge>(1, make_shared<TreeNode>()));
 	inputs = { 1,2 };
 	root->addToThisNode(inputs);
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->getChildren()->size() == 1
 		&& root->getChildren()->at(0)->getIO() == 1
 		&& root->getChildren()->at(0)->getTarget()->getChildren()->size() == 1
@@ -1381,7 +1381,7 @@ void testAddToThisNode() {
 	shared_ptr<TreeNode> copy = root->clone();
 	inputs = { 1,2 };
 	root->addToThisNode(inputs);
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		(*root == *copy),
 		"addToThisNode() doesn't change tree if vector equals path contained in tree emanating from root");
 
@@ -1389,7 +1389,7 @@ void testAddToThisNode() {
 	root = make_shared<TreeNode>();
 	inputs = { 1,2 };
 	root->addToThisNode(inputs);
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->getChildren()->size() == 1
 		&& root->getChildren()->at(0)->getIO() == inputs.at(0)
 		&& root->getChildren()->at(0)->getTarget()->getChildren()->size() == 1
@@ -1479,7 +1479,7 @@ void testTreeNodeAddIOListContainer() {
 	shared_ptr<std::vector<std::vector<int>>> iolLstPtr = make_shared < std::vector<std::vector<int>>>(ioLst);
 	shared_ptr<FsmPresentationLayer> presentationLayer = make_shared<FsmPresentationLayer>();	
 	root->add(IOListContainer(iolLstPtr, presentationLayer));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->superTreeOf(clone)
 		&& (*root == *clone),
 		"add(IOListContainer &iolc) called on leaf doesn't change tree if iolc only contains empty traces");
@@ -1503,11 +1503,11 @@ void testTreeNodeAddIOListContainer() {
 	vector<shared_ptr<TreeNode>> leaves;
 	root->calcLeaves(leaves);
 
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->superTreeOf(clone)
 		&& containsExpectedPaths(cloneIoll, rootIoll, iolLstPtr), //containsNoUnexpectedPath(cloneIoll, leaves, iolLstPtr)
 		"add(IOListContainer &iolc) result is super tree of old tree and result contains the expected paths");
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		containsNoUnexpectedPath(cloneIoll, leaves, iolLstPtr),
 		"add(IOListContainer &iolc) result contains only expected paths");
 
@@ -1532,11 +1532,11 @@ void testTreeNodeAddIOListContainer() {
 	leaves.clear();
 	root->calcLeaves(leaves);
 
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->superTreeOf(clone)
 		&& containsExpectedPaths(cloneIoll, rootIoll, iolLstPtr),
 		"add(IOListContainer &iolc) result is super tree of old tree and result contains the expected paths");
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		containsNoUnexpectedPath(cloneIoll, leaves, iolLstPtr),
 		"add(IOListContainer &iolc) result contains only expected paths");
 
@@ -1561,11 +1561,11 @@ void testTreeNodeAddIOListContainer() {
 	leaves.clear();
 	root->calcLeaves(leaves);
 
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->superTreeOf(clone)
 		&& containsExpectedPaths(cloneIoll, rootIoll, iolLstPtr),
 		"add(IOListContainer &iolc) result is super tree of old tree and result contains the expected paths");
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		containsNoUnexpectedPath(cloneIoll, leaves, iolLstPtr),
 		"add(IOListContainer &iolc) result contains only expected paths");
 
@@ -1617,11 +1617,11 @@ void testTreeNodeAddIOListContainer() {
 	leaves.clear();
 	root->calcLeaves(leaves);
 
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->superTreeOf(clone)
 		&& containsExpectedPaths(cloneIoll, rootIoll, iolLstPtr),
 		"add(IOListContainer &iolc) result is super tree of old tree and result contains the expected paths");
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		containsNoUnexpectedPath(cloneIoll, leaves, iolLstPtr),
 		"add(IOListContainer &iolc) result contains only expected paths");
 
@@ -1648,11 +1648,11 @@ void testTreeNodeAddIOListContainer() {
 	leaves.clear();
 	root->calcLeaves(leaves);
 
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->superTreeOf(clone)
 		&& containsExpectedPaths(cloneIoll, rootIoll, iolLstPtr),
 		"add(IOListContainer &iolc) result is super tree of old tree and result contains the expected paths");
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		containsNoUnexpectedPath(cloneIoll, leaves, iolLstPtr),
 		"add(IOListContainer &iolc) result contains only expected paths");
 
@@ -1679,11 +1679,11 @@ void testTreeNodeAddIOListContainer() {
 	leaves.clear();
 	root->calcLeaves(leaves);
 
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->superTreeOf(clone)
 		&& containsExpectedPaths(cloneIoll, rootIoll, iolLstPtr),
 		"add(IOListContainer &iolc) result is super tree of old tree and result contains the expected paths");
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		containsNoUnexpectedPath(cloneIoll, leaves, iolLstPtr),
 		"add(IOListContainer &iolc) result contains only expected paths");
 }
@@ -1692,7 +1692,7 @@ void testTreeNodeAddIOListContainer() {
 void testTreeNodeEqualOperator1() {
 	shared_ptr<TreeNode> n1 = make_shared<TreeNode>();
 	shared_ptr<TreeNode> n2 = make_shared<TreeNode>();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		*n1 == *n2,
 		"operator== returns true if both nodes are equal");
 
@@ -1700,7 +1700,7 @@ void testTreeNodeEqualOperator1() {
 	shared_ptr<TreeNode> n21 = make_shared<TreeNode>();
 	n1->add(make_shared<TreeEdge>(1, n11));
 	n2->add(make_shared<TreeEdge>(1, n21));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		*n1 == *n2,
 		"operator== returns true if both nodes are equal");
 
@@ -1708,7 +1708,7 @@ void testTreeNodeEqualOperator1() {
 	shared_ptr<TreeNode> n22 = make_shared<TreeNode>();
 	n1->add(make_shared<TreeEdge>(2, n12));
 	n2->add(make_shared<TreeEdge>(2, n22));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		*n1 == *n2,
 		"operator== returns true if both nodes are equal");
 
@@ -1721,7 +1721,7 @@ void testTreeNodeEqualOperator1() {
 	n21->add(make_shared<TreeEdge>(1, n211));
 	n21->add(make_shared<TreeEdge>(2, n212));
 
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		*n1 == *n2,
 		"operator== returns true if both nodes are equal");
 }
@@ -1731,19 +1731,19 @@ void testTreeNodeEqualOperator2() {
 	shared_ptr<TreeNode> n1 = make_shared<TreeNode>();
 	shared_ptr<TreeNode> n2 = make_shared<TreeNode>();
 	n1->deleteSingleNode();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!(*n1 == *n2),
 		"operator== returns false if only one of the TreeNode instances is marked as deleted");
 
 	n1 = make_shared<TreeNode>();
 	n2 = make_shared<TreeNode>();
 	n2->add(make_shared<TreeEdge>(1, make_shared<TreeNode>()));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!(*n1 == *n2),
 		"operator== returns false if the compared TreeNode instances have different number of children");
 
 	n1->add(make_shared<TreeEdge>(2, make_shared<TreeNode>()));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!(*n1 == *n2) && n1->getChildren()->size() == n2->getChildren()->size(),
 		"operator== returns false if both TreeNode instances have same number of children but edges are labeled differently");
 
@@ -1754,24 +1754,24 @@ void testTreeNodeEqualOperator2() {
 	n1->add(make_shared<TreeEdge>(1, n11));
 	n2->add(make_shared<TreeEdge>(1, n21));
 	n11->add(make_shared<TreeEdge>(1, make_shared<TreeNode>()));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!(*n1 == *n2) && n11->getChildren()->size() != n21->getChildren()->size(),
 		"operator== returns false if two corresponding childs of both TreeNode instances differ in the number of children");
 
 	n21->add(make_shared<TreeEdge>(2, make_shared<TreeNode>()));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!(*n1 == *n2) && n11->getChildren()->size() == n21->getChildren()->size(),
 		"operator== returns false if two corresponding childs of both TreeNode instances differ in the labeling of their children");
 
 	n11->add(make_shared<TreeEdge>(2, make_shared<TreeNode>()));
 	n21->add(make_shared<TreeEdge>(1, make_shared<TreeNode>()));
 	n11->deleteSingleNode();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!(*n1 == *n2),
 		"operator== returns false if two corresponding childs differ in beeing marked as deleted");
 
 	n21->deleteSingleNode();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		(*n1 == *n2),
 		"operator== returns true if both instances are equal");
 }
@@ -1781,7 +1781,7 @@ void testTreeNodeCalcLeaves() {
 	shared_ptr<TreeNode> root = make_shared<TreeNode>();
 	std::vector<shared_ptr<TreeNode>> leaves;
 	root->calcLeaves(leaves);
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		leaves.size() == 1 && leaves[0] == root,
 		"calcLeaves() called on leave adds this leave");
 
@@ -1789,7 +1789,7 @@ void testTreeNodeCalcLeaves() {
 	shared_ptr<TreeNode> child1 = make_shared<TreeNode>();
 	root->add(make_shared<TreeEdge>(1, child1));
 	root->calcLeaves(leaves);
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		leaves.size() == 1 && leaves[0] == child1,
 		"calcLeaves() called on parent with leave-child adds this leave-child");
 
@@ -1797,7 +1797,7 @@ void testTreeNodeCalcLeaves() {
 	shared_ptr<TreeNode> child2 = make_shared<TreeNode>();
 	root->add(make_shared<TreeEdge>(2, child2));
 	root->calcLeaves(leaves);
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		leaves.size() == 2 && std::find(leaves.cbegin(), leaves.cend(), child1) != leaves.cend() 
 		&& std::find(leaves.cbegin(), leaves.cend(), child2) != leaves.cend(),
 		"calcLeaves() called on parent with leave-childs adds all leave-childs");
@@ -1806,7 +1806,7 @@ void testTreeNodeCalcLeaves() {
 	shared_ptr<TreeNode> grandChild1 = make_shared<TreeNode>();
 	child1->add(make_shared<TreeEdge>(1, grandChild1));
 	root->calcLeaves(leaves);
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		leaves.size() == 2 && std::find(leaves.cbegin(), leaves.cend(), grandChild1) != leaves.cend()
 		&& std::find(leaves.cbegin(), leaves.cend(), child2) != leaves.cend(),
 		"calcLeaves() called on parent with leave-child and leave-grandchild adds leave-child and leave-grandchild");
@@ -1815,7 +1815,7 @@ void testTreeNodeCalcLeaves() {
 	shared_ptr<TreeNode> grandChild2 = make_shared<TreeNode>();
 	child2->add(make_shared<TreeEdge>(1, grandChild2));
 	root->calcLeaves(leaves);
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		leaves.size() == 2 && std::find(leaves.cbegin(), leaves.cend(), grandChild1) != leaves.cend()
 		&& std::find(leaves.cbegin(), leaves.cend(), grandChild2) != leaves.cend(),
 		"calcLeaves() called on root with two leave-grandchilds adds both leave-grandchilds");
@@ -1824,7 +1824,7 @@ void testTreeNodeCalcLeaves() {
 	shared_ptr<TreeNode> grandChild3 = make_shared<TreeNode>();
 	child2->add(make_shared<TreeEdge>(3, grandChild3));
 	root->calcLeaves(leaves);
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		leaves.size() == 3 && std::find(leaves.cbegin(), leaves.cend(), grandChild1) != leaves.cend()
 		&& std::find(leaves.cbegin(), leaves.cend(), grandChild2) != leaves.cend()
 		&& std::find(leaves.cbegin(), leaves.cend(), grandChild3) != leaves.cend(),
@@ -1882,35 +1882,35 @@ bool isDeepCopyOfEqualNode(shared_ptr<TreeNode> original, shared_ptr<TreeNode> c
 void testTreeNodeClone() {
 	shared_ptr<TreeNode> root = make_shared<TreeNode>();
 	shared_ptr<TreeNode> clone = root->clone();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		(*root == *clone) && isDeepCopyOfEqualNode(root, clone),    //(root != clone),
 		"clone equals original and clone is deep copy");
 
 	shared_ptr<TreeNode> child1 = make_shared<TreeNode>();
 	root->add(make_shared<TreeEdge>(1, child1));
 	clone = root->clone();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		(*root == *clone) && isDeepCopyOfEqualNode(root, clone),
 		"clone equals original and clone is deep copy");
 
 	shared_ptr<TreeNode> child2 = make_shared<TreeNode>();
 	root->add(make_shared<TreeEdge>(2, child2));
 	clone = root->clone();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		(*root == *clone) && isDeepCopyOfEqualNode(root, clone),
 		"clone equals original and clone is deep copy");
 
 	shared_ptr<TreeNode> grandChild1 = make_shared<TreeNode>();
 	child1->add(make_shared<TreeEdge>(1, grandChild1));
 	clone = root->clone();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		(*root == *clone) && isDeepCopyOfEqualNode(root, clone),
 		"clone equals original and clone is deep copy");
 
 	shared_ptr<TreeNode> grandChild2 = make_shared<TreeNode>();
 	child1->add(make_shared<TreeEdge>(2, grandChild2));
 	clone = root->clone();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		(*root == *clone) && isDeepCopyOfEqualNode(root, clone),
 		"clone equals original and clone is deep copy");
 }
@@ -1919,21 +1919,21 @@ void testTreeNodeClone() {
 void testTreeNodeGetPath() {
 	shared_ptr<TreeNode> root = make_shared<TreeNode>();
 	std::vector<int> expected = {};
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		expected == root->getPath(),
 		"getPath invoked on root returns empty list");
 
 	shared_ptr<TreeNode> child1 = make_shared<TreeNode>();
 	root->add(make_shared<TreeEdge>(1, child1));
 	expected = {1};
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		expected == child1->getPath(),
 		"getPath invoked on child returns list containing only the input needed to reach it");
 
 	shared_ptr<TreeNode> child2 = make_shared<TreeNode>();
 	root->add(make_shared<TreeEdge>(2, child2));
 	expected = { 2 };
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		expected == child2->getPath(),
 		"getPath invoked on child returns list containing only the input needed to reach it");
 
@@ -1942,12 +1942,12 @@ void testTreeNodeGetPath() {
 	child1->add(make_shared<TreeEdge>(1, grandChild1));
 	child1->add(make_shared<TreeEdge>(2, grandChild2));
 	expected = { 1, 1 };
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		expected == grandChild1->getPath(),
 		"getPath invoked on grandchild returns list containing only the two inputs needed to reach it");
 
 	expected = { 1, 2 };
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		expected == grandChild2->getPath(),
 		"getPath invoked on grandchild returns list containing only the two inputs needed to reach it");
 }
@@ -1959,31 +1959,31 @@ void testTreeNodeSuperTreeOf1() {
 	shared_ptr<TreeNode> rootOther = make_shared<TreeNode>();
 	shared_ptr<TreeNode> childOther1 = make_shared<TreeNode>();
 	rootOther->add(make_shared<TreeEdge>(1, childOther1));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!root->superTreeOf(rootOther),
 		"superTreeOf() returns false if rootOther has more children than root");
 
 	shared_ptr<TreeNode> childOther2 = make_shared<TreeNode>();
 	rootOther->add(make_shared<TreeEdge>(2, childOther2));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!root->superTreeOf(rootOther),
 		"superTreeOf() returns false if rootOther has more children than root");
 
 	shared_ptr<TreeNode> child1 = make_shared<TreeNode>();
 	root->add(make_shared<TreeEdge>(1, child1));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!root->superTreeOf(rootOther),
 		"superTreeOf() returns false if rootOther has more children than root");
 
 	shared_ptr<TreeNode> grandChildOther1 = make_shared<TreeNode>();
 	childOther2->add(make_shared<TreeEdge>(1, grandChildOther1));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!root->superTreeOf(rootOther),
 		"superTreeOf() returns false if rootOther has more children than root");
 
 	shared_ptr<TreeNode> child2 = make_shared<TreeNode>();
 	root->add(make_shared<TreeEdge>(2, child2));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!root->superTreeOf(rootOther),
 		"superTreeOf() returns false if one corresponding child of root and rootOther has different number of childs");
 
@@ -1995,7 +1995,7 @@ void testTreeNodeSuperTreeOf1() {
 	childOther1 = make_shared<TreeNode>();
 	root->add(make_shared<TreeEdge>(1, child1));
 	rootOther->add(make_shared<TreeEdge>(2, childOther1));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!root->superTreeOf(rootOther),
 		"superTreeOf() returns false if rootOther has TreeEdge with label not existent in root");
 
@@ -2003,7 +2003,7 @@ void testTreeNodeSuperTreeOf1() {
 	root->add(make_shared<TreeEdge>(2, child2));
 	childOther2 = make_shared<TreeNode>();
 	rootOther->add(make_shared<TreeEdge>(3, childOther2));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!root->superTreeOf(rootOther),
 		"superTreeOf() returns false if rootOther has TreeEdge with label not existent in root");
 }
@@ -2013,13 +2013,13 @@ void testTreeNodeSuperTreeOf1() {
 void testTreeNodeSuperTreeOf2() {
 	shared_ptr<TreeNode> root = make_shared<TreeNode>();
 	shared_ptr<TreeNode> rootOther = make_shared<TreeNode>();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->superTreeOf(rootOther),
 		"superTreeOf() returns true if root and rootOther are equal");
 
 	shared_ptr<TreeNode> child1 = make_shared<TreeNode>();
 	root->add(make_shared<TreeEdge>(1, child1));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->superTreeOf(rootOther),
 		"superTreeOf() returns true if root contains rootOther");
 
@@ -2027,19 +2027,19 @@ void testTreeNodeSuperTreeOf2() {
 	root->add(make_shared<TreeEdge>(2, child2));
 	shared_ptr<TreeNode> childOther1 = make_shared<TreeNode>();
 	rootOther->add(make_shared<TreeEdge>(1, childOther1));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->superTreeOf(rootOther),
 		"superTreeOf() returns true if root contains rootOther");
 
 	shared_ptr<TreeNode> childOther2 = make_shared<TreeNode>();
 	rootOther->add(make_shared<TreeEdge>(2, childOther2));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->superTreeOf(rootOther) && *root == *rootOther,
 		"superTreeOf() returns true if root and rootOther are equal");
 
 	shared_ptr<TreeNode> grandChild1 = make_shared<TreeNode>();
 	child1->add(make_shared<TreeEdge>(1, grandChild1));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->superTreeOf(rootOther),
 		"superTreeOf() returns true if root contains rootOther");
 
@@ -2047,7 +2047,7 @@ void testTreeNodeSuperTreeOf2() {
 	child1->add(make_shared<TreeEdge>(2, grandChild2));
 	shared_ptr<TreeNode> grandChildOther1 = make_shared<TreeNode>();
 	childOther1->add(make_shared<TreeEdge>(2, grandChildOther1));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->superTreeOf(rootOther),
 		"superTreeOf() returns true if root contains rootOther");
 }
@@ -2058,7 +2058,7 @@ void testTreeNodeTraverse() {
 	std::vector<int> v;
 	std::shared_ptr<std::vector<std::vector<int>>> ioll = make_shared<std::vector<std::vector<int>>>();
 	root->traverse(v, ioll);
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		v.size() == 0 && ioll->size() == 1 && ioll->at(0) == v,
 		"traverse() called on leave doesn't add inputs to current input vector v but adds v to ioll");
 
@@ -2072,7 +2072,7 @@ void testTreeNodeTraverse() {
 	/*const std::vector<int> e1 = {};
 	const std::vector<int> e2 = { 1 };
 	const std::vector<int> e3 = { 2 };*/
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		ioll->size() == 3 && std::find(ioll->cbegin(), ioll->cend(), root->getPath()) != ioll->cend()
 		&& std::find(ioll->cbegin(), ioll->cend(), child1->getPath()) != ioll->cend()
 		&& std::find(ioll->cbegin(), ioll->cend(), child2->getPath()) != ioll->cend(),
@@ -2087,7 +2087,7 @@ void testTreeNodeTraverse() {
 	root->traverse(v, ioll);
 	//const std::vector<int> e4 = { 1,3 };
 	//const std::vector<int> e5 = { 1,4 };
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		ioll->size() == 5 && std::find(ioll->cbegin(), ioll->cend(), root->getPath()) != ioll->cend()
 		&& std::find(ioll->cbegin(), ioll->cend(), child1->getPath()) != ioll->cend()
 		&& std::find(ioll->cbegin(), ioll->cend(), child2->getPath()) != ioll->cend()
@@ -2100,7 +2100,7 @@ void testTreeNodeTraverse() {
 void testTreeNodeDeleteNode() {
 	shared_ptr<TreeNode> root = make_shared<TreeNode>();
 	root->deleteNode();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->isDeleted(),
 		"deleteNode() called on root marks root as deleted");
 
@@ -2110,7 +2110,7 @@ void testTreeNodeDeleteNode() {
 	shared_ptr<TreeEdge> rootToChild1 = make_shared<TreeEdge>(1, child1);
 	root->add(rootToChild1);
 	child1->deleteNode();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!(root->isDeleted())
 		&& child1->isDeleted()
 		&& std::find(root->getChildren()->cbegin(), root->getChildren()->cend(), rootToChild1) == root->getChildren()->cend(),
@@ -2122,7 +2122,7 @@ void testTreeNodeDeleteNode() {
 	rootToChild1 = make_shared<TreeEdge>(1, child1);
 	root->add(rootToChild1);
 	root->deleteNode();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->isDeleted()
 		&& !(child1->isDeleted())
 		&& std::find(root->getChildren()->cbegin(), root->getChildren()->cend(), rootToChild1) != root->getChildren()->cend(),
@@ -2137,7 +2137,7 @@ void testTreeNodeDeleteNode() {
 	root->add(rootToChild1);
 	root->add(rootToChild2);
 	child2->deleteNode();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!(root->isDeleted())
 		&& !(child1->isDeleted())
 		&& child2->isDeleted()
@@ -2154,7 +2154,7 @@ void testTreeNodeDeleteNode() {
 	root->add(rootToChild1);
 	child1->add(child1ToGrandChild1);
 	child1->deleteNode();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!(root->isDeleted())
 		&& child1->isDeleted()
 		&& !(grandChild1->isDeleted())
@@ -2165,7 +2165,7 @@ void testTreeNodeDeleteNode() {
 	// root has child1 as only child. child1 has grandChild1 as only child, which is a leaf. child1 is already deleted.
 	// In the next step grandChild1 gets deleted
 	grandChild1->deleteNode();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!(root->isDeleted())
 		&& child1->isDeleted()
 		&& grandChild1->isDeleted()
@@ -2183,7 +2183,7 @@ void testTreeNodeDeleteNode() {
 	root->add(rootToChild1);
 	child1->add(child1ToGrandChild1);
 	grandChild1->deleteNode();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!(root->isDeleted())
 		&& !(child1->isDeleted())
 		&& grandChild1->isDeleted()
@@ -2197,7 +2197,7 @@ void testTreeNodeDeleteNode() {
 void testTreeNodeDeleteSingleNode() {
 	shared_ptr<TreeNode> root = make_shared<TreeNode>();
 	root->deleteSingleNode();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->isDeleted(),
 		"deleteSingleNode() called on root marks root as deleted");
 
@@ -2207,7 +2207,7 @@ void testTreeNodeDeleteSingleNode() {
 	shared_ptr<TreeEdge> rootToChild1 = make_shared<TreeEdge>(1, child1);
 	root->add(rootToChild1);
 	child1->deleteSingleNode();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!(root->isDeleted())
 		&& child1->isDeleted()
 		&& std::find(root->getChildren()->cbegin(), root->getChildren()->cend(), rootToChild1) == root->getChildren()->cend(),
@@ -2219,7 +2219,7 @@ void testTreeNodeDeleteSingleNode() {
 	rootToChild1 = make_shared<TreeEdge>(1, child1);
 	root->add(rootToChild1);
 	root->deleteSingleNode();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->isDeleted()
 		&& !(child1->isDeleted())
 		&& std::find(root->getChildren()->cbegin(), root->getChildren()->cend(), rootToChild1) != root->getChildren()->cend(),
@@ -2234,7 +2234,7 @@ void testTreeNodeDeleteSingleNode() {
 	root->add(rootToChild1);
 	child1->add(child1ToGrandChild1);
 	child1->deleteSingleNode();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!(root->isDeleted())
 		&& child1->isDeleted()
 		&& !(grandChild1->isDeleted())
@@ -2245,7 +2245,7 @@ void testTreeNodeDeleteSingleNode() {
 	// root has child1 as only child. child1 has grandChild1 as only child, which is a leaf. child1 is already deleted.
 	// In the next step grandChild1 gets deleted
 	grandChild1->deleteSingleNode();
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		!(root->isDeleted())
 		&& child1->isDeleted()
 		&& grandChild1->isDeleted()
@@ -2263,7 +2263,7 @@ void testTreeNodeTentativeAddToThisNode() {
 	shared_ptr<TreeNode> ref = make_shared<TreeNode>();
 	shared_ptr<TreeNode> root = make_shared<TreeNode>();
 	vector<int> inpPath = {};
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 0
 		&& ref == root,
 		"tentativeAddToThisNode() returns 0 if path is already contained in tree");
@@ -2276,7 +2276,7 @@ void testTreeNodeTentativeAddToThisNode() {
 	root->add(make_shared<TreeEdge>(1, c1));
 	root->add(make_shared<TreeEdge>(2, c2));
 	inpPath = { 1 };
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 0
 		&& ref == c1,
 		"tentativeAddToThisNode() returns 0 if path is already contained in tree");
@@ -2293,7 +2293,7 @@ void testTreeNodeTentativeAddToThisNode() {
 	c2->add(make_shared<TreeEdge>(1, gc1));
 	c2->add(make_shared<TreeEdge>(2, gc2));
 	inpPath = { 2 };
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 0
 		&& ref == c2,
 		"tentativeAddToThisNode() returns 0 if path is already contained in tree");
@@ -2310,7 +2310,7 @@ void testTreeNodeTentativeAddToThisNode() {
 	c2->add(make_shared<TreeEdge>(1, gc1));
 	c2->add(make_shared<TreeEdge>(2, gc2));
 	inpPath = { 2, 1 };
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 0
 		&& ref == gc1,
 		"tentativeAddToThisNode() returns 0 if path is already contained in tree");
@@ -2321,7 +2321,7 @@ void testTreeNodeTentativeAddToThisNode() {
 	ref = make_shared<TreeNode>();
 	root = make_shared<TreeNode>();
 	inpPath = { 1 };
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 1
 		&& ref == root,
 		"tentativeAddToThisNode() returns 1 if a prefix of the path reaches a leaf "
@@ -2339,7 +2339,7 @@ void testTreeNodeTentativeAddToThisNode() {
 	//std::cout << "c1 children size: " << c1->getChildren()->size() << std::endl;
 	//std::cout << "c2 children size: " << c2->getChildren()->size() << std::endl;
 	inpPath = { 1,2 };
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 1
 		&& ref == c1,
 		"tentativeAddToThisNode() returns 1 if a prefix of the path reaches a leaf "
@@ -2358,7 +2358,7 @@ void testTreeNodeTentativeAddToThisNode() {
 	c2->add(make_shared<TreeEdge>(2, gc2));
 	inpPath = { 2, 1, 2 };
 
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 1
 		&& ref == gc1,
 		"tentativeAddToThisNode() returns 1 if a prefix of the path reaches a leaf "
@@ -2373,7 +2373,7 @@ void testTreeNodeTentativeAddToThisNode() {
 	root->add(make_shared<TreeEdge>(1, c1));
 	inpPath = { 2 };
 
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 2
 		&& ref == root,
 		"tentativeAddToThisNode() returns 2 if no prefix of the path reaches a leaf "
@@ -2393,7 +2393,7 @@ void testTreeNodeTentativeAddToThisNode() {
 	c2->add(make_shared<TreeEdge>(2, gc2));
 	inpPath = { 2, 3 };
 
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 2
 		&& ref == c2,
 		"tentativeAddToThisNode() returns 2 if no prefix of the path reaches a leaf "
@@ -2402,7 +2402,7 @@ void testTreeNodeTentativeAddToThisNode() {
 	// root is has childs c1 and c2. c1 is a leaf. c2 has two childs gc1 and gc2. gc1 and gc2 are leaves.
 	// inpPath contains 3 elements.
 	inpPath = { 2, 3, 2};
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->tentativeAddToThisNode(inpPath.cbegin(), inpPath.cend(), ref) == 2
 		&& ref == c2,
 		"tentativeAddToThisNode() returns 2 if no prefix of the path reaches a leaf "
@@ -2416,7 +2416,7 @@ void testTreeNodeAfter() {
 	// root is a leaf. path is empty.
 	shared_ptr<TreeNode> root = make_shared<TreeNode>();
 	vector<int> path = {};
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->after(path.cbegin(), path.cend()) == root,
 		"after() called with empty path returns root");
 
@@ -2425,7 +2425,7 @@ void testTreeNodeAfter() {
 	shared_ptr<TreeNode> c2 = make_shared<TreeNode>();
 	root->add(make_shared<TreeEdge>(1, c1));
 	root->add(make_shared<TreeEdge>(2, c2));
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->after(path.cbegin(), path.cend()) == root,
 		"after() called with empty path returns root");
 
@@ -2436,14 +2436,14 @@ void testTreeNodeAfter() {
 	c2->add(make_shared<TreeEdge>(1, gc1));
 	c2->add(make_shared<TreeEdge>(2, gc2));
 	path = { 2 };
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->after(path.cbegin(), path.cend()) == c2,
 		"after() called with non empty path which is a prefix of a contained path returns the node, which can be reached with this prefix");
 
 	// root has two children (c1 and c2). c1 is a leaf. c2 has two children (gc1 and gc2). gc1 and gc2 are leaves.
 	// path contains two elements and equals a path which is contained in the tree.
 	path = { 2, 1 };
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->after(path.cbegin(), path.cend()) == gc1,
 		"after() called with non empty path which equals a contained path returns the node, which can be reached with this path");
 
@@ -2453,7 +2453,7 @@ void testTreeNodeAfter() {
 	// root is leaf. path is not empty
 	root = make_shared<TreeNode>();
 	path = { 1 };
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->after(path.cbegin(), path.cend()) == nullptr,
 		"after() called with path that can't be completely matched against tree returns nullptr.");
 
@@ -2463,13 +2463,13 @@ void testTreeNodeAfter() {
 	root->add(make_shared<TreeEdge>(1, c1));
 	root->add(make_shared<TreeEdge>(2, c2));
 	path = { 3 };
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->after(path.cbegin(), path.cend()) == nullptr,
 		"after() called with path that can't be completely matched against tree returns nullptr.");
 
 	// root has two children (c1 and c2). c1 and c2 are leaves. path contains two elements (path is longer than any contained path). 
 	path = { 1,2 };
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->after(path.cbegin(), path.cend()) == nullptr,
 		"after() called with path that can't be completely matched against tree returns nullptr.");
 
@@ -2480,14 +2480,14 @@ void testTreeNodeAfter() {
 	c2->add(make_shared<TreeEdge>(1, gc1));
 	c2->add(make_shared<TreeEdge>(2, gc2));
 	path = { 2,3 };
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->after(path.cbegin(), path.cend()) == nullptr,
 		"after() called with path that can't be completely matched against tree returns nullptr.");
 
 	// root has two children (c1 and c2). c1 is a leaf. c2 has two children (gc1 and gc2). gc1 and gc2 are leaves.
 	// path contains three elements (path is longer than any contained path).
 	path = { 2, 1, 3 };
-	assert("TC-TreeNode-NNNN",
+	fsmlib_assert("TC-TreeNode-NNNN",
 		root->after(path.cbegin(), path.cend()) == nullptr,
 		"after() called with path that can't be completely matched against tree returns nullptr.");
 }
