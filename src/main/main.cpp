@@ -2409,6 +2409,89 @@ void testTreeNodeTentativeAddToThisNode() {
 		"and adding the path would require to create a new branch");
 }
 
+// tests TreeNode::after(std::vector<int>::const_iterator lstIte, const std::vector<int>::const_iterator end)
+void testTreeNodeAfter() {
+	// case 1: result is no nullptr
+
+	// root is a leaf. path is empty.
+	shared_ptr<TreeNode> root = make_shared<TreeNode>();
+	vector<int> path = {};
+	assert("TC-TreeNode-NNNN",
+		root->after(path.cbegin(), path.cend()) == root,
+		"after() called with empty path returns root");
+
+	// root has two children (c1 and c2). path is empty
+	shared_ptr<TreeNode> c1 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> c2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, c1));
+	root->add(make_shared<TreeEdge>(2, c2));
+	assert("TC-TreeNode-NNNN",
+		root->after(path.cbegin(), path.cend()) == root,
+		"after() called with empty path returns root");
+
+	// root has two children (c1 and c2). c1 is a leaf. c2 has two children (gc1 and gc2). gc1 and gc2 are leaves.
+	// path contains one element and is a prefix of a path which is contained in the tree.
+	shared_ptr<TreeNode> gc1 = make_shared<TreeNode>();
+	shared_ptr<TreeNode> gc2 = make_shared<TreeNode>();
+	c2->add(make_shared<TreeEdge>(1, gc1));
+	c2->add(make_shared<TreeEdge>(2, gc2));
+	path = { 2 };
+	assert("TC-TreeNode-NNNN",
+		root->after(path.cbegin(), path.cend()) == c2,
+		"after() called with non empty path which is a prefix of a contained path returns the node, which can be reached with this prefix");
+
+	// root has two children (c1 and c2). c1 is a leaf. c2 has two children (gc1 and gc2). gc1 and gc2 are leaves.
+	// path contains two elements and equals a path which is contained in the tree.
+	path = { 2, 1 };
+	assert("TC-TreeNode-NNNN",
+		root->after(path.cbegin(), path.cend()) == gc1,
+		"after() called with non empty path which equals a contained path returns the node, which can be reached with this path");
+
+
+	// case 2: result is nullptr
+
+	// root is leaf. path is not empty
+	root = make_shared<TreeNode>();
+	path = { 1 };
+	assert("TC-TreeNode-NNNN",
+		root->after(path.cbegin(), path.cend()) == nullptr,
+		"after() called with path that can't be completely matched against tree returns nullptr.");
+
+	// root has two children (c1 and c2). path contains one element which doesn't match any edge label.
+	c1 = make_shared<TreeNode>();
+	c2 = make_shared<TreeNode>();
+	root->add(make_shared<TreeEdge>(1, c1));
+	root->add(make_shared<TreeEdge>(2, c2));
+	path = { 3 };
+	assert("TC-TreeNode-NNNN",
+		root->after(path.cbegin(), path.cend()) == nullptr,
+		"after() called with path that can't be completely matched against tree returns nullptr.");
+
+	// root has two children (c1 and c2). c1 and c2 are leaves. path contains two elements (path is longer than any contained path). 
+	path = { 1,2 };
+	assert("TC-TreeNode-NNNN",
+		root->after(path.cbegin(), path.cend()) == nullptr,
+		"after() called with path that can't be completely matched against tree returns nullptr.");
+
+	// root has two children (c1 and c2). c1 is a leaf. c2 has two children (gc1 and gc2). gc1 and gc2 are leaves.
+	// path contains two elements.
+	gc1 = make_shared<TreeNode>();
+	gc2 = make_shared<TreeNode>();
+	c2->add(make_shared<TreeEdge>(1, gc1));
+	c2->add(make_shared<TreeEdge>(2, gc2));
+	path = { 2,3 };
+	assert("TC-TreeNode-NNNN",
+		root->after(path.cbegin(), path.cend()) == nullptr,
+		"after() called with path that can't be completely matched against tree returns nullptr.");
+
+	// root has two children (c1 and c2). c1 is a leaf. c2 has two children (gc1 and gc2). gc1 and gc2 are leaves.
+	// path contains three elements (path is longer than any contained path).
+	path = { 2, 1, 3 };
+	assert("TC-TreeNode-NNNN",
+		root->after(path.cbegin(), path.cend()) == nullptr,
+		"after() called with path that can't be completely matched against tree returns nullptr.");
+}
+
 int main(int argc, char** argv)
 {
     
@@ -2492,7 +2575,8 @@ int main(int argc, char** argv)
 	//testTreeNodeDeleteSingleNode();
 	//testAddToThisNode();
 	//testTreeNodeAddIOListContainer();
-	testTreeNodeTentativeAddToThisNode();
+	//testTreeNodeTentativeAddToThisNode();
+	testTreeNodeAfter();
 
 	/*testMinimise();
 	testWMethod();*/
