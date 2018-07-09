@@ -1469,7 +1469,7 @@ bool containsNoUnexpectedPath(shared_ptr<vector<vector<int>>> cloneIoll, std::ve
 	return true;
 }
 
-// tests add(const IOListContainer & tcl)
+// tests TreeNode::add(const IOListContainer & tcl)
 void testTreeNodeAddIOListContainer() {
 	// root is leaf. iolc contains only one trace which is empty.
 	shared_ptr<TreeNode> root = make_shared<TreeNode>();
@@ -2492,6 +2492,287 @@ void testTreeNodeAfter() {
 		"after() called with path that can't be completely matched against tree returns nullptr.");
 }
 
+// checks if every path (from root to leaf) in newNode is a path in oldNode or in iolc.
+// This is a condition the result of TreeNode::addToThisNode(const IOListContainer & tcl) has to fullfill
+bool resultContainsOnlyExpectedPaths(shared_ptr<TreeNode> newNode, shared_ptr<TreeNode> oldNode, IOListContainer & iolc) {
+	std::cout << "==========================================================" << std::endl;
+	std::cout << "resultContainsOnlyExpectedPaths:" << std::endl;
+	std::vector<shared_ptr<TreeNode>> newLeaves;
+	newNode->calcLeaves(newLeaves);
+
+	std::vector<shared_ptr<TreeNode>> oldLeaves;
+	oldNode->calcLeaves(oldLeaves);
+
+	// store all paths from oldNode (from root to a leaf) and from iolc in vector paths.
+	std::vector<std::vector<int>> paths;
+	for (shared_ptr<TreeNode> oldLeaf : oldLeaves) {
+		paths.push_back(oldLeaf->getPath());
+	}
+	paths.insert(paths.cend(), iolc.getIOLists()->cbegin(), iolc.getIOLists()->cend());
+
+	printVectors(make_shared<std::vector<std::vector<int>>>(paths));
+
+	// check if every path in newNode is contained in paths
+	for (shared_ptr<TreeNode> newLeaf : newLeaves) {
+		std::vector<int> p = newLeaf->getPath();
+		printVector(p);
+		if (find(paths.cbegin(), paths.cend(), newLeaf->getPath()) == paths.cend()) {
+			return false;
+		}
+	}
+	std::cout << "==========================================================" << std::endl;
+	return true;
+}
+
+// checks if newNode contains each path contained in iolc.
+// This is a condition the result of TreeNode::addToThisNode(const IOListContainer & tcl) has to fullfill
+bool resultContainsEachAddedPath(shared_ptr<TreeNode> newNode, IOListContainer & iolc) {	
+	std::cout << "==========================================================" << std::endl;
+	std::cout << "resultContainsEachAddedPath:" << std::endl;
+	std::vector<shared_ptr<TreeNode>> reachable;
+	extractAllTreeNodes(newNode, reachable);
+
+	// store each path from newNode in vector paths
+	std::vector<std::vector<int>> paths;
+	for (shared_ptr<TreeNode> node : reachable) {
+		paths.push_back(node->getPath());
+	}
+	printVectors(make_shared<std::vector<std::vector<int>>>(paths));
+
+	// check if each path from iolc is contained in paths
+	for (std::vector<int> path : *(iolc.getIOLists())) {
+		if (find(paths.cbegin(), paths.cend(), path) == paths.cend()) {
+			return false;
+		}
+	}
+	std::cout << "==========================================================" << std::endl;
+	return true;
+}
+
+// checks if each TreeNode in the tree emanating from newNode is observable. (There are no two TreeEdges emanating from the same TreeNode, which
+// have the same label)
+bool treeIsObservable(shared_ptr<TreeNode> newNode) {	
+	std::vector<shared_ptr<TreeNode>> reachable;
+	extractAllTreeNodes(newNode, reachable);
+
+	// check the children of each node
+	for (shared_ptr<TreeNode> node : reachable) {
+		std::unordered_set<int> nodeLabels;
+		for (shared_ptr<TreeEdge> edge : *(node->getChildren())) {
+			// if label of edge couldn't be inserted, it is already contained, so there is another edge with same label
+			if (!nodeLabels.insert(edge->getIO()).second) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+// tests TreeNode::addToThisNode(const IOListContainer & tcl)
+void testTreeNodeAddToThisNodeIOListContainer() {
+	// root is a leaf. IOListContainer is empty.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		shared_ptr<TreeNode> old = root->clone();
+		std::vector<std::vector<int>> ioLst = { };
+		shared_ptr<std::vector<std::vector<int>>> iolLstPtr = make_shared < std::vector<std::vector<int>>>(ioLst);
+		shared_ptr<FsmPresentationLayer> presentationLayer = make_shared<FsmPresentationLayer>();
+		IOListContainer iolc1(iolLstPtr, presentationLayer);
+		root->addToThisNode(iolc1);
+		fsmlib_assert("TC-TreeNode-NNNN",
+			root->superTreeOf(old),
+			"result of addToThisNode(const IOListContainer & tcl) is a super tree of the original TreeNode, so every path from original is still contained in result");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			resultContainsOnlyExpectedPaths(root, old, iolc1),
+			"result of addToThisNode(const IOListContainer & tcl) contains only expected paths (paths from original tree or added paths)");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			resultContainsEachAddedPath(root, iolc1),
+			"result of addToThisNode(const IOListContainer & tcl) contains each added path");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			treeIsObservable(root),
+			"result of addToThisNode(const IOListContainer & tcl) contains no redundant prefixes");
+	}
+
+	// root is a leaf. IOListContainer contains only empty vectors.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		shared_ptr<TreeNode> old = root->clone();
+		std::vector<int> inputs1 = {};
+		std::vector<std::vector<int>> ioLst = {inputs1};
+		shared_ptr<std::vector<std::vector<int>>> iolLstPtr = make_shared < std::vector<std::vector<int>>>(ioLst);
+		shared_ptr<FsmPresentationLayer> presentationLayer = make_shared<FsmPresentationLayer>();
+		IOListContainer iolc1(iolLstPtr, presentationLayer);
+		root->addToThisNode(iolc1);
+		fsmlib_assert("TC-TreeNode-NNNN",
+			root->superTreeOf(old),
+			"result of addToThisNode(const IOListContainer & tcl) is a super tree of the original TreeNode, so every path from original is still contained in result");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			resultContainsOnlyExpectedPaths(root, old, iolc1),
+			"result of addToThisNode(const IOListContainer & tcl) contains only expected paths (paths from original tree or added paths)");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			resultContainsEachAddedPath(root, iolc1),
+			"result of addToThisNode(const IOListContainer & tcl) contains each added path");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			treeIsObservable(root),
+			"result of addToThisNode(const IOListContainer & tcl) contains no redundant prefixes");
+	}
+
+	// root is a leaf. IOListContainer contains two paths ({1} and {2}).
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		shared_ptr<TreeNode> old = root->clone();
+		std::vector<int> inputs1 = { 1 };
+		std::vector<int> inputs2 = { 2 };
+		std::vector<std::vector<int>> ioLst = { inputs1, inputs2 };
+		shared_ptr<std::vector<std::vector<int>>> iolLstPtr = make_shared < std::vector<std::vector<int>>>(ioLst);
+		shared_ptr<FsmPresentationLayer> presentationLayer = make_shared<FsmPresentationLayer>();
+		IOListContainer iolc1(iolLstPtr, presentationLayer);
+		root->addToThisNode(iolc1);
+		fsmlib_assert("TC-TreeNode-NNNN",
+			root->superTreeOf(old),
+			"result of addToThisNode(const IOListContainer & tcl) is a super tree of the original TreeNode, so every path from original is still contained in result");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			resultContainsOnlyExpectedPaths(root, old, iolc1),
+			"result of addToThisNode(const IOListContainer & tcl) contains only expected paths (paths from original tree or added paths)");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			resultContainsEachAddedPath(root, iolc1),
+			"result of addToThisNode(const IOListContainer & tcl) contains each added path");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			treeIsObservable(root),
+			"result of addToThisNode(const IOListContainer & tcl) contains no redundant prefixes");
+	}
+
+	// root has one child (c1). c1 is a leaf. IOListContainer contains two paths ({1} and {2}). TreeEdge matches one contained path.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c1 = make_shared<TreeNode>();
+		root->add(make_shared<TreeEdge>(1, c1));
+		shared_ptr<TreeNode> old = root->clone();
+		std::vector<int> inputs1 = { 1 };
+		std::vector<int> inputs2 = { 2 };
+		std::vector<std::vector<int>> ioLst = { inputs1, inputs2 };
+		shared_ptr<std::vector<std::vector<int>>> iolLstPtr = make_shared < std::vector<std::vector<int>>>(ioLst);
+		shared_ptr<FsmPresentationLayer> presentationLayer = make_shared<FsmPresentationLayer>();
+		IOListContainer iolc1(iolLstPtr, presentationLayer);
+		root->addToThisNode(iolc1);
+		fsmlib_assert("TC-TreeNode-NNNN",
+			root->superTreeOf(old),
+			"result of addToThisNode(const IOListContainer & tcl) is a super tree of the original TreeNode, so every path from original is still contained in result");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			resultContainsOnlyExpectedPaths(root, old, iolc1),
+			"result of addToThisNode(const IOListContainer & tcl) contains only expected paths (paths from original tree or added paths)");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			resultContainsEachAddedPath(root, iolc1),
+			"result of addToThisNode(const IOListContainer & tcl) contains each added path");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			treeIsObservable(root),
+			"result of addToThisNode(const IOListContainer & tcl) contains no redundant prefixes");
+	}
+
+	// root has two childs (c1 and c2). c2 is a leaf. c1 has two children (gc1 and gc2). gc1 and gc2 are leaves.
+	// IOListContainer contains two paths ({1, 3} and {1, 3}). (both are equal and match a prefix already contained in tree)
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c2 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> gc1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> gc2 = make_shared<TreeNode>();
+		root->add(make_shared<TreeEdge>(1, c1));
+		root->add(make_shared<TreeEdge>(2, c2));
+		c1->add(make_shared<TreeEdge>(1, gc1));
+		c1->add(make_shared<TreeEdge>(2, gc2));
+		shared_ptr<TreeNode> old = root->clone();
+		std::vector<int> inputs1 = { 1, 3 };
+		std::vector<int> inputs2 = { 1, 3 };
+		std::vector<std::vector<int>> ioLst = { inputs1, inputs2 };
+		shared_ptr<std::vector<std::vector<int>>> iolLstPtr = make_shared < std::vector<std::vector<int>>>(ioLst);
+		shared_ptr<FsmPresentationLayer> presentationLayer = make_shared<FsmPresentationLayer>();
+		IOListContainer iolc1(iolLstPtr, presentationLayer);
+		root->addToThisNode(iolc1);
+		fsmlib_assert("TC-TreeNode-NNNN",
+			root->superTreeOf(old),
+			"result of addToThisNode(const IOListContainer & tcl) is a super tree of the original TreeNode, so every path from original is still contained in result");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			resultContainsOnlyExpectedPaths(root, old, iolc1),
+			"result of addToThisNode(const IOListContainer & tcl) contains only expected paths (paths from original tree or added paths)");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			resultContainsEachAddedPath(root, iolc1),
+			"result of addToThisNode(const IOListContainer & tcl) contains each added path");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			treeIsObservable(root),
+			"result of addToThisNode(const IOListContainer & tcl) contains no redundant prefixes");
+	}
+
+	// root has two childs (c1 and c2). c2 is a leaf. c1 has two children (gc1 and gc2). gc1 and gc2 are leaves.
+	// IOListContainer contains two paths ({1, 3} and {1, 3, 1}). (first is prefix of second, both have prefix in tree)
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c2 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> gc1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> gc2 = make_shared<TreeNode>();
+		root->add(make_shared<TreeEdge>(1, c1));
+		root->add(make_shared<TreeEdge>(2, c2));
+		c1->add(make_shared<TreeEdge>(1, gc1));
+		c1->add(make_shared<TreeEdge>(2, gc2));
+		shared_ptr<TreeNode> old = root->clone();
+		std::vector<int> inputs1 = { 1, 3 };
+		std::vector<int> inputs2 = { 1, 3, 1 };
+		std::vector<std::vector<int>> ioLst = { inputs1, inputs2 };
+		shared_ptr<std::vector<std::vector<int>>> iolLstPtr = make_shared < std::vector<std::vector<int>>>(ioLst);
+		shared_ptr<FsmPresentationLayer> presentationLayer = make_shared<FsmPresentationLayer>();
+		IOListContainer iolc1(iolLstPtr, presentationLayer);
+		root->addToThisNode(iolc1);
+		fsmlib_assert("TC-TreeNode-NNNN",
+			root->superTreeOf(old),
+			"result of addToThisNode(const IOListContainer & tcl) is a super tree of the original TreeNode, so every path from original is still contained in result");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			resultContainsOnlyExpectedPaths(root, old, iolc1),
+			"result of addToThisNode(const IOListContainer & tcl) contains only expected paths (paths from original tree or added paths)");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			resultContainsEachAddedPath(root, iolc1),
+			"result of addToThisNode(const IOListContainer & tcl) contains each added path");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			treeIsObservable(root),
+			"result of addToThisNode(const IOListContainer & tcl) contains no redundant prefixes");
+	}
+
+	// root has two childs (c1 and c2). c2 is a leaf. c1 has two children (gc1 and gc2). gc1 and gc2 are leaves.
+	// IOListContainer contains three paths ({1, 1} and {1, 2} and {2}). (each path is already contained in tree)
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c2 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> gc1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> gc2 = make_shared<TreeNode>();
+		root->add(make_shared<TreeEdge>(1, c1));
+		root->add(make_shared<TreeEdge>(2, c2));
+		c1->add(make_shared<TreeEdge>(1, gc1));
+		c1->add(make_shared<TreeEdge>(2, gc2));
+		shared_ptr<TreeNode> old = root->clone();
+		std::vector<int> inputs1 = { 1, 1 };
+		std::vector<int> inputs2 = { 1, 2 };
+		std::vector<int> inputs3 = { 2 };
+		std::vector<std::vector<int>> ioLst = { inputs1, inputs2, inputs3 };
+		shared_ptr<std::vector<std::vector<int>>> iolLstPtr = make_shared < std::vector<std::vector<int>>>(ioLst);
+		shared_ptr<FsmPresentationLayer> presentationLayer = make_shared<FsmPresentationLayer>();
+		IOListContainer iolc1(iolLstPtr, presentationLayer);
+		root->addToThisNode(iolc1);
+		fsmlib_assert("TC-TreeNode-NNNN",
+			root->superTreeOf(old),
+			"result of addToThisNode(const IOListContainer & tcl) is a super tree of the original TreeNode, so every path from original is still contained in result");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			resultContainsOnlyExpectedPaths(root, old, iolc1),
+			"result of addToThisNode(const IOListContainer & tcl) contains only expected paths (paths from original tree or added paths)");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			resultContainsEachAddedPath(root, iolc1),
+			"result of addToThisNode(const IOListContainer & tcl) contains each added path");
+		fsmlib_assert("TC-TreeNode-NNNN",
+			treeIsObservable(root),
+			"result of addToThisNode(const IOListContainer & tcl) contains no redundant prefixes");
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -2576,7 +2857,8 @@ int main(int argc, char** argv)
 	//testAddToThisNode();
 	//testTreeNodeAddIOListContainer();
 	//testTreeNodeTentativeAddToThisNode();
-	testTreeNodeAfter();
+	//testTreeNodeAfter();
+	testTreeNodeAddToThisNodeIOListContainer();
 
 	/*testMinimise();
 	testWMethod();*/
