@@ -2773,6 +2773,106 @@ void testTreeNodeAddToThisNodeIOListContainer() {
 	}
 }
 
+//===================================== Tree Tests ===================================================
+
+// tests Tree::remove(const std::shared_ptr<Tree> otherTree)
+void testTreeRemove() {
+	
+	// thisTree is a leaf. otherTree is a leaf.
+	{
+		shared_ptr<TreeNode> thisRoot = make_shared<TreeNode>();
+		Tree thisTree(thisRoot, make_shared<FsmPresentationLayer>());
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		Tree otherTree(otherRoot, make_shared<FsmPresentationLayer>());
+
+		thisTree.remove(make_shared<Tree>(otherTree));
+
+		fsmlib_assert("TC-Tree-NNNN",
+			thisRoot->isDeleted(),
+			"remove(const std::shared_ptr<Tree> otherTree): All corresponding nodes (source and target of matching edges) "
+			"of thisTree and otherTree are marked as deleted.");
+		fsmlib_assert("TC-Tree-NNNN",
+			thisRoot->isLeaf(),
+			"remove(const std::shared_ptr<Tree> otherTree): Each deleted leaf is removed from children lists");
+	}
+
+	// thisTree is a leaf. otherTree has root otherRoot. otherRoot has one child (otherC1). otherC1 is a leaf.
+	{
+		shared_ptr<TreeNode> thisRoot = make_shared<TreeNode>();
+		Tree thisTree(thisRoot, make_shared<FsmPresentationLayer>());
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		shared_ptr<TreeNode> otherC1 = make_shared<TreeNode>();
+		otherRoot->add(make_shared<TreeEdge>(1, otherC1));
+		Tree otherTree(otherRoot, make_shared<FsmPresentationLayer>());
+
+		thisTree.remove(make_shared<Tree>(otherTree));
+
+		fsmlib_assert("TC-Tree-NNNN",
+			thisRoot->isDeleted(),
+			"remove(const std::shared_ptr<Tree> otherTree): All corresponding nodes (source and target of matching edges) "
+			"of thisTree and otherTree are marked as deleted.");
+		fsmlib_assert("TC-Tree-NNNN",
+			thisRoot->isLeaf(),
+			"remove(const std::shared_ptr<Tree> otherTree): Each deleted leaf is removed from children lists");
+	}
+
+	// thisTree has root thisRoot. thisRoot has one child (thisC1). thisC1 is a leaf. otherTree is a leaf.
+	{
+		shared_ptr<TreeNode> thisRoot = make_shared<TreeNode>();
+		shared_ptr<TreeNode> thisC1 = make_shared<TreeNode>();
+		thisRoot->add(make_shared<TreeEdge>(1, thisC1));
+		Tree thisTree(thisRoot, make_shared<FsmPresentationLayer>());
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		Tree otherTree(otherRoot, make_shared<FsmPresentationLayer>());
+
+		thisTree.remove(make_shared<Tree>(otherTree));
+
+		fsmlib_assert("TC-Tree-NNNN",
+			thisRoot->isDeleted()
+			&& !(thisC1->isDeleted()),
+			"remove(const std::shared_ptr<Tree> otherTree): All corresponding nodes (source and target of matching edges) "
+			"of thisTree and otherTree are marked as deleted. Non corresponding nodes aren't deleted.");
+		fsmlib_assert("TC-Tree-NNNN",
+			!(thisRoot->isLeaf())
+			&& thisC1->isLeaf(),
+			"remove(const std::shared_ptr<Tree> otherTree): Each deleted leaf is removed from children lists. Each non "
+			"deleted leaf isn't removed.");
+	}
+
+	// thisTree is super tree of otherTree. thisTree contains two edges emanating from thisRoot. otherTree contains one edge.
+	{
+		shared_ptr<TreeNode> thisRoot = make_shared<TreeNode>();
+		shared_ptr<TreeNode> thisC1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> thisC2 = make_shared<TreeNode>();
+		thisRoot->add(make_shared<TreeEdge>(1, thisC1));
+		thisRoot->add(make_shared<TreeEdge>(2, thisC2));
+		Tree thisTree(thisRoot, make_shared<FsmPresentationLayer>());
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		shared_ptr<TreeNode> otherC1 = make_shared<TreeNode>();
+		otherRoot->add(make_shared<TreeEdge>(1, otherC1));
+		Tree otherTree(otherRoot, make_shared<FsmPresentationLayer>());
+
+		thisTree.remove(make_shared<Tree>(otherTree));
+
+		fsmlib_assert("TC-Tree-NNNN",
+			thisRoot->isDeleted()
+			&& thisC1->isDeleted()
+			&& !(thisC2->isDeleted()),
+			"remove(const std::shared_ptr<Tree> otherTree): All corresponding nodes (source and target of matching edges) "
+			"of thisTree and otherTree are marked as deleted. Non corresponding nodes aren't deleted.");
+		fsmlib_assert("TC-Tree-NNNN",
+			thisRoot->getChildren()->size() == 1
+			&& thisRoot->getChildren()->at(0)->getTarget() == thisC2,
+			"remove(const std::shared_ptr<Tree> otherTree): Each deleted leaf is removed from children lists. Each non "
+			"deleted leaf isn't removed.");
+	}
+
+}
+
 int main(int argc, char** argv)
 {
     
@@ -2858,7 +2958,8 @@ int main(int argc, char** argv)
 	//testTreeNodeAddIOListContainer();
 	//testTreeNodeTentativeAddToThisNode();
 	//testTreeNodeAfter();
-	testTreeNodeAddToThisNodeIOListContainer();
+	//testTreeNodeAddToThisNodeIOListContainer();
+	testTreeRemove();
 
 	/*testMinimise();
 	testWMethod();*/
