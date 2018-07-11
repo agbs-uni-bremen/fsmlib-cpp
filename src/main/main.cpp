@@ -2949,6 +2949,91 @@ void testTreeRemove() {
 	}
 }
 
+// gets string representation of a Tree::toDot() result and counts the declarations of edges.
+int countEdgesInToDotResult(std::string content) {
+	int counter = 0;
+	int pos = content.find(" -> ", 0);
+	while (pos != string::npos) {
+		++counter;
+		pos = content.find(" -> ", pos + 1);
+	}
+	return counter;
+}
+
+// tests Tree::toDot(ostream & out)
+void testTreeToDot() {
+	// tree contains only the root (leaf). result contains no edge.
+	{
+		std::ostringstream stream;
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		Tree tree(root, make_shared<FsmPresentationLayer>());
+		tree.toDot(stream);
+		std::string content = stream.str();
+		fsmlib_assert("TC-Tree-NNNN",
+			content.find(" -> ") == string::npos,
+			"result of toDot(ostream & out) contains only expected edges");
+	}
+
+	
+	{
+		// root of the tree has one child (c1). c1 is a leaf. result contains 1 edge.
+		std::ostringstream stream;
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c1 = make_shared<TreeNode>();
+		root->add(make_shared<TreeEdge>(1, c1));
+		Tree tree(root, make_shared<FsmPresentationLayer>());
+		tree.toDot(stream);
+		std::string content = stream.str();
+		fsmlib_assert("TC-Tree-NNNN",
+			content.find("0 -> 1[label = \"1\" ];") != string::npos,
+			"result of toDot(ostream & out) contains each expected edge");
+
+		fsmlib_assert("TC-Tree-NNNN",
+			countEdgesInToDotResult(content) == 1,
+			"result of toDot(ostream & out) contains only expected edges");
+
+
+		// root has two children (c1 and c2). Both are leaves. result contains two edges.
+		shared_ptr<TreeNode> c2 = make_shared<TreeNode>();
+		root->add(make_shared<TreeEdge>(2, c2));
+		stream.str("");
+		stream.clear();
+		tree.toDot(stream);
+		content = stream.str();
+
+		fsmlib_assert("TC-Tree-NNNN",
+			content.find("0 -> 1[label = \"1\" ];") != string::npos
+			&& content.find("0 -> 2[label = \"2\" ];") != string::npos,
+			"result of toDot(ostream & out) contains each expected edge");
+
+		fsmlib_assert("TC-Tree-NNNN",
+			countEdgesInToDotResult(content) == 2,
+			"result of toDot(ostream & out) contains only expected edges");
+
+		// root has two children (c1 and c2). c1 has two children (gc1 and gc2). gc1, gc2 and c2 are leaves. result contains 4 edges.
+		shared_ptr<TreeNode> gc1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> gc2 = make_shared<TreeNode>();
+		c1->add(make_shared<TreeEdge>(1, gc1));
+		c1->add(make_shared<TreeEdge>(2, gc2));
+		stream.str("");
+		stream.clear();
+		tree.toDot(stream);
+		content = stream.str();
+
+		fsmlib_assert("TC-Tree-NNNN",
+			content.find("0 -> 1[label = \"1\" ];") != string::npos
+			&& content.find("1 -> 2[label = \"1\" ];") != string::npos
+			&& content.find("1 -> 3[label = \"2\" ];") != string::npos
+			&& content.find("0 -> 4[label = \"2\" ];") != string::npos,
+			"result of toDot(ostream & out) contains each expected edge");
+
+		fsmlib_assert("TC-Tree-NNNN",
+			countEdgesInToDotResult(content) == 4,
+			"result of toDot(ostream & out) contains only expected edges");
+	}
+
+}
+
 int main(int argc, char** argv)
 {
     
@@ -3035,7 +3120,8 @@ int main(int argc, char** argv)
 	//testTreeNodeTentativeAddToThisNode();
 	//testTreeNodeAfter();
 	//testTreeNodeAddToThisNodeIOListContainer();
-	testTreeRemove();
+	//testTreeRemove();
+	testTreeToDot();
 
 	/*testMinimise();
 	testWMethod();*/
