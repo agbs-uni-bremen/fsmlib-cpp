@@ -5,6 +5,7 @@
  */
 #include "trees/TreeNode.h"
 #include <deque>
+#include <algorithm>
 
 using namespace std;
 
@@ -96,14 +97,12 @@ shared_ptr<vector<shared_ptr<TreeEdge>>> TreeNode::getChildren() const
 
 void TreeNode::remove(const shared_ptr<TreeNode> node)
 {
-    for (shared_ptr<TreeEdge> e : *children)
+    children->erase(remove_if(children->begin(),
+                              children->end(),
+                              [node](shared_ptr<TreeEdge> e)
     {
-        if (e->getTarget() == node)
-        {
-            children->erase(find(children->begin(), children->end(), e));
-            break;
-        }
-    }
+        return e->getTarget() == node;
+    }));
 }
 
 void TreeNode::calcLeaves(vector<shared_ptr<TreeNode>>& leaves)
