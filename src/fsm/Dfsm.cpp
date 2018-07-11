@@ -283,7 +283,8 @@ void Dfsm::createDfsmTransitionGraph(const string& fname) {
     
     int nodeId = 0;
     while (getline(inputFile, line)) {
-        
+        if (line.empty())
+            continue;
         currentParsedNode = nodes[nodeId];
         if ( currentParsedNode == nullptr ) {
             currentParsedNode =
