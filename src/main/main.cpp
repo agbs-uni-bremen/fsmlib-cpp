@@ -3034,6 +3034,176 @@ void testTreeToDot() {
 
 }
 
+// tests Tree::getPrefixRelationTree(const shared_ptr<Tree> & b)
+void testTreeGetPrefixRelationTree() {
+	// thisTree contains no test case (root without children). otherTree contains two test cases.
+	{
+		shared_ptr<TreeNode> thisRoot = make_shared<TreeNode>();
+		Tree thisTree(thisRoot, make_shared<FsmPresentationLayer>());
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		shared_ptr<TreeNode> otherC1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> otherC2 = make_shared<TreeNode>();
+		otherRoot->add(make_shared<TreeEdge>(1, otherC1));
+		otherRoot->add(make_shared<TreeEdge>(2, otherC2));
+		Tree otherTree(otherRoot, make_shared<FsmPresentationLayer>());
+		shared_ptr<Tree> otherTreePtr = make_shared<Tree>(otherTree);
+		shared_ptr<Tree> result = thisTree.getPrefixRelationTree(otherTreePtr);
+		fsmlib_assert("TC-Tree-NNNN",
+			result == otherTreePtr,
+			"getPrefixRelationTree(const shared_ptr<Tree> & b) returns pointer to b if thisTree contains no test case (root without childs) "
+			"and b contains at least one test case.");		
+	}
+
+	// thisTree contains two test cases. otherTree contains no test case (root without children).
+	{
+		shared_ptr<TreeNode> thisRoot = make_shared<TreeNode>();
+		shared_ptr<TreeNode> thisC1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> thisC2 = make_shared<TreeNode>();
+		thisRoot->add(make_shared<TreeEdge>(1, thisC1));
+		thisRoot->add(make_shared<TreeEdge>(2, thisC2));
+		shared_ptr<Tree> thisTree = make_shared<Tree>(thisRoot, make_shared<FsmPresentationLayer>());
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		shared_ptr<Tree> otherTree = make_shared<Tree>(otherRoot, make_shared<FsmPresentationLayer>());
+		shared_ptr<Tree> result = thisTree->getPrefixRelationTree(otherTree);
+		fsmlib_assert("TC-Tree-NNNN",
+			result == thisTree,
+			"getPrefixRelationTree(const shared_ptr<Tree> & b) returns pointer to thisTree if b contains no test case (root without childs) "
+			"and thisTree contains at least one test case.");
+	}
+
+	// thisTree and otherTree both contain no test case (root without children).
+	{
+		shared_ptr<TreeNode> thisRoot = make_shared<TreeNode>();
+		shared_ptr<Tree> thisTree = make_shared<Tree>(thisRoot, make_shared<FsmPresentationLayer>());
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		shared_ptr<Tree> otherTree = make_shared<Tree>(otherRoot, make_shared<FsmPresentationLayer>());
+		shared_ptr<Tree> result = thisTree->getPrefixRelationTree(otherTree);
+		fsmlib_assert("TC-Tree-NNNN",
+			result != thisTree
+			&& result != otherTree
+			&& result->size() == 1,
+			"getPrefixRelationTree(const shared_ptr<Tree> & b) returns pointer to a new empty Tree if b and thisTree are empty.");
+	}
+
+	// thisTree contains two test cases. otherTree contains one testcase, which equals one of the test cases of thisTree.
+	{
+		shared_ptr<TreeNode> thisRoot = make_shared<TreeNode>();
+		shared_ptr<TreeNode> thisC1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> thisC2 = make_shared<TreeNode>();
+		thisRoot->add(make_shared<TreeEdge>(1, thisC1));
+		thisRoot->add(make_shared<TreeEdge>(2, thisC2));
+		shared_ptr<Tree> thisTree = make_shared<Tree>(thisRoot, make_shared<FsmPresentationLayer>());
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		shared_ptr<TreeNode> otherC1 = make_shared<TreeNode>();
+		otherRoot->add(make_shared<TreeEdge>(1, otherC1));
+		shared_ptr<Tree> otherTree = make_shared<Tree>(otherRoot, make_shared<FsmPresentationLayer>());
+		shared_ptr<Tree> result = thisTree->getPrefixRelationTree(otherTree);
+		vector<int> expected = { 1 };
+		fsmlib_assert("TC-Tree-NNNN",
+			result->getTestCases().getIOLists()->size() == 1
+			&& result->getTestCases().getIOLists()->at(0) == expected,
+			"result of getPrefixRelationTree(const shared_ptr<Tree> & b) contains each expected test case and no unexpected test case.");
+	}
+
+	// thisTree contains two test cases. otherTree contains only one testcase. Trees don't share any prefixes.
+	{
+		shared_ptr<TreeNode> thisRoot = make_shared<TreeNode>();
+		shared_ptr<TreeNode> thisC1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> thisC2 = make_shared<TreeNode>();
+		thisRoot->add(make_shared<TreeEdge>(1, thisC1));
+		thisRoot->add(make_shared<TreeEdge>(2, thisC2));
+		shared_ptr<Tree> thisTree = make_shared<Tree>(thisRoot, make_shared<FsmPresentationLayer>());
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		shared_ptr<TreeNode> otherC1 = make_shared<TreeNode>();
+		otherRoot->add(make_shared<TreeEdge>(3, otherC1));
+		shared_ptr<Tree> otherTree = make_shared<Tree>(otherRoot, make_shared<FsmPresentationLayer>());
+		shared_ptr<Tree> result = thisTree->getPrefixRelationTree(otherTree);
+		fsmlib_assert("TC-Tree-NNNN",
+			result->size() == 1,
+			"result of getPrefixRelationTree(const shared_ptr<Tree> & b) contains each expected test case and no unexpected test case.");
+	}
+
+	// thisTree contains two test cases (thisTC1 and thisTC2). otherTree contains three testcase (otherTC1, otherTC2 and otherTC3). 
+	// otherTC1 is a prefix of thisTC1. thisTC2 is a prefix of otherTC2 and otherTC3.
+	// (Each test case is either a prefix of a test case contained in the other tree or has a prefix in the other tree)
+	{
+		shared_ptr<TreeNode> thisRoot = make_shared<TreeNode>();
+		shared_ptr<TreeNode> thisC1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> thisC2 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> thisGC1 = make_shared<TreeNode>();
+		thisRoot->add(make_shared<TreeEdge>(1, thisC1));
+		thisRoot->add(make_shared<TreeEdge>(2, thisC2));
+		thisC1->add(make_shared<TreeEdge>(1, thisGC1));
+		shared_ptr<Tree> thisTree = make_shared<Tree>(thisRoot, make_shared<FsmPresentationLayer>());
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		shared_ptr<TreeNode> otherC1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> otherC2 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> otherGC1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> otherGC2 = make_shared<TreeNode>();
+		otherRoot->add(make_shared<TreeEdge>(1, otherC1));
+		otherRoot->add(make_shared<TreeEdge>(2, otherC2));
+		otherC2->add(make_shared<TreeEdge>(2, otherGC1));
+		otherC2->add(make_shared<TreeEdge>(1, otherGC2));
+		shared_ptr<Tree> otherTree = make_shared<Tree>(otherRoot, make_shared<FsmPresentationLayer>());
+		shared_ptr<Tree> result = thisTree->getPrefixRelationTree(otherTree);
+
+		vector<int> thisTC1 = { 1,1 };
+		vector<int> otherTC2 = { 2,2 };
+		vector<int> otherTC3 = { 2,1 };
+
+		shared_ptr<vector<vector<int>>> testCases = result->getTestCases().getIOLists();
+
+		fsmlib_assert("TC-Tree-NNNN",
+			testCases->size() == 3
+			&& find(testCases->cbegin(), testCases->cend(), thisTC1) != testCases->cend()
+			&& find(testCases->cbegin(), testCases->cend(), otherTC2) != testCases->cend()
+			&& find(testCases->cbegin(), testCases->cend(), otherTC3) != testCases->cend(),
+			"result of getPrefixRelationTree(const shared_ptr<Tree> & b) contains each expected test case and no unexpected test case.");
+	}
+
+	// thisTree contains two test cases (thisTC1 and thisTC2). otherTree contains three testcase (otherTC1, otherTC2 and otherTC3). 
+	// otherTC1 is a prefix of thisTC1. thisTC2, otherTC2 and otherTC3 aren't prefixes of each other (but share prefixes).
+	{
+		shared_ptr<TreeNode> thisRoot = make_shared<TreeNode>();
+		shared_ptr<TreeNode> thisC1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> thisC2 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> thisGC1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> thisGC2 = make_shared<TreeNode>();
+		thisRoot->add(make_shared<TreeEdge>(1, thisC1));
+		thisRoot->add(make_shared<TreeEdge>(2, thisC2));
+		thisC1->add(make_shared<TreeEdge>(1, thisGC1));
+		thisC2->add(make_shared<TreeEdge>(3, thisGC2));
+		shared_ptr<Tree> thisTree = make_shared<Tree>(thisRoot, make_shared<FsmPresentationLayer>());
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		shared_ptr<TreeNode> otherC1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> otherC2 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> otherGC1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> otherGC2 = make_shared<TreeNode>();
+		otherRoot->add(make_shared<TreeEdge>(1, otherC1));
+		otherRoot->add(make_shared<TreeEdge>(2, otherC2));
+		otherC2->add(make_shared<TreeEdge>(2, otherGC1));
+		otherC2->add(make_shared<TreeEdge>(1, otherGC2));
+		shared_ptr<Tree> otherTree = make_shared<Tree>(otherRoot, make_shared<FsmPresentationLayer>());
+		shared_ptr<Tree> result = thisTree->getPrefixRelationTree(otherTree);
+
+		vector<int> thisTC1 = { 1,1 };
+
+		shared_ptr<vector<vector<int>>> testCases = result->getTestCases().getIOLists();
+
+		fsmlib_assert("TC-Tree-NNNN",
+			testCases->size() == 1
+			&& find(testCases->cbegin(), testCases->cend(), thisTC1) != testCases->cend(),
+			"result of getPrefixRelationTree(const shared_ptr<Tree> & b) contains each expected test case and no unexpected test case.");
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -3121,7 +3291,8 @@ int main(int argc, char** argv)
 	//testTreeNodeAfter();
 	//testTreeNodeAddToThisNodeIOListContainer();
 	//testTreeRemove();
-	testTreeToDot();
+	//testTreeToDot();
+	testTreeGetPrefixRelationTree();
 
 	/*testMinimise();
 	testWMethod();*/
