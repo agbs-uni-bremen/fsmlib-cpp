@@ -2364,7 +2364,7 @@ void testTreeNodeTentativeAddToThisNode() {
 		"tentativeAddToThisNode() returns 1 if a prefix of the path reaches a leaf "
 		"and adding the path would require to extend the tree");
 
-	// case 3: no prefix of path reaches leaf of tree (new branch needed) -> returns 2
+	// case 3: path not fully contained and no prefix of path reaches leaf of tree (new branch needed) -> returns 2
 
 	// root is has child c1. c1 is a leaf. path contains one element
 	ref = make_shared<TreeNode>();
@@ -3204,6 +3204,268 @@ void testTreeGetPrefixRelationTree() {
 	}
 }
 
+// tests Tree::tentativeAddToRoot(SegmentedTrace& alpha)
+void testTreeTentativeAddToRoot() {
+	// case 1: alpha is already contained in Tree.
+
+	// root of Tree is a leaf. alpha = <>
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		shared_ptr<Tree> tree = make_shared<Tree>(root, make_shared<FsmPresentationLayer>());
+
+		vector<int> seg1vec = { };
+		shared_ptr<TraceSegment> seg1 = make_shared<TraceSegment>(make_shared<vector<int>>(seg1vec));
+		std::deque< std::shared_ptr<TraceSegment> > segments = {seg1};
+		SegmentedTrace alpha(segments);
+	
+		fsmlib_assert("TC-Tree-NNNN",
+			tree->tentativeAddToRoot(alpha) == 0,
+			"Tree::tentativeAddToRoot(SegmentedTrace& alpha) return 0 if alpha is already contained in Tree.");
+	}
+
+	// Tree contains one path (2 edges). alpha matches this path (with one, two or three segments)
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> gc1 = make_shared<TreeNode>();
+		root->add(make_shared<TreeEdge>(1, c1));
+		c1->add(make_shared<TreeEdge>(2, gc1));
+		shared_ptr<Tree> tree = make_shared<Tree>(root, make_shared<FsmPresentationLayer>());
+
+		// alpha = 2 segments
+		vector<int> seg1vec = { 1 };				
+		shared_ptr<TraceSegment> seg1 = make_shared<TraceSegment>(make_shared<vector<int>>(seg1vec));
+		vector<int> seg2vec = { 2 };
+		shared_ptr<TraceSegment> seg2 = make_shared<TraceSegment>(make_shared<vector<int>>(seg2vec));
+		std::deque< std::shared_ptr<TraceSegment> > segments = { seg1, seg2 };
+		SegmentedTrace alpha(segments);
+
+		fsmlib_assert("TC-Tree-NNNN",
+			tree->tentativeAddToRoot(alpha) == 0,
+			"Tree::tentativeAddToRoot(SegmentedTrace& alpha) return 0 if alpha is already contained in Tree.");
+
+		// alpha = 1 segment
+		seg1vec = { 1, 2 };
+		seg1 = make_shared<TraceSegment>(make_shared<vector<int>>(seg1vec));
+		segments = { seg1 };
+		alpha = segments;
+
+		fsmlib_assert("TC-Tree-NNNN",
+			tree->tentativeAddToRoot(alpha) == 0,
+			"Tree::tentativeAddToRoot(SegmentedTrace& alpha) return 0 if alpha is already contained in Tree.");
+
+		// alpha = 3 segments
+		seg1vec = { 1 };
+		seg1 = make_shared<TraceSegment>(make_shared<vector<int>>(seg1vec));
+		seg2vec = { 2 };
+		seg2 = make_shared<TraceSegment>(make_shared<vector<int>>(seg2vec));
+		vector<int> seg3vec = {  };
+		shared_ptr<TraceSegment> seg3 = make_shared<TraceSegment>(make_shared<vector<int>>(seg3vec));
+		segments = { seg1, seg2, seg3 };
+		alpha = segments;
+
+		fsmlib_assert("TC-Tree-NNNN",
+			tree->tentativeAddToRoot(alpha) == 0,
+			"Tree::tentativeAddToRoot(SegmentedTrace& alpha) return 0 if alpha is already contained in Tree.");
+	}
+
+	// Bigger Tree with longer paths. alpha is already contained.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c2 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> gc1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> gc2 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> ggc1 = make_shared<TreeNode>();
+		root->add(make_shared<TreeEdge>(1, c1));
+		root->add(make_shared<TreeEdge>(2, c2));
+		c1->add(make_shared<TreeEdge>(2, gc1));
+		c2->add(make_shared<TreeEdge>(3, gc2));
+		gc1->add(make_shared<TreeEdge>(3, ggc1));
+		shared_ptr<Tree> tree = make_shared<Tree>(root, make_shared<FsmPresentationLayer>());
+
+		// alpha = 2 segments. alpha is prefix of a path in Tree
+		vector<int> seg1vec = { 1 };
+		shared_ptr<TraceSegment> seg1 = make_shared<TraceSegment>(make_shared<vector<int>>(seg1vec));
+		vector<int> seg2vec = { 2 };
+		shared_ptr<TraceSegment> seg2 = make_shared<TraceSegment>(make_shared<vector<int>>(seg2vec));
+		std::deque< std::shared_ptr<TraceSegment> > segments = { seg1, seg2 };
+		SegmentedTrace alpha(segments);
+
+		fsmlib_assert("TC-Tree-NNNN",
+			tree->tentativeAddToRoot(alpha) == 0,
+			"Tree::tentativeAddToRoot(SegmentedTrace& alpha) return 0 if alpha is already contained in Tree.");
+
+		/// alpha = 2 segments. alpha is prefix of a path in Tree
+		seg1vec = { 1, 2 };
+		seg1 = make_shared<TraceSegment>(make_shared<vector<int>>(seg1vec));
+		seg2vec = { 3 };
+		seg2 = make_shared<TraceSegment>(make_shared<vector<int>>(seg2vec));
+		segments = { seg1, seg2 };
+		alpha = segments;
+
+		fsmlib_assert("TC-Tree-NNNN",
+			tree->tentativeAddToRoot(alpha) == 0,
+			"Tree::tentativeAddToRoot(SegmentedTrace& alpha) return 0 if alpha is already contained in Tree.");
+	}
+
+	// case 2: prefix of path alpha reaches leaf of tree (no new branch needed) -> returns 1
+
+	// root of the Tree is a leaf. alpha is not empty.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		shared_ptr<Tree> tree = make_shared<Tree>(root, make_shared<FsmPresentationLayer>());
+
+		// alpha = 2 segments.
+		vector<int> seg1vec = { 1 };
+		shared_ptr<TraceSegment> seg1 = make_shared<TraceSegment>(make_shared<vector<int>>(seg1vec));
+		vector<int> seg2vec = { 2 };
+		shared_ptr<TraceSegment> seg2 = make_shared<TraceSegment>(make_shared<vector<int>>(seg2vec));
+		std::deque< std::shared_ptr<TraceSegment> > segments = { seg1, seg2 };
+		SegmentedTrace alpha(segments);
+
+		fsmlib_assert("TC-Tree-NNNN",
+			tree->tentativeAddToRoot(alpha) == 1,
+			"Tree::tentativeAddToRoot(SegmentedTrace& alpha) return 1 if prefix of alpha reaches leaf of Tree.");
+	}
+
+	// root of the Tree has two childs (c1 and c2). c1 and c2 are leaves. Prefix of alpha reaches c1. 
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c2 = make_shared<TreeNode>();
+		root->add(make_shared<TreeEdge>(1, c1));
+		root->add(make_shared<TreeEdge>(2, c2));
+		shared_ptr<Tree> tree = make_shared<Tree>(root, make_shared<FsmPresentationLayer>());
+
+		// alpha = 1 segment (<1,2>).
+		vector<int> seg1vec = { 1, 2 };
+		shared_ptr<TraceSegment> seg1 = make_shared<TraceSegment>(make_shared<vector<int>>(seg1vec));
+		std::deque< std::shared_ptr<TraceSegment> > segments = { seg1 };
+		SegmentedTrace alpha(segments);
+
+		fsmlib_assert("TC-Tree-NNNN",
+			tree->tentativeAddToRoot(alpha) == 1,
+			"Tree::tentativeAddToRoot(SegmentedTrace& alpha) return 1 if prefix of alpha reaches leaf of Tree.");
+
+		// alpha = 2 segments (<1>.<2>).
+		seg1vec = { 1 };
+		seg1 = make_shared<TraceSegment>(make_shared<vector<int>>(seg1vec));
+		vector<int> seg2vec = { 2 };
+		shared_ptr<TraceSegment> seg2 = make_shared<TraceSegment>(make_shared<vector<int>>(seg2vec));
+		segments = { seg1, seg2 };
+		alpha = segments;
+
+		fsmlib_assert("TC-Tree-NNNN",
+			tree->tentativeAddToRoot(alpha) == 1,
+			"Tree::tentativeAddToRoot(SegmentedTrace& alpha) return 1 if prefix of alpha reaches leaf of Tree.");
+	}
+
+	// root of the Tree has two childs (c1 and c2). c1 has one child (gc1).  gc1 is a leaf. c2 has a child (gc2). gc2 is a leaf.
+	// Prefix of alpha reaches gc1. 
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c2 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> gc1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> gc2 = make_shared<TreeNode>();
+		root->add(make_shared<TreeEdge>(1, c1));
+		c1->add(make_shared<TreeEdge>(2, gc1));
+		root->add(make_shared<TreeEdge>(2, c2));
+		c2->add(make_shared<TreeEdge>(3, gc2));
+		shared_ptr<Tree> tree = make_shared<Tree>(root, make_shared<FsmPresentationLayer>());
+
+		// alpha = 2 segments (<1,2>.<3>).
+		vector<int> seg1vec = { 1, 2 };
+		shared_ptr<TraceSegment> seg1 = make_shared<TraceSegment>(make_shared<vector<int>>(seg1vec));
+		vector<int> seg2vec = { 3 };
+		shared_ptr<TraceSegment> seg2 = make_shared<TraceSegment>(make_shared<vector<int>>(seg2vec));
+		std::deque< std::shared_ptr<TraceSegment> > segments = { seg1, seg2 };
+		SegmentedTrace alpha(segments);
+
+		fsmlib_assert("TC-Tree-NNNN",
+			tree->tentativeAddToRoot(alpha) == 1,
+			"Tree::tentativeAddToRoot(SegmentedTrace& alpha) return 1 if prefix of alpha reaches leaf of Tree.");
+
+		// alpha = 2 segments (<1>.<2,3>).
+		seg1vec = { 1 };
+		seg1 = make_shared<TraceSegment>(make_shared<vector<int>>(seg1vec));
+		seg2vec = { 2, 3 };
+		seg2 = make_shared<TraceSegment>(make_shared<vector<int>>(seg2vec));
+		segments = { seg1, seg2 };
+		alpha = segments;
+
+		fsmlib_assert("TC-Tree-NNNN",
+			tree->tentativeAddToRoot(alpha) == 1,
+			"Tree::tentativeAddToRoot(SegmentedTrace& alpha) return 1 if prefix of alpha reaches leaf of Tree.");
+	}
+
+	// case 3: path not fully contained and no prefix of path reaches leaf of tree (new branch needed) -> returns 2
+
+	// root of the Tree has one childs (c1). c1 is a leaf. First element of alpha has no corresponding edge in the Tree.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c1 = make_shared<TreeNode>();
+		root->add(make_shared<TreeEdge>(1, c1));
+		shared_ptr<Tree> tree = make_shared<Tree>(root, make_shared<FsmPresentationLayer>());
+
+		// alpha = 1 segment (<2>).
+		vector<int> seg1vec = { 2 };
+		shared_ptr<TraceSegment> seg1 = make_shared<TraceSegment>(make_shared<vector<int>>(seg1vec));
+		std::deque< std::shared_ptr<TraceSegment> > segments = { seg1 };
+		SegmentedTrace alpha(segments);
+
+		fsmlib_assert("TC-Tree-NNNN",
+			tree->tentativeAddToRoot(alpha) == 2,
+			"Tree::tentativeAddToRoot(SegmentedTrace& alpha) return 2 if prefix of alpha reaches leaf of Tree.");
+
+		// alpha = 2 segments (<2>.<1>)
+		vector<int> seg2vec = { 1 };
+		shared_ptr<TraceSegment> seg2 = make_shared<TraceSegment>(make_shared<vector<int>>(seg2vec));
+		segments = { seg1, seg2 };
+		alpha = segments;
+
+		fsmlib_assert("TC-Tree-NNNN",
+			tree->tentativeAddToRoot(alpha) == 2,
+			"Tree::tentativeAddToRoot(SegmentedTrace& alpha) return 2 if prefix of alpha reaches leaf of Tree.");
+
+	}
+
+	// root of the Tree has one child (c1). c1 has one child (gc1). gc1 is a leaf.
+	// Prefix of alpha matches a prefix of a path contained in the Tree, but alpha contains additional elements (new Branch needed).
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		shared_ptr<TreeNode> c1 = make_shared<TreeNode>();
+		shared_ptr<TreeNode> gc1 = make_shared<TreeNode>();
+		root->add(make_shared<TreeEdge>(1, c1));
+		c1->add(make_shared<TreeEdge>(2, gc1));
+		shared_ptr<Tree> tree = make_shared<Tree>(root, make_shared<FsmPresentationLayer>());
+
+		// alpha = 1 segment (<1, 1>).
+		vector<int> seg1vec = { 1, 1 };
+		shared_ptr<TraceSegment> seg1 = make_shared<TraceSegment>(make_shared<vector<int>>(seg1vec));
+		std::deque< std::shared_ptr<TraceSegment> > segments = { seg1 };
+		SegmentedTrace alpha(segments);
+
+		fsmlib_assert("TC-Tree-NNNN",
+			tree->tentativeAddToRoot(alpha) == 2,
+			"Tree::tentativeAddToRoot(SegmentedTrace& alpha) return 2 if prefix of alpha reaches leaf of Tree.");
+
+		// alpha = 2 segments (<1>.<1>)
+		seg1vec = { 1 };
+		seg1 = make_shared<TraceSegment>(make_shared<vector<int>>(seg1vec));
+		vector<int> seg2vec = { 1 };
+		shared_ptr<TraceSegment> seg2 = make_shared<TraceSegment>(make_shared<vector<int>>(seg2vec));
+		segments = { seg1, seg2 };
+		alpha = segments;
+
+		fsmlib_assert("TC-Tree-NNNN",
+			tree->tentativeAddToRoot(alpha) == 2,
+			"Tree::tentativeAddToRoot(SegmentedTrace& alpha) return 2 if prefix of alpha reaches leaf of Tree.");
+
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -3292,7 +3554,8 @@ int main(int argc, char** argv)
 	//testTreeNodeAddToThisNodeIOListContainer();
 	//testTreeRemove();
 	//testTreeToDot();
-	testTreeGetPrefixRelationTree();
+	//testTreeGetPrefixRelationTree();
+	testTreeTentativeAddToRoot();
 
 	/*testMinimise();
 	testWMethod();*/
