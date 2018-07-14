@@ -3466,6 +3466,73 @@ void testTreeTentativeAddToRoot() {
 	}
 }
 
+//===================================== FsmPresentationLayer Tests ===================================================
+
+// tests FsmPresentationLayer(const std::string & inputs, const std::string & outputs, const std::string & states);
+void testFsmPresentationLayerFileConstructor() {
+	// Correct file names. No file is empty.
+	shared_ptr<FsmPresentationLayer> pl =
+		make_shared<FsmPresentationLayer>("../../../resources/garageIn.txt",
+			"../../../resources/garageOut.txt",
+			"../../../resources/garageState.txt");
+
+	vector<string> inputs{ "e1", "e2", "e3", "e4" };
+	vector<string> outputs{ "a0", "a1", "a2", "a3", "a4"};
+	vector<string> states{ "Door Up", "Door Down", "Door stopped going down", "Door stopped going up", "Door closing", "Door opening" };
+	fsmlib_assert("TC-FsmPresentationLayer-NNNN",
+		pl->getIn2String() == inputs
+		&& pl->getOut2String() == outputs
+		&& pl->getState2String() == states,
+		"FsmPresentationLayer(const std::string & inputs, const std::string & outputs, const std::string & states) correctly initializes "
+		"contents of in2String, out2String and state2String");
+
+	// input file doesn't exist
+	pl =
+		make_shared<FsmPresentationLayer>("nonExistingFileName.txt",
+			"../../../resources/garageOut.txt",
+			"../../../resources/garageState.txt");
+	inputs = {  };
+	outputs = { "a0", "a1", "a2", "a3", "a4" };
+	states = { "Door Up", "Door Down", "Door stopped going down", "Door stopped going up", "Door closing", "Door opening" };
+	fsmlib_assert("TC-FsmPresentationLayer-NNNN",
+		pl->getIn2String() == inputs
+		&& pl->getOut2String() == outputs
+		&& pl->getState2String() == states,
+		"FsmPresentationLayer(const std::string & inputs, const std::string & outputs, const std::string & states) correctly initializes "
+		"contents of in2String, out2String and state2String");
+
+	// Using the same file name for each parameter.
+	pl =
+		make_shared<FsmPresentationLayer>("../../../resources/garageIn.txt",
+			"../../../resources/garageIn.txt",
+			"../../../resources/garageIn.txt");
+	inputs = { "e1", "e2", "e3", "e4" };
+	outputs = { "e1", "e2", "e3", "e4" };
+	states = { "e1", "e2", "e3", "e4" };
+	fsmlib_assert("TC-FsmPresentationLayer-NNNN",
+		pl->getIn2String() == inputs
+		&& pl->getOut2String() == outputs
+		&& pl->getState2String() == states,
+		"FsmPresentationLayer(const std::string & inputs, const std::string & outputs, const std::string & states) correctly initializes "
+		"contents of in2String, out2String and state2String");
+
+	// One file is completely empty
+	pl =
+		make_shared<FsmPresentationLayer>("../../../resources/emptyIn.txt",
+			"../../../resources/garageOut.txt",
+			"../../../resources/garageState.txt");
+	inputs = {  };
+	outputs = { "a0", "a1", "a2", "a3", "a4" };
+	states = { "Door Up", "Door Down", "Door stopped going down", "Door stopped going up", "Door closing", "Door opening" };
+	fsmlib_assert("TC-FsmPresentationLayer-NNNN",
+		pl->getIn2String() == inputs
+		&& pl->getOut2String() == outputs
+		&& pl->getState2String() == states,
+		"FsmPresentationLayer(const std::string & inputs, const std::string & outputs, const std::string & states) correctly initializes "
+		"contents of in2String, out2String and state2String");
+}
+
+
 int main(int argc, char** argv)
 {
     
@@ -3552,10 +3619,13 @@ int main(int argc, char** argv)
 	//testTreeNodeTentativeAddToThisNode();
 	//testTreeNodeAfter();
 	//testTreeNodeAddToThisNodeIOListContainer();
+
 	//testTreeRemove();
 	//testTreeToDot();
 	//testTreeGetPrefixRelationTree();
-	testTreeTentativeAddToRoot();
+	//testTreeTentativeAddToRoot();
+
+	testFsmPresentationLayerFileConstructor();
 
 	/*testMinimise();
 	testWMethod();*/
