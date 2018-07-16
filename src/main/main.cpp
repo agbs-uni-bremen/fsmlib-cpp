@@ -3532,6 +3532,44 @@ void testFsmPresentationLayerFileConstructor() {
 		"contents of in2String, out2String and state2String");
 }
 
+// tests FsmPresentationLayer::dumpIn(std::ostream & out)
+void testFsmPresentationLayerDumpIn() {
+	// in2String is empty
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	ostringstream stream;
+	pl->dumpIn(stream);
+	string s = stream.str();
+	fsmlib_assert("TC-FsmPresentationLayer-NNNN",
+		s.empty(),
+		"FsmPresentationLayer::dumpIn(std::ostream & out) writes each element of in2String to out.");
+
+	stream.str("");
+	stream.clear();
+
+	// in2String contains only one element
+	vector<string> in2String{ "e1" };
+	vector<string> out2String{ "o1", "o2" };
+	vector<string> state2String{ "s1" };
+	pl = make_shared<FsmPresentationLayer>(in2String, out2String, state2String);
+	pl->dumpIn(stream);
+	s = stream.str();
+	fsmlib_assert("TC-FsmPresentationLayer-NNNN",
+		s == "e1",
+		"FsmPresentationLayer::dumpIn(std::ostream & out) writes each element of in2String to out.");
+
+	stream.str("");
+	stream.clear();
+
+	// in2String contains two elements
+	in2String = { "e1", "e2" };
+	pl = make_shared<FsmPresentationLayer>(in2String, out2String, state2String);
+	pl->dumpIn(stream);
+	s = stream.str();
+	fsmlib_assert("TC-FsmPresentationLayer-NNNN",
+		s == "e1\ne2",
+		"FsmPresentationLayer::dumpIn(std::ostream & out) writes each element of in2String to out.");
+}
+
 
 int main(int argc, char** argv)
 {
@@ -3625,7 +3663,8 @@ int main(int argc, char** argv)
 	//testTreeGetPrefixRelationTree();
 	//testTreeTentativeAddToRoot();
 
-	testFsmPresentationLayerFileConstructor();
+	//testFsmPresentationLayerFileConstructor();
+	testFsmPresentationLayerDumpIn();
 
 	/*testMinimise();
 	testWMethod();*/
