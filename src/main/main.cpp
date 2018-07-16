@@ -3570,6 +3570,117 @@ void testFsmPresentationLayerDumpIn() {
 		"FsmPresentationLayer::dumpIn(std::ostream & out) writes each element of in2String to out.");
 }
 
+// tests FsmPresentationLayer::compare(std::shared_ptr<FsmPresentationLayer> otherPresentationLayer)
+// Positive Case
+void testFsmPresentationLayerComparePositive() {
+	// in2String1 and in2String2 are empty. out2String1 and out2String2 are empty. state2String1 == state2String
+	vector<string> in2String1{};
+	vector<string> out2String1{};
+	vector<string> state2String1{};
+	shared_ptr<FsmPresentationLayer> pl1 = make_shared<FsmPresentationLayer>(in2String1, out2String1, state2String1);
+
+	vector<string> in2String2{};
+	vector<string> out2String2{};
+	vector<string> state2String2{};
+	shared_ptr<FsmPresentationLayer> pl2 = make_shared<FsmPresentationLayer>(in2String2, out2String2, state2String2);
+
+	fsmlib_assert("TC-FsmPresentationLayer-NNNN",
+		pl1->compare(pl2)
+		&& pl2->compare(pl1),
+		"FsmPresentationLayer::compare(std::shared_ptr<FsmPresentationLayer>) returns "
+		"true if both in2String and out2String lists are equal.");
+
+	// in2String and out2String lists are equals but not empty. state2String lists differ in size.
+	in2String1 = { "e1" };
+	in2String2 = { "e1" };
+	out2String1 = { "o1", "o2" };
+	out2String2 = { "o1", "o2" };
+	state2String1 = {};
+	state2String2 = { "s1" };
+
+	pl1 = make_shared<FsmPresentationLayer>(in2String1, out2String1, state2String1);
+	pl2 = make_shared<FsmPresentationLayer>(in2String2, out2String2, state2String2);
+
+	fsmlib_assert("TC-FsmPresentationLayer-NNNN",
+		pl1->compare(pl2)
+		&& pl2->compare(pl1),
+		"FsmPresentationLayer::compare(std::shared_ptr<FsmPresentationLayer>) returns "
+		"true if both in2String and out2String lists are equal.");
+
+}
+
+// tests FsmPresentationLayer::compare(std::shared_ptr<FsmPresentationLayer> otherPresentationLayer)
+// Positive Case
+void testFsmPresentationLayerCompareNegative() {
+	// in2String lists differ in size. out2String lists are equal.
+	vector<string> in2String1{};
+	vector<string> out2String1{"o1"};
+	vector<string> state2String1{};
+	shared_ptr<FsmPresentationLayer> pl1 = make_shared<FsmPresentationLayer>(in2String1, out2String1, state2String1);
+
+	vector<string> in2String2{ "e1" };
+	vector<string> out2String2{"o1"};
+	vector<string> state2String2{};
+	shared_ptr<FsmPresentationLayer> pl2 = make_shared<FsmPresentationLayer>(in2String2, out2String2, state2String2);
+
+	fsmlib_assert("TC-FsmPresentationLayer-NNNN",
+		!pl1->compare(pl2)
+		&& !pl2->compare(pl1),
+		"FsmPresentationLayer::compare(std::shared_ptr<FsmPresentationLayer>) returns "
+		"false if both in2String lists differ in size");
+
+	// in2String lists are equals. out2String lists differ in size.
+	in2String1 = { "e1" };
+	in2String2 = { "e1" };
+	out2String1 = { "o1" };
+	out2String2 = {  };
+	state2String1 = {};
+	state2String2 = {};
+
+	pl1 = make_shared<FsmPresentationLayer>(in2String1, out2String1, state2String1);
+	pl2 = make_shared<FsmPresentationLayer>(in2String2, out2String2, state2String2);
+
+	fsmlib_assert("TC-FsmPresentationLayer-NNNN",
+		!pl1->compare(pl2)
+		&& !pl2->compare(pl1),
+		"FsmPresentationLayer::compare(std::shared_ptr<FsmPresentationLayer>) returns "
+		"false if both out2String lists differ in size.");
+
+	// in2String lists are equal. out2String lists have the same size but contain at least one different element.
+	in2String1 = { "e1", "e2" };
+	in2String2 = { "e1", "e2" };
+	out2String1 = { "o1", "o2" };
+	out2String2 = { "o1", "o3" };
+	state2String1 = {};
+	state2String2 = {};
+
+	pl1 = make_shared<FsmPresentationLayer>(in2String1, out2String1, state2String1);
+	pl2 = make_shared<FsmPresentationLayer>(in2String2, out2String2, state2String2);
+
+	fsmlib_assert("TC-FsmPresentationLayer-NNNN",
+		!pl1->compare(pl2)
+		&& !pl2->compare(pl1),
+		"FsmPresentationLayer::compare(std::shared_ptr<FsmPresentationLayer>) returns "
+		"false if both out2String lists contain different elements.");
+
+	// out2String lists are equal. in2String lists have the same size but contain at least one different element.
+	in2String1 = { "e1", "e2" };
+	in2String2 = { "e2", "e1" };
+	out2String1 = { "o1", "o2" };
+	out2String2 = { "o1", "o2" };
+	state2String1 = {};
+	state2String2 = {};
+
+	pl1 = make_shared<FsmPresentationLayer>(in2String1, out2String1, state2String1);
+	pl2 = make_shared<FsmPresentationLayer>(in2String2, out2String2, state2String2);
+
+	fsmlib_assert("TC-FsmPresentationLayer-NNNN",
+		!pl1->compare(pl2)
+		&& !pl2->compare(pl1),
+		"FsmPresentationLayer::compare(std::shared_ptr<FsmPresentationLayer>) returns "
+		"false if both out2String lists contain different elements.");
+}
+
 
 int main(int argc, char** argv)
 {
@@ -3664,7 +3775,9 @@ int main(int argc, char** argv)
 	//testTreeTentativeAddToRoot();
 
 	//testFsmPresentationLayerFileConstructor();
-	testFsmPresentationLayerDumpIn();
+	//testFsmPresentationLayerDumpIn();
+	//testFsmPresentationLayerComparePositive();
+	testFsmPresentationLayerCompareNegative();
 
 	/*testMinimise();
 	testWMethod();*/
