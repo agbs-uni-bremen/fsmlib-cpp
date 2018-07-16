@@ -3681,6 +3681,42 @@ void testFsmPresentationLayerCompareNegative() {
 		"false if both out2String lists contain different elements.");
 }
 
+//===================================== Trace Tests ===================================================
+
+// tests operator==(Trace const & trace1, Trace const & trace2)
+// Positive case.
+void testTraceEquals1Positive() {
+	// tr1 and tr2 are empty.
+	vector<int> v1 = {};
+	Trace tr1{ v1, make_shared<FsmPresentationLayer>() };
+
+	vector<int> v2 = {};
+	Trace tr2{ v2, make_shared<FsmPresentationLayer>() };
+
+	fsmlib_assert("TC-Trace-NNNN",
+		tr1 == tr2,
+		"tr1 == tr2 if the underlying vectors are equal.");
+
+	// tr1 and tr2 both contain one element.
+	v1 = {1};
+	v2 = {1};
+	tr1 = { v1, make_shared<FsmPresentationLayer>() };
+	tr2 = { v2, make_shared<FsmPresentationLayer>() };
+
+	fsmlib_assert("TC-Trace-NNNN",
+		tr1 == tr2,
+		"tr1 == tr2 if the underlying vectors are equal.");
+
+	// tr1 and tr2 both contain two elements.
+	v1 = { 1, 2 };
+	v2 = { 1, 2 };
+	tr1 = { v1, make_shared<FsmPresentationLayer>() };
+	tr2 = { v2, make_shared<FsmPresentationLayer>() };
+
+	fsmlib_assert("TC-Trace-NNNN",
+		tr1 == tr2,
+		"tr1 == tr2 if the underlying vectors are equal.");
+}
 
 int main(int argc, char** argv)
 {
@@ -3777,7 +3813,9 @@ int main(int argc, char** argv)
 	//testFsmPresentationLayerFileConstructor();
 	//testFsmPresentationLayerDumpIn();
 	//testFsmPresentationLayerComparePositive();
-	testFsmPresentationLayerCompareNegative();
+	//testFsmPresentationLayerCompareNegative();
+	
+	testTraceEquals1Positive();
 
 	/*testMinimise();
 	testWMethod();*/
