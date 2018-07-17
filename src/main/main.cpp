@@ -3763,6 +3763,119 @@ void testTraceEquals1Negative() {
 		"tr1 == tr2 is false if the underlying vectors are unequal.");
 }
 
+// tests operator==(Trace const & trace1, std::vector<int> const & trace2)
+// Positive case.
+void testTraceEquals2Positive() {
+	// tr1 and tr2 are empty.
+	vector<int> v1 = {};
+	Trace tr1{ v1, make_shared<FsmPresentationLayer>() };
+
+	vector<int> tr2 = {};
+
+	fsmlib_assert("TC-Trace-NNNN",
+		tr1 == tr2,
+		"tr1 == tr2 if the underlying vectors are equal.");
+
+	// tr1 and tr2 both contain one element.
+	v1 = { 1 };
+	tr2 = { 1 };
+	tr1 = { v1, make_shared<FsmPresentationLayer>() };
+
+	fsmlib_assert("TC-Trace-NNNN",
+		tr1 == tr2,
+		"tr1 == tr2 if the underlying vectors are equal.");
+
+	// tr1 and tr2 both contain two elements.
+	v1 = { 1, 2 };
+	tr2 = { 1, 2 };
+	tr1 = { v1, make_shared<FsmPresentationLayer>() };
+
+	fsmlib_assert("TC-Trace-NNNN",
+		tr1 == tr2,
+		"tr1 == tr2 if the underlying vectors are equal.");
+}
+
+// tests operator==(Trace const & trace1, std::vector<int> const & trace2)
+// Negative case.
+void testTraceEquals2Negative() {
+	// tr1 is empty. tr2 isn't empty.
+	vector<int> v1 = {};
+	Trace tr1{ v1, make_shared<FsmPresentationLayer>() };
+
+	vector<int> tr2 = { 1 };
+
+	fsmlib_assert("TC-Trace-NNNN",
+		not (tr1 == tr2),
+		"tr1 == tr2 is false if the underlying vectors are unequal.");
+
+	// tr2 is empty. tr1 isn't empty.
+	v1 = { 1 };
+	tr2 = {};
+	tr1 = { v1, make_shared<FsmPresentationLayer>() };
+
+	fsmlib_assert("TC-Trace-NNNN",
+		not (tr1 == tr2),
+		"tr1 == tr2 is false if the underlying vectors are unequal.");
+
+	// tr1 and tr2 have the same size but contain different elements.
+	v1 = { 1 };
+	tr2 = { 2 };
+	tr1 = { v1, make_shared<FsmPresentationLayer>() };
+
+	fsmlib_assert("TC-Trace-NNNN",
+		not (tr1 == tr2),
+		"tr1 == tr2 is false if the underlying vectors are unequal.");
+
+	// tr1 and tr2 have the same size but contain different elements.
+	v1 = { 1, 2 };
+	tr2 = { 1, 3 };
+	tr1 = { v1, make_shared<FsmPresentationLayer>() };
+
+	fsmlib_assert("TC-Trace-NNNN",
+		not (tr1 == tr2),
+		"tr1 == tr2 is false if the underlying vectors are unequal.");
+}
+
+// tests operator<<(std::ostream & out, const Trace & trace)
+void testTraceOutputOperator() {
+	// trace is empty.
+	vector<int> v1 = {};
+	Trace tr1{ v1, make_shared<FsmPresentationLayer>() };
+	ostringstream out;
+	out << tr1;
+	string result = out.str();
+
+	fsmlib_assert("TC-Trace-NNNN",
+		result == "",
+		"operator<<(std::ostream & out, const Trace & trace) writes every element of trace to out in the right order.");
+
+	out.str("");
+	out.clear();
+
+	// trace contains one element.
+	v1 = { 1 };
+	tr1 = { v1,  make_shared<FsmPresentationLayer>() };
+	out << tr1;
+	result = out.str();
+
+	fsmlib_assert("TC-Trace-NNNN",
+		result == "1",
+		"operator<<(std::ostream & out, const Trace & trace) writes every element of trace to out in the right order.");
+
+	out.str("");
+	out.clear();
+
+	// trace contains two elements.
+	v1 = { 1,2 };
+	tr1 = { v1,  make_shared<FsmPresentationLayer>() };
+	out << tr1;
+	result = out.str();
+
+	fsmlib_assert("TC-Trace-NNNN",
+		result == "1.2",
+		"operator<<(std::ostream & out, const Trace & trace) writes every element of trace to out in the right order.");
+}
+
 int main(int argc, char** argv)
 {
     
@@ -3861,7 +3974,10 @@ int main(int argc, char** argv)
 	//testFsmPresentationLayerCompareNegative();
 	
 	//testTraceEquals1Positive();
-	testTraceEquals1Negative();
+	//testTraceEquals1Negative();
+	//testTraceEquals2Positive();
+	//testTraceEquals2Negative();
+	testTraceOutputOperator();
 
 	/*testMinimise();
 	testWMethod();*/
