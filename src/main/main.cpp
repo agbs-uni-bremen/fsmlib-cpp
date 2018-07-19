@@ -3876,6 +3876,202 @@ void testTraceOutputOperator() {
 		"operator<<(std::ostream & out, const Trace & trace) writes every element of trace to out in the right order.");
 }
 
+//===================================== InputTrace Tests ===================================================
+
+// tests operator<<(std::ostream & out, const InputTrace & trace)
+void testInputTraceOutputOperator() {
+	// in2String of pl is empty. inTrace contains one element.
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	vector<int> inVec{0};
+	InputTrace inTrace{ inVec, pl };
+	ostringstream out;
+	out << inTrace;
+	string result = out.str();
+	fsmlib_assert("TC-InputTrace-NNNN",
+		result == "0",
+		"operator<<(std::ostream & out, const InputTrace & trace) writes every element of trace to out in the right order and with the right name");
+
+	out.str("");
+	out.clear();
+
+	// in2String of pl is empty. inTrace contains two elements.
+	inVec = { 0, 3 };
+	inTrace = { inVec, pl };
+	out << inTrace;
+	result = out.str();
+	fsmlib_assert("TC-InputTrace-NNNN",
+		result == "0.3",
+		"operator<<(std::ostream & out, const InputTrace & trace) writes every element of trace to out in the right order and with the right name");
+
+	out.str("");
+	out.clear();
+
+	// in2String of pl contains one element. inTrace contains one element.
+	vector<string> in2String{ "e0" };
+	vector<string> out2String{ };
+	vector<string> state2String{ };
+	pl = make_shared<FsmPresentationLayer>(in2String, out2String, state2String);
+	inVec = { 0 };
+	inTrace = { inVec, pl };
+	out << inTrace;
+	result = out.str();
+	fsmlib_assert("TC-InputTrace-NNNN",
+		result == "e0",
+		"operator<<(std::ostream & out, const InputTrace & trace) writes every element of trace to out in the right order and with the right name");
+
+	out.str("");
+	out.clear();
+
+	// in2String contains one element. inTrace contains one element >= in2String.size()
+	inVec = { 1 };
+	inTrace = { inVec, pl };
+	out << inTrace;
+	result = out.str();
+	fsmlib_assert("TC-InputTrace-NNNN",
+		result == "1",
+		"operator<<(std::ostream & out, const InputTrace & trace) writes every element of trace to out in the right order and with the right name");
+
+	out.str("");
+	out.clear();
+
+	// in2String contains one element. inTrace contains two elements. One elements is smaller than in2String.size() and one is equal to in2String.size().
+	inVec = { 0,1 };
+	inTrace = { inVec, pl };
+	out << inTrace;
+	result = out.str();
+	fsmlib_assert("TC-InputTrace-NNNN",
+		result == "e0.1",
+		"operator<<(std::ostream & out, const InputTrace & trace) writes every element of trace to out in the right order and with the right name");
+
+	out.str("");
+	out.clear();
+
+	// in2String contains two elements. inTrace contains three elements. All elements are smaller than in2String.size().
+	in2String = { "e0", "e1" };
+	pl = make_shared<FsmPresentationLayer>(in2String, out2String, state2String);
+	inVec = { 0,1,0 };
+	inTrace = { inVec, pl };
+	out << inTrace;
+	result = out.str();
+	fsmlib_assert("TC-InputTrace-NNNN",
+		result == "e0.e1.e0",
+		"operator<<(std::ostream & out, const InputTrace & trace) writes every element of trace to out in the right order and with the right name");
+
+	out.str("");
+	out.clear();
+
+
+	// in2String contains two elements. inTrace contains three elements. Two elements are smaller than in2String.size(). One element is equal to this size.
+	inVec = { 1,2,1 };
+	inTrace = { inVec, pl };
+	out << inTrace;
+	result = out.str();
+	fsmlib_assert("TC-InputTrace-NNNN",
+		result == "e1.2.e1",
+		"operator<<(std::ostream & out, const InputTrace & trace) writes every element of trace to out in the right order and with the right name");
+
+	out.str("");
+	out.clear();
+}
+
+//===================================== OutputTrace Tests ===================================================
+
+// tests operator<<(std::ostream & out, const OutputTrace & trace)
+void testOutputTraceOutputOperator() {
+	// out2String of pl is empty. outTrace contains one element.
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	vector<int> outVec{ 0 };
+	OutputTrace outTrace{ outVec, pl };
+	ostringstream out;
+	out << outTrace;
+	string result = out.str();
+	fsmlib_assert("TC-OutputTrace-NNNN",
+		result == "0",
+		"operator<<(std::ostream & out, const OutputTrace & trace) writes every element of trace to out in the right order and with the right name");
+
+	out.str("");
+	out.clear();
+
+	// out2String of pl is empty. outTrace contains two elements.
+	outVec = { 0, 3 };
+	outTrace = { outVec, pl };
+	out << outTrace;
+	result = out.str();
+	fsmlib_assert("TC-OutputTrace-NNNN",
+		result == "0.3",
+		"operator<<(std::ostream & out, const OutputTrace & trace) writes every element of trace to out in the right order and with the right name");
+
+	out.str("");
+	out.clear();
+
+	// out2String of pl contains one element. outTrace contains one element.
+	vector<string> in2String{};
+	vector<string> out2String{ "e0" };
+	vector<string> state2String{};
+	pl = make_shared<FsmPresentationLayer>(in2String, out2String, state2String);
+	outVec = { 0 };
+	outTrace = { outVec, pl };
+	out << outTrace;
+	result = out.str();
+	fsmlib_assert("TC-OutputTrace-NNNN",
+		result == "e0",
+		"operator<<(std::ostream & out, const OutputTrace & trace) writes every element of trace to out in the right order and with the right name");
+
+	out.str("");
+	out.clear();
+
+	// out2String contains one element. outTrace contains one element >= out2String.size()
+	outVec = { 1 };
+	outTrace = { outVec, pl };
+	out << outTrace;
+	result = out.str();
+	fsmlib_assert("TC-OutputTrace-NNNN",
+		result == "1",
+		"operator<<(std::ostream & out, const OutputTrace & trace) writes every element of trace to out in the right order and with the right name");
+
+	out.str("");
+	out.clear();
+
+	// out2String contains one element. outTrace contains two elements. One elements is smaller than out2String.size() and one is equal to out2String.size().
+	outVec = { 0,1 };
+	outTrace = { outVec, pl };
+	out << outTrace;
+	result = out.str();
+	fsmlib_assert("TC-OutputTrace-NNNN",
+		result == "e0.1",
+		"operator<<(std::ostream & out, const OutputTrace & trace) writes every element of trace to out in the right order and with the right name");
+
+	out.str("");
+	out.clear();
+
+	// out2String contains two elements. outTrace contains three elements. All elements are smaller than out2String.size().
+	out2String = { "e0", "e1" };
+	pl = make_shared<FsmPresentationLayer>(in2String, out2String, state2String);
+	outVec = { 0,1,0 };
+	outTrace = { outVec, pl };
+	out << outTrace;
+	result = out.str();
+	fsmlib_assert("TC-OutputTrace-NNNN",
+		result == "e0.e1.e0",
+		"operator<<(std::ostream & out, const OutputTrace & trace) writes every element of trace to out in the right order and with the right name");
+
+	out.str("");
+	out.clear();
+
+
+	// out2String contains two elements. outTrace contains three elements. Two elements are smaller than out2String.size(). One element is equal to this size.
+	outVec = { 1,2,1 };
+	outTrace = { outVec, pl };
+	out << outTrace;
+	result = out.str();
+	fsmlib_assert("TC-OutputTrace-NNNN",
+		result == "e1.2.e1",
+		"operator<<(std::ostream & out, const OutputTrace & trace) writes every element of trace to out in the right order and with the right name");
+
+	out.str("");
+	out.clear();
+}
+
 int main(int argc, char** argv)
 {
     
@@ -3977,7 +4173,11 @@ int main(int argc, char** argv)
 	//testTraceEquals1Negative();
 	//testTraceEquals2Positive();
 	//testTraceEquals2Negative();
-	testTraceOutputOperator();
+	//testTraceOutputOperator();
+
+	//testInputTraceOutputOperator();
+	
+	testOutputTraceOutputOperator();
 
 	/*testMinimise();
 	testWMethod();*/
