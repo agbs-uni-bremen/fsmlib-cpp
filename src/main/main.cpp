@@ -4072,6 +4072,336 @@ void testOutputTraceOutputOperator() {
 	out.clear();
 }
 
+//===================================== OutputTree Tests ===================================================
+
+// tests OutputTree::contains(OutputTree& ot)
+// Negative Case.
+void testOutputTreeContainsNegative() {
+	// inputTrace of this Tree is empty. otherInputTrace of otherTree isn't empty.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{};
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		vector<int> otherInVec{1};
+		InputTrace otherInputTrace(otherInVec, pl);
+		OutputTree otherTree(otherRoot, otherInputTrace, pl);
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			not tree.contains(otherTree),
+			"OutputTree::contains(OutputTree& ot) returns false if the InputTraces differ.");
+	}
+
+	// inputTrace of this Tree isn't empty. otherInputTrace of otherTree is empty.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 1 };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		vector<int> otherInVec{ };
+		InputTrace otherInputTrace(otherInVec, pl);
+		OutputTree otherTree(otherRoot, otherInputTrace, pl);
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			not tree.contains(otherTree),
+			"OutputTree::contains(OutputTree& ot) returns false if the InputTraces differ.");
+	}
+
+	// inputTraces both aren't empty. inputTraces are unequal. 
+	// Both Trees contain the same output trace.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 1 };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+		vector<int> outVec{ 1 };
+		tree.addToRoot(outVec);
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		vector<int> otherInVec{1,2};
+		InputTrace otherInputTrace(otherInVec, pl);
+		OutputTree otherTree(otherRoot, otherInputTrace, pl);
+		vector<int> otherOutVec{ 1 };
+		otherTree.addToRoot(otherOutVec);
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			not tree.contains(otherTree),
+			"OutputTree::contains(OutputTree& ot) returns false if the InputTraces differ.");
+	}
+
+	// inputTraces are equal (both empty).
+	// tree contains empty trace. otherTree contains one output trace which is not empty.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{  };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		vector<int> otherInVec{  };
+		InputTrace otherInputTrace(otherInVec, pl);
+		OutputTree otherTree(otherRoot, otherInputTrace, pl);
+		vector<int> otherOutVec{ 1 };
+		otherTree.addToRoot(otherOutVec);
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			not tree.contains(otherTree),
+			"OutputTree::contains(OutputTree& ot) returns false if otherTree contains an output trace which is not contained in tree.");
+	}
+
+	// inputTraces are equal (both empty).
+	// tree contains only output trace [2]. otherTree contains only output trace [1].
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{};
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+		vector<int> outVec{ 2 };
+		tree.addToRoot(outVec);
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		vector<int> otherInVec{};
+		InputTrace otherInputTrace(otherInVec, pl);
+		OutputTree otherTree(otherRoot, otherInputTrace, pl);
+		vector<int> otherOutVec{ 1 };
+		otherTree.addToRoot(otherOutVec);
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			not tree.contains(otherTree),
+			"OutputTree::contains(OutputTree& ot) returns false if otherTree contains an output trace which is not contained in tree.");
+	}
+
+	// inputTraces are equal.
+	// tree contains only output trace [1,2]. otherTree contains only output trace [1] (prefix)).
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{1, 2};
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+		vector<int> outVec{ 1, 2 };
+		tree.addToRoot(outVec);
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		vector<int> otherInVec{ 1, 2 };
+		InputTrace otherInputTrace(otherInVec, pl);
+		OutputTree otherTree(otherRoot, otherInputTrace, pl);
+		vector<int> otherOutVec{ 1 };
+		otherTree.addToRoot(otherOutVec);
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			not tree.contains(otherTree),
+			"OutputTree::contains(OutputTree& ot) returns false if otherTree contains an output trace which is not contained in tree.");
+	}
+
+	// inputTraces are equal.
+	// tree contains output traces [1,2] and [2,3]. otherTree contains output traces [1,2] and [2,2] (they share one Trace)).
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 1, 2 };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+		vector<int> outVec1{ 1, 2 };
+		tree.addToRoot(outVec1);
+		vector<int> outVec2{ 2, 3 };
+		tree.addToRoot(outVec2);
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		vector<int> otherInVec{ 1, 2 };
+		InputTrace otherInputTrace(otherInVec, pl);
+		OutputTree otherTree(otherRoot, otherInputTrace, pl);
+		vector<int> otherOutVec1{ 1, 2 };
+		otherTree.addToRoot(otherOutVec1);
+		vector<int> otherOutVec2{ 2, 2 };
+		otherTree.addToRoot(otherOutVec2);
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			not tree.contains(otherTree),
+			"OutputTree::contains(OutputTree& ot) returns false if otherTree contains an output trace which is not contained in tree.");
+	}
+
+	// inputTraces are equal.
+	// tree contains output trace [1,2]. otherTree contains output trace [1,2,1].
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 1, 2 };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+		vector<int> outVec{ 1, 2 };
+		tree.addToRoot(outVec);
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		vector<int> otherInVec{ 1, 2 };
+		InputTrace otherInputTrace(otherInVec, pl);
+		OutputTree otherTree(otherRoot, otherInputTrace, pl);
+		vector<int> otherOutVec{ 1, 2, 1 };
+		otherTree.addToRoot(otherOutVec);
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			not tree.contains(otherTree),
+			"OutputTree::contains(OutputTree& ot) returns false if otherTree contains an output trace which is not contained in tree.");
+	}
+
+	// inputTraces are equal.
+	// tree contains output trace [0]. otherTree contains only empty trace [].
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 1 };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+		vector<int> outVec{ 0 };
+		tree.addToRoot(outVec);
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		vector<int> otherInVec{ 1 };
+		InputTrace otherInputTrace(otherInVec, pl);
+		OutputTree otherTree(otherRoot, otherInputTrace, pl);
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			not tree.contains(otherTree),
+			"OutputTree::contains(OutputTree& ot) returns false if otherTree contains an output trace which is not contained in tree.");
+	}
+}
+
+// tests OutputTree::contains(OutputTree& ot)
+// Positive Case.
+void testOutputTreeContainsPositive() {
+	// all Traces are empty.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{};
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		vector<int> otherInVec{};
+		InputTrace otherInputTrace(otherInVec, pl);
+		OutputTree otherTree(otherRoot, otherInputTrace, pl);
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			tree.contains(otherTree),
+			"OutputTree::contains(OutputTree& ot) returns true if the InputTraces are the same and each output trace contained in otherTree is "
+			"also contained in tree.");
+	}
+
+	// inputTraces are equal.
+	// tree contains only output trace [0]. otherTree contains only output trace [0].
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 1 };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+		vector<int> outVec{ 0 };
+		tree.addToRoot(outVec);
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		vector<int> otherInVec{ 1 };
+		InputTrace otherInputTrace(otherInVec, pl);
+		OutputTree otherTree(otherRoot, otherInputTrace, pl);
+		vector<int> otherOutVec{ 0 };
+		otherTree.addToRoot(otherOutVec);
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			tree.contains(otherTree),
+			"OutputTree::contains(OutputTree& ot) returns true if the InputTraces are the same and each output trace contained in otherTree is "
+			"also contained in tree.");
+	}
+
+	// inputTraces are equal.
+	// tree contains output traces [0,0] and [0,2]. otherTree contains only output trace [0,2].
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 1,2 };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+		vector<int> outVec1{ 0,0 };
+		tree.addToRoot(outVec1);
+		vector<int> outVec2{ 0,2 };
+		tree.addToRoot(outVec2);
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		vector<int> otherInVec{ 1,2 };
+		InputTrace otherInputTrace(otherInVec, pl);
+		OutputTree otherTree(otherRoot, otherInputTrace, pl);
+		vector<int> otherOutVec{ 0,2 };
+		otherTree.addToRoot(otherOutVec);
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			tree.contains(otherTree),
+			"OutputTree::contains(OutputTree& ot) returns true if the InputTraces are the same and each output trace contained in otherTree is "
+			"also contained in tree.");
+	}
+
+	// inputTraces are equal.
+	// tree contains output traces [0,0] and [0,2]. otherTree contains only output trace [0,0].
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 1,2 };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+		vector<int> outVec1{ 0,0 };
+		tree.addToRoot(outVec1);
+		vector<int> outVec2{ 0,2 };
+		tree.addToRoot(outVec2);
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		vector<int> otherInVec{ 1,2 };
+		InputTrace otherInputTrace(otherInVec, pl);
+		OutputTree otherTree(otherRoot, otherInputTrace, pl);
+		vector<int> otherOutVec{ 0,0 };
+		otherTree.addToRoot(otherOutVec);
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			tree.contains(otherTree),
+			"OutputTree::contains(OutputTree& ot) returns true if the InputTraces are the same and each output trace contained in otherTree is "
+			"also contained in tree.");
+	}
+
+	// inputTraces are equal.
+	// Both Trees are equal and not empty.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 1,2 };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+		vector<int> outVec1{ 0,0 };
+		tree.addToRoot(outVec1);
+		vector<int> outVec2{ 0,2 };
+		tree.addToRoot(outVec2);
+
+		shared_ptr<TreeNode> otherRoot = make_shared<TreeNode>();
+		vector<int> otherInVec{ 1,2 };
+		InputTrace otherInputTrace(otherInVec, pl);
+		OutputTree otherTree(otherRoot, otherInputTrace, pl);
+		vector<int> otherOutVec1{ 0,0 };
+		otherTree.addToRoot(otherOutVec1);
+		vector<int> otherOutVec2{ 0,2 };
+		otherTree.addToRoot(otherOutVec2);
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			tree.contains(otherTree),
+			"OutputTree::contains(OutputTree& ot) returns true if the InputTraces are the same and each output trace contained in otherTree is "
+			"also contained in tree.");
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -4177,7 +4507,10 @@ int main(int argc, char** argv)
 
 	//testInputTraceOutputOperator();
 	
-	testOutputTraceOutputOperator();
+	//testOutputTraceOutputOperator();
+
+	//testOutputTreeContainsNegative();
+	testOutputTreeContainsPositive();
 
 	/*testMinimise();
 	testWMethod();*/
