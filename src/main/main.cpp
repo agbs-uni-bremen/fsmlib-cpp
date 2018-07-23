@@ -4530,6 +4530,84 @@ void testOutputTreeToDot() {
 	}
 }
 
+// tests OutputTree::getOutputTraces()
+void testOutputTreeGetOutputTraces() {
+	// root is a leaf. InputTrace is empty.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{};
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+
+		vector<int> outVec{};
+		OutputTrace outputTrace(outVec, pl);
+
+		vector<OutputTrace> result = tree.getOutputTraces();
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			result.size() == 1
+			&& result.at(0) == outputTrace,
+			"OutputTree::getOutputTraces() called on an OutputTree which consists only of a root, returns only an empty OutputTrace.");
+	}
+
+	// OutputTree contains two Traces ([1] and [2]).
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{0};
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+
+		vector<int> outVec1{ 1 };
+		tree.addToRoot(outVec1);
+		OutputTrace outputTrace1(outVec1, pl);
+		vector<int> outVec2{ 2 };
+		tree.addToRoot(outVec2);
+		OutputTrace outputTrace2(outVec2, pl);
+		
+		vector<OutputTrace> result = tree.getOutputTraces();
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			find(result.cbegin(), result.cend(), outputTrace1) != result.cend()
+			&& find(result.cbegin(), result.cend(), outputTrace2) != result.cend(),
+			"result of OutputTree::getOutputTraces() contains each expected OutputTrace");
+		fsmlib_assert("TC-OutputTree-NNNN",
+			result.size() == 2,
+			"result of OutputTree::getOutputTraces() contains only expected OutputTraces");
+	}
+
+	// OutputTree contains three Traces ([1,1], [1,2] and [2]).
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 0 };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);		
+
+		vector<int> outVec1{ 1,1 };
+		tree.addToRoot(outVec1);
+		OutputTrace outputTrace1(outVec1, pl);
+		vector<int> outVec2{ 1,2 };
+		tree.addToRoot(outVec2);
+		OutputTrace outputTrace2(outVec2, pl);
+		vector<int> outVec3{ 2 };
+		tree.addToRoot(outVec3);
+		OutputTrace outputTrace3(outVec3, pl);
+
+		vector<OutputTrace> result = tree.getOutputTraces();
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			find(result.cbegin(), result.cend(), outputTrace1) != result.cend()
+			&& find(result.cbegin(), result.cend(), outputTrace2) != result.cend()
+			&& find(result.cbegin(), result.cend(), outputTrace3) != result.cend(),
+			"result of OutputTree::getOutputTraces() contains each expected OutputTrace");
+		fsmlib_assert("TC-OutputTree-NNNN",
+			result.size() == 3,
+			"result of OutputTree::getOutputTraces() contains only expected OutputTraces");
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -4639,7 +4717,8 @@ int main(int argc, char** argv)
 
 	//testOutputTreeContainsNegative();
 	//testOutputTreeContainsPositive();
-	testOutputTreeToDot();
+	//testOutputTreeToDot();
+	testOutputTreeGetOutputTraces();
 
 	/*testMinimise();
 	testWMethod();*/
