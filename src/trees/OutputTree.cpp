@@ -7,7 +7,7 @@
 
 using namespace std;
 
-void OutputTree::printChildrenOutput(ostream& out, const shared_ptr<TreeNode> top, const shared_ptr<int> idNode, const int idInput) const
+void OutputTree::printChildrenOutput(ostream& out, const shared_ptr<TreeNode>& top, const shared_ptr<int>& idNode, const int idInput) const
 {
 	int idNodeBase = *idNode;
 	for (shared_ptr<TreeEdge> edge : *top->getChildren())
@@ -17,10 +17,16 @@ void OutputTree::printChildrenOutput(ostream& out, const shared_ptr<TreeNode> to
 	}
 }
 
-OutputTree::OutputTree(const shared_ptr<TreeNode> root,
+OutputTree::OutputTree(const shared_ptr<TreeNode>& root,
                        const InputTrace& inputTrace,
-                       const shared_ptr<FsmPresentationLayer> presentationLayer)
+                       const shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: Tree(root, presentationLayer), inputTrace(inputTrace)
+{
+
+}
+
+OutputTree::OutputTree(const OutputTree* other):
+    Tree(other), inputTrace(other->inputTrace.get(), other->presentationLayer)
 {
 
 }
@@ -30,7 +36,7 @@ InputTrace OutputTree::getInputTrace() const
     return inputTrace;
 }
 
-bool OutputTree::contains(OutputTree& ot)
+bool OutputTree::contains(const OutputTree& ot) const
 {
     //Get the input traces
     InputTrace myInputs = getInputTrace();
@@ -66,6 +72,36 @@ vector<OutputTrace> OutputTree::getOutputTraces() const {
         traces.emplace_back(std::move(trace), presentationLayer);
     }
     return traces;
+}
+
+vector<IOTrace> OutputTree::getOutputsIntersection(OutputTree & ot)
+{
+    vector<IOTrace> thisIOTrace;
+    vector<IOTrace> otherIOTrace;
+    toIOTrace(thisIOTrace);
+    ot.toIOTrace(otherIOTrace);
+
+    vector<IOTrace> intersection;
+
+    bool skip = false;
+    for (IOTrace thisTrace : thisIOTrace)
+    {
+        if (skip)
+        {
+            skip = false;
+            continue;
+        }
+        for (IOTrace otherTrace : otherIOTrace)
+        {
+            if (thisTrace == otherTrace)
+            {
+                intersection.push_back(thisTrace);
+                skip = true;
+                continue;
+            }
+        }
+    }
+    return intersection;
 }
 
 void OutputTree::toDot(ostream& out) const
@@ -108,6 +144,26 @@ void OutputTree::toIOTrace(vector<IOTrace> &iotrVec) {
         
     }
     
+}
+
+void OutputTree::toIOTrace(vector<shared_ptr<IOTrace>> &iotrVec) {
+    vector<vector<int>> lli = *getIOLists().getIOLists();
+    for (vector<int> lst : lli)
+    {
+        OutputTrace otrc(lst,presentationLayer);
+        shared_ptr<IOTrace> iotrc = make_shared<IOTrace>(inputTrace, otrc);
+        iotrVec.push_back(iotrc);
+    }
+}
+
+OutputTree* OutputTree::_clone() const
+{
+    return new OutputTree( this );
+}
+
+std::shared_ptr<OutputTree> OutputTree::Clone() const
+{
+    return std::shared_ptr<OutputTree>(_clone());
 }
 
 ostream& operator<<(ostream& out, OutputTree& ot)

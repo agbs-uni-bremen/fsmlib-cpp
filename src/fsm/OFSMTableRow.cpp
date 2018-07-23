@@ -25,7 +25,7 @@ int OFSMTableRow::get(const int i, const int j) const
 	return matrix.at(i).at(j);
 }
 
-bool OFSMTableRow::ioEquals(const std::shared_ptr<OFSMTableRow> r) const
+bool OFSMTableRow::ioEquals(const std::shared_ptr<OFSMTableRow>& r) const
 {
 	for (int i = 0; i <= maxInput; ++ i)
 	{
@@ -40,7 +40,7 @@ bool OFSMTableRow::ioEquals(const std::shared_ptr<OFSMTableRow> r) const
 	return true;
 }
 
-bool OFSMTableRow::classEquals(const S2CMap & s2c, const std::shared_ptr<OFSMTableRow> r)
+bool OFSMTableRow::classEquals(const S2CMap & s2c, const std::shared_ptr<OFSMTableRow>& r)
 {
 	if (!ioEquals(r))
 	{

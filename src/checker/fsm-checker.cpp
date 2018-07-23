@@ -253,7 +253,7 @@ static void executeTestSuite(const char* fname) {
         }
         
     }
-    
+    fclose(f);
     
     
 }

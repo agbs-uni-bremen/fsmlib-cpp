@@ -1,3 +1,6 @@
+logs
+_logs
+Debug
 Debug.Linux
 Debug.OSX
 build.Linux
@@ -5,6 +8,7 @@ build.MacOSX
 build.Win
 doc/html
 doc/latex
+Release
 Release.Linux
 resources/csm.fsm
 build.Linux/**
@@ -69,3 +73,11 @@ resources/pls-example/plsautocndOut.csv
 src/main/main_BASE_2591.cpp
 src/main/main_LOCAL_2591.cpp
 src/main/main_REMOTE_2591.cpp
+CMakeFiles
+
+src/CMakeLists.txt.user
+
+resources/adaptive-test/*.dot
+resources/asc-test-results/*.dot
+resources/example-master-fehler
+csv/**

@@ -8,9 +8,9 @@
 
 using namespace std;
 
-FsmTransition::FsmTransition(const shared_ptr<FsmNode>  source,
-                             const shared_ptr<FsmNode>  target,
-                             const shared_ptr<FsmLabel> label)
+FsmTransition::FsmTransition(const shared_ptr<FsmNode>& source,
+                             const shared_ptr<FsmNode>& target,
+                             const shared_ptr<FsmLabel>& label)
 	: source(source), target(target), label(label)
 {
     
@@ -58,8 +58,37 @@ shared_ptr<FsmLabel> FsmTransition::getLabel()
 
 ostream & operator<<(ostream& out, FsmTransition& transition)
 {
-	out << transition.getSource()->getId() << " -> " << transition.getTarget()->getId() << "[label=\" " << *transition.label << "   \"];";
-	return out;
+    out << transition.str();
+    return out;
+}
+
+string FsmTransition::str()
+{
+    stringstream out;
+    if (auto src = getSource())
+    {
+        if (auto tar = getTarget())
+        {
+            out << src->getId() << " -> " << tar->getId() << "[label=\"" << *label << "\"];"
+                << "  //" << src->getName() << " -> " << tar->getName();
+        }
+        else
+        {
+            out << src->getId() << " -> " << "[label=\"" << *label << "\"];"
+                << "  //" << src->getName() << " -> ";
+        }
+    }
+    else if (auto tar = getTarget())
+    {
+        out << " -> " << tar->getId() << "[label=\"" << *label << "\"];"
+            << "  //" << " -> " << tar->getName();
+    }
+    else
+    {
+        out << " -> " << "[label=\"" << *label << "\"];"
+            << "  //" << " -> ";
+    }
+    return out.str();
 }
 
 void FsmTransition::accept(FsmVisitor &v) {

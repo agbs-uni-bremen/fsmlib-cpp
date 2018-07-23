@@ -28,9 +28,20 @@ std::shared_ptr<TreeNode> TreeNode::clone() const
     return clone;
 }
 
-void TreeNode::setParent(const weak_ptr<TreeNode> pparent)
+TreeNode::TreeNode(const TreeNode* other):
+    parent(std::weak_ptr<TreeNode>()), children(std::make_shared<std::vector<std::shared_ptr<TreeEdge>>>())
 {
-    parent = pparent;
+    for (std::shared_ptr<TreeEdge> child: *other->children)
+    {
+        std::shared_ptr<TreeEdge> childCopy = child->Clone();
+        children->push_back(childCopy);
+    }
+    deleted = other->deleted;
+}
+
+void TreeNode::setParent(const weak_ptr<TreeNode>& parent)
+{
+    this->parent = parent;
 }
 
 weak_ptr<TreeNode> TreeNode::getParent() const
@@ -94,7 +105,7 @@ shared_ptr<vector<shared_ptr<TreeEdge>>> TreeNode::getChildren() const
     return children;
 }
 
-void TreeNode::remove(const shared_ptr<TreeNode> node)
+void TreeNode::remove(const shared_ptr<TreeNode>& node)
 {
     for (shared_ptr<TreeEdge> e : *children)
     {
@@ -136,7 +147,7 @@ void TreeNode::calcLeaves(vector<shared_ptr<TreeNode const>>& leaves) const
     }
 }
 
-void TreeNode::add(const shared_ptr<TreeEdge> edge)
+void TreeNode::add(const shared_ptr<TreeEdge>& edge)
 {
     edge->getTarget()->setParent(shared_from_this());
     children->push_back(edge);
@@ -147,7 +158,7 @@ bool TreeNode::isLeaf() const
     return children->empty();
 }
 
-int TreeNode::getIO(shared_ptr<TreeNode const> node) const
+int TreeNode::getIO(const shared_ptr<TreeNode const>& node) const
 {
     for (shared_ptr<TreeEdge> e : *children)
     {
@@ -159,7 +170,7 @@ int TreeNode::getIO(shared_ptr<TreeNode const> node) const
     exit(EXIT_FAILURE);
 }
 
-shared_ptr<TreeEdge> TreeNode::hasEdge(const shared_ptr<TreeEdge> edge) const
+shared_ptr<TreeEdge> TreeNode::hasEdge(const shared_ptr<TreeEdge>& edge) const
 {
     for (shared_ptr<TreeEdge> g : *children)
     {
@@ -193,7 +204,7 @@ vector<int> TreeNode::getPath() const
     return result;
 }
 
-bool TreeNode::superTreeOf(const shared_ptr<TreeNode> otherNode) const
+bool TreeNode::superTreeOf(const shared_ptr<TreeNode>& otherNode) const
 {
     
     if (children->size() < otherNode->children->size())
@@ -270,6 +281,11 @@ bool operator==(TreeNode const & treeNode1, TreeNode const & treeNode2)
         
     }
     return true;
+}
+
+bool operator!=(TreeNode const & treeNode1, TreeNode const & treeNode2)
+{
+    return !(treeNode1 == treeNode2);
 }
 
 shared_ptr<TreeNode> TreeNode::add(const int x)
@@ -431,6 +447,30 @@ shared_ptr<TreeNode> TreeNode::after(vector<int>::const_iterator lstIte, const v
     return shared_from_this();
 }
 
+std::shared_ptr<TreeNode> TreeNode::after(const int y) const
+{
+    for (std::shared_ptr<TreeEdge> edge : *children)
+    {
+        if (edge->getIO() == y)
+        {
+            return edge->getTarget();
+        }
+    }
+    return nullptr;
+}
+
+bool TreeNode::isDefined(int y) const
+{
+    for (std::shared_ptr<TreeEdge> edge : *children)
+    {
+        if (edge->getIO() == y)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 void TreeNode::calcSize(size_t& theSize) {
     
     theSize++;
@@ -441,7 +481,20 @@ void TreeNode::calcSize(size_t& theSize) {
     
 }
 
+TreeNode* TreeNode::_clone() const
+{
+    return new TreeNode( this );
+}
 
+std::shared_ptr<TreeNode> TreeNode::Clone() const
+{
+    std::shared_ptr<TreeNode> copy = std::shared_ptr<TreeNode>(_clone());
+    for (auto child: *(copy->children))
+    {
+        child->getTarget()->setParent(copy);
+    }
+    return copy;
+}
 
 void TreeNode::traverse(vector<int>& v,
                         shared_ptr<vector<vector<int>>> ioll) {
@@ -465,7 +518,6 @@ void TreeNode::traverse(vector<int>& v,
     
     
 }
-
 
 
 

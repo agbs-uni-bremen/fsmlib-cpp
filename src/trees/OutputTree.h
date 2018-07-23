@@ -29,10 +29,13 @@ private:
 	 * @param idInput The current id of the input trace, incremented each time you go deeper in the tree
 	 */
 	void printChildrenOutput(std::ostream& out,
-                             const std::shared_ptr<TreeNode> top,
-                             const std::shared_ptr<int> idNode,
+                             const std::shared_ptr<TreeNode>& top,
+                             const std::shared_ptr<int>& idNode,
                              const int idInput) const;
     
+protected:
+    OutputTree(const OutputTree* other);
+
 public:
 	/**
 	 * Create a new OutputTree
@@ -40,9 +43,9 @@ public:
 	 * @param inputTrace The inputTrace of this output tree (one input trace, maybe more than one output possible)
 	 * @param presentationLayer The presentation layer to use
 	*/
-	OutputTree(const std::shared_ptr<TreeNode> root,
+    OutputTree(const std::shared_ptr<TreeNode>& root,
                const InputTrace& inputTrace,
-               const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+               const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
     InputTrace getInputTrace() const;
 
@@ -64,7 +67,9 @@ public:
      * @note This operations re-calculates the leaves of this and of ot,
      *        so int changes the internal state of both objects.
 	*/
-	bool contains(OutputTree& ot);
+    bool contains(const OutputTree& ot) const;
+
+    std::vector<IOTrace> getOutputsIntersection(OutputTree & ot);
 
 	/**
 	 * Store the OutputTree to a standard output file in dot format
@@ -82,6 +87,11 @@ public:
      *  Transform output tree into vector of IO traces.
      */
     void toIOTrace(std::vector<IOTrace>& iotrVec);
+
+    void toIOTrace(std::vector<std::shared_ptr<IOTrace>>& iotrVec);
+
+    virtual OutputTree* _clone() const;
+    std::shared_ptr<OutputTree> Clone() const;
 
 	/**
 	 * Output the OutputTree to a standard output stream

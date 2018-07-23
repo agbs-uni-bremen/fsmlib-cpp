@@ -49,13 +49,13 @@ std::vector<int> IOListContainer::nextLst(const int maxInput, const std::vector<
 	return nextl;
 }
 
-IOListContainer::IOListContainer(const std::shared_ptr<std::vector<std::vector<int>>> iolLst, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+IOListContainer::IOListContainer(const std::shared_ptr<std::vector<std::vector<int>>>& iolLst, const std::shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: iolLst(iolLst), presentationLayer(presentationLayer)
 {
 
 }
 
-IOListContainer::IOListContainer(const int maxInput, const int minLength, const int maxLenght, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+IOListContainer::IOListContainer(const int maxInput, const int minLength, const int maxLenght, const std::shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: iolLst(std::make_shared<std::vector<std::vector<int>>>()), presentationLayer(presentationLayer)
 {
 	for (int len = minLength; len <= maxLenght; ++ len)
@@ -75,7 +75,7 @@ IOListContainer::IOListContainer(const int maxInput, const int minLength, const 
 	}
 }
 
-IOListContainer::IOListContainer(const std::shared_ptr<FsmPresentationLayer>
+IOListContainer::IOListContainer(const std::shared_ptr<FsmPresentationLayer>&
                                  pl)
 : iolLst(std::make_shared<std::vector<std::vector<int>>>()),
     presentationLayer(pl) {
@@ -92,9 +92,101 @@ void IOListContainer::add(const Trace & trc)
 	iolLst->push_back(trc.get());
 }
 
+void IOListContainer::addUnique(const Trace & trc)
+{
+    for(auto inLst : *iolLst)
+    {
+        if (trc == inLst){
+            return;
+        }
+    }
+    iolLst->push_back(trc.get());
+}
+
+void IOListContainer::removeRealPrefixes(const Trace & trc)
+{
+    std::vector<int> trace = trc.get();
+    auto it = iolLst->begin();
+    while (it != iolLst->end())
+    {
+        bool foundPrefix = true;
+        std::vector<int> t = *it;
+        if (t.size() >= trace.size())
+        {
+            ++it;
+            continue;
+        }
+        for (size_t i = 0; i < t.size(); ++i)
+        {
+            if (t.at(i) != trace.at(i))
+            {
+                foundPrefix = false;
+                break;
+            }
+        }
+        if (foundPrefix)
+        {
+            it = iolLst->erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
+
+void IOListContainer::addUniqueRemovePrefixes(const Trace & trc)
+{
+    removeRealPrefixes(trc);
+    for(auto inLst : *iolLst)
+    {
+        if (trc == inLst){
+            return;
+        }
+        for (size_t i = 0; i < trc.get().size(); ++i)
+        {
+            if (trc.get().at(i) != inLst.at(i))
+            {
+                break;
+            }
+            if (i == trc.get().size() - 1)
+            {
+                // The list contains the trace already as prefix.
+                return;
+            }
+        }
+    }
+    // No other trace has been found that contains the trace as prefix.
+    iolLst->push_back(trc.get());
+}
+
 int IOListContainer::size() const
 {
 	return static_cast<int> (iolLst->size());
+}
+
+bool IOListContainer::contains(const std::shared_ptr<std::vector<std::vector<int>>>& ioll, const std::vector<int>& trace)
+{
+    for (size_t i = 0; i < ioll->size(); ++i)
+    {
+        std::vector<int>& elem = ioll->at(i);
+        if (elem.size() != trace.size())
+        {
+            continue;
+        }
+        for (size_t j = 0; j < elem.size(); ++j)
+        {
+            if (elem.at(j) != trace.at(j))
+            {
+                break;
+            }
+            if (j == elem.size() - 1)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 std::ostream & operator<<(std::ostream & out, const IOListContainer & ot)

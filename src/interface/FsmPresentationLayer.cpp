@@ -4,19 +4,17 @@
  * Licensed under the EUPL V.1.1
  */
 #include "interface/FsmPresentationLayer.h"
+#include <algorithm>
 
 FsmPresentationLayer::FsmPresentationLayer()
 {
 
 }
 
-FsmPresentationLayer::FsmPresentationLayer(const FsmPresentationLayer& pl)
+FsmPresentationLayer::FsmPresentationLayer(const FsmPresentationLayer& pl):
+    in2String(pl.in2String), out2String(pl.out2String), state2String(pl.state2String)
 {
-    
-    in2String = pl.in2String;
-    out2String = pl.out2String;
-    state2String = pl.state2String;
-    
+
 }
 
 FsmPresentationLayer::FsmPresentationLayer(const std::vector<std::string>& in2String, const std::vector<std::string>& out2String, const std::vector<std::string>& state2String)
@@ -51,6 +49,11 @@ FsmPresentationLayer::FsmPresentationLayer(const std::string& inputs, const std:
 	}
 }
 
+void FsmPresentationLayer::setState2String(std::vector<std::string> state2String)
+{
+    this->state2String = state2String;
+}
+
 void FsmPresentationLayer::addState2String(std::string name)
 {
     state2String.push_back(name);
@@ -61,6 +64,60 @@ void FsmPresentationLayer::removeState2String(const int index)
     if (index >= 0 && state2String.size() > static_cast<size_t>(index))
     {
         state2String.erase(state2String.begin() + index);
+    }
+}
+
+int FsmPresentationLayer::addOut2String(std::string name)
+{
+    out2String.push_back(name);
+    return static_cast<int>(out2String.size() - 1);
+}
+
+int FsmPresentationLayer::addOut2String(const int i, std::string name)
+{
+    if (static_cast<int>(out2String.size()) <= i)
+    {
+        return addOut2String(name);
+    }
+    return static_cast<int>(i);
+}
+
+int FsmPresentationLayer::addIn2String(std::string name)
+{
+    in2String.push_back(name);
+    return static_cast<int>(in2String.size() - 1);
+}
+
+int FsmPresentationLayer::addIn2String(const int i, std::string name)
+{
+    if (static_cast<int>(in2String.size()) <= i)
+    {
+        return addIn2String(name);
+    }
+    return static_cast<int>(i);
+}
+
+void FsmPresentationLayer::truncateState2String(const int index)
+{
+    if (state2String.size() > static_cast<size_t>(index))
+    {
+        state2String.erase(state2String.begin() + index, state2String.end());
+    }
+}
+
+void FsmPresentationLayer::truncateIn2String(const int index)
+{
+    if (in2String.size() > static_cast<size_t>(index))
+    {
+        in2String.erase(in2String.begin() + index, in2String.end());
+    }
+}
+
+void FsmPresentationLayer::truncateOut2String(const int index)
+{
+    if (out2String.size() > static_cast<size_t>(index))
+    {
+        out2String.erase(out2String.begin() + index, out2String.end());
     }
 }
 
@@ -188,6 +245,17 @@ int FsmPresentationLayer::state2Num(const std::string& name) {
     }
     
     return -1;
+}
+
+FsmPresentationLayer& FsmPresentationLayer::operator=(FsmPresentationLayer& other)
+{
+    if (this != &other)
+    {
+        in2String = other.in2String;
+        out2String = other.out2String;
+        state2String = other.state2String;
+    }
+    return *this;
 }
 
 
