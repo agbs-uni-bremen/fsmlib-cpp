@@ -4402,6 +4402,134 @@ void testOutputTreeContainsPositive() {
 	}
 }
 
+// tests OutputTree::toDot(std::ostream& out) 
+void testOutputTreeToDot() {
+	// root is a leaf. InputTrace is empty.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+
+		std::ostringstream stream;
+		tree.toDot(stream);
+		string content = stream.str();
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			content.find(" -> ") == string::npos,
+			"result of toDot(ostream & out) contains only expected edges");
+	}
+
+	// OutputTree contains only one path [1]. InputTrace is [0].
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{0};
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+		vector<int> outVec{ 1 };
+		tree.addToRoot(outVec); 
+
+		std::ostringstream stream;
+		tree.toDot(stream);
+		string content = stream.str();
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			content.find("0 -> 1[label = \"0/1\" ];") != string::npos,
+			"result of toDot(ostream & out) contains each expected edge");
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			countEdgesInToDotResult(content) == 1,
+			"result of toDot(ostream & out) contains only expected edges");
+	}
+
+	// OutputTree contains two paths [1] and [2]. InputTrace is [0] (empty). Length of InputTrace is equal to the length of each Trace contained in 
+	// OutputTree.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 0 };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+		vector<int> outVec1{ 1 };
+		tree.addToRoot(outVec1);
+		vector<int> outVec2{ 2 };
+		tree.addToRoot(outVec2);
+
+		std::ostringstream stream;
+		tree.toDot(stream);
+		string content = stream.str();
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			content.find("0 -> 1[label = \"0/1\" ];") != string::npos
+			&& content.find("0 -> 2[label = \"0/2\" ];") != string::npos,
+			"result of toDot(ostream & out) contains each expected edge");
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			countEdgesInToDotResult(content) == 2,
+			"result of toDot(ostream & out) contains only expected edges");
+	}
+
+	// OutputTree contains two paths [1] and [2]. InputTrace is [0,1]. Length of InputTrace is greater than the length of at least one Trace
+	// contained in OutputTree.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 0,1 };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+		vector<int> outVec1{ 1 };
+		tree.addToRoot(outVec1);
+		vector<int> outVec2{ 2 };
+		tree.addToRoot(outVec2);
+
+		std::ostringstream stream;
+		tree.toDot(stream);
+		string content = stream.str();
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			content.find("0 -> 1[label = \"0/1\" ];") != string::npos
+			&& content.find("0 -> 2[label = \"0/2\" ];") != string::npos,
+			"result of toDot(ostream & out) contains each expected edge");
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			countEdgesInToDotResult(content) == 2,
+			"result of toDot(ostream & out) contains only expected edges");
+	}
+
+	// OutputTree contains paths [1,1], [1,2] and [2]. InputTrace is [0,1]. Length of InputTrace is greater than the length of at least one Trace
+	// contained in OutputTree.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 0,1 };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+		vector<int> outVec1{ 1, 1 };
+		tree.addToRoot(outVec1);
+		vector<int> outVec2{ 1, 2 };
+		tree.addToRoot(outVec2);
+		vector<int> outVec3{ 2 };
+		tree.addToRoot(outVec3);
+
+		std::ostringstream stream;
+		tree.toDot(stream);
+		string content = stream.str();
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			content.find("0 -> 1[label = \"0/1\" ];") != string::npos
+			&& content.find("1 -> 2[label = \"1/1\" ];") != string::npos
+			&& content.find("1 -> 3[label = \"1/2\" ];") != string::npos
+			&& content.find("0 -> 4[label = \"0/2\" ];") != string::npos,
+			"result of toDot(ostream & out) contains each expected edge");
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			countEdgesInToDotResult(content) == 4,
+			"result of toDot(ostream & out) contains only expected edges");
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -4510,7 +4638,8 @@ int main(int argc, char** argv)
 	//testOutputTraceOutputOperator();
 
 	//testOutputTreeContainsNegative();
-	testOutputTreeContainsPositive();
+	//testOutputTreeContainsPositive();
+	testOutputTreeToDot();
 
 	/*testMinimise();
 	testWMethod();*/
