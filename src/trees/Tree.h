@@ -48,10 +48,10 @@ protected:
                 const std::shared_ptr<TreeNode>& otherNode);
 
 	/**
-	Print every childran of this tree to a dot format into a standard output stream
-	@param out The standard output stream to use
-	@param top The root of the tree
-	@param idNode The id of this node, used to differenciate node in dot format
+	 * Print all children of this tree to a dot format into a standard output stream
+	 * @param out The standard output stream to use
+	 * @param top The root of the tree
+	 * @param idNode The id of this node, used to differenciate node in dot format
 	*/
     void printChildren(std::ostream & out, const std::shared_ptr<TreeNode>& top, const std::shared_ptr<int>& idNode) const;
 

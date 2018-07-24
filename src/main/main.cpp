@@ -2847,7 +2847,7 @@ int main(int argc, char** argv)
     test15();
 
     /** Uncomment to run Adaptive State Counting tests **/
-    // runAdaptiveStateCountingTests();
+    runAdaptiveStateCountingTests();
 
     exit(0);
 

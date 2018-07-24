@@ -716,7 +716,7 @@ vector<shared_ptr<FsmNode>> Fsm::calcDReachableStates(InputTraceSet& detStateCov
                 }
                 else
                 {
-                    InputTrace in = InputTrace({x}, presentationLayer);
+                    InputTrace in = InputTrace(x, presentationLayer);
                     OutputTrace out = OutputTrace({producedOutputs.at(0)}, presentationLayer);
                     newPath = make_shared<IOTrace>(in, out);
                     VLOG(2) << "newPath (new): " << *newPath;

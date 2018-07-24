@@ -3,8 +3,11 @@
 
 using namespace std;
 
-InputOutputTree::InputOutputTree(const std::shared_ptr<AdaptiveTreeNode>& root, const std::shared_ptr<FsmPresentationLayer>& presentationLayer)
-    : OutputTree(root->Clone(), InputTrace({root->getInput()}, presentationLayer), presentationLayer)
+InputOutputTree::InputOutputTree(const std::shared_ptr<AdaptiveTreeNode>& root,
+                                 const std::shared_ptr<FsmPresentationLayer>& presentationLayer)
+    : OutputTree(root->Clone(),
+                 InputTrace(root->getInput(), presentationLayer),
+                 presentationLayer)
 {
 
 }

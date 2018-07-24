@@ -186,7 +186,7 @@ IOTrace IOTrace::getSuffix(const IOTrace& prefix) const
 
 shared_ptr<IOTrace> IOTrace::getEmptyTrace(shared_ptr<FsmPresentationLayer> pl)
 {
-    InputTrace i({FsmLabel::EPSILON}, pl);
+    InputTrace i(FsmLabel::EPSILON, pl);
     OutputTrace o({FsmLabel::EPSILON}, pl);
     return make_shared<IOTrace>(i, o);
 }

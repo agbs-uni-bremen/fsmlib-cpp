@@ -25,7 +25,8 @@ private:
 	 * Print this one and every child (to a dot format)
 	 * @param out The standard output stream to use
 	 * @param top The current "root"
-	 * @param idNode The current id of the node, incremented for EVERY node, used to differenciate them in the dot file
+	 * @param idNode The current id of the node, incremented for EVERY node,
+     * used to differentiate them in the dot file
 	 * @param idInput The current id of the input trace, incremented each time you go deeper in the tree
 	 */
 	void printChildrenOutput(std::ostream& out,
