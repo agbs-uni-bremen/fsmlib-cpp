@@ -4581,7 +4581,7 @@ void testOutputTreeGetOutputTraces() {
 	{
 		shared_ptr<TreeNode> root = make_shared<TreeNode>();
 		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-		vector<int> inVec{ 0 };
+		vector<int> inVec{ 0, 1 };
 		InputTrace inputTrace(inVec, pl);
 		OutputTree tree(root, inputTrace, pl);		
 
@@ -4605,6 +4605,75 @@ void testOutputTreeGetOutputTraces() {
 		fsmlib_assert("TC-OutputTree-NNNN",
 			result.size() == 3,
 			"result of OutputTree::getOutputTraces() contains only expected OutputTraces");
+	}
+}
+
+// tests operator<<(std::ostream& out, OutputTree& ot)
+void testOutputTreeOutputOperator() {
+	// root of OutputTree is a leaf (tree contains only the empty trace). FsmPresentationLayer contains no names.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{  };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+
+		ostringstream out;
+		out << tree;
+		string result = out.str();
+		fsmlib_assert("TC-OutputTree-NNNN",
+			result == "\n",   
+			"operator<<(std::ostream& out, OutputTree& ot) writes each trace contained in OutputTree with the right names to out.");
+	}
+
+	// OutputTree contains Traces [0] and [1]. InputTrace = [0].  FsmPresentationLayer contains names for each Input/Output.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		vector<string> in2String{ "e0", "e1" };
+		vector<string> out2String{ "o0", "o1" };
+		vector<string> state2String;
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>(in2String, out2String, state2String);
+		vector<int> inVec{ 0 };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+		vector<int> outVec1{ 0 };
+		tree.addToRoot(outVec1);
+		vector<int> outVec2{ 1 };
+		tree.addToRoot(outVec2);
+
+		ostringstream out;
+		out << tree;
+		string result = out.str();
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			result.find("(e0/o0)") != string::npos
+			&& result.find("(e0/o1)") != string::npos,
+			"operator<<(std::ostream& out, OutputTree& ot) writes each trace contained in OutputTree with the right names to out.");
+	}
+
+	// OutputTree contains Traces [0,2] and [1]. InputTrace = [0,2].  FsmPresentationLayer contains names for some but not for each Input/Output.
+	{
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		vector<string> in2String{ "e0", "e1" };
+		vector<string> out2String{ "o0", "o1" };
+		vector<string> state2String;
+		std::shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>(in2String, out2String, state2String);
+		vector<int> inVec{ 0, 2 };
+		InputTrace inputTrace(inVec, pl);
+		OutputTree tree(root, inputTrace, pl);
+		vector<int> outVec1{ 0, 2 };
+		tree.addToRoot(outVec1);
+		vector<int> outVec2{ 1 };
+		tree.addToRoot(outVec2);
+
+		ostringstream out;
+		out << tree;
+		string result = out.str();
+
+		fsmlib_assert("TC-OutputTree-NNNN",
+			result.find("(e0/o0).(2/2)") != string::npos
+			&& result.find("(e0/o1)") != string::npos,
+			"operator<<(std::ostream& out, OutputTree& ot) writes each trace contained in OutputTree with the right names to out.");
 	}
 }
 
@@ -4718,7 +4787,8 @@ int main(int argc, char** argv)
 	//testOutputTreeContainsNegative();
 	//testOutputTreeContainsPositive();
 	//testOutputTreeToDot();
-	testOutputTreeGetOutputTraces();
+	//testOutputTreeGetOutputTraces();
+	testOutputTreeOutputOperator();
 
 	/*testMinimise();
 	testWMethod();*/
