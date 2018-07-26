@@ -4681,7 +4681,7 @@ void testOutputTreeOutputOperator() {
 
 // tests TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput)
 // Positive Case
-void testTestSuiteIsEquivalentTo() {
+void testTestSuiteIsEquivalentToPositive() {
 	// empty TestSuites
 	{
 		TestSuite ts1;
@@ -4791,6 +4791,152 @@ void testTestSuiteIsEquivalentTo() {
 			"TestSuites contain the same OutputTrees in the same order.");
 	}
 }
+
+// tests TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput)
+// Negative Case
+void testTestSuiteIsEquivalentToNegative() {
+	// TestSuites contain different number of OutputTrees.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 0 };
+		InputTrace inTrc{ inVec, pl };
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		OutputTree tree{ root, inTrc, pl };
+		vector<int> outVec1{ 1 };
+		vector<int> outVec2{ 2 };
+		tree.addToRoot(outVec1);
+		tree.addToRoot(outVec2);
+		TestSuite ts;
+		ts.push_back(tree);
+
+		TestSuite o_ts;
+
+		fsmlib_assert("TC-TestSuite-NNNN",
+			not ts.isEquivalentTo(o_ts)
+			&& not o_ts.isEquivalentTo(ts),
+			"TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput) returns false if both "
+			"TestSuites have different sizes.");
+	}
+
+	// both TestSuites have the same number of OutputTrees (1), but they aren't equal. 
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 0 };
+		InputTrace inTrc{ inVec, pl };
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		OutputTree tree{ root, inTrc, pl };
+		vector<int> outVec1{ 1 };
+		vector<int> outVec2{ 2 };
+		tree.addToRoot(outVec1);
+		tree.addToRoot(outVec2);
+		TestSuite ts;
+		ts.push_back(tree);
+
+		shared_ptr<FsmPresentationLayer> o_pl = make_shared<FsmPresentationLayer>();
+		vector<int> o_inVec{ 0 };
+		InputTrace o_inTrc{ o_inVec, o_pl };
+		shared_ptr<TreeNode> o_root = make_shared<TreeNode>();
+		OutputTree o_tree{ o_root, o_inTrc, o_pl };
+		vector<int> o_outVec1{ 1 };
+		o_tree.addToRoot(o_outVec1);
+		TestSuite o_ts;
+		o_ts.push_back(o_tree);
+
+		fsmlib_assert("TC-TestSuite-NNNN",
+			not ts.isEquivalentTo(o_ts)
+			&& not o_ts.isEquivalentTo(ts),
+			"TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput) returns false if one "
+			"TestSuite contains an OutputTree that is not contained in the other TestSuite.");
+	}
+
+	// both TestSuites contain two test cases (OutputTrees). The TestSuites differ in the second OutputTree (in the InputTraces).
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+		// constructing first tree
+		vector<int> inVecTree1{ 0 };
+		InputTrace inTrcTree1{ inVecTree1, pl };
+		shared_ptr<TreeNode> rootTree1 = make_shared<TreeNode>();
+		OutputTree tree1{ rootTree1, inTrcTree1, pl };
+		vector<int> outVec1Tree1{ 1 };
+		vector<int> outVec2Tree1{ 2 };
+		tree1.addToRoot(outVec1Tree1);
+		tree1.addToRoot(outVec2Tree1);
+
+		// constructing second tree
+		vector<int> inVecTree2{ 0,1 };
+		InputTrace inTrcTree2{ inVecTree2, pl };
+		shared_ptr<TreeNode> rootTree2 = make_shared<TreeNode>();
+		OutputTree tree2{ rootTree2, inTrcTree2, pl };
+		vector<int> outVec1Tree2{ 1,3 };
+		vector<int> outVec2Tree2{ 2,4 };
+		tree2.addToRoot(outVec1Tree2);
+		tree2.addToRoot(outVec2Tree2);
+
+		TestSuite ts;
+		ts.push_back(tree1);
+		ts.push_back(tree2);
+
+		vector<int> o_inVecTree2{ 0,0 };
+		InputTrace o_inTrcTree2{ o_inVecTree2, pl };
+		shared_ptr<TreeNode> o_rootTree2 = make_shared<TreeNode>();
+		OutputTree o_tree2{ o_rootTree2, o_inTrcTree2, pl };
+		vector<int> o_outVec1Tree2{ outVec1Tree2 };
+		vector<int> o_outVec2Tree2{ outVec2Tree2 };
+		o_tree2.addToRoot(o_outVec1Tree2);
+		o_tree2.addToRoot(o_outVec2Tree2);
+
+		TestSuite o_ts;
+		o_ts.push_back(tree1);
+		o_ts.push_back(o_tree2);
+
+		fsmlib_assert("TC-TestSuite-NNNN",
+			not ts.isEquivalentTo(o_ts)
+			&& not o_ts.isEquivalentTo(ts),
+			"TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput) returns false if one "
+			"TestSuite contains an OutputTree that is not contained in the other TestSuite.");
+	}
+
+	// both TestSuites contain the same two test cases (OutputTrees) in different order.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+		// constructing first tree
+		vector<int> inVecTree1{ 0 };
+		InputTrace inTrcTree1{ inVecTree1, pl };
+		shared_ptr<TreeNode> rootTree1 = make_shared<TreeNode>();
+		OutputTree tree1{ rootTree1, inTrcTree1, pl };
+		vector<int> outVec1Tree1{ 1 };
+		vector<int> outVec2Tree1{ 2 };
+		tree1.addToRoot(outVec1Tree1);
+		tree1.addToRoot(outVec2Tree1);
+
+		// constructing second tree
+		vector<int> inVecTree2{ 0,1 };
+		InputTrace inTrcTree2{ inVecTree2, pl };
+		shared_ptr<TreeNode> rootTree2 = make_shared<TreeNode>();
+		OutputTree tree2{ rootTree2, inTrcTree2, pl };
+		vector<int> outVec1Tree2{ 1,3 };
+		vector<int> outVec2Tree2{ 2,4 };
+		tree2.addToRoot(outVec1Tree2);
+		tree2.addToRoot(outVec2Tree2);
+
+		TestSuite ts;
+		ts.push_back(tree1);
+		ts.push_back(tree2);
+
+		TestSuite o_ts;
+		o_ts.push_back(tree2);
+		o_ts.push_back(tree1);
+
+		fsmlib_assert("TC-TestSuite-NNNN",
+			not ts.isEquivalentTo(o_ts)
+			&& not o_ts.isEquivalentTo(ts),
+			"TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput) returns false if one "
+			"TestSuite contains an OutputTree that is not contained in the other TestSuite.");
+	}
+}
+
 
 int main(int argc, char** argv)
 {
@@ -4905,7 +5051,8 @@ int main(int argc, char** argv)
 	//testOutputTreeGetOutputTraces();
 	//testOutputTreeOutputOperator();
 
-	testTestSuiteIsEquivalentTo();
+	//testTestSuiteIsEquivalentToPositive();
+	testTestSuiteIsEquivalentToNegative();
 
 	/*testMinimise();
 	testWMethod();*/
