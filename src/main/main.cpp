@@ -4677,6 +4677,121 @@ void testOutputTreeOutputOperator() {
 	}
 }
 
+//===================================== TestSuite Tests ===================================================
+
+// tests TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput)
+// Positive Case
+void testTestSuiteIsEquivalentTo() {
+	// empty TestSuites
+	{
+		TestSuite ts1;
+		TestSuite ts2;
+		fsmlib_assert("TC-TestSuite-NNNN",
+			ts1.isEquivalentTo(ts2)
+			&& ts2.isEquivalentTo(ts1),
+			"TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput) returns true if both TestSuites are empty.");
+	}
+
+	// both TestSuites contain one test case (OutputTree).
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 0 };
+		InputTrace inTrc{ inVec, pl };
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		OutputTree tree{ root, inTrc, pl };
+		vector<int> outVec1{ 1 };
+		vector<int> outVec2{ 2 };
+		tree.addToRoot(outVec1);
+		tree.addToRoot(outVec2);
+		TestSuite ts;
+		ts.push_back(tree);
+
+		shared_ptr<FsmPresentationLayer> o_pl = make_shared<FsmPresentationLayer>();
+		vector<int> o_inVec{ 0 };
+		InputTrace o_inTrc{ o_inVec, o_pl };
+		shared_ptr<TreeNode> o_root = make_shared<TreeNode>();
+		OutputTree o_tree{ o_root, o_inTrc, o_pl };
+		vector<int> o_outVec1{ 1 };
+		vector<int> o_outVec2{ 2 };
+		o_tree.addToRoot(o_outVec1);
+		o_tree.addToRoot(o_outVec2);
+		TestSuite o_ts;
+		o_ts.push_back(o_tree);
+
+		fsmlib_assert("TC-TestSuite-NNNN",
+			ts.isEquivalentTo(o_ts)
+			&& o_ts.isEquivalentTo(ts),
+			"TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput) returns true if both "
+			"TestSuites contain the same OutputTrees in the same order.");
+	}
+
+	// both TestSuites contain two test cases (OutputTrees).
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+		// constructing first tree
+		vector<int> inVecTree1{ 0,1 };
+		InputTrace inTrcTree1{ inVecTree1, pl };
+		shared_ptr<TreeNode> rootTree1 = make_shared<TreeNode>();
+		OutputTree tree1{ rootTree1, inTrcTree1, pl };
+		vector<int> outVec1Tree1{ 1,1 };
+		vector<int> outVec2Tree1{ 1,2 };
+		vector<int> outVec3Tree1{ 2,3 };
+		tree1.addToRoot(outVec1Tree1);
+		tree1.addToRoot(outVec2Tree1);
+		tree1.addToRoot(outVec3Tree1);
+
+		// constructing second tree
+		vector<int> inVecTree2{ 1,1 };
+		InputTrace inTrcTree2{ inVecTree2, pl };
+		shared_ptr<TreeNode> rootTree2 = make_shared<TreeNode>();
+		OutputTree tree2{ rootTree2, inTrcTree2, pl };
+		vector<int> outVec1Tree2{ 3,3 };
+		vector<int> outVec2Tree2{ 4,4 };
+		tree2.addToRoot(outVec1Tree2);
+		tree2.addToRoot(outVec2Tree2);
+
+		TestSuite ts;
+		ts.push_back(tree1);
+		ts.push_back(tree2);
+
+
+		//shared_ptr<FsmPresentationLayer> o_pl = make_shared<FsmPresentationLayer>();
+
+		//vector<int> o_inVecTree1{ 0,1 };
+		//InputTrace o_inTrcTree1{ o_inVecTree1, o_pl };
+		//shared_ptr<TreeNode> o_rootTree1 = make_shared<TreeNode>();
+		//OutputTree o_tree1{ o_rootTree1, o_inTrcTree1, o_pl };
+		//vector<int> o_outVec1Tree1{ 1,1 };
+		//vector<int> o_outVec2Tree1{ 1,2 };
+		//vector<int> o_outVec3Tree1{ 2,3 };
+		//o_tree1.addToRoot(o_outVec1Tree1);
+		//o_tree1.addToRoot(o_outVec2Tree1);
+		//o_tree1.addToRoot(o_outVec3Tree1);
+
+		//vector<int> o_inVecTree2{ 0,1 };
+		//InputTrace o_inTrcTree2{ o_inVecTree2, o_pl };
+		//shared_ptr<TreeNode> o_rootTree2 = make_shared<TreeNode>();
+		//OutputTree o_tree2{ o_rootTree2, o_inTrcTree2, o_pl };
+		//vector<int> o_outVec1Tree2{ 1,1 };
+		//vector<int> o_outVec2Tree2{ 1,2 };
+		//vector<int> o_outVec3Tree2{ 2,3 };
+		//o_tree2.addToRoot(o_outVec1Tree2);
+		//o_tree2.addToRoot(o_outVec2Tree2);
+		//o_tree2.addToRoot(o_outVec3Tree2);
+
+		TestSuite o_ts;
+		o_ts.push_back(tree1);
+		o_ts.push_back(tree2);
+
+		fsmlib_assert("TC-TestSuite-NNNN",
+			ts.isEquivalentTo(o_ts)
+			&& o_ts.isEquivalentTo(ts),
+			"TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput) returns true if both "
+			"TestSuites contain the same OutputTrees in the same order.");
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -4788,7 +4903,9 @@ int main(int argc, char** argv)
 	//testOutputTreeContainsPositive();
 	//testOutputTreeToDot();
 	//testOutputTreeGetOutputTraces();
-	testOutputTreeOutputOperator();
+	//testOutputTreeOutputOperator();
+
+	testTestSuiteIsEquivalentTo();
 
 	/*testMinimise();
 	testWMethod();*/
