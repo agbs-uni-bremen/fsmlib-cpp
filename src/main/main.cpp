@@ -5116,7 +5116,87 @@ void testTestSuiteIsReductionOfNegative() {
 // tests TestSuite::isReductionOf(TestSuite& theOtherTs, bool writeOutput)
 // Positive case.
 void testTestSuiteIsReductionOfPositive() {
+	// both TestSuites are empty.
+	{
+		TestSuite ts;
+		TestSuite o_ts;
+		fsmlib_assert("TC-TestSuite-NNNN",
+			ts.isReductionOf(o_ts)
+			&& o_ts.isReductionOf(ts),
+			"ts1.isReductionOf(ts2) returns true if ts1 and ts2 are equivalent.");
+	}
 
+	// both TestSuites contain one OutputTree. Each path of the OutputTree of ts is also a path in the OutputTree of o_ts.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> inVec{ 0 };
+		InputTrace inTrc{ inVec, pl };
+		shared_ptr<TreeNode> root = make_shared<TreeNode>();
+		OutputTree tree{ root, inTrc, pl };
+		vector<int> outVec1{ 1 };
+		tree.addToRoot(outVec1);
+
+		TestSuite ts;
+		ts.push_back(tree);
+
+		vector<int> o_inVec{ 0 };
+		InputTrace o_inTrc{ o_inVec, pl };
+		shared_ptr<TreeNode> o_root = make_shared<TreeNode>();
+		OutputTree o_tree{ o_root, o_inTrc, pl };
+		vector<int> o_outVec1{ 1 };
+		vector<int> o_outVec2{ 2 };
+		o_tree.addToRoot(o_outVec1);
+		o_tree.addToRoot(o_outVec2);
+
+		TestSuite o_ts;
+		o_ts.push_back(o_tree);
+
+		fsmlib_assert("TC-TestSuite-NNNN",
+			ts.isReductionOf(o_ts),
+			"ts1.isReductionOf(ts2) returns true if each path of ts1[i] is contained in ts2[i], for each 0 <= i < size.");
+	}
+
+	// Both TestSuites contain two OutputTrees. Each OutputTree of ts is contained in the corresponding OutputTree of o_ts (o_ts[i].contains(ts[i])).
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+		// constructing first tree
+		vector<int> inVecTree1{ 0 };
+		InputTrace inTrcTree1{ inVecTree1, pl };
+		shared_ptr<TreeNode> rootTree1 = make_shared<TreeNode>();
+		OutputTree tree1{ rootTree1, inTrcTree1, pl };
+		vector<int> outVec1Tree1{ 1 };
+		tree1.addToRoot(outVec1Tree1);
+
+		// constructing second tree
+		vector<int> inVecTree2{ 1,1 };
+		InputTrace inTrcTree2{ inVecTree2, pl };
+		shared_ptr<TreeNode> rootTree2 = make_shared<TreeNode>();
+		OutputTree tree2{ rootTree2, inTrcTree2, pl };
+		vector<int> outVec1Tree2{ 2,3 };
+		tree2.addToRoot(outVec1Tree2);
+
+		TestSuite ts;
+		ts.push_back(tree1);
+		ts.push_back(tree2);
+
+		vector<int> o_inVecTree2{ 1, 1 };
+		InputTrace o_inTrcTree2{ o_inVecTree2, pl };
+		shared_ptr<TreeNode> o_rootTree2 = make_shared<TreeNode>();
+		OutputTree o_tree2{ o_rootTree2, o_inTrcTree2, pl };
+		vector<int> o_outVec1Tree2{ 2,2 };
+		vector<int> o_outVec2Tree2{ 2,3 };
+		o_tree2.addToRoot(o_outVec1Tree2);
+		o_tree2.addToRoot(o_outVec2Tree2);
+
+		TestSuite o_ts;
+		o_ts.push_back(tree1);
+		o_ts.push_back(o_tree2);
+
+		fsmlib_assert("TC-TestSuite-NNNN",
+			ts.isReductionOf(o_ts),
+			"ts1.isReductionOf(ts2) returns true if each path of ts1[i] is contained in ts2[i], for each 0 <= i < size.");
+	}
 }
 
 
@@ -5235,7 +5315,8 @@ int main(int argc, char** argv)
 
 	//testTestSuiteIsEquivalentToPositive();
 	//testTestSuiteIsEquivalentToNegative();
-	testTestSuiteIsReductionOfNegative();
+	//testTestSuiteIsReductionOfNegative();
+	testTestSuiteIsReductionOfPositive();
 
 	/*testMinimise();
 	testWMethod();*/
