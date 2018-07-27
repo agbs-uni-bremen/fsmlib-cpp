@@ -4681,6 +4681,8 @@ void testOutputTreeOutputOperator() {
 
 // tests TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput)
 // Positive Case
+// Additional tests for TestSuite::isReductionOf(TestSuite& theOtherTs,bool writeOutput): if ts1 equals ts2 then ts1 is a reduction
+// of ts2 and vice versa
 void testTestSuiteIsEquivalentToPositive() {
 	// empty TestSuites
 	{
@@ -4690,6 +4692,11 @@ void testTestSuiteIsEquivalentToPositive() {
 			ts1.isEquivalentTo(ts2)
 			&& ts2.isEquivalentTo(ts1),
 			"TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput) returns true if both TestSuites are empty.");
+
+		fsmlib_assert("TC-TestSuite-NNNN",
+			ts1.isReductionOf(ts2)
+			&& ts2.isReductionOf(ts1),
+			"If TestSuites are equivalent they are also reductions of each other");
 	}
 
 	// both TestSuites contain one test case (OutputTree).
@@ -4723,6 +4730,11 @@ void testTestSuiteIsEquivalentToPositive() {
 			&& o_ts.isEquivalentTo(ts),
 			"TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput) returns true if both "
 			"TestSuites contain the same OutputTrees in the same order.");
+
+		fsmlib_assert("TC-TestSuite-NNNN",
+			ts.isReductionOf(o_ts)
+			&& o_ts.isReductionOf(ts),
+			"If TestSuites are equivalent they are also reductions of each other");
 	}
 
 	// both TestSuites contain two test cases (OutputTrees).
@@ -4789,11 +4801,18 @@ void testTestSuiteIsEquivalentToPositive() {
 			&& o_ts.isEquivalentTo(ts),
 			"TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput) returns true if both "
 			"TestSuites contain the same OutputTrees in the same order.");
+
+		fsmlib_assert("TC-TestSuite-NNNN",
+			ts.isReductionOf(o_ts)
+			&& o_ts.isReductionOf(ts),
+			"If TestSuites are equivalent they are also reductions of each other");
 	}
 }
 
 // tests TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput)
 // Negative Case
+// Additional tests for TestSuite::isReductionOf(TestSuite& theOtherTs,bool writeOutput): if not(ts1isEquivalentTo(ts2) then ts1 and ts2 can't be
+// reductions of each other
 void testTestSuiteIsEquivalentToNegative() {
 	// TestSuites contain different number of OutputTrees.
 	{
@@ -4814,8 +4833,11 @@ void testTestSuiteIsEquivalentToNegative() {
 		fsmlib_assert("TC-TestSuite-NNNN",
 			not ts.isEquivalentTo(o_ts)
 			&& not o_ts.isEquivalentTo(ts),
-			"TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput) returns false if both "
-			"TestSuites have different sizes.");
+			"TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput) returns false if both TestSuites have different sizes.");
+
+		fsmlib_assert("TC-TestSuite-NNNN",
+			not (ts.isReductionOf(o_ts) && o_ts.isReductionOf(ts)),
+			"If TestSuites aren't equal they can't be reductions of each other.");
 	}
 
 	// both TestSuites have the same number of OutputTrees (1), but they aren't equal. 
@@ -4847,6 +4869,10 @@ void testTestSuiteIsEquivalentToNegative() {
 			&& not o_ts.isEquivalentTo(ts),
 			"TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput) returns false if one "
 			"TestSuite contains an OutputTree that is not contained in the other TestSuite.");
+
+		fsmlib_assert("TC-TestSuite-NNNN",
+			not (ts.isReductionOf(o_ts) && o_ts.isReductionOf(ts)),
+			"If TestSuites aren't equal they can't be reductions of each other.");
 	}
 
 	// both TestSuites contain two test cases (OutputTrees). The TestSuites differ in the second OutputTree (in the InputTraces).
@@ -4895,6 +4921,10 @@ void testTestSuiteIsEquivalentToNegative() {
 			&& not o_ts.isEquivalentTo(ts),
 			"TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput) returns false if one "
 			"TestSuite contains an OutputTree that is not contained in the other TestSuite.");
+
+		fsmlib_assert("TC-TestSuite-NNNN",
+			not (ts.isReductionOf(o_ts) && o_ts.isReductionOf(ts)),
+			"If TestSuites aren't equal they can't be reductions of each other.");
 	}
 
 	// both TestSuites contain the same two test cases (OutputTrees) in different order.
@@ -4934,6 +4964,10 @@ void testTestSuiteIsEquivalentToNegative() {
 			&& not o_ts.isEquivalentTo(ts),
 			"TestSuite::isEquivalentTo(TestSuite& theOtherTs,bool writeOutput) returns false if one "
 			"TestSuite contains an OutputTree that is not contained in the other TestSuite.");
+
+		fsmlib_assert("TC-TestSuite-NNNN",
+			not (ts.isReductionOf(o_ts) && o_ts.isReductionOf(ts)),
+			"If TestSuites aren't equal they can't be reductions of each other.");
 	}
 }
 
