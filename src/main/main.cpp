@@ -4767,31 +4767,6 @@ void testTestSuiteIsEquivalentToPositive() {
 		ts.push_back(tree1);
 		ts.push_back(tree2);
 
-
-		//shared_ptr<FsmPresentationLayer> o_pl = make_shared<FsmPresentationLayer>();
-
-		//vector<int> o_inVecTree1{ 0,1 };
-		//InputTrace o_inTrcTree1{ o_inVecTree1, o_pl };
-		//shared_ptr<TreeNode> o_rootTree1 = make_shared<TreeNode>();
-		//OutputTree o_tree1{ o_rootTree1, o_inTrcTree1, o_pl };
-		//vector<int> o_outVec1Tree1{ 1,1 };
-		//vector<int> o_outVec2Tree1{ 1,2 };
-		//vector<int> o_outVec3Tree1{ 2,3 };
-		//o_tree1.addToRoot(o_outVec1Tree1);
-		//o_tree1.addToRoot(o_outVec2Tree1);
-		//o_tree1.addToRoot(o_outVec3Tree1);
-
-		//vector<int> o_inVecTree2{ 0,1 };
-		//InputTrace o_inTrcTree2{ o_inVecTree2, o_pl };
-		//shared_ptr<TreeNode> o_rootTree2 = make_shared<TreeNode>();
-		//OutputTree o_tree2{ o_rootTree2, o_inTrcTree2, o_pl };
-		//vector<int> o_outVec1Tree2{ 1,1 };
-		//vector<int> o_outVec2Tree2{ 1,2 };
-		//vector<int> o_outVec3Tree2{ 2,3 };
-		//o_tree2.addToRoot(o_outVec1Tree2);
-		//o_tree2.addToRoot(o_outVec2Tree2);
-		//o_tree2.addToRoot(o_outVec3Tree2);
-
 		TestSuite o_ts;
 		o_ts.push_back(tree1);
 		o_ts.push_back(tree2);
