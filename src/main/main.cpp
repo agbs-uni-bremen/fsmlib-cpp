@@ -4949,7 +4949,7 @@ void testTestSuiteIsEquivalentToNegative() {
 // tests TestSuite::isReductionOf(TestSuite& theOtherTs, bool writeOutput)
 // Negative case.
 void testTestSuiteIsReductionOfNegative() {
-	// TestSuites have different sizes.
+	// TestSuites contain different number of OutputTrees.
 	{
 		TestSuite ts;
 
