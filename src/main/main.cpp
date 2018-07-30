@@ -22,6 +22,7 @@
 #include "json/json.h"
 
 #include <algorithm>
+#include <cmath>
 
 
 using namespace std;
@@ -5174,6 +5175,171 @@ void testTestSuiteIsReductionOfPositive() {
 	}
 }
 
+//===================================== IOListContainer Tests ===================================================
+
+// This function can be used to check if the given element is a valid one (size between minLength and maxLength,
+// each int contained in element is a value between 0 and maxInput). 
+bool checkIOListContainerElement(const int maxInput, const int minLength, const int maxLength, const vector<int> &element) {
+	if (element.size() < minLength || element.size() > maxLength) {
+		return false;
+	}
+	for (const auto &i : element) {
+		if (i < 0 || i > maxInput) {
+			return false;
+		}
+	}
+	return true;
+}
+
+// This function can be used to calculate the expected size of a constructed IOListContainer (using the 
+// IOListContainer(const int maxInput, const int minLength, const int maxLength, const std::shared_ptr<FsmPresentationLayer>)
+// constructor). (maxInput + 1)^minLength + (maxInput + 1)^(minLength+1) + ... + (maxInput + 1)^maxLength
+int calculateExpectedIOListContainerSize(int maxInput, int minLength, int maxLength) {
+	int expectedSize = 0;
+	for (int i = minLength; i <= maxLength; ++i) {
+		expectedSize += pow(maxInput + 1, i);
+	}
+	return expectedSize;
+}
+
+// tests IOListContainer::IOListContainer(const int maxInput, const int minLength, 
+//             const int maxLenght, const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+void testIOListContainerConstructor() {
+	// maxInput = minLength = maxLength = 0.
+	{
+		shared_ptr<FsmPresentationLayer> pl;
+		IOListContainer iolc(0, 0, 0, pl);
+		shared_ptr<vector<vector<int>>> ioLists = iolc.getIOLists();
+
+		fsmlib_assert("TC-IOListContainer-NNNN",
+			ioLists->size() == 1
+			&& ioLists->at(0).size() == 0,
+			"IOListContainer::IOListContainer(const int maxInput, const int minLength, "
+			"const int maxLenght, const std::shared_ptr<FsmPresentationLayer>) generates only the "
+			"empty list if minLength = maxLength = 0");
+	}
+
+	// maxInput = minLength = 0, maxLength = 1
+	{
+		shared_ptr<FsmPresentationLayer> pl;
+		const int maxInput = 0;
+		const int minLength = 0;
+		const int maxLength = 1;
+		IOListContainer iolc(maxInput, minLength, maxLength, pl);
+		shared_ptr<vector<vector<int>>> ioLists = iolc.getIOLists();		
+
+		int expectedSize = calculateExpectedIOListContainerSize(maxInput, minLength, maxLength);
+
+		fsmlib_assert("TC-IOListContainer-NNNN",
+			ioLists->size() == expectedSize,
+			"Size of the constructed IOListContainer matches the expected size.");
+
+		set<vector<int>> traces(ioLists->cbegin(), ioLists->cend());
+		fsmlib_assert("TC-IOListContainer-NNNN",
+			traces.size() == expectedSize,
+			"Constructed IOListContainer only contains unique elements.");
+
+		for (const vector<int> &trace : traces) {
+			fsmlib_assert("TC-IOListContainer-NNNN",
+				checkIOListContainerElement(maxInput, minLength, maxLength, trace),
+				"Only valid elements are contained in the constructed IOListContainer.");
+		}
+	}
+
+	//  maxInput = 1, minLength = 0, maxLength = 1
+	{
+		shared_ptr<FsmPresentationLayer> pl;
+		const int maxInput = 1;
+		const int minLength = 0;
+		const int maxLength = 1;
+		IOListContainer iolc(maxInput, minLength, maxLength, pl);
+		shared_ptr<vector<vector<int>>> ioLists = iolc.getIOLists();
+
+		int expectedSize = calculateExpectedIOListContainerSize(maxInput, minLength, maxLength);
+
+		fsmlib_assert("TC-IOListContainer-NNNN",
+			ioLists->size() == expectedSize,
+			"Size of the constructed IOListContainer matches the expected size.");
+
+		set<vector<int>> traces(ioLists->cbegin(), ioLists->cend());
+		fsmlib_assert("TC-IOListContainer-NNNN",
+			traces.size() == expectedSize,
+			"Constructed IOListContainer only contains unique elements.");
+
+		for (const vector<int> &trace : traces) {
+			fsmlib_assert("TC-IOListContainer-NNNN",
+				checkIOListContainerElement(maxInput, minLength, maxLength, trace),
+				"Only valid elements are contained in the constructed IOListContainer.");
+		}
+	}
+
+	//  maxInput = 2, minLength = 1, maxLength = 1
+	{
+		shared_ptr<FsmPresentationLayer> pl;
+		const int maxInput = 2;
+		const int minLength = 1;
+		const int maxLength = 1;
+		IOListContainer iolc(maxInput, minLength, maxLength, pl);
+		shared_ptr<vector<vector<int>>> ioLists = iolc.getIOLists();
+
+		int expectedSize = calculateExpectedIOListContainerSize(maxInput, minLength, maxLength);
+
+		fsmlib_assert("TC-IOListContainer-NNNN",
+			ioLists->size() == expectedSize,
+			"Size of the constructed IOListContainer matches the expected size.");
+
+		set<vector<int>> traces(ioLists->cbegin(), ioLists->cend());
+		fsmlib_assert("TC-IOListContainer-NNNN",
+			traces.size() == expectedSize,
+			"Constructed IOListContainer only contains unique elements.");
+
+		for (const vector<int> &trace : traces) {
+			fsmlib_assert("TC-IOListContainer-NNNN",
+				checkIOListContainerElement(maxInput, minLength, maxLength, trace),
+				"Only valid elements are contained in the constructed IOListContainer.");
+		}
+	}
+
+	//  maxInput = 2, minLength = 1, maxLength = 2
+	{
+		shared_ptr<FsmPresentationLayer> pl;
+		const int maxInput = 2;
+		const int minLength = 1;
+		const int maxLength = 2;
+		IOListContainer iolc(maxInput, minLength, maxLength, pl);
+		shared_ptr<vector<vector<int>>> ioLists = iolc.getIOLists();
+
+		int expectedSize = calculateExpectedIOListContainerSize(maxInput, minLength, maxLength);
+
+		fsmlib_assert("TC-IOListContainer-NNNN",
+			ioLists->size() == expectedSize,
+			"Size of the constructed IOListContainer matches the expected size.");
+
+		set<vector<int>> traces(ioLists->cbegin(), ioLists->cend());
+		fsmlib_assert("TC-IOListContainer-NNNN",
+			traces.size() == expectedSize,
+			"Constructed IOListContainer only contains unique elements.");
+
+		for (const vector<int> &trace : traces) {
+			fsmlib_assert("TC-IOListContainer-NNNN",
+				checkIOListContainerElement(maxInput, minLength, maxLength, trace),
+				"Only valid elements are contained in the constructed IOListContainer.");
+		}
+	}
+}
+
+
+//void testSetMethod() {
+//	set<vector<int>> traces;
+//	vector<int> v1{0, 0};
+//	vector<int> v2{0, 0};
+//	traces.insert(v1);
+//	traces.insert(v2);
+//	for (auto &v : traces) {
+//		std::cout << v[0] << "," << v[1] << std::endl;
+//	}
+//}
+
 
 int main(int argc, char** argv)
 {
@@ -5291,7 +5457,9 @@ int main(int argc, char** argv)
 	//testTestSuiteIsEquivalentToPositive();
 	//testTestSuiteIsEquivalentToNegative();
 	//testTestSuiteIsReductionOfNegative();
-	testTestSuiteIsReductionOfPositive();
+	//testTestSuiteIsReductionOfPositive();
+	testIOListContainerConstructor();
+
 
 	/*testMinimise();
 	testWMethod();*/
