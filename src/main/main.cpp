@@ -5207,7 +5207,7 @@ int calculateExpectedIOListContainerSize(int maxInput, int minLength, int maxLen
 void testIOListContainerConstructor() {
 	// maxInput = minLength = maxLength = 0.
 	{
-		shared_ptr<FsmPresentationLayer> pl;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 		IOListContainer iolc(0, 0, 0, pl);
 		shared_ptr<vector<vector<int>>> ioLists = iolc.getIOLists();
 
@@ -5221,7 +5221,7 @@ void testIOListContainerConstructor() {
 
 	// maxInput = minLength = 0, maxLength = 1
 	{
-		shared_ptr<FsmPresentationLayer> pl;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 		const int maxInput = 0;
 		const int minLength = 0;
 		const int maxLength = 1;
@@ -5248,7 +5248,7 @@ void testIOListContainerConstructor() {
 
 	//  maxInput = 1, minLength = 0, maxLength = 1
 	{
-		shared_ptr<FsmPresentationLayer> pl;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 		const int maxInput = 1;
 		const int minLength = 0;
 		const int maxLength = 1;
@@ -5275,7 +5275,7 @@ void testIOListContainerConstructor() {
 
 	//  maxInput = 2, minLength = 1, maxLength = 1
 	{
-		shared_ptr<FsmPresentationLayer> pl;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 		const int maxInput = 2;
 		const int minLength = 1;
 		const int maxLength = 1;
@@ -5302,7 +5302,7 @@ void testIOListContainerConstructor() {
 
 	//  maxInput = 2, minLength = 1, maxLength = 2
 	{
-		shared_ptr<FsmPresentationLayer> pl;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 		const int maxInput = 2;
 		const int minLength = 1;
 		const int maxLength = 2;
