@@ -5328,17 +5328,120 @@ void testIOListContainerConstructor() {
 	}
 }
 
+//===================================== TraceSegment Tests ===================================================
 
-//void testSetMethod() {
-//	set<vector<int>> traces;
-//	vector<int> v1{0, 0};
-//	vector<int> v2{0, 0};
-//	traces.insert(v1);
-//	traces.insert(v2);
-//	for (auto &v : traces) {
-//		std::cout << v[0] << "," << v[1] << std::endl;
-//	}
-//}
+// tests TraceSegment::getCopy()
+void testTraceSegmentGetCopy() {
+	// segment is empty. prefix = string::npos
+	{
+		vector<int> seg{};
+		std::shared_ptr< std::vector<int> > segment = make_shared<vector<int>>(seg);
+		TraceSegment trcSeg{ segment };
+		vector<int> result = trcSeg.getCopy();
+		fsmlib_assert("TC-TraceSegment-NNNN",
+			seg == result,
+			"TraceSegment::getCopy() returns a copy of the whole segment stored in the "
+			"TraceSegment object if prefix equals string::npos.");
+	}
+
+	// segment.size() = 1 . prefix = string::npos
+	{
+		vector<int> seg{ 1 };
+		std::shared_ptr< std::vector<int> > segment = make_shared<vector<int>>(seg);
+		TraceSegment trcSeg{ segment };
+		vector<int> result = trcSeg.getCopy();
+		fsmlib_assert("TC-TraceSegment-NNNN",
+			seg == result,
+			"TraceSegment::getCopy() returns a copy of the whole segment stored in the "
+			"TraceSegment object if prefix equals string::npos.");
+	}
+
+	// segment.size() = 0 . prefix = 0 (prefix >= segment.size() case)
+	{
+		vector<int> seg{ };
+		std::shared_ptr< std::vector<int> > segment = make_shared<vector<int>>(seg);
+		TraceSegment trcSeg{ segment, 0 };
+		vector<int> result = trcSeg.getCopy();
+		fsmlib_assert("TC-TraceSegment-NNNN",
+			seg == result,
+			"TraceSegment::getCopy() returns a copy of the whole segment stored in the "
+			"TraceSegment object if prefix equals segment.size().");
+	}
+
+	// segment.size() = 1 . prefix = 1 (prefix >= segment.size() case)
+	{
+		vector<int> seg{ 1 };
+		std::shared_ptr< std::vector<int> > segment = make_shared<vector<int>>(seg);
+		TraceSegment trcSeg{ segment, 1 };
+		vector<int> result = trcSeg.getCopy();
+		fsmlib_assert("TC-TraceSegment-NNNN",
+			seg == result,
+			"TraceSegment::getCopy() returns a copy of the whole segment stored in the "
+			"TraceSegment object if prefix equals segment.size().");
+	}
+
+	// segment.size() = 2 . prefix = 2 (prefix >= segment.size() case)
+	{
+		vector<int> seg{ 1, 2 };
+		std::shared_ptr< std::vector<int> > segment = make_shared<vector<int>>(seg);
+		TraceSegment trcSeg{ segment, 2 };
+		vector<int> result = trcSeg.getCopy();
+		fsmlib_assert("TC-TraceSegment-NNNN",
+			seg == result,
+			"TraceSegment::getCopy() returns a copy of the whole segment stored in the "
+			"TraceSegment object if prefix equals segment.size().");
+	}
+
+	// segment.size() != 0 . prefix = 0 
+	{
+		vector<int> seg{ 1 };
+		std::shared_ptr< std::vector<int> > segment = make_shared<vector<int>>(seg);
+		TraceSegment trcSeg{ segment, 0 };
+		vector<int> result = trcSeg.getCopy();
+		fsmlib_assert("TC-TraceSegment-NNNN",
+			result.empty(),
+			"TraceSegment::getCopy() returns empty vector if prefix is set to 0. ");
+	}
+
+	// segment.size() = 2 . prefix = 1 ( 0 < prefix < segment.size() case) 
+	{
+		vector<int> seg{ 0, 1 };
+		std::shared_ptr< std::vector<int> > segment = make_shared<vector<int>>(seg);
+		TraceSegment trcSeg{ segment, 1 };
+		vector<int> result = trcSeg.getCopy();
+		vector<int> expected{ 0 };
+		fsmlib_assert("TC-TraceSegment-NNNN",
+			expected == result,
+			"TraceSegment::getCopy() returns a copy of the prefix of the stored segment if "
+			"0 < prefix < segment.size()");
+	}
+
+	// segment.size() = 3 . prefix = 1 ( 0 < prefix < segment.size() case) 
+	{
+		vector<int> seg{ 0, 1, 2 };
+		std::shared_ptr< std::vector<int> > segment = make_shared<vector<int>>(seg);
+		TraceSegment trcSeg{ segment, 1 };
+		vector<int> result = trcSeg.getCopy();
+		vector<int> expected{ 0 };
+		fsmlib_assert("TC-TraceSegment-NNNN",
+			expected == result,
+			"TraceSegment::getCopy() returns a copy of the prefix of the stored segment if "
+			"0 < prefix < segment.size()");
+	}
+
+	// segment.size() = 3 . prefix = 2 ( 0 < prefix < segment.size() case) 
+	{
+		vector<int> seg{ 0, 1, 2 };
+		std::shared_ptr< std::vector<int> > segment = make_shared<vector<int>>(seg);
+		TraceSegment trcSeg{ segment, 2 };
+		vector<int> result = trcSeg.getCopy();
+		vector<int> expected{ 0, 1 };
+		fsmlib_assert("TC-TraceSegment-NNNN",
+			expected == result,
+			"TraceSegment::getCopy() returns a copy of the prefix of the stored segment if "
+			"0 < prefix < segment.size()");
+	}
+}
 
 
 int main(int argc, char** argv)
@@ -5458,7 +5561,10 @@ int main(int argc, char** argv)
 	//testTestSuiteIsEquivalentToNegative();
 	//testTestSuiteIsReductionOfNegative();
 	//testTestSuiteIsReductionOfPositive();
-	testIOListContainerConstructor();
+
+	//testIOListContainerConstructor();
+
+	testTraceSegmentGetCopy();
 
 
 	/*testMinimise();
