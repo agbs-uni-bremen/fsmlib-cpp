@@ -5443,6 +5443,436 @@ void testTraceSegmentGetCopy() {
 	}
 }
 
+//===================================== SegmentedTrace Tests ===================================================
+
+// tests operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2)
+// positive case
+void testSegmentedTraceEqualOperatorPositive() {
+	// both SegmentedTraces are empty.
+	{
+		deque< std::shared_ptr<TraceSegment> > segments;
+		SegmentedTrace segTrc1(segments);
+		SegmentedTrace segTrc2(segments);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			segTrc1 == segTrc2,
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns true if both traces are empty.");
+	}
+
+	// segTrc1 = <<1>> , segTrc2 = <<> <1>>
+	{
+		deque< std::shared_ptr<TraceSegment> > segments1;
+		shared_ptr<vector<int>> v1 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg1 = make_shared<TraceSegment>(v1);
+		segments1.push_back(trcSeg1);
+		SegmentedTrace segTrc1(segments1);
+
+		deque< std::shared_ptr<TraceSegment> > segments2;
+		shared_ptr<vector<int>> v2_1 = make_shared<vector<int>>(vector<int>{});
+		shared_ptr<TraceSegment> trcSeg2_1 = make_shared<TraceSegment>(v2_1);
+		segments2.push_back(trcSeg2_1);
+		shared_ptr<vector<int>> v2_2 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg2_2 = make_shared<TraceSegment>(v2_2);
+		segments2.push_back(trcSeg2_2);
+		SegmentedTrace segTrc2(segments2);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			segTrc1 == segTrc2,
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns true if both traces are equal.");
+	}
+
+	// segTrc1 = <<1> <>>, segTrc2 = <<1>> 
+	{
+		deque< std::shared_ptr<TraceSegment> > segments1;
+		shared_ptr<vector<int>> v1_1 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg1_1 = make_shared<TraceSegment>(v1_1);
+		segments1.push_back(trcSeg1_1);
+		shared_ptr<vector<int>> v1_2 = make_shared<vector<int>>(vector<int>{});
+		shared_ptr<TraceSegment> trcSeg1_2 = make_shared<TraceSegment>(v1_2);
+		segments1.push_back(trcSeg1_2);
+		SegmentedTrace segTrc1(segments1);
+
+		deque< std::shared_ptr<TraceSegment> > segments2;
+		shared_ptr<vector<int>> v2_1 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg2_1 = make_shared<TraceSegment>(v2_1);
+		segments2.push_back(trcSeg2_1);
+		SegmentedTrace segTrc2(segments2);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			segTrc1 == segTrc2,
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns true if both traces are equal.");
+	}
+
+	// segTrc1 = <<1>>, segTrc2 = <<1>> 
+	{
+		deque< std::shared_ptr<TraceSegment> > segments1;
+		shared_ptr<vector<int>> v1_1 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg1_1 = make_shared<TraceSegment>(v1_1);
+		segments1.push_back(trcSeg1_1);
+		SegmentedTrace segTrc1(segments1);
+
+		deque< std::shared_ptr<TraceSegment> > segments2;
+		shared_ptr<vector<int>> v2_1 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg2_1 = make_shared<TraceSegment>(v2_1);
+		segments2.push_back(trcSeg2_1);
+		SegmentedTrace segTrc2(segments2);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			segTrc1 == segTrc2,
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns true if both traces are equal.");
+	}
+
+	// segTrc1 = <<1,2>,<3>>, segTrc2 = <<1>,<2>,<3>> 
+	{
+		deque< std::shared_ptr<TraceSegment> > segments1;
+		shared_ptr<vector<int>> v1_1 = make_shared<vector<int>>(vector<int>{1, 2});
+		shared_ptr<TraceSegment> trcSeg1_1 = make_shared<TraceSegment>(v1_1);
+		segments1.push_back(trcSeg1_1);
+		shared_ptr<vector<int>> v1_2 = make_shared<vector<int>>(vector<int>{3});
+		shared_ptr<TraceSegment> trcSeg1_2 = make_shared<TraceSegment>(v1_2);
+		segments1.push_back(trcSeg1_2);
+		SegmentedTrace segTrc1(segments1);
+
+		deque< std::shared_ptr<TraceSegment> > segments2;
+		shared_ptr<vector<int>> v2_1 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg2_1 = make_shared<TraceSegment>(v2_1);
+		segments2.push_back(trcSeg2_1);
+		shared_ptr<vector<int>> v2_2 = make_shared<vector<int>>(vector<int>{2});
+		shared_ptr<TraceSegment> trcSeg2_2 = make_shared<TraceSegment>(v2_2);
+		segments2.push_back(trcSeg2_2);
+		shared_ptr<vector<int>> v2_3 = make_shared<vector<int>>(vector<int>{3});
+		shared_ptr<TraceSegment> trcSeg2_3 = make_shared<TraceSegment>(v2_3);
+		segments2.push_back(trcSeg2_3);
+		SegmentedTrace segTrc2(segments2);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			segTrc1 == segTrc2,
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns true if both traces are equal.");
+	}
+
+	// segTrc1 = <<1,2>,<3>,<45>>, segTrc2 = <<1>,<2,3,4>,<5>> 
+	{
+		deque< std::shared_ptr<TraceSegment> > segments1;
+		shared_ptr<vector<int>> v1_1 = make_shared<vector<int>>(vector<int>{1, 2});
+		shared_ptr<TraceSegment> trcSeg1_1 = make_shared<TraceSegment>(v1_1);
+		segments1.push_back(trcSeg1_1);
+		shared_ptr<vector<int>> v1_2 = make_shared<vector<int>>(vector<int>{3});
+		shared_ptr<TraceSegment> trcSeg1_2 = make_shared<TraceSegment>(v1_2);
+		segments1.push_back(trcSeg1_2);
+		shared_ptr<vector<int>> v1_3 = make_shared<vector<int>>(vector<int>{4,5});
+		shared_ptr<TraceSegment> trcSeg1_3 = make_shared<TraceSegment>(v1_3);
+		segments1.push_back(trcSeg1_3);
+		SegmentedTrace segTrc1(segments1);
+
+		deque< std::shared_ptr<TraceSegment> > segments2;
+		shared_ptr<vector<int>> v2_1 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg2_1 = make_shared<TraceSegment>(v2_1);
+		segments2.push_back(trcSeg2_1);
+		shared_ptr<vector<int>> v2_2 = make_shared<vector<int>>(vector<int>{2,3,4});
+		shared_ptr<TraceSegment> trcSeg2_2 = make_shared<TraceSegment>(v2_2);
+		segments2.push_back(trcSeg2_2);
+		shared_ptr<vector<int>> v2_3 = make_shared<vector<int>>(vector<int>{5});
+		shared_ptr<TraceSegment> trcSeg2_3 = make_shared<TraceSegment>(v2_3);
+		segments2.push_back(trcSeg2_3);
+		SegmentedTrace segTrc2(segments2);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			segTrc1 == segTrc2,
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns true if both traces are equal.");
+	}
+
+	// segTrc1 = <<1,3>> (prefixTrcSeg1 = 1), segTrc2 = <<1>> (prefix = string::npos)
+	{
+		deque< std::shared_ptr<TraceSegment> > segments1;
+		shared_ptr<vector<int>> v1_1 = make_shared<vector<int>>(vector<int>{1, 3});
+		int prefixTrcSeg1 = 1;
+		shared_ptr<TraceSegment> trcSeg1_1 = make_shared<TraceSegment>(v1_1, prefixTrcSeg1);
+		segments1.push_back(trcSeg1_1);
+		SegmentedTrace segTrc1(segments1);
+
+		deque< std::shared_ptr<TraceSegment> > segments2;
+		shared_ptr<vector<int>> v2_1 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg2_1 = make_shared<TraceSegment>(v2_1);
+		segments2.push_back(trcSeg2_1);
+		SegmentedTrace segTrc2(segments2);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			segTrc1 == segTrc2,
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns true if both traces are equal.");
+	}
+
+	// segTrc1 = <<1,2,3>,<3>> (prefixTrcSeg1_1 = 2, prefixTrcSeg1_2 = 1), segTrc2 = <<1,3>, <2,4>, <4> , <3>> 
+	// (prefixTrcSeg2_1 = 1, prefixTrcSeg2_2 = 1, prefixTrcSeg2_3 = 0, prefixTrcSeg2_4 = 1)
+	{
+		deque< std::shared_ptr<TraceSegment> > segments1;
+		shared_ptr<vector<int>> v1_1 = make_shared<vector<int>>(vector<int>{1, 2, 3});
+		int prefixTrcSeg1_1 = 2;
+		shared_ptr<TraceSegment> trcSeg1_1 = make_shared<TraceSegment>(v1_1, prefixTrcSeg1_1);
+		segments1.push_back(trcSeg1_1);
+		shared_ptr<vector<int>> v1_2 = make_shared<vector<int>>(vector<int>{3});
+		int prefixTrcSeg1_2 = 1;
+		shared_ptr<TraceSegment> trcSeg1_2 = make_shared<TraceSegment>(v1_2, prefixTrcSeg1_2);
+		segments1.push_back(trcSeg1_2);
+		SegmentedTrace segTrc1(segments1);
+
+		deque< std::shared_ptr<TraceSegment> > segments2;
+		shared_ptr<vector<int>> v2_1 = make_shared<vector<int>>(vector<int>{1,3});
+		int prefixTrcSeg2_1 = 1;
+		shared_ptr<TraceSegment> trcSeg2_1 = make_shared<TraceSegment>(v2_1, prefixTrcSeg2_1);
+		segments2.push_back(trcSeg2_1);
+		shared_ptr<vector<int>> v2_2 = make_shared<vector<int>>(vector<int>{2, 4});
+		int prefixTrcSeg2_2 = 1;
+		shared_ptr<TraceSegment> trcSeg2_2 = make_shared<TraceSegment>(v2_2, prefixTrcSeg2_2);
+		segments2.push_back(trcSeg2_2);
+		shared_ptr<vector<int>> v2_3 = make_shared<vector<int>>(vector<int>{4});
+		int prefixTrcSeg2_3 = 0;
+		shared_ptr<TraceSegment> trcSeg2_3 = make_shared<TraceSegment>(v2_3, prefixTrcSeg2_3);
+		segments2.push_back(trcSeg2_3);
+		shared_ptr<vector<int>> v2_4 = make_shared<vector<int>>(vector<int>{3});
+		int prefixTrcSeg2_4 = 1;
+		shared_ptr<TraceSegment> trcSeg2_4 = make_shared<TraceSegment>(v2_4, prefixTrcSeg2_4);
+		segments2.push_back(trcSeg2_4);
+		SegmentedTrace segTrc2(segments2);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			segTrc1 == segTrc2,
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns true if both traces are equal.");
+
+
+		std::cout << "copy equals..." << std::endl;
+		std::cout << (segTrc1.getCopy() == segTrc2.getCopy()) << std::endl;
+	}
+
+}
+
+// tests operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2)
+// negative case
+void testSegmentedTraceEqualOperatorNegative() {
+	// segTrc1 = <<>> , segTrc2 = <<1>>
+	{
+		deque< std::shared_ptr<TraceSegment> > segments1;
+		shared_ptr<vector<int>> v1 = make_shared<vector<int>>(vector<int>{});
+		shared_ptr<TraceSegment> trcSeg1 = make_shared<TraceSegment>(v1);
+		segments1.push_back(trcSeg1);
+		SegmentedTrace segTrc1(segments1);
+
+		deque< std::shared_ptr<TraceSegment> > segments2;
+		shared_ptr<vector<int>> v2_1 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg2_1 = make_shared<TraceSegment>(v2_1);
+		segments2.push_back(trcSeg2_1);
+		SegmentedTrace segTrc2(segments2);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			not(segTrc1 == segTrc2),
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns false if both traces are unequal.");
+	}
+
+	// segTrc1 = <<1>, <2,3>>, segTrc2 = <<1>,<2>> 
+	{
+		deque< std::shared_ptr<TraceSegment> > segments1;
+		shared_ptr<vector<int>> v1_1 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg1_1 = make_shared<TraceSegment>(v1_1);
+		segments1.push_back(trcSeg1_1);
+		shared_ptr<vector<int>> v1_2 = make_shared<vector<int>>(vector<int>{2,3});
+		shared_ptr<TraceSegment> trcSeg1_2 = make_shared<TraceSegment>(v1_2);
+		segments1.push_back(trcSeg1_2);
+		SegmentedTrace segTrc1(segments1);
+
+		deque< std::shared_ptr<TraceSegment> > segments2;
+		shared_ptr<vector<int>> v2_1 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg2_1 = make_shared<TraceSegment>(v2_1);
+		segments2.push_back(trcSeg2_1);
+		shared_ptr<vector<int>> v2_2 = make_shared<vector<int>>(vector<int>{2});
+		shared_ptr<TraceSegment> trcSeg2_2 = make_shared<TraceSegment>(v2_2);
+		segments2.push_back(trcSeg2_2);
+		SegmentedTrace segTrc2(segments2);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			not(segTrc1 == segTrc2),
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns false if both traces are unequal.");
+	}
+
+	// segTrc1 = <<1>, <2,3>>, segTrc2 = <<1>,<2,4>> 
+	{
+		deque< std::shared_ptr<TraceSegment> > segments1;
+		shared_ptr<vector<int>> v1_1 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg1_1 = make_shared<TraceSegment>(v1_1);
+		segments1.push_back(trcSeg1_1);
+		shared_ptr<vector<int>> v1_2 = make_shared<vector<int>>(vector<int>{2, 3});
+		shared_ptr<TraceSegment> trcSeg1_2 = make_shared<TraceSegment>(v1_2);
+		segments1.push_back(trcSeg1_2);
+		SegmentedTrace segTrc1(segments1);
+
+		deque< std::shared_ptr<TraceSegment> > segments2;
+		shared_ptr<vector<int>> v2_1 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg2_1 = make_shared<TraceSegment>(v2_1);
+		segments2.push_back(trcSeg2_1);
+		shared_ptr<vector<int>> v2_2 = make_shared<vector<int>>(vector<int>{2,4});
+		shared_ptr<TraceSegment> trcSeg2_2 = make_shared<TraceSegment>(v2_2);
+		segments2.push_back(trcSeg2_2);
+		SegmentedTrace segTrc2(segments2);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			not(segTrc1 == segTrc2),
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns false if both traces are unequal.");
+	}
+
+	// segTrc1 = <<1>, <2>>, segTrc2 = <<2>,<1>> 
+	{
+		deque< std::shared_ptr<TraceSegment> > segments1;
+		shared_ptr<vector<int>> v1_1 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg1_1 = make_shared<TraceSegment>(v1_1);
+		segments1.push_back(trcSeg1_1);
+		shared_ptr<vector<int>> v1_2 = make_shared<vector<int>>(vector<int>{2});
+		shared_ptr<TraceSegment> trcSeg1_2 = make_shared<TraceSegment>(v1_2);
+		segments1.push_back(trcSeg1_2);
+		SegmentedTrace segTrc1(segments1);
+
+		deque< std::shared_ptr<TraceSegment> > segments2;
+		shared_ptr<vector<int>> v2_1 = make_shared<vector<int>>(vector<int>{2});
+		shared_ptr<TraceSegment> trcSeg2_1 = make_shared<TraceSegment>(v2_1);
+		segments2.push_back(trcSeg2_1);
+		shared_ptr<vector<int>> v2_2 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg2_2 = make_shared<TraceSegment>(v2_2);
+		segments2.push_back(trcSeg2_2);
+		SegmentedTrace segTrc2(segments2);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			not(segTrc1 == segTrc2),
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns false if both traces are unequal.");
+	}
+
+	// segTrc1 = <<1>> prefixTrcSeg1_1 = 0, segTrc2 = <<1>> 
+	{
+		deque< std::shared_ptr<TraceSegment> > segments1;
+		shared_ptr<vector<int>> v1_1 = make_shared<vector<int>>(vector<int>{1});
+		int prefixTrcSeg1_1 = 0;
+		shared_ptr<TraceSegment> trcSeg1_1 = make_shared<TraceSegment>(v1_1, prefixTrcSeg1_1);
+		segments1.push_back(trcSeg1_1);
+		SegmentedTrace segTrc1(segments1);
+
+		deque< std::shared_ptr<TraceSegment> > segments2;
+		shared_ptr<vector<int>> v2_1 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg2_1 = make_shared<TraceSegment>(v2_1);
+		segments2.push_back(trcSeg2_1);
+		SegmentedTrace segTrc2(segments2);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			not(segTrc1 == segTrc2),
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns false if both traces are unequal.");
+	}
+
+	// segTrc1 = <<1>,<2>> prefixTrcSeg1_2 = 0, segTrc2 = <<1>,<2>>
+	{
+		deque< std::shared_ptr<TraceSegment> > segments1;
+		shared_ptr<vector<int>> v1_1 = make_shared<vector<int>>(vector<int>{1});		
+		shared_ptr<TraceSegment> trcSeg1_1 = make_shared<TraceSegment>(v1_1);
+		segments1.push_back(trcSeg1_1);
+		shared_ptr<vector<int>> v1_2 = make_shared<vector<int>>(vector<int>{2});
+		int prefixTrcSeg1_2 = 0;
+		shared_ptr<TraceSegment> trcSeg1_2 = make_shared<TraceSegment>(v1_2, prefixTrcSeg1_2);
+		segments1.push_back(trcSeg1_2);		
+		SegmentedTrace segTrc1(segments1);
+
+		deque< std::shared_ptr<TraceSegment> > segments2;
+		shared_ptr<vector<int>> v2_1 = make_shared<vector<int>>(vector<int>{1});
+		shared_ptr<TraceSegment> trcSeg2_1 = make_shared<TraceSegment>(v2_1);
+		segments2.push_back(trcSeg2_1);
+		shared_ptr<vector<int>> v2_2 = make_shared<vector<int>>(vector<int>{2});
+		shared_ptr<TraceSegment> trcSeg2_2 = make_shared<TraceSegment>(v2_2);
+		segments2.push_back(trcSeg2_2);
+		SegmentedTrace segTrc2(segments2);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			not(segTrc1 == segTrc2),
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns false if both traces are unequal.");
+	}
+
+	// segTrc1 = <<1,2>,<3>>, segTrc2 = <<1,2>,<3>> prefixTrcSeg2_1 = 1
+	{
+		deque< std::shared_ptr<TraceSegment> > segments1;
+		shared_ptr<vector<int>> v1_1 = make_shared<vector<int>>(vector<int>{1,2});
+		shared_ptr<TraceSegment> trcSeg1_1 = make_shared<TraceSegment>(v1_1);
+		segments1.push_back(trcSeg1_1);
+		shared_ptr<vector<int>> v1_2 = make_shared<vector<int>>(vector<int>{3});
+		shared_ptr<TraceSegment> trcSeg1_2 = make_shared<TraceSegment>(v1_2);
+		segments1.push_back(trcSeg1_2);
+		SegmentedTrace segTrc1(segments1);
+
+		deque< std::shared_ptr<TraceSegment> > segments2;
+		shared_ptr<vector<int>> v2_1 = make_shared<vector<int>>(vector<int>{1,2});
+		int prefixTrcSeg2_1 = 1;
+		shared_ptr<TraceSegment> trcSeg2_1 = make_shared<TraceSegment>(v2_1, prefixTrcSeg2_1);
+		segments2.push_back(trcSeg2_1);
+		shared_ptr<vector<int>> v2_2 = make_shared<vector<int>>(vector<int>{3});
+		shared_ptr<TraceSegment> trcSeg2_2 = make_shared<TraceSegment>(v2_2);
+		segments2.push_back(trcSeg2_2);
+		SegmentedTrace segTrc2(segments2);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			not(segTrc1 == segTrc2),
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns false if both traces are unequal.");
+	}
+
+	// segTrc1 = <<1,2>,<3>>, segTrc2 = <<1,2>,<3>> prefixTrcSeg2_1 = 0
+	{
+		deque< std::shared_ptr<TraceSegment> > segments1;
+		shared_ptr<vector<int>> v1_1 = make_shared<vector<int>>(vector<int>{1, 2});
+		shared_ptr<TraceSegment> trcSeg1_1 = make_shared<TraceSegment>(v1_1);
+		segments1.push_back(trcSeg1_1);
+		shared_ptr<vector<int>> v1_2 = make_shared<vector<int>>(vector<int>{3});
+		shared_ptr<TraceSegment> trcSeg1_2 = make_shared<TraceSegment>(v1_2);
+		segments1.push_back(trcSeg1_2);
+		SegmentedTrace segTrc1(segments1);
+
+		deque< std::shared_ptr<TraceSegment> > segments2;
+		shared_ptr<vector<int>> v2_1 = make_shared<vector<int>>(vector<int>{1, 2});
+		int prefixTrcSeg2_1 = 0;
+		shared_ptr<TraceSegment> trcSeg2_1 = make_shared<TraceSegment>(v2_1, prefixTrcSeg2_1);
+		segments2.push_back(trcSeg2_1);
+		shared_ptr<vector<int>> v2_2 = make_shared<vector<int>>(vector<int>{3});
+		shared_ptr<TraceSegment> trcSeg2_2 = make_shared<TraceSegment>(v2_2);
+		segments2.push_back(trcSeg2_2);
+		SegmentedTrace segTrc2(segments2);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			not(segTrc1 == segTrc2),
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns false if both traces are unequal.");
+	}
+
+	// segTrc1 = <<1,2>,<3,4,5>,<6>> prefixTrcSeg1_2 = 2, segTrc2 = <<1,2>,<3,4>,<5,6>> 
+	{
+		deque< std::shared_ptr<TraceSegment> > segments1;
+		shared_ptr<vector<int>> v1_1 = make_shared<vector<int>>(vector<int>{1, 2});
+		shared_ptr<TraceSegment> trcSeg1_1 = make_shared<TraceSegment>(v1_1);
+		segments1.push_back(trcSeg1_1);
+		shared_ptr<vector<int>> v1_2 = make_shared<vector<int>>(vector<int>{3,4,5});
+		int prefixTrcSeg1_2 = 2;
+		shared_ptr<TraceSegment> trcSeg1_2 = make_shared<TraceSegment>(v1_2, prefixTrcSeg1_2);
+		segments1.push_back(trcSeg1_2);
+		shared_ptr<vector<int>> v1_3 = make_shared<vector<int>>(vector<int>{6});
+		shared_ptr<TraceSegment> trcSeg1_3 = make_shared<TraceSegment>(v1_3);
+		segments1.push_back(trcSeg1_3);
+		SegmentedTrace segTrc1(segments1);
+
+		deque< std::shared_ptr<TraceSegment> > segments2;
+		shared_ptr<vector<int>> v2_1 = make_shared<vector<int>>(vector<int>{1, 2});		
+		shared_ptr<TraceSegment> trcSeg2_1 = make_shared<TraceSegment>(v2_1);
+		segments2.push_back(trcSeg2_1);
+		shared_ptr<vector<int>> v2_2 = make_shared<vector<int>>(vector<int>{3,4});
+		shared_ptr<TraceSegment> trcSeg2_2 = make_shared<TraceSegment>(v2_2);
+		segments2.push_back(trcSeg2_2);
+		shared_ptr<vector<int>> v2_3 = make_shared<vector<int>>(vector<int>{5,6});
+		shared_ptr<TraceSegment> trcSeg2_3 = make_shared<TraceSegment>(v2_3);
+		segments2.push_back(trcSeg2_3);
+		SegmentedTrace segTrc2(segments2);
+
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			not(segTrc1 == segTrc2),
+			"operator==(SegmentedTrace const & trace1, SegmentedTrace const & trace2) returns false if both traces are unequal.");
+	}
+}
+
 
 int main(int argc, char** argv)
 {
@@ -5564,7 +5994,10 @@ int main(int argc, char** argv)
 
 	//testIOListContainerConstructor();
 
-	testTraceSegmentGetCopy();
+	//testTraceSegmentGetCopy();
+
+	//testSegmentedTraceEqualOperatorPositive();
+	testSegmentedTraceEqualOperatorNegative();
 
 
 	/*testMinimise();
