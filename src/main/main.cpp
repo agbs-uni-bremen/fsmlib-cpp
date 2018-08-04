@@ -21,6 +21,8 @@
 #include <trees/TestSuite.h>
 #include "json/json.h"
 
+#include "sets/HittingSet.h"
+#include "sets/HsTreeNode.h"
 #include <algorithm>
 #include <cmath>
 
@@ -5873,6 +5875,63 @@ void testSegmentedTraceEqualOperatorNegative() {
 	}
 }
 
+//===================================== HittingSet Tests ===================================================
+
+// tests HittingSet::HittingSet(const std::vector<std::unordered_set<int>>& s)
+void testHittingSetConstructor() {
+	// empty vector (no set contained)
+	{
+		vector<unordered_set<int>> s;
+		HittingSet hs(s);
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			HsTreeNode::hSmallest.empty(),
+			"HittingSet::HittingSet(const std::vector<std::unordered_set<int>>& s) called with "
+			"empty s initializes HsTreeNode::hSmallest as empty set");
+	}
+
+	// vector contains only the empty set.
+	{
+		vector<unordered_set<int>> s;
+		s.push_back(unordered_set<int>{});
+		HittingSet hs(s);
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			HsTreeNode::hSmallest.empty(),
+			"HittingSet::HittingSet(const std::vector<std::unordered_set<int>>& s) initializes "
+			"HsTreeNode::hSmallest as empty set, if s contains only empty sets.");
+	}
+
+	// vector contains one non-empty set.
+	{
+		vector<unordered_set<int>> s;
+		unordered_set<int> set1{ 1, 2 };
+		s.push_back(set1);
+		HittingSet hs(s);
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			HsTreeNode::hSmallest.size() == 2
+			&& HsTreeNode::hSmallest.count(1) != 0
+			&& HsTreeNode::hSmallest.count(2) != 0,
+			"HittingSet::HittingSet(const std::vector<std::unordered_set<int>>& s) initializes  "
+			"HsTreeNode::hSmallest as a set containing all elements contained in sets of s.");
+	}
+
+	// vector contains two non-empty sets. The intersection of both sets isn't empty.
+	{
+		vector<unordered_set<int>> s;
+		unordered_set<int> set1{ 1, 2 };
+		unordered_set<int> set2{ 2, 3 };
+		s.push_back(set1);
+		s.push_back(set2);
+		HittingSet hs(s);
+		fsmlib_assert("TC-SegmentedTrace-NNNN",
+			HsTreeNode::hSmallest.size() == 3
+			&& HsTreeNode::hSmallest.count(1) != 0
+			&& HsTreeNode::hSmallest.count(2) != 0
+			&& HsTreeNode::hSmallest.count(3) != 0,
+			"HittingSet::HittingSet(const std::vector<std::unordered_set<int>>& s) initializes  "
+			"HsTreeNode::hSmallest as a set containing all elements contained in sets of s.");
+	}
+}
+
 
 int main(int argc, char** argv)
 {
@@ -5997,7 +6056,9 @@ int main(int argc, char** argv)
 	//testTraceSegmentGetCopy();
 
 	//testSegmentedTraceEqualOperatorPositive();
-	testSegmentedTraceEqualOperatorNegative();
+	//testSegmentedTraceEqualOperatorNegative();
+
+	testHittingSetConstructor();
 
 
 	/*testMinimise();
