@@ -5883,7 +5883,7 @@ void testHittingSetConstructor() {
 	{
 		vector<unordered_set<int>> s;
 		HittingSet hs(s);
-		fsmlib_assert("TC-SegmentedTrace-NNNN",
+		fsmlib_assert("TC-HittingSet-NNNN",
 			HsTreeNode::hSmallest.empty(),
 			"HittingSet::HittingSet(const std::vector<std::unordered_set<int>>& s) called with "
 			"empty s initializes HsTreeNode::hSmallest as empty set");
@@ -5894,7 +5894,7 @@ void testHittingSetConstructor() {
 		vector<unordered_set<int>> s;
 		s.push_back(unordered_set<int>{});
 		HittingSet hs(s);
-		fsmlib_assert("TC-SegmentedTrace-NNNN",
+		fsmlib_assert("TC-HittingSet-NNNN",
 			HsTreeNode::hSmallest.empty(),
 			"HittingSet::HittingSet(const std::vector<std::unordered_set<int>>& s) initializes "
 			"HsTreeNode::hSmallest as empty set, if s contains only empty sets.");
@@ -5906,7 +5906,7 @@ void testHittingSetConstructor() {
 		unordered_set<int> set1{ 1, 2 };
 		s.push_back(set1);
 		HittingSet hs(s);
-		fsmlib_assert("TC-SegmentedTrace-NNNN",
+		fsmlib_assert("TC-HittingSet-NNNN",
 			HsTreeNode::hSmallest.size() == 2
 			&& HsTreeNode::hSmallest.count(1) != 0
 			&& HsTreeNode::hSmallest.count(2) != 0,
@@ -5922,13 +5922,170 @@ void testHittingSetConstructor() {
 		s.push_back(set1);
 		s.push_back(set2);
 		HittingSet hs(s);
-		fsmlib_assert("TC-SegmentedTrace-NNNN",
+		fsmlib_assert("TC-HittingSet-NNNN",
 			HsTreeNode::hSmallest.size() == 3
 			&& HsTreeNode::hSmallest.count(1) != 0
 			&& HsTreeNode::hSmallest.count(2) != 0
 			&& HsTreeNode::hSmallest.count(3) != 0,
 			"HittingSet::HittingSet(const std::vector<std::unordered_set<int>>& s) initializes  "
 			"HsTreeNode::hSmallest as a set containing all elements contained in sets of s.");
+	}
+}
+
+// tests HittingSet::calcMinCardHittingSet()
+void testHittingSetCalcMinCardHittingSet() {
+	// empty vector (no set contained)
+	{
+		vector<unordered_set<int>> s;
+		HittingSet hs(s);
+		unordered_set<int> minHittingSet = hs.calcMinCardHittingSet();
+		fsmlib_assert("TC-HittingSet-NNNN",
+			HsTreeNode::hSmallest == minHittingSet,
+			"The result of HittingSet::calcMinCardHittingSet() is assigned to HsTreeNode::hSmallest.");
+
+		int expectedSize = 0;
+		fsmlib_assert("TC-HittingSet-NNNN",
+			minHittingSet.size() == expectedSize,
+			"Result of HittingSet::calcMinCardHittingSet() is minimal.");
+
+		// this returns true (ok because s is empty, so one could argue that every possible set is a hitting set )
+		HsTreeNode node(minHittingSet, s);
+		fsmlib_assert("TC-HittingSet-NNNN",
+			node.isHittingSet(),
+			"Result of HittingSet::calcMinCardHittingSet() is a hitting set.");
+	}
+
+	// vector contains only the empty set.
+	{
+		vector<unordered_set<int>> s;
+		s.push_back(unordered_set<int>{});
+		HittingSet hs(s);
+		unordered_set<int> minHittingSet = hs.calcMinCardHittingSet();
+		fsmlib_assert("TC-HittingSet-NNNN",
+			HsTreeNode::hSmallest == minHittingSet,
+			"The result of HittingSet::calcMinCardHittingSet() is assigned to HsTreeNode::hSmallest.");
+
+		int expectedSize = 0;
+		fsmlib_assert("TC-HittingSet-NNNN",
+			minHittingSet.size() == expectedSize,
+			"Result of HittingSet::calcMinCardHittingSet() is minimal.");
+
+		// this returns false (ok because no element of minHittingSet is contained in the only set of s in this special case)
+		//HsTreeNode node(minHittingSet, s);
+		//fsmlib_assert("TC-HittingSet-NNNN",
+		//	node.isHittingSet(),
+		//	"Result of HittingSet::calcMinCardHittingSet() is a hitting set.");
+	}
+
+	// vector contains {1,2} => expectedSize = 1
+	{
+		vector<unordered_set<int>> s;
+		s.push_back(unordered_set<int>{1,2});
+		HittingSet hs(s);
+		unordered_set<int> minHittingSet = hs.calcMinCardHittingSet();
+		fsmlib_assert("TC-HittingSet-NNNN",
+			HsTreeNode::hSmallest == minHittingSet,
+			"The result of HittingSet::calcMinCardHittingSet() is assigned to HsTreeNode::hSmallest.");
+
+		int expectedSize = 1;
+		fsmlib_assert("TC-HittingSet-NNNN",
+			minHittingSet.size() == expectedSize,
+			"Result of HittingSet::calcMinCardHittingSet() is minimal.");
+
+		HsTreeNode node(minHittingSet, s);
+		fsmlib_assert("TC-HittingSet-NNNN",
+			node.isHittingSet(),
+			"Result of HittingSet::calcMinCardHittingSet() is a hitting set.");
+	}
+
+	// vector contains {1,2} and {3} => expectedSize = 2
+	{
+		vector<unordered_set<int>> s;
+		s.push_back(unordered_set<int>{1, 2});
+		s.push_back(unordered_set<int>{3});
+		HittingSet hs(s);
+		unordered_set<int> minHittingSet = hs.calcMinCardHittingSet();
+		fsmlib_assert("TC-HittingSet-NNNN",
+			HsTreeNode::hSmallest == minHittingSet,
+			"The result of HittingSet::calcMinCardHittingSet() is assigned to HsTreeNode::hSmallest.");
+
+		int expectedSize = 2;
+		fsmlib_assert("TC-HittingSet-NNNN",
+			minHittingSet.size() == expectedSize,
+			"Result of HittingSet::calcMinCardHittingSet() is minimal.");
+
+		HsTreeNode node(minHittingSet, s);
+		fsmlib_assert("TC-HittingSet-NNNN",
+			node.isHittingSet(),
+			"Result of HittingSet::calcMinCardHittingSet() is a hitting set.");
+	}
+
+	// vector contains {1,2} and {2,3} => expectedSize = 1
+	{
+		vector<unordered_set<int>> s;
+		s.push_back(unordered_set<int>{1, 2});
+		s.push_back(unordered_set<int>{2, 3});
+		HittingSet hs(s);
+		unordered_set<int> minHittingSet = hs.calcMinCardHittingSet();
+		fsmlib_assert("TC-HittingSet-NNNN",
+			HsTreeNode::hSmallest == minHittingSet,
+			"The result of HittingSet::calcMinCardHittingSet() is assigned to HsTreeNode::hSmallest.");
+
+		int expectedSize = 1;
+		fsmlib_assert("TC-HittingSet-NNNN",
+			minHittingSet.size() == expectedSize,
+			"Result of HittingSet::calcMinCardHittingSet() is minimal.");
+
+		HsTreeNode node(minHittingSet, s);
+		fsmlib_assert("TC-HittingSet-NNNN",
+			node.isHittingSet(),
+			"Result of HittingSet::calcMinCardHittingSet() is a hitting set.");
+	}
+
+	// vector contains {1,2}, {2,3} and {3,1} => expectedSize = 2
+	{
+		vector<unordered_set<int>> s;
+		s.push_back(unordered_set<int>{1, 2});
+		s.push_back(unordered_set<int>{2, 3});
+		s.push_back(unordered_set<int>{3, 1});
+		HittingSet hs(s);
+		unordered_set<int> minHittingSet = hs.calcMinCardHittingSet();
+		fsmlib_assert("TC-HittingSet-NNNN",
+			HsTreeNode::hSmallest == minHittingSet,
+			"The result of HittingSet::calcMinCardHittingSet() is assigned to HsTreeNode::hSmallest.");
+
+		int expectedSize = 2;
+		fsmlib_assert("TC-HittingSet-NNNN",
+			minHittingSet.size() == expectedSize,
+			"Result of HittingSet::calcMinCardHittingSet() is minimal.");
+
+		HsTreeNode node(minHittingSet, s);
+		fsmlib_assert("TC-HittingSet-NNNN",
+			node.isHittingSet(),
+			"Result of HittingSet::calcMinCardHittingSet() is a hitting set.");
+	}
+
+	// vector contains {1,2,3}, {2,3} and {3,1} => expectedSize = 1
+	{
+		vector<unordered_set<int>> s;
+		s.push_back(unordered_set<int>{1, 2, 3});
+		s.push_back(unordered_set<int>{2, 3});
+		s.push_back(unordered_set<int>{3, 1});
+		HittingSet hs(s);
+		unordered_set<int> minHittingSet = hs.calcMinCardHittingSet();
+		fsmlib_assert("TC-HittingSet-NNNN",
+			HsTreeNode::hSmallest == minHittingSet,
+			"The result of HittingSet::calcMinCardHittingSet() is assigned to HsTreeNode::hSmallest.");
+
+		int expectedSize = 1;
+		fsmlib_assert("TC-HittingSet-NNNN",
+			minHittingSet.size() == expectedSize,
+			"Result of HittingSet::calcMinCardHittingSet() is minimal.");
+
+		HsTreeNode node(minHittingSet, s);
+		fsmlib_assert("TC-HittingSet-NNNN",
+			node.isHittingSet(),
+			"Result of HittingSet::calcMinCardHittingSet() is a hitting set.");
 	}
 }
 
@@ -6058,7 +6215,8 @@ int main(int argc, char** argv)
 	//testSegmentedTraceEqualOperatorPositive();
 	//testSegmentedTraceEqualOperatorNegative();
 
-	testHittingSetConstructor();
+	//testHittingSetConstructor();
+	testHittingSetCalcMinCardHittingSet();
 
 
 	/*testMinimise();
