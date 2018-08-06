@@ -6089,6 +6089,175 @@ void testHittingSetCalcMinCardHittingSet() {
 	}
 }
 
+//===================================== HsTreeNode Tests ===================================================
+
+// tests HsTreeNode::isHittingSet() 
+// Positive case
+void testHsTreeNodeIsHittingSetPositive() {
+	// s = <> , x = {}
+	{
+		unordered_set<int> x{};
+		vector<unordered_set<int>> s{};
+		HsTreeNode n(x, s);
+		int oldMaxNumNode = HsTreeNode::maxNodeNum;
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			n.isHittingSet(),
+			"HsTreeNode::isHittingSet() returns true if x is a hitting set of s.");
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			oldMaxNumNode == HsTreeNode::maxNodeNum,
+			"HsTreeNode::isHittingSet() doesn't change HsTreeNode::maxNodeNum.");
+	}
+
+	// s = <{1,2}> , x = {2}
+	{
+		unordered_set<int> x{2};
+		vector<unordered_set<int>> s{ unordered_set<int>{1,2} };
+		HsTreeNode n(x, s);
+		int oldMaxNumNode = HsTreeNode::maxNodeNum;
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			n.isHittingSet(),
+			"HsTreeNode::isHittingSet() returns true if x is a hitting set of s.");
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			oldMaxNumNode == HsTreeNode::maxNodeNum,
+			"HsTreeNode::isHittingSet() doesn't change HsTreeNode::maxNodeNum.");
+	}
+
+	// s = <{1,2}, {1,3}> , x = {1}
+	{
+		unordered_set<int> x{ 1 };
+		vector<unordered_set<int>> s{ unordered_set<int>{1,2}, unordered_set<int>{1,3} };
+		HsTreeNode n(x, s);
+		int oldMaxNumNode = HsTreeNode::maxNodeNum;
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			n.isHittingSet(),
+			"HsTreeNode::isHittingSet() returns true if x is a hitting set of s.");
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			oldMaxNumNode == HsTreeNode::maxNodeNum,
+			"HsTreeNode::isHittingSet() doesn't change HsTreeNode::maxNodeNum.");
+	}
+
+	// s = <{1,2}, {1,3}> , x = {2,3,4}
+	{
+		unordered_set<int> x{ 2,3,4 };
+		vector<unordered_set<int>> s{ unordered_set<int>{1,2}, unordered_set<int>{1,3} };
+		HsTreeNode n(x, s);
+		int oldMaxNumNode = HsTreeNode::maxNodeNum;
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			n.isHittingSet(),
+			"HsTreeNode::isHittingSet() returns true if x is a hitting set of s.");
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			oldMaxNumNode == HsTreeNode::maxNodeNum,
+			"HsTreeNode::isHittingSet() doesn't change HsTreeNode::maxNodeNum.");
+	}
+}
+
+// tests HsTreeNode::isHittingSet() 
+// Negative case
+void testHsTreeNodeIsHittingSetNegative() {
+	// s = <{}> , x = {}
+	{
+		unordered_set<int> x{};
+		vector<unordered_set<int>> s{ unordered_set<int>{} };
+		HsTreeNode n(x, s);
+		int oldMaxNumNode = HsTreeNode::maxNodeNum;
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			not n.isHittingSet(),
+			"HsTreeNode::isHittingSet() returns false if x is not a hitting set of s.");
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			oldMaxNumNode == HsTreeNode::maxNodeNum,
+			"HsTreeNode::isHittingSet() doesn't change HsTreeNode::maxNodeNum.");
+	}
+
+	// s = <{1}> , x = {}
+	{
+		unordered_set<int> x{};
+		vector<unordered_set<int>> s{ unordered_set<int>{1} };
+		HsTreeNode n(x, s);
+		int oldMaxNumNode = HsTreeNode::maxNodeNum;
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			not n.isHittingSet(),
+			"HsTreeNode::isHittingSet() returns false if x is not a hitting set of s.");
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			oldMaxNumNode == HsTreeNode::maxNodeNum,
+			"HsTreeNode::isHittingSet() doesn't change HsTreeNode::maxNodeNum.");
+	}
+
+	// s = <{1,2}> , x = {3}
+	{
+		unordered_set<int> x{3};
+		vector<unordered_set<int>> s{ unordered_set<int>{1,2} };
+		HsTreeNode n(x, s);
+		int oldMaxNumNode = HsTreeNode::maxNodeNum;
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			not n.isHittingSet(),
+			"HsTreeNode::isHittingSet() returns false if x is not a hitting set of s.");
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			oldMaxNumNode == HsTreeNode::maxNodeNum,
+			"HsTreeNode::isHittingSet() doesn't change HsTreeNode::maxNodeNum.");
+	}
+
+	// s = <{1,2}, {1,3}> , x = {2}
+	{
+		unordered_set<int> x{ 2 };
+		vector<unordered_set<int>> s{ unordered_set<int>{1,2}, unordered_set<int>{1,3} };
+		HsTreeNode n(x, s);
+		int oldMaxNumNode = HsTreeNode::maxNodeNum;
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			not n.isHittingSet(),
+			"HsTreeNode::isHittingSet() returns false if x is not a hitting set of s.");
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			oldMaxNumNode == HsTreeNode::maxNodeNum,
+			"HsTreeNode::isHittingSet() doesn't change HsTreeNode::maxNodeNum.");
+	}
+
+	// s = <{1,2}, {1,3}> , x = {3,4}
+	{
+		unordered_set<int> x{ 3,4 };
+		vector<unordered_set<int>> s{ unordered_set<int>{1,2}, unordered_set<int>{1,3} };
+		HsTreeNode n(x, s);
+		int oldMaxNumNode = HsTreeNode::maxNodeNum;
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			not n.isHittingSet(),
+			"HsTreeNode::isHittingSet() returns false if x is not a hitting set of s.");
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			oldMaxNumNode == HsTreeNode::maxNodeNum,
+			"HsTreeNode::isHittingSet() doesn't change HsTreeNode::maxNodeNum.");
+	}
+
+	// s = <{1,2}, {1,3}, {3,4}> , x = {2,4}
+	{
+		unordered_set<int> x{ 2,4 };
+		vector<unordered_set<int>> s{ unordered_set<int>{1,2}, unordered_set<int>{1,3}, unordered_set<int>{3,4} };
+		HsTreeNode n(x, s);
+		int oldMaxNumNode = HsTreeNode::maxNodeNum;
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			not n.isHittingSet(),
+			"HsTreeNode::isHittingSet() returns false if x is not a hitting set of s.");
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			oldMaxNumNode == HsTreeNode::maxNodeNum,
+			"HsTreeNode::isHittingSet() doesn't change HsTreeNode::maxNodeNum.");
+	}
+}
 
 int main(int argc, char** argv)
 {
@@ -6216,8 +6385,10 @@ int main(int argc, char** argv)
 	//testSegmentedTraceEqualOperatorNegative();
 
 	//testHittingSetConstructor();
-	testHittingSetCalcMinCardHittingSet();
+	//testHittingSetCalcMinCardHittingSet();
 
+	//testHsTreeNodeIsHittingSetPositive();
+	testHsTreeNodeIsHittingSetNegative();
 
 	/*testMinimise();
 	testWMethod();*/
