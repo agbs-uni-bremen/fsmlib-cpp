@@ -6259,6 +6259,99 @@ void testHsTreeNodeIsHittingSetNegative() {
 	}
 }
 
+// tests HsTreeNode::expandNode()
+void testHsTreeNodeExpandNode() {
+	// s = <{3},{2}>, x = {1,2} -> x isn't a Hitting Set of s.
+	{
+		unordered_set<int> x = { 1,2 };
+		vector<unordered_set<int>> s{ unordered_set<int>{3}, unordered_set<int>{2} };
+		HsTreeNode::hSmallest = x;
+		HsTreeNode n(x, s);
+		n.expandNode();
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			HsTreeNode::hSmallest == x,
+			"HsTreeNode::expandNode() doesn't change HsTreeNode::hSmallest if x isn't a hitting set of s.");
+
+	}
+
+	// s = <>, x = {1,2} -> s is empty so no elements are needed in x. (A created hitting set can't be empty, so the expected size is 1.)
+	{
+		unordered_set<int> x = { 1,2 };
+		vector<unordered_set<int>> s{ };
+		HsTreeNode::hSmallest = x;
+		HsTreeNode::maxNodeNum = 0;
+		HsTreeNode n(x, s);
+		n.expandNode();
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			HsTreeNode::hSmallest.size() == 1,
+			"HsTreeNode::expandNode() calculates all possible hitting sets of s, consisting of elements of x, "
+			"and stores the minimal one in HsTreeNode::hSmallest.");
+	}
+
+	// s = <{1},{2}>, x = {1,2} -> No child is a hitting set of s. (hitting set  = {1,2})
+	{
+		unordered_set<int> x = { 1,2 };
+		vector<unordered_set<int>> s{ unordered_set<int>{1}, unordered_set<int>{2} };
+		HsTreeNode::hSmallest = x;
+		HsTreeNode::maxNodeNum = 0;
+		HsTreeNode n(x, s);
+		n.expandNode();
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			HsTreeNode::hSmallest == x,
+			"HsTreeNode::expandNode() calculates all possible hitting sets of s, consisting of elements of x, "
+			"and stores the minimal one in HsTreeNode::hSmallest.");
+	}
+
+	// s = <{1,2},{2,3}>, x = {1,2,3} -> Each direct child of n is a hitting set. Minimal hitting set contains 1 element.
+	{
+		unordered_set<int> x = { 1,2,3 };
+		vector<unordered_set<int>> s{ unordered_set<int>{1,2}, unordered_set<int>{2,3} };
+		HsTreeNode::hSmallest = x;
+		HsTreeNode::maxNodeNum = 0;
+		HsTreeNode n(x, s);
+		n.expandNode();
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			HsTreeNode::hSmallest.size() == 1,
+			"HsTreeNode::expandNode() calculates all possible hitting sets of s, consisting of elements of x, "
+			"and stores the minimal one in HsTreeNode::hSmallest.");
+	}
+
+	// s = <{1,2},{1,3}>, x = {1} -> Each direct child of n is empty (no child is hitting set). Minimal hitting set contains 1 element.
+	{
+		unordered_set<int> x = { 1 };
+		vector<unordered_set<int>> s{ unordered_set<int>{1,2}, unordered_set<int>{1,3} };
+		HsTreeNode::hSmallest = x;
+		HsTreeNode::maxNodeNum = 0;
+		HsTreeNode n(x, s);
+		n.expandNode();
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			HsTreeNode::hSmallest.size() == 1,
+			"HsTreeNode::expandNode() calculates all possible hitting sets of s, consisting of elements of x, "
+			"and stores the minimal one in HsTreeNode::hSmallest.");
+	}
+
+	// s = <{4},{1,4},{2,4}>, x = {1,2,4} -> Not every child of n is a hitting set (but some). 
+	// Minimal hitting set contains 1 element.
+	{
+		unordered_set<int> x = { 1,2,4 };
+		vector<unordered_set<int>> s{ unordered_set<int>{4}, unordered_set<int>{1,4}, unordered_set<int>{2,4} };
+		HsTreeNode::hSmallest = x;
+		HsTreeNode::maxNodeNum = 0;
+		HsTreeNode n(x, s);
+		n.expandNode();
+
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			HsTreeNode::hSmallest.size() == 1,
+			"HsTreeNode::expandNode() calculates all possible hitting sets of s, consisting of elements of x, "
+			"and stores the minimal one in HsTreeNode::hSmallest.");
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -6388,7 +6481,8 @@ int main(int argc, char** argv)
 	//testHittingSetCalcMinCardHittingSet();
 
 	//testHsTreeNodeIsHittingSetPositive();
-	testHsTreeNodeIsHittingSetNegative();
+	//testHsTreeNodeIsHittingSetNegative();
+	testHsTreeNodeExpandNode();
 
 	/*testMinimise();
 	testWMethod();*/
