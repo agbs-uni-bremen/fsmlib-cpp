@@ -6344,12 +6344,87 @@ void testHsTreeNodeExpandNode() {
 		HsTreeNode::maxNodeNum = 0;
 		HsTreeNode n(x, s);
 		n.expandNode();
-
+		
 		fsmlib_assert("TC-HsTreeNode-NNNN",
 			HsTreeNode::hSmallest.size() == 1,
 			"HsTreeNode::expandNode() calculates all possible hitting sets of s, consisting of elements of x, "
 			"and stores the minimal one in HsTreeNode::hSmallest.");
 	}
+}
+
+// tests HsTreeNode::toDot()
+void testHsTreeNodeToDot() {
+	// no children (expandNode() is not invoked). x = {}
+	{
+		unordered_set<int> x = {  };
+		vector<unordered_set<int>> s{ unordered_set<int>{1}, unordered_set<int>{2} };
+		HsTreeNode::hSmallest = x;
+		HsTreeNode::maxNodeNum = 0;
+		HsTreeNode n(x, s);
+		cout << n.toDot() << endl;
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			n.toDot().find("label=\"[]\"") != string::npos,
+			"HsTreeNode::toDot() returns string that contains all expected node labels.");
+	}
+
+	// no children (expandNode() is not invoked). x = {1}
+	{
+		unordered_set<int> x = {1};
+		vector<unordered_set<int>> s{ unordered_set<int>{1}, unordered_set<int>{2} };
+		HsTreeNode::hSmallest = x;
+		HsTreeNode::maxNodeNum = 0;
+		HsTreeNode n(x, s);
+		cout << n.toDot() << endl;
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			n.toDot().find("label=\"[1]\"") != string::npos,
+			"HsTreeNode::toDot() returns string that contains all expected node labels.");
+	}
+
+	// no children (expandNode() is not invoked). x = {1,2}
+	{
+		unordered_set<int> x = { 1,2 };
+		vector<unordered_set<int>> s{ unordered_set<int>{1}, unordered_set<int>{2} };
+		HsTreeNode::hSmallest = x;
+		HsTreeNode::maxNodeNum = 0;
+		HsTreeNode n(x, s);
+		cout << n.toDot() << endl;
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			n.toDot().find("label=\"[1, 2]\"") != string::npos,
+			"HsTreeNode::toDot() returns string that contains all expected node labels.");
+	}
+
+	// with children (expandNode() is invoked). x = {1,2} s = <{1,2},{2}>
+	{
+		unordered_set<int> x = { 1,2 };
+		vector<unordered_set<int>> s{ unordered_set<int>{1,2}, unordered_set<int>{2} };
+		HsTreeNode::hSmallest = x;
+		HsTreeNode::maxNodeNum = 0;
+		HsTreeNode n(x, s);
+		n.expandNode();
+		cout << n.toDot() << endl;
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			n.toDot().find("label=\"[1, 2]\"") != string::npos
+			&& n.toDot().find("label=\"[2]\"") != string::npos,
+			"HsTreeNode::toDot() returns string that contains all expected node labels.");
+	}
+
+	// with children (expandNode() is invoked). x = {1,2,4} s = <{4},{1,4},{2,4}>
+	{
+		unordered_set<int> x = { 1,2,4 };
+		vector<unordered_set<int>> s{ unordered_set<int>{4}, unordered_set<int>{1,4}, unordered_set<int>{2,4} };
+		HsTreeNode::hSmallest = x;
+		HsTreeNode::maxNodeNum = 0;
+		HsTreeNode n(x, s);
+		n.expandNode();
+		cout << n.toDot() << endl;
+		fsmlib_assert("TC-HsTreeNode-NNNN",
+			n.toDot().find("label=\"[1, 2, 4]\"") != string::npos
+			&& n.toDot().find("label=\"[2, 4]\"") != string::npos
+			&& n.toDot().find("label=\"[4]\"") != string::npos
+			&& n.toDot().find("label=\"[1, 4]\"") != string::npos,
+			"HsTreeNode::toDot() returns string that contains all expected node labels.");
+	}
+
 }
 
 int main(int argc, char** argv)
@@ -6482,7 +6557,8 @@ int main(int argc, char** argv)
 
 	//testHsTreeNodeIsHittingSetPositive();
 	//testHsTreeNodeIsHittingSetNegative();
-	testHsTreeNodeExpandNode();
+	//testHsTreeNodeExpandNode();
+	testHsTreeNodeToDot();
 
 	/*testMinimise();
 	testWMethod();*/
