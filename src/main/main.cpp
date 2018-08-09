@@ -6427,6 +6427,36 @@ void testHsTreeNodeToDot() {
 
 }
 
+//===================================== Int2IntMap Tests ===================================================
+
+// tests Constructor of Int2IntMap (Int2IntMap::Int2IntMap(const int maxInput))
+void testInt2IntMapConstructor() {
+	{
+		Int2IntMap map(0);
+		fsmlib_assert("TC-Int2IntMap-NNNN",
+			map.size() == 1
+			&& map.at(0) == -1,
+			"Int2IntMap::Int2IntMap(const int maxInput) creates map containing maxInput + 1 keys mapped to -1");
+	}
+	{
+		Int2IntMap map(1);
+		fsmlib_assert("TC-Int2IntMap-NNNN",
+			map.size() == 2
+			&& map.at(0) == -1
+			&& map.at(1) == -1,
+			"Int2IntMap::Int2IntMap(const int maxInput) creates map containing maxInput + 1 keys mapped to -1");
+	}
+	{
+		Int2IntMap map(2);
+		fsmlib_assert("TC-Int2IntMap-NNNN",
+			map.size() == 3
+			&& map.at(0) == -1
+			&& map.at(1) == -1
+			&& map.at(2) == -1,
+			"Int2IntMap::Int2IntMap(const int maxInput) creates map containing maxInput + 1 keys mapped to -1");
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -6558,7 +6588,9 @@ int main(int argc, char** argv)
 	//testHsTreeNodeIsHittingSetPositive();
 	//testHsTreeNodeIsHittingSetNegative();
 	//testHsTreeNodeExpandNode();
-	testHsTreeNodeToDot();
+	//testHsTreeNodeToDot();
+
+	testInt2IntMapConstructor();
 
 	/*testMinimise();
 	testWMethod();*/
