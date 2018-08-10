@@ -25,6 +25,7 @@
 #include "sets/HsTreeNode.h"
 #include <algorithm>
 #include <cmath>
+#include "fsm/PkTableRow.h"
 
 
 using namespace std;
@@ -6457,6 +6458,457 @@ void testInt2IntMapConstructor() {
 	}
 }
 
+//===================================== PkTableRow Tests ===================================================
+
+// tests PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c)
+// Positive Case
+void testPkTableRowIsEquivalentPositive(){
+	// ioMap1 = [0], i2pMap1 = [0], ioMap2 = [1], i2pMap2 = [0], s2cMap = [0]
+	{
+		int maxInput = 0;
+
+		IOMap ioMap1(maxInput);
+		ioMap1[0] = 0;
+		I2PMap i2pMap1(maxInput);
+		i2pMap1[0] = 0;
+		PkTableRow row1(ioMap1, i2pMap1);
+
+		IOMap ioMap2(maxInput);
+		ioMap2[0] = 1;
+		I2PMap i2pMap2(maxInput);
+		i2pMap2[0] = 0;
+		PkTableRow row2(ioMap2, i2pMap2);
+
+		S2CMap s2cMap(maxInput);
+		s2cMap[0] = 0;
+
+		fsmlib_assert("TC-PkTableRow-NNNN",
+			row1.isEquivalent(row2, s2cMap)
+			&& row2.isEquivalent(row1, s2cMap),
+			"PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c) returns true if both rows are equivalent wrt. s2c");
+	}
+
+	// ioMap1 = [0], i2pMap1 = [-1],
+	// ioMap2 = [1], i2pMap2 = [-1], 
+	// s2cMap = [0]
+	{
+		int maxInput = 0;
+
+		IOMap ioMap1(maxInput);
+		ioMap1[0] = 0;
+		I2PMap i2pMap1(maxInput);
+		i2pMap1[0] = -1;
+		PkTableRow row1(ioMap1, i2pMap1);
+
+		IOMap ioMap2(maxInput);
+		ioMap2[0] = 1;
+		I2PMap i2pMap2(maxInput);
+		i2pMap2[0] = -1;
+		PkTableRow row2(ioMap2, i2pMap2);
+
+		S2CMap s2cMap(maxInput);
+		s2cMap[0] = 0;
+
+		fsmlib_assert("TC-PkTableRow-NNNN",
+			row1.isEquivalent(row2, s2cMap)
+			&& row2.isEquivalent(row1, s2cMap),
+			"PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c) returns true if both rows are equivalent wrt. s2c");
+	}
+
+	// ioMap1 = [0], i2pMap1 = [0],
+	// ioMap2 = [1], i2pMap2 = [0], 
+	// s2cMap = [1]
+	{
+		int maxInput = 0;
+
+		IOMap ioMap1(maxInput);
+		ioMap1[0] = 0;
+		I2PMap i2pMap1(maxInput);
+		i2pMap1[0] = 0;
+		PkTableRow row1(ioMap1, i2pMap1);
+
+		IOMap ioMap2(maxInput);
+		ioMap2[0] = 1;
+		I2PMap i2pMap2(maxInput);
+		i2pMap2[0] = 0;
+		PkTableRow row2(ioMap2, i2pMap2);
+
+		S2CMap s2cMap(maxInput);
+		s2cMap[0] = 1;
+
+		fsmlib_assert("TC-PkTableRow-NNNN",
+			row1.isEquivalent(row2, s2cMap)
+			&& row2.isEquivalent(row1, s2cMap),
+			"PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c) returns true if both rows are equivalent wrt. s2c");
+	}
+
+	// ioMap1 = [0,1], i2pMap1 = [1,0],
+	// ioMap2 = [0,1], i2pMap2 = [1,0], 
+	// s2cMap = [1,1]
+	{
+		int maxInput = 1;
+
+		IOMap ioMap1(maxInput);
+		ioMap1[0] = 0;
+		ioMap1[1] = 1;
+		I2PMap i2pMap1(maxInput);
+		i2pMap1[0] = 1;
+		i2pMap1[1] = 0;
+		PkTableRow row1(ioMap1, i2pMap1);
+
+		IOMap ioMap2(maxInput);
+		ioMap2[0] = 0;
+		ioMap2[1] = 1;
+		I2PMap i2pMap2(maxInput);
+		i2pMap2[0] = 1;
+		i2pMap2[1] = 0;
+		PkTableRow row2(ioMap2, i2pMap2);
+
+		S2CMap s2cMap(maxInput);
+		s2cMap[0] = 1;
+		s2cMap[1] = 1;
+
+		fsmlib_assert("TC-PkTableRow-NNNN",
+			row1.isEquivalent(row2, s2cMap)
+			&& row2.isEquivalent(row1, s2cMap),
+			"PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c) returns true if both rows are equivalent wrt. s2c");
+	}
+
+	// ioMap1 = [0,1], i2pMap1 = [-1,0],
+	// ioMap2 = [0,1], i2pMap2 = [-1,0], 
+	// s2cMap = [1,1]
+	{
+		int maxInput = 1;
+
+		IOMap ioMap1(maxInput);
+		ioMap1[0] = 0;
+		ioMap1[1] = 1;
+		I2PMap i2pMap1(maxInput);
+		i2pMap1[0] = -1;
+		i2pMap1[1] = 0;
+		PkTableRow row1(ioMap1, i2pMap1);
+
+		IOMap ioMap2(maxInput);
+		ioMap2[0] = 0;
+		ioMap2[1] = 1;
+		I2PMap i2pMap2(maxInput);
+		i2pMap2[0] = -1;
+		i2pMap2[1] = 0;
+		PkTableRow row2(ioMap2, i2pMap2);
+
+		S2CMap s2cMap(maxInput);
+		s2cMap[0] = 1;
+		s2cMap[1] = 1;
+
+		fsmlib_assert("TC-PkTableRow-NNNN",
+			row1.isEquivalent(row2, s2cMap)
+			&& row2.isEquivalent(row1, s2cMap),
+			"PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c) returns true if both rows are equivalent wrt. s2c");
+	}
+
+	// ioMap1 = [0,1], i2pMap1 = [1,0],
+	// ioMap2 = [1,1], i2pMap2 = [0,0], 
+	// s2cMap = [0,0,1]
+	{
+		int maxInput = 1;
+
+		IOMap ioMap1(maxInput);
+		ioMap1[0] = 0;
+		ioMap1[1] = 1;
+		I2PMap i2pMap1(maxInput);
+		i2pMap1[0] = 1;
+		i2pMap1[1] = 0;
+		PkTableRow row1(ioMap1, i2pMap1);
+
+		IOMap ioMap2(maxInput);
+		ioMap2[0] = 1;
+		ioMap2[1] = 1;
+		I2PMap i2pMap2(maxInput);
+		i2pMap2[0] = 0;
+		i2pMap2[1] = 0;
+		PkTableRow row2(ioMap2, i2pMap2);
+
+		S2CMap s2cMap(maxInput+1);
+		s2cMap[0] = 0;
+		s2cMap[1] = 0;
+		s2cMap[2] = 1;
+
+		fsmlib_assert("TC-PkTableRow-NNNN",
+			row1.isEquivalent(row2, s2cMap)
+			&& row2.isEquivalent(row1, s2cMap),
+			"PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c) returns true if both rows are equivalent wrt. s2c");
+	}
+
+	// ioMap1 = [0,1,1], i2pMap1 = [1,2,2],
+	// ioMap2 = [1,1,1], i2pMap2 = [0,2,2], 
+	// s2cMap = [1,1,0]
+	{
+		int maxInput = 2;
+
+		IOMap ioMap1(maxInput);
+		ioMap1[0] = 0;
+		ioMap1[1] = 1;
+		ioMap1[2] = 1;
+		I2PMap i2pMap1(maxInput);
+		i2pMap1[0] = 1;
+		i2pMap1[1] = 2;
+		i2pMap1[2] = 2;
+		PkTableRow row1(ioMap1, i2pMap1);
+
+		IOMap ioMap2(maxInput);
+		ioMap2[0] = 1;
+		ioMap2[1] = 1;
+		ioMap2[2] = 1;
+		I2PMap i2pMap2(maxInput);
+		i2pMap2[0] = 0;
+		i2pMap2[1] = 2;
+		i2pMap2[2] = 2;
+		PkTableRow row2(ioMap2, i2pMap2);
+
+		S2CMap s2cMap(maxInput);
+		s2cMap[0] = 1;
+		s2cMap[1] = 1;
+		s2cMap[2] = 0;
+
+		fsmlib_assert("TC-PkTableRow-NNNN",
+			row1.isEquivalent(row2, s2cMap)
+			&& row2.isEquivalent(row1, s2cMap),
+			"PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c) returns true if both rows are equivalent wrt. s2c");
+	}
+
+	// ioMap1 = [1,0,1], i2pMap1 = [1,3,4],
+	// ioMap2 = [1,0,1], i2pMap2 = [0,2,2], 
+	// s2cMap = [1,1,2,2,2]
+	{
+		int maxInput = 2;
+
+		IOMap ioMap1(maxInput);
+		ioMap1[0] = 1;
+		ioMap1[1] = 0;
+		ioMap1[2] = 1;
+		I2PMap i2pMap1(maxInput);
+		i2pMap1[0] = 1;
+		i2pMap1[1] = 3;
+		i2pMap1[2] = 4;
+		PkTableRow row1(ioMap1, i2pMap1);
+
+		IOMap ioMap2(maxInput);
+		ioMap2[0] = 1;
+		ioMap2[1] = 0;
+		ioMap2[2] = 1;
+		I2PMap i2pMap2(maxInput);
+		i2pMap2[0] = 0;
+		i2pMap2[1] = 2;
+		i2pMap2[2] = 2;
+		PkTableRow row2(ioMap2, i2pMap2);
+
+		S2CMap s2cMap(maxInput + 2);
+		s2cMap[0] = 1;
+		s2cMap[1] = 1;
+		s2cMap[2] = 2;
+		s2cMap[3] = 2;
+		s2cMap[4] = 2;
+
+		fsmlib_assert("TC-PkTableRow-NNNN",
+			row1.isEquivalent(row2, s2cMap)
+			&& row2.isEquivalent(row1, s2cMap),
+			"PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c) returns true if both rows are equivalent wrt. s2c");
+	}
+}
+
+// tests PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c)
+// Negative Case
+void testPkTableRowIsEquivalentNegative() {
+	// ioMap1 = [0], i2pMap1 = [0],
+	// ioMap2 = [0], i2pMap2 = [1], 
+	// s2cMap = [0,1]
+	{
+		int maxInput = 0;
+
+		IOMap ioMap1(maxInput);
+		ioMap1[0] = 0;
+		I2PMap i2pMap1(maxInput);
+		i2pMap1[0] = 0;
+		PkTableRow row1(ioMap1, i2pMap1);
+
+		IOMap ioMap2(maxInput);
+		ioMap2[0] = 0;
+		I2PMap i2pMap2(maxInput);
+		i2pMap2[0] = 1;
+		PkTableRow row2(ioMap2, i2pMap2);
+
+		S2CMap s2cMap(maxInput + 1);
+		s2cMap[0] = 0;
+		s2cMap[1] = 1;
+
+		fsmlib_assert("TC-PkTableRow-NNNN",
+			not (row1.isEquivalent(row2, s2cMap))
+			&& not (row2.isEquivalent(row1, s2cMap)),
+			"PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c) returns false if both rows aren't equivalent wrt. s2c");
+	}
+
+	// ioMap1 = [0,0], i2pMap1 = [0,1],
+	// ioMap2 = [0,0], i2pMap2 = [1,0], 
+	// s2cMap = [0,1]
+	{
+		int maxInput = 1;
+
+		IOMap ioMap1(maxInput);
+		ioMap1[0] = 0;
+		ioMap1[1] = 0;
+		I2PMap i2pMap1(maxInput);
+		i2pMap1[0] = 0;
+		i2pMap1[1] = 1;
+		PkTableRow row1(ioMap1, i2pMap1);
+
+		IOMap ioMap2(maxInput);
+		ioMap2[0] = 0;
+		ioMap2[1] = 0;
+		I2PMap i2pMap2(maxInput);
+		i2pMap2[0] = 1;
+		i2pMap2[1] = 0;
+		PkTableRow row2(ioMap2, i2pMap2);
+
+		S2CMap s2cMap(maxInput);
+		s2cMap[0] = 0;
+		s2cMap[1] = 1;
+
+		fsmlib_assert("TC-PkTableRow-NNNN",
+			not (row1.isEquivalent(row2, s2cMap))
+			&& not (row2.isEquivalent(row1, s2cMap)),
+			"PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c) returns false if both rows aren't equivalent wrt. s2c");
+	}
+
+	// ioMap1 = [0], i2pMap1 = [0],
+	// ioMap2 = [0], i2pMap2 = [1], 
+	// s2cMap = [1,0]
+	{
+		int maxInput = 0;
+
+		IOMap ioMap1(maxInput);
+		ioMap1[0] = 0;
+		I2PMap i2pMap1(maxInput);
+		i2pMap1[0] = 0;
+		PkTableRow row1(ioMap1, i2pMap1);
+
+		IOMap ioMap2(maxInput);
+		ioMap2[0] = 0;
+		I2PMap i2pMap2(maxInput);
+		i2pMap2[0] = 1;
+		PkTableRow row2(ioMap2, i2pMap2);
+
+		S2CMap s2cMap(maxInput + 1);
+		s2cMap[0] = 1;
+		s2cMap[1] = 0;
+
+		fsmlib_assert("TC-PkTableRow-NNNN",
+			not (row1.isEquivalent(row2, s2cMap))
+			&& not (row2.isEquivalent(row1, s2cMap)),
+			"PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c) returns false if both rows aren't equivalent wrt. s2c");
+	}
+
+	// ioMap1 = [0,0,0], i2pMap1 = [0,1,2],
+	// ioMap2 = [0,0,0], i2pMap2 = [0,1,1], 
+	// s2cMap = [1,2,1]
+	{
+		int maxInput = 2;
+
+		IOMap ioMap1(maxInput);
+		ioMap1[0] = 0;
+		ioMap1[1] = 0;
+		ioMap1[2] = 0;
+		I2PMap i2pMap1(maxInput);
+		i2pMap1[0] = 0;
+		i2pMap1[1] = 1;
+		i2pMap1[2] = 2;
+		PkTableRow row1(ioMap1, i2pMap1);
+
+		IOMap ioMap2(maxInput);
+		ioMap2[0] = 0;
+		ioMap2[1] = 0;
+		ioMap2[2] = 0;
+		I2PMap i2pMap2(maxInput);
+		i2pMap2[0] = 0;
+		i2pMap2[1] = 1;
+		i2pMap2[2] = 1;
+		PkTableRow row2(ioMap2, i2pMap2);
+
+		S2CMap s2cMap(maxInput);
+		s2cMap[0] = 1;
+		s2cMap[1] = 2;
+		s2cMap[2] = 1;
+
+		fsmlib_assert("TC-PkTableRow-NNNN",
+			not (row1.isEquivalent(row2, s2cMap))
+			&& not (row2.isEquivalent(row1, s2cMap)),
+			"PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c) returns false if both rows aren't equivalent wrt. s2c");
+	}
+
+	// ioMap1 = [0,0], i2pMap1 = [0,-1],
+	// ioMap2 = [0,0], i2pMap2 = [0,1], 
+	// s2cMap = [0,1]
+	{
+		int maxInput = 1;
+
+		IOMap ioMap1(maxInput);
+		ioMap1[0] = 0;
+		ioMap1[1] = 0;
+		I2PMap i2pMap1(maxInput);
+		i2pMap1[0] = 0;
+		i2pMap1[1] = -1;
+		PkTableRow row1(ioMap1, i2pMap1);
+
+		IOMap ioMap2(maxInput);
+		ioMap2[0] = 0;
+		ioMap2[1] = 0;
+		I2PMap i2pMap2(maxInput);
+		i2pMap2[0] = 0;
+		i2pMap2[1] = 1;
+		PkTableRow row2(ioMap2, i2pMap2);
+
+		S2CMap s2cMap(maxInput);
+		s2cMap[0] = 0;
+		s2cMap[1] = 1;
+
+		fsmlib_assert("TC-PkTableRow-NNNN",
+			not (row1.isEquivalent(row2, s2cMap))
+			&& not (row2.isEquivalent(row1, s2cMap)),
+			"PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c) returns false if both rows aren't equivalent wrt. s2c");
+	}
+
+	// ioMap1 = [0,0], i2pMap1 = [0,1],
+	// ioMap2 = [0,0], i2pMap2 = [-1,0], 
+	// s2cMap = [0,1]
+	{
+		int maxInput = 1;
+
+		IOMap ioMap1(maxInput);
+		ioMap1[0] = 0;
+		ioMap1[1] = 0;
+		I2PMap i2pMap1(maxInput);
+		i2pMap1[0] = 0;
+		i2pMap1[1] = 1;
+		PkTableRow row1(ioMap1, i2pMap1);
+
+		IOMap ioMap2(maxInput);
+		ioMap2[0] = 0;
+		ioMap2[1] = 0;
+		I2PMap i2pMap2(maxInput);
+		i2pMap2[0] = -1;
+		i2pMap2[1] = 0;
+		PkTableRow row2(ioMap2, i2pMap2);
+
+		S2CMap s2cMap(maxInput);
+		s2cMap[0] = 0;
+		s2cMap[1] = 1;
+
+		fsmlib_assert("TC-PkTableRow-NNNN",
+			not (row1.isEquivalent(row2, s2cMap))
+			&& not (row2.isEquivalent(row1, s2cMap)),
+			"PkTableRow::isEquivalent(const PkTableRow& row, const S2CMap& s2c) returns false if both rows aren't equivalent wrt. s2c");
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -6590,7 +7042,10 @@ int main(int argc, char** argv)
 	//testHsTreeNodeExpandNode();
 	//testHsTreeNodeToDot();
 
-	testInt2IntMapConstructor();
+	//testInt2IntMapConstructor();
+
+	//testPkTableRowIsEquivalentPositive();
+	testPkTableRowIsEquivalentNegative();
 
 	/*testMinimise();
 	testWMethod();*/
