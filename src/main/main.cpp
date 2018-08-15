@@ -7040,8 +7040,6 @@ bool checkPkUnequalityOfClasses(PkTable &pkTable, IOListContainer &iolc, int k, 
 void testPkTableGetPkPlusOneTable() {
 	std::shared_ptr<FsmPresentationLayer> presentationLayer = make_shared<FsmPresentationLayer>();
 	int maxInput = 2;
-	int minLength = 1;
-	IOListContainer iolc(maxInput, minLength, minLength, presentationLayer);
 
 	// create all PkTableRows
 	IOMap ioMap1(maxInput);
@@ -7159,55 +7157,26 @@ void testPkTableGetPkPlusOneTable() {
 	pkTable.setClass(6, 0);
 	pkTable.setClass(7, 0);
 	pkTable.setClass(8, 1);
-	//checkPkEqualityOfClasses(PkTable &pkTable, IOListContainer &iolc, int k, int numStates) {
-	fsmlib_assert("TC-PkTable-NNNN",
-		checkPkEqualityOfClasses(pkTable, iolc, minLength, numStates),
-		"PkTableRows with the same class in s2c are k equivalent");
+
+	int minLength = 1;
+	shared_ptr<PkTable> currentTable = make_shared<PkTable>(pkTable);
+	do {
+		IOListContainer iolc(maxInput, minLength, minLength, presentationLayer);
+		fsmlib_assert("TC-PkTable-NNNN",
+			checkPkEqualityOfClasses(*currentTable, iolc, minLength, numStates),
+			"PkTableRows with the same class in s2c are k equivalent");
+
+		fsmlib_assert("TC-PkTable-NNNN",
+			checkPkUnequalityOfClasses(*currentTable, iolc, minLength, numStates),
+			"PkTableRows with the different classes in s2c are not k equivalent");
+
+		currentTable = currentTable->getPkPlusOneTable();
+		++minLength;		
+	} while (currentTable != nullptr);
 
 	fsmlib_assert("TC-PkTable-NNNN",
-		checkPkUnequalityOfClasses(pkTable, iolc, minLength, numStates),
-		"PkTableRows with the different classes in s2c are not k equivalent");
-
-	minLength = 2;
-	IOListContainer iolc2(maxInput, minLength, minLength, presentationLayer);
-	shared_ptr<PkTable> nextPkTable = pkTable.getPkPlusOneTable();
-	fsmlib_assert("TC-PkTable-NNNN",
-		checkPkEqualityOfClasses(*nextPkTable, iolc2, minLength, numStates),
-		"PkTableRows with the same class in s2c are k equivalent");
-
-	fsmlib_assert("TC-PkTable-NNNN",
-		checkPkUnequalityOfClasses(*nextPkTable, iolc2, minLength, numStates),
-		"PkTableRows with the different classes in s2c are not k equivalent");
-
-	minLength = 3;
-	IOListContainer iolc3(maxInput, minLength, minLength, presentationLayer);
-	nextPkTable = nextPkTable->getPkPlusOneTable();
-	fsmlib_assert("TC-PkTable-NNNN",
-		checkPkEqualityOfClasses(*nextPkTable, iolc3, minLength, numStates),
-		"PkTableRows with the same class in s2c are k equivalent");
-
-	fsmlib_assert("TC-PkTable-NNNN",
-		checkPkUnequalityOfClasses(*nextPkTable, iolc3, minLength, numStates),
-		"PkTableRows with the different classes in s2c are not k equivalent");
-
-	minLength = 4;
-	IOListContainer iolc4(maxInput, minLength, minLength, presentationLayer);
-	nextPkTable = nextPkTable->getPkPlusOneTable();
-	fsmlib_assert("TC-PkTable-NNNN",
-		checkPkEqualityOfClasses(*nextPkTable, iolc4, minLength, numStates),
-		"PkTableRows with the same class in s2c are k equivalent");
-
-	fsmlib_assert("TC-PkTable-NNNN",
-		checkPkUnequalityOfClasses(*nextPkTable, iolc4, minLength, numStates),
-		"PkTableRows with the different classes in s2c are not k equivalent");
-
-	//minLength = 5;
-	//IOListContainer iolc5(maxInput, minLength, minLength, presentationLayer);
-	nextPkTable = nextPkTable->getPkPlusOneTable();
-	fsmlib_assert("TC-PkTable-NNNN",
-		nextPkTable == nullptr,
+		minLength == 5,
 		"PkTable::getPkPlusOneTable() returns nullptr if no new equivalence classes are generated.");
-	
 }
 
 int main(int argc, char** argv)
