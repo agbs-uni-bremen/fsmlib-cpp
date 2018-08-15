@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <cmath>
 #include "fsm/PkTableRow.h"
+#include "fsm/PkTable.h"
 
 
 using namespace std;
@@ -6909,6 +6910,73 @@ void testPkTableRowIsEquivalentNegative() {
 	}
 }
 
+//===================================== PkTable Tests ===================================================
+
+// tests PkTable::maxClassId()
+void testPkTableMaxClassId() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	int maxInput = 4;
+	// s2c = [-1] -> all s2c ids are smaller than 0
+	{
+		int numStates = 1;
+		PkTable pkTable(numStates, maxInput, pl);
+		pkTable.setClass(0, -1);
+		fsmlib_assert("TC-PkTable-NNNN",
+			pkTable.maxClassId() == 0,
+			"PkTable::maxClassId() returns 0 if all elements from s2c are smaller than 0");
+	}
+
+	// s2c = [-1,0] -> not all s2c ids are smaller than 0
+	{
+		int numStates = 2;
+		PkTable pkTable(numStates, maxInput, pl);
+		pkTable.setClass(0, -1);
+		pkTable.setClass(1, 0);
+		fsmlib_assert("TC-PkTable-NNNN",
+			pkTable.maxClassId() == 0,
+			"PkTable::maxClassId() returns greatest value of s2c");
+	}
+
+	// s2c = [0,0,1]
+	{
+		int numStates = 3;
+		PkTable pkTable(numStates, maxInput, pl);
+		pkTable.setClass(0, 0);
+		pkTable.setClass(1, 0);
+		pkTable.setClass(2, 1);
+		fsmlib_assert("TC-PkTable-NNNN",
+			pkTable.maxClassId() == 1,
+			"PkTable::maxClassId() returns greatest value of s2c");
+	}
+
+	// s2c = [0,1,2,1]
+	{
+		int numStates = 4;
+		PkTable pkTable(numStates, maxInput, pl);
+		pkTable.setClass(0, 0);
+		pkTable.setClass(1, 1);
+		pkTable.setClass(2, 2);
+		pkTable.setClass(3, 1);
+		fsmlib_assert("TC-PkTable-NNNN",
+			pkTable.maxClassId() == 2,
+			"PkTable::maxClassId() returns greatest value of s2c");
+	}
+
+	// s2c = [0,1,3,3]
+	{
+		int numStates = 4;
+		PkTable pkTable(numStates, maxInput, pl);
+		pkTable.setClass(0, 0);
+		pkTable.setClass(1, 1);
+		pkTable.setClass(2, 3);
+		pkTable.setClass(3, 3);
+		fsmlib_assert("TC-PkTable-NNNN",
+			pkTable.maxClassId() == 3,
+			"PkTable::maxClassId() returns greatest value of s2c");
+	}
+
+}
+
 int main(int argc, char** argv)
 {
     
@@ -7045,7 +7113,9 @@ int main(int argc, char** argv)
 	//testInt2IntMapConstructor();
 
 	//testPkTableRowIsEquivalentPositive();
-	testPkTableRowIsEquivalentNegative();
+	//testPkTableRowIsEquivalentNegative();
+
+	testPkTableMaxClassId();
 
 	/*testMinimise();
 	testWMethod();*/
