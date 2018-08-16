@@ -7158,25 +7158,86 @@ void testPkTableGetPkPlusOneTable() {
 	pkTable.setClass(7, 0);
 	pkTable.setClass(8, 1);
 
-	int minLength = 1;
+	int k = 1;
 	shared_ptr<PkTable> currentTable = make_shared<PkTable>(pkTable);
 	do {
-		IOListContainer iolc(maxInput, minLength, minLength, presentationLayer);
+		IOListContainer iolc(maxInput, k, k, presentationLayer);
 		fsmlib_assert("TC-PkTable-NNNN",
-			checkPkEqualityOfClasses(*currentTable, iolc, minLength, numStates),
+			checkPkEqualityOfClasses(*currentTable, iolc, k, numStates),
 			"PkTableRows with the same class in s2c are k equivalent");
 
 		fsmlib_assert("TC-PkTable-NNNN",
-			checkPkUnequalityOfClasses(*currentTable, iolc, minLength, numStates),
+			checkPkUnequalityOfClasses(*currentTable, iolc, k, numStates),
 			"PkTableRows with the different classes in s2c are not k equivalent");
 
 		currentTable = currentTable->getPkPlusOneTable();
-		++minLength;		
+		++k;
 	} while (currentTable != nullptr);
 
 	fsmlib_assert("TC-PkTable-NNNN",
-		minLength == 5,
+		k == 5,
 		"PkTable::getPkPlusOneTable() returns nullptr if no new equivalence classes are generated.");
+}
+
+// tests PkTable::getMembers(const int c)
+void testPkTableGetMembers() {
+	// table contains only one row (state). This state is in class 0.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		int numStates = 1;
+		int maxInput = 5;
+		PkTable pkTable(numStates, maxInput, pl);
+		pkTable.setClass(0, 0);
+		string result = pkTable.getMembers(0);
+		fsmlib_assert("TC-PkTable-NNNN",
+			result.find("0") != string::npos,
+			"Result of PkTable::getMembers(const int c) contains all state identifiers of states in class c");
+	}
+	// Table contains two rows (states). Both are in different classes.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		int numStates = 2;
+		int maxInput = 5;
+		PkTable pkTable(numStates, maxInput, pl);
+		pkTable.setClass(0, 1);
+		pkTable.setClass(1, 0);
+		string membersOf0 = pkTable.getMembers(0);
+		string membersOf1 = pkTable.getMembers(1);
+		fsmlib_assert("TC-PkTable-NNNN",
+			membersOf0.find("1") != string::npos
+			&& membersOf1.find("0") != string::npos,
+			"Result of PkTable::getMembers(const int c) contains all state identifiers of states in class c");
+
+		fsmlib_assert("TC-PkTable-NNNN",
+			membersOf0.find("0") == string::npos
+			&& membersOf1.find("1") == string::npos,
+			"Result of PkTable::getMembers(const int c) contains only state identifiers of states in class c");
+	}
+	// Table contains four rows (states). Some class contains more than one element.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		int numStates = 4;
+		int maxInput = 5;
+		PkTable pkTable(numStates, maxInput, pl);
+		pkTable.setClass(0, 0);
+		pkTable.setClass(1, 0);
+		pkTable.setClass(2, 1);
+		pkTable.setClass(3, 2);
+		string membersOf0 = pkTable.getMembers(0);
+		string membersOf1 = pkTable.getMembers(1);
+		string membersOf2 = pkTable.getMembers(2);
+		fsmlib_assert("TC-PkTable-NNNN",
+			membersOf0.find("0") != string::npos && membersOf0.find("1") != string::npos
+			&& membersOf1.find("2") != string::npos
+			&& membersOf2.find("3") != string::npos,
+			"Result of PkTable::getMembers(const int c) contains all state identifiers of states in class c");
+
+		fsmlib_assert("TC-PkTable-NNNN",
+			membersOf0.find("2") == string::npos && membersOf0.find("3") == string::npos
+			&& membersOf1.find("0") == string::npos && membersOf1.find("1") == string::npos && membersOf1.find("3") == string::npos
+			&& membersOf2.find("0") == string::npos && membersOf2.find("1") == string::npos && membersOf2.find("2") == string::npos,
+			"Result of PkTable::getMembers(const int c) contains only state identifiers of states in class c");
+	}
 }
 
 int main(int argc, char** argv)
@@ -7318,7 +7379,8 @@ int main(int argc, char** argv)
 	//testPkTableRowIsEquivalentNegative();
 
 	//testPkTableMaxClassId();
-	testPkTableGetPkPlusOneTable();
+	//testPkTableGetPkPlusOneTable();
+	testPkTableGetMembers();
 
 	/*testMinimise();
 	testWMethod();*/
