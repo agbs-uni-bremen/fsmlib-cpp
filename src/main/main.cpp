@@ -7036,97 +7036,107 @@ bool checkPkUnequalityOfClasses(PkTable &pkTable, IOListContainer &iolc, int k, 
 	return true;
 }
 
-// tests PkTable::getPkPlusOneTable()
-void testPkTableGetPkPlusOneTable() {
+struct PkTableTestCase
+{
+	shared_ptr<FsmPresentationLayer> presentationLayer;
+	shared_ptr<PkTable> pkTable;
+	int maxInput;
+	int maxOutput;
+	int numStates;
+};
+
+PkTableTestCase getPkTableTestCase1() {
 	std::shared_ptr<FsmPresentationLayer> presentationLayer = make_shared<FsmPresentationLayer>();
 	int maxInput = 2;
+	int maxOutput = 1;
 
 	// create all PkTableRows
-	IOMap ioMap1(maxInput);
+	// (maps are declared as static because their references are stored in the created rows)
+	static IOMap ioMap1(maxInput);
 	ioMap1[0] = 1;
 	ioMap1[1] = 0;
 	ioMap1[2] = 0;
-	I2PMap i2pMap1(maxInput);
+	static I2PMap i2pMap1(maxInput);
 	i2pMap1[0] = 1;
 	i2pMap1[1] = 1;
 	i2pMap1[2] = 4;
 	PkTableRow row1(ioMap1, i2pMap1);
 
-	IOMap ioMap2(maxInput);
+	static IOMap ioMap2(maxInput);
 	ioMap2[0] = 0;
 	ioMap2[1] = 1;
 	ioMap2[2] = 1;
-	I2PMap i2pMap2(maxInput);
+	static I2PMap i2pMap2(maxInput);
 	i2pMap2[0] = 0;
 	i2pMap2[1] = 3;
 	i2pMap2[2] = 3;
 	PkTableRow row2(ioMap2, i2pMap2);
 
-	IOMap ioMap3(maxInput);
+	static IOMap ioMap3(maxInput);
 	ioMap3[0] = 1;
 	ioMap3[1] = 0;
 	ioMap3[2] = 0;
-	I2PMap i2pMap3(maxInput);
+	static I2PMap i2pMap3(maxInput);
 	i2pMap3[0] = 1;
 	i2pMap3[1] = 1;
 	i2pMap3[2] = 4;
 	PkTableRow row3(ioMap3, i2pMap3);
 
-	IOMap ioMap4(maxInput);
+	static IOMap ioMap4(maxInput);
 	ioMap4[0] = 0;
 	ioMap4[1] = 1;
 	ioMap4[2] = 1;
-	I2PMap i2pMap4(maxInput);
+	static I2PMap i2pMap4(maxInput);
 	i2pMap4[0] = 2;
 	i2pMap4[1] = 1;
 	i2pMap4[2] = 1;
 	PkTableRow row4(ioMap4, i2pMap4);
 
-	IOMap ioMap5(maxInput);
+	static IOMap ioMap5(maxInput);
 	ioMap5[0] = 1;
 	ioMap5[1] = 0;
 	ioMap5[2] = 0;
-	I2PMap i2pMap5(maxInput);
+	static I2PMap i2pMap5(maxInput);
 	i2pMap5[0] = 5;
 	i2pMap5[1] = 3;
 	i2pMap5[2] = 2;
 	PkTableRow row5(ioMap5, i2pMap5);
 
-	IOMap ioMap6(maxInput);
+	static IOMap ioMap6(maxInput);
 	ioMap6[0] = 0;
 	ioMap6[1] = 1;
 	ioMap6[2] = 1;
-	I2PMap i2pMap6(maxInput);
+	static I2PMap i2pMap6(maxInput);
 	i2pMap6[0] = 7;
 	i2pMap6[1] = 8;
 	i2pMap6[2] = 5;
 	PkTableRow row6(ioMap6, i2pMap6);
 
-	IOMap ioMap7(maxInput);
+	static IOMap ioMap7(maxInput);
 	ioMap7[0] = 1;
 	ioMap7[1] = 0;
 	ioMap7[2] = 0;
-	I2PMap i2pMap7(maxInput);
+	static I2PMap i2pMap7(maxInput);
 	i2pMap7[0] = 5;
 	i2pMap7[1] = 1;
 	i2pMap7[2] = 7;
 	PkTableRow row7(ioMap7, i2pMap7);
 
-	IOMap ioMap8(maxInput);
+	static IOMap ioMap8(maxInput);
 	ioMap8[0] = 1;
 	ioMap8[1] = 0;
 	ioMap8[2] = 0;
-	I2PMap i2pMap8(maxInput);
+	static I2PMap i2pMap8(maxInput);
 	i2pMap8[0] = 3;
 	i2pMap8[1] = 3;
 	i2pMap8[2] = 6;
 	PkTableRow row8(ioMap8, i2pMap8);
 
-	IOMap ioMap9(maxInput);
+	static IOMap ioMap9(maxInput);
 	ioMap9[0] = 0;
 	ioMap9[1] = 1;
 	ioMap9[2] = 1;
-	I2PMap i2pMap9(maxInput);
+	static I2PMap i2pMap9(maxInput);
 	i2pMap9[0] = 6;
 	i2pMap9[1] = 8;
 	i2pMap9[2] = 6;
@@ -7158,16 +7168,32 @@ void testPkTableGetPkPlusOneTable() {
 	pkTable.setClass(7, 0);
 	pkTable.setClass(8, 1);
 
-	int k = 1;
-	shared_ptr<PkTable> currentTable = make_shared<PkTable>(pkTable);
-	do {
-		IOListContainer iolc(maxInput, k, k, presentationLayer);
-		fsmlib_assert("TC-PkTable-NNNN",
-			checkPkEqualityOfClasses(*currentTable, iolc, k, numStates),
-			"PkTableRows with the same class in s2c are k equivalent");
+	PkTableTestCase testStructure;
+	testStructure.presentationLayer = presentationLayer;
+	testStructure.pkTable = make_shared<PkTable>(pkTable);
+	testStructure.maxInput = maxInput;
+	testStructure.maxOutput = maxOutput;
+	testStructure.numStates = numStates;
 
+	std::cout << "iomap size von row 1: " << testStructure.pkTable->getRow(0)->getIOMap().size() << std::endl;
+	return testStructure;
+}
+
+// tests PkTable::getPkPlusOneTable()
+void testPkTableGetPkPlusOneTable() {
+
+    PkTableTestCase pkTableTestCase = getPkTableTestCase1();
+	//shared_ptr<PkTableTestCase> pkTableTestCase = getPkTableTestCase1();
+	std::cout << "iomap size von row 1: "  << pkTableTestCase.pkTable->getRow(0)->getIOMap().size() << std::endl;
+	int k = 1;
+	shared_ptr<PkTable> currentTable = pkTableTestCase.pkTable;
+	do {
+		IOListContainer iolc(pkTableTestCase.maxInput, k, k, pkTableTestCase.presentationLayer);
 		fsmlib_assert("TC-PkTable-NNNN",
-			checkPkUnequalityOfClasses(*currentTable, iolc, k, numStates),
+			checkPkEqualityOfClasses(*currentTable, iolc, k, pkTableTestCase.numStates),
+			"PkTableRows with the same class in s2c are k equivalent");
+		fsmlib_assert("TC-PkTable-NNNN",
+			checkPkUnequalityOfClasses(*currentTable, iolc, k, pkTableTestCase.numStates),
 			"PkTableRows with the different classes in s2c are not k equivalent");
 
 		currentTable = currentTable->getPkPlusOneTable();
@@ -7177,6 +7203,148 @@ void testPkTableGetPkPlusOneTable() {
 	fsmlib_assert("TC-PkTable-NNNN",
 		k == 5,
 		"PkTable::getPkPlusOneTable() returns nullptr if no new equivalence classes are generated.");
+
+
+	//-------------------------------------------------------------
+	//std::shared_ptr<FsmPresentationLayer> presentationLayer = make_shared<FsmPresentationLayer>();
+	//int maxInput = 2;
+
+	//// create all PkTableRows
+	//IOMap ioMap1(maxInput);
+	//ioMap1[0] = 1;
+	//ioMap1[1] = 0;
+	//ioMap1[2] = 0;
+	//I2PMap i2pMap1(maxInput);
+	//i2pMap1[0] = 1;
+	//i2pMap1[1] = 1;
+	//i2pMap1[2] = 4;
+	//PkTableRow row1(ioMap1, i2pMap1);
+
+	//IOMap ioMap2(maxInput);
+	//ioMap2[0] = 0;
+	//ioMap2[1] = 1;
+	//ioMap2[2] = 1;
+	//I2PMap i2pMap2(maxInput);
+	//i2pMap2[0] = 0;
+	//i2pMap2[1] = 3;
+	//i2pMap2[2] = 3;
+	//PkTableRow row2(ioMap2, i2pMap2);
+
+	//IOMap ioMap3(maxInput);
+	//ioMap3[0] = 1;
+	//ioMap3[1] = 0;
+	//ioMap3[2] = 0;
+	//I2PMap i2pMap3(maxInput);
+	//i2pMap3[0] = 1;
+	//i2pMap3[1] = 1;
+	//i2pMap3[2] = 4;
+	//PkTableRow row3(ioMap3, i2pMap3);
+
+	//IOMap ioMap4(maxInput);
+	//ioMap4[0] = 0;
+	//ioMap4[1] = 1;
+	//ioMap4[2] = 1;
+	//I2PMap i2pMap4(maxInput);
+	//i2pMap4[0] = 2;
+	//i2pMap4[1] = 1;
+	//i2pMap4[2] = 1;
+	//PkTableRow row4(ioMap4, i2pMap4);
+
+	//IOMap ioMap5(maxInput);
+	//ioMap5[0] = 1;
+	//ioMap5[1] = 0;
+	//ioMap5[2] = 0;
+	//I2PMap i2pMap5(maxInput);
+	//i2pMap5[0] = 5;
+	//i2pMap5[1] = 3;
+	//i2pMap5[2] = 2;
+	//PkTableRow row5(ioMap5, i2pMap5);
+
+	//IOMap ioMap6(maxInput);
+	//ioMap6[0] = 0;
+	//ioMap6[1] = 1;
+	//ioMap6[2] = 1;
+	//I2PMap i2pMap6(maxInput);
+	//i2pMap6[0] = 7;
+	//i2pMap6[1] = 8;
+	//i2pMap6[2] = 5;
+	//PkTableRow row6(ioMap6, i2pMap6);
+
+	//IOMap ioMap7(maxInput);
+	//ioMap7[0] = 1;
+	//ioMap7[1] = 0;
+	//ioMap7[2] = 0;
+	//I2PMap i2pMap7(maxInput);
+	//i2pMap7[0] = 5;
+	//i2pMap7[1] = 1;
+	//i2pMap7[2] = 7;
+	//PkTableRow row7(ioMap7, i2pMap7);
+
+	//IOMap ioMap8(maxInput);
+	//ioMap8[0] = 1;
+	//ioMap8[1] = 0;
+	//ioMap8[2] = 0;
+	//I2PMap i2pMap8(maxInput);
+	//i2pMap8[0] = 3;
+	//i2pMap8[1] = 3;
+	//i2pMap8[2] = 6;
+	//PkTableRow row8(ioMap8, i2pMap8);
+
+	//IOMap ioMap9(maxInput);
+	//ioMap9[0] = 0;
+	//ioMap9[1] = 1;
+	//ioMap9[2] = 1;
+	//I2PMap i2pMap9(maxInput);
+	//i2pMap9[0] = 6;
+	//i2pMap9[1] = 8;
+	//i2pMap9[2] = 6;
+	//PkTableRow row9(ioMap9, i2pMap9);
+
+	//std::vector<std::shared_ptr<PkTableRow>> rows;
+	//rows.push_back(make_shared<PkTableRow>(row1));
+	//rows.push_back(make_shared<PkTableRow>(row2));
+	//rows.push_back(make_shared<PkTableRow>(row3));
+	//rows.push_back(make_shared<PkTableRow>(row4));
+	//rows.push_back(make_shared<PkTableRow>(row5));
+	//rows.push_back(make_shared<PkTableRow>(row6));
+	//rows.push_back(make_shared<PkTableRow>(row7));
+	//rows.push_back(make_shared<PkTableRow>(row8));
+	//rows.push_back(make_shared<PkTableRow>(row9));
+
+	//// create PkTable from PkTableRows
+	//int numStates = 9;
+	//PkTable pkTable(numStates, maxInput, rows, presentationLayer);
+
+	//// set classes. pkTable becomes P1 Table.
+	//pkTable.setClass(0, 0);
+	//pkTable.setClass(1, 1);
+	//pkTable.setClass(2, 0);
+	//pkTable.setClass(3, 1);
+	//pkTable.setClass(4, 0);
+	//pkTable.setClass(5, 1);
+	//pkTable.setClass(6, 0);
+	//pkTable.setClass(7, 0);
+	//pkTable.setClass(8, 1);
+
+	//int k = 1;
+	//shared_ptr<PkTable> currentTable = make_shared<PkTable>(pkTable);
+	//do {
+	//	IOListContainer iolc(maxInput, k, k, presentationLayer);
+	//	fsmlib_assert("TC-PkTable-NNNN",
+	//		checkPkEqualityOfClasses(*currentTable, iolc, k, numStates),
+	//		"PkTableRows with the same class in s2c are k equivalent");
+
+	//	fsmlib_assert("TC-PkTable-NNNN",
+	//		checkPkUnequalityOfClasses(*currentTable, iolc, k, numStates),
+	//		"PkTableRows with the different classes in s2c are not k equivalent");
+
+	//	currentTable = currentTable->getPkPlusOneTable();
+	//	++k;
+	//} while (currentTable != nullptr);
+
+	//fsmlib_assert("TC-PkTable-NNNN",
+	//	k == 5,
+	//	"PkTable::getPkPlusOneTable() returns nullptr if no new equivalence classes are generated.");
 }
 
 // tests PkTable::getMembers(const int c)
@@ -7571,7 +7739,7 @@ int main(int argc, char** argv)
 	//testPkTableRowIsEquivalentNegative();
 
 	//testPkTableMaxClassId();
-	//testPkTableGetPkPlusOneTable();
+	testPkTableGetPkPlusOneTable();
 	//testPkTableGetMembers();
 	testPkTableToFsm();
 
