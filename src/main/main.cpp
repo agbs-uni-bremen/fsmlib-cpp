@@ -27,6 +27,8 @@
 #include <cmath>
 #include "fsm/PkTableRow.h"
 #include "fsm/PkTable.h"
+#include "fsm/DFSMTable.h"
+#include "fsm/DFSMTableRow.h"
 
 
 using namespace std;
@@ -7336,6 +7338,192 @@ void testPkTableToFsm() {
 	} while (currentTable != nullptr);
 }
 
+//===================================== DFSMTable Tests ===================================================
+
+// checks if classes in the given pkTable are set according to 1-equivalence.
+// row1.class == row2.class <=> row1.ioSection == row2.ioSection
+bool check1EquivalenceProperty(shared_ptr<PkTable> pkTable, int numStates) {
+	for (int i = 0; i < numStates; ++i) {
+		for (int j = i + 1; j < numStates; ++j) {
+			if (pkTable->getClass(i) == pkTable->getClass(j)) {
+				if (pkTable->getRow(i)->getIOMap() != pkTable->getRow(j)->getIOMap()) {
+					return false;
+				}
+			} 
+			// => pkTable->getClass(i) != pkTable->getClass(j)
+			else {
+				if (pkTable->getRow(i)->getIOMap() == pkTable->getRow(j)->getIOMap()) {
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+}
+
+// tests DFSMTable::getP1Table()
+void testDFSMTableGetP1Table() {
+	// DFSMTable consists of one DFSMTableRow
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		int numStates = 1;
+		int maxInput = 1;
+
+		shared_ptr<DFSMTableRow> row0 = make_shared<DFSMTableRow>(0, maxInput);
+		row0->getioSection()[0] = 0;
+		row0->getioSection()[1] = 0;
+		row0->geti2postSection()[0] = 1;
+		row0->geti2postSection()[1] = 0;
+
+		DFSMTable dfsmTable(numStates, maxInput, pl);
+		dfsmTable.setRow(0, row0);
+
+		shared_ptr<PkTable> p1Table = dfsmTable.getP1Table();
+		fsmlib_assert("TC-DFSMTable-NNNN",
+			dfsmTable.getRow(0)->getioSection() == p1Table->getRow(0)->getIOMap()
+			&& dfsmTable.getRow(0)->geti2postSection() == p1Table->getRow(0)->getI2PMap(),
+			"DFSMTable::getP1Table() doesn't change IOMap and I2PMap in result.");
+
+		fsmlib_assert("TC-DFSMTable-NNNN",
+			p1Table->getClass(0) != -1,
+			"DFSMTable::getP1Table() sets classes in created PkTable according to 1-equivalence (matching IO-sections)");
+	}
+
+	// DFSMTable consists of two DFSMTableRows. These aren't 1-equivalent. Not completely specified.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		int numStates = 2;
+		int maxInput = 1;
+
+		shared_ptr<DFSMTableRow> row0 = make_shared<DFSMTableRow>(0, maxInput);
+		row0->getioSection()[0] = 0;
+		row0->getioSection()[1] = 0;
+		row0->geti2postSection()[0] = 1;
+		row0->geti2postSection()[1] = 1;
+
+		shared_ptr<DFSMTableRow> row1 = make_shared<DFSMTableRow>(1, maxInput);
+		row1->getioSection()[0] = 1;
+		row1->getioSection()[1] = -1;
+		row1->geti2postSection()[0] = 0;
+		row1->geti2postSection()[1] = -1;
+
+		DFSMTable dfsmTable(numStates, maxInput, pl);
+		dfsmTable.setRow(0, row0);
+		dfsmTable.setRow(1, row1);
+
+		shared_ptr<PkTable> p1Table = dfsmTable.getP1Table();
+		for (int id = 0; id < numStates; ++id) {
+			fsmlib_assert("TC-DFSMTable-NNNN",
+				dfsmTable.getRow(id)->getioSection() == p1Table->getRow(id)->getIOMap()
+				&& dfsmTable.getRow(id)->geti2postSection() == p1Table->getRow(id)->getI2PMap(),
+				"DFSMTable::getP1Table() doesn't change IOMap and I2PMap in result.");
+		}
+
+		fsmlib_assert("TC-DFSMTable-NNNN",
+			check1EquivalenceProperty(p1Table, numStates),
+			"DFSMTable::getP1Table() sets classes in created PkTable according to 1-equivalence (matching IO-sections)");
+	}
+
+	// DFSMTable consists of four DFSMTableRows. Only two different io-sections => two different 1-equivalence classes expected
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		int numStates = 4;
+		int maxInput = 1;
+
+		shared_ptr<DFSMTableRow> row0 = make_shared<DFSMTableRow>(0, maxInput);
+		row0->getioSection()[0] = 0;
+		row0->getioSection()[1] = 0;
+		row0->geti2postSection()[0] = 1;
+		row0->geti2postSection()[1] = 1;
+
+		shared_ptr<DFSMTableRow> row1 = make_shared<DFSMTableRow>(1, maxInput);
+		row1->getioSection()[0] = 1;
+		row1->getioSection()[1] = -1;
+		row1->geti2postSection()[0] = 0;
+		row1->geti2postSection()[1] = -1;
+
+		shared_ptr<DFSMTableRow> row2 = make_shared<DFSMTableRow>(2, maxInput);
+		row2->getioSection()[0] = 1;
+		row2->getioSection()[1] = -1;
+		row2->geti2postSection()[0] = 0;
+		row2->geti2postSection()[1] = -1;
+
+		shared_ptr<DFSMTableRow> row3 = make_shared<DFSMTableRow>(3, maxInput);
+		row3->getioSection()[0] = 0;
+		row3->getioSection()[1] = 0;
+		row3->geti2postSection()[0] = 0;
+		row3->geti2postSection()[1] = 0;
+
+		DFSMTable dfsmTable(numStates, maxInput, pl);
+		dfsmTable.setRow(0, row0);
+		dfsmTable.setRow(1, row1);
+		dfsmTable.setRow(2, row2);
+		dfsmTable.setRow(3, row3);
+
+		shared_ptr<PkTable> p1Table = dfsmTable.getP1Table();
+		for (int id = 0; id < numStates; ++id) {
+			fsmlib_assert("TC-DFSMTable-NNNN",
+				dfsmTable.getRow(id)->getioSection() == p1Table->getRow(id)->getIOMap()
+				&& dfsmTable.getRow(id)->geti2postSection() == p1Table->getRow(id)->getI2PMap(),
+				"DFSMTable::getP1Table() doesn't change IOMap and I2PMap in result.");
+		}
+
+		fsmlib_assert("TC-DFSMTable-NNNN",
+			check1EquivalenceProperty(p1Table, numStates),
+			"DFSMTable::getP1Table() sets classes in created PkTable according to 1-equivalence (matching IO-sections)");
+	}
+
+	// DFSMTable consists of four DFSMTableRows. Three different io-sections => three different 1-equivalence classes expected
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		int numStates = 4;
+		int maxInput = 1;
+
+		shared_ptr<DFSMTableRow> row0 = make_shared<DFSMTableRow>(0, maxInput);
+		row0->getioSection()[0] = 0;
+		row0->getioSection()[1] = 0;
+		row0->geti2postSection()[0] = 1;
+		row0->geti2postSection()[1] = 1;
+
+		shared_ptr<DFSMTableRow> row1 = make_shared<DFSMTableRow>(1, maxInput);
+		row1->getioSection()[0] = 1;
+		row1->getioSection()[1] = -1;
+		row1->geti2postSection()[0] = 0;
+		row1->geti2postSection()[1] = -1;
+
+		shared_ptr<DFSMTableRow> row2 = make_shared<DFSMTableRow>(2, maxInput);
+		row2->getioSection()[0] = 0;
+		row2->getioSection()[1] = 0;
+		row2->geti2postSection()[0] = 0;
+		row2->geti2postSection()[1] = 0;
+
+		shared_ptr<DFSMTableRow> row3 = make_shared<DFSMTableRow>(3, maxInput);
+		row3->getioSection()[0] = 1;
+		row3->getioSection()[1] = 0;
+		row3->geti2postSection()[0] = 1;
+		row3->geti2postSection()[1] = 0;
+
+		DFSMTable dfsmTable(numStates, maxInput, pl);
+		dfsmTable.setRow(0, row0);
+		dfsmTable.setRow(1, row1);
+		dfsmTable.setRow(2, row2);
+		dfsmTable.setRow(3, row3);
+
+		shared_ptr<PkTable> p1Table = dfsmTable.getP1Table();
+		for (int id = 0; id < numStates; ++id) {
+			fsmlib_assert("TC-DFSMTable-NNNN",
+				dfsmTable.getRow(id)->getioSection() == p1Table->getRow(id)->getIOMap()
+				&& dfsmTable.getRow(id)->geti2postSection() == p1Table->getRow(id)->getI2PMap(),
+				"DFSMTable::getP1Table() doesn't change IOMap and I2PMap in result.");
+		}
+
+		fsmlib_assert("TC-DFSMTable-NNNN",
+			check1EquivalenceProperty(p1Table, numStates),
+			"DFSMTable::getP1Table() sets classes in created PkTable according to 1-equivalence (matching IO-sections)");
+	}
+
+}
+
 int main(int argc, char** argv)
 {
     
@@ -7475,9 +7663,11 @@ int main(int argc, char** argv)
 	//testPkTableRowIsEquivalentNegative();
 
 	//testPkTableMaxClassId();
-	testPkTableGetPkPlusOneTable();
+	//testPkTableGetPkPlusOneTable();
 	//testPkTableGetMembers();
-	testPkTableToFsm();
+	//testPkTableToFsm();
+
+	testDFSMTableGetP1Table();
 
 	/*testMinimise();
 	testWMethod();*/
