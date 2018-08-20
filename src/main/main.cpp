@@ -7590,6 +7590,84 @@ void testOFSMTableRowConstructor() {
 	}
 }
 
+// tests OFSMTableRow::ioEquals(const std::shared_ptr<OFSMTableRow> r)
+// Positive case
+void testOFSMTableIoEqualsPositive() {
+	// this=[[-1]] other=[[-1]], maxInput = 0, maxOutput = 0
+	{
+		int maxInput = 0;
+		int maxOutput = 0;
+		shared_ptr<OFSMTableRow> rowThis = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		shared_ptr<OFSMTableRow> rowOther = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		fsmlib_assert("TC-OFSMTableRow-NNNN",
+			rowThis->ioEquals(rowOther)
+			&& rowOther->ioEquals(rowThis),
+			"OFSMTableRow::ioEquals(const std::shared_ptr<OFSMTableRow> r) returns true if both rows contain -1 entries "
+			"for the same indices.");
+	}
+
+	// this=[[1]] other=[[2]], maxInput = 0, maxOutput = 0
+	{
+		int maxInput = 0;
+		int maxOutput = 0;
+		shared_ptr<OFSMTableRow> rowThis = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowThis->set(0, 0, 1);
+		shared_ptr<OFSMTableRow> rowOther = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowOther->set(0, 0, 2);
+		fsmlib_assert("TC-OFSMTableRow-NNNN",
+			rowThis->ioEquals(rowOther)
+			&& rowOther->ioEquals(rowThis),
+			"OFSMTableRow::ioEquals(const std::shared_ptr<OFSMTableRow> r) returns true if both rows contain -1 entries "
+			"for the same indices.");
+	}
+
+	// this=[[1,-1], [-1,1]] other=[[2,-1], [-1,3]], maxInput = 1, maxOutput = 1
+	{
+		int maxInput = 1;
+		int maxOutput = 1;
+		shared_ptr<OFSMTableRow> rowThis = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowThis->set(0, 0, 1);
+		rowThis->set(0, 1, -1);
+		rowThis->set(1, 0, -1);
+		rowThis->set(1, 1, 1);
+		shared_ptr<OFSMTableRow> rowOther = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowOther->set(0, 0, 2);
+		rowOther->set(0, 1, -1);
+		rowOther->set(1, 0, -1);
+		rowOther->set(1, 1, 3);
+		fsmlib_assert("TC-OFSMTableRow-NNNN",
+			rowThis->ioEquals(rowOther)
+			&& rowOther->ioEquals(rowThis),
+			"OFSMTableRow::ioEquals(const std::shared_ptr<OFSMTableRow> r) returns true if both rows contain -1 entries "
+			"for the same indices.");
+	}
+
+	// this=[[2, 3, 1], [1, -1, -1]] other=[[0, 0, 0], [2, -1, -1]], maxInput = 1, maxOutput = 2
+	{
+		int maxInput = 1;
+		int maxOutput = 2;
+		shared_ptr<OFSMTableRow> rowThis = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowThis->set(0, 0, 2);
+		rowThis->set(0, 1, 3);
+		rowThis->set(0, 2, 1);
+		rowThis->set(1, 0, 1);
+		rowThis->set(1, 1, -1);
+		rowThis->set(1, 2, -1);
+		shared_ptr<OFSMTableRow> rowOther = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowOther->set(0, 0, 0);
+		rowOther->set(0, 1, 0);
+		rowOther->set(0, 2, 0);
+		rowOther->set(1, 0, 2);
+		rowOther->set(1, 1, -1);
+		rowOther->set(1, 2, -1);
+		fsmlib_assert("TC-OFSMTableRow-NNNN",
+			rowThis->ioEquals(rowOther)
+			&& rowOther->ioEquals(rowThis),
+			"OFSMTableRow::ioEquals(const std::shared_ptr<OFSMTableRow> r) returns true if both rows contain -1 entries "
+			"for the same indices.");
+	}
+}
+
 
 int main(int argc, char** argv)
 {
@@ -7736,7 +7814,8 @@ int main(int argc, char** argv)
 
 	//testDFSMTableGetP1Table();
 
-	testOFSMTableRowConstructor();
+	//testOFSMTableRowConstructor();
+	testOFSMTableIoEqualsPositive();
 
 	/*testMinimise();
 	testWMethod();*/
