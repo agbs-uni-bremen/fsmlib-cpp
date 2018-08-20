@@ -7732,6 +7732,115 @@ void testOFSMTableIoEqualsNegative() {
 	}
 }
 
+// tests OFSMTableRow::classEquals(const S2CMap & s2c, const std::shared_ptr<OFSMTableRow> r)
+// Positive case
+void testOFSMTableClassEqualsPositive() {
+	// this = [[0]], other = [[0]], s2c = {{0->0}}, maxInput = 0, maxOutput = 0 
+	{
+		int maxInput = 0;
+		int maxOutput = 0;
+		shared_ptr<OFSMTableRow> rowThis = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowThis->set(0, 0, 0);
+		shared_ptr<OFSMTableRow> rowOther = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowOther->set(0, 0, 0);
+		S2CMap s2c(0);
+		s2c[0] = 0;
+		fsmlib_assert("TC-OFSMTableRow-NNNN",
+			rowThis->classEquals(s2c, rowOther)
+			&& rowOther->classEquals(s2c, rowThis),
+			"OFSMTableRow::classEquals(const S2CMap & s2c, const std::shared_ptr<OFSMTableRow> r) returns true"
+			" if each io-pair results in poststates s, s' with s2c[s] == s2c[s']");
+	}
+
+	// this = [[-1]], other = [[-1]], s2c = {{0->0}}, maxInput = 0, maxOutput = 0 
+	{
+		int maxInput = 0;
+		int maxOutput = 0;
+		shared_ptr<OFSMTableRow> rowThis = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowThis->set(0, 0, -1);
+		shared_ptr<OFSMTableRow> rowOther = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowOther->set(0, 0, -1);
+		S2CMap s2c(0);
+		s2c[0] = 0;
+		fsmlib_assert("TC-OFSMTableRow-NNNN",
+			rowThis->classEquals(s2c, rowOther)
+			&& rowOther->classEquals(s2c, rowThis),
+			"OFSMTableRow::classEquals(const S2CMap & s2c, const std::shared_ptr<OFSMTableRow> r) returns true"
+			" if each io-pair results in poststates s, s' with s2c[s] == s2c[s']");
+	}
+
+	// this = [[0]], other = [[1]], s2c = {{0->1},{1->1}}, maxInput = 0, maxOutput = 0 
+	{
+		int maxInput = 0;
+		int maxOutput = 0;
+		shared_ptr<OFSMTableRow> rowThis = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowThis->set(0, 0, 0);
+		shared_ptr<OFSMTableRow> rowOther = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowOther->set(0, 0, 1);
+		S2CMap s2c(1);
+		s2c[0] = 1;
+		s2c[1] = 1;
+		fsmlib_assert("TC-OFSMTableRow-NNNN",
+			rowThis->classEquals(s2c, rowOther)
+			&& rowOther->classEquals(s2c, rowThis),
+			"OFSMTableRow::classEquals(const S2CMap & s2c, const std::shared_ptr<OFSMTableRow> r) returns true"
+			" if each io-pair results in poststates s, s' with s2c[s] == s2c[s']");
+	}
+
+	// this = [[0,-1], [-1,2]], other = [[1,-1], [-1,2]], s2c = {{0->1},{1->1},{2->2}}, maxInput = 1, maxOutput = 1 
+	{
+		int maxInput = 1;
+		int maxOutput = 1;
+		shared_ptr<OFSMTableRow> rowThis = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowThis->set(0, 0, 0);
+		rowThis->set(0, 1, -1);
+		rowThis->set(1, 0, -1);
+		rowThis->set(1, 1, 2);
+		shared_ptr<OFSMTableRow> rowOther = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowOther->set(0, 0, 1);
+		rowOther->set(0, 1, -1);
+		rowOther->set(1, 0, -1);
+		rowOther->set(1, 1, 2);
+		S2CMap s2c(2);
+		s2c[0] = 1;
+		s2c[1] = 1;
+		s2c[2] = 2;
+		fsmlib_assert("TC-OFSMTableRow-NNNN",
+			rowThis->classEquals(s2c, rowOther)
+			&& rowOther->classEquals(s2c, rowThis),
+			"OFSMTableRow::classEquals(const S2CMap & s2c, const std::shared_ptr<OFSMTableRow> r) returns true"
+			" if each io-pair results in poststates s, s' with s2c[s] == s2c[s']");
+	}
+
+	// this = [[0,1], [2,3]], other = [[1,4], [4,5]], s2c = {{0->2},{1->2},{2->2},{3->4},{4->2},{5->4}}, maxInput = 1, maxOutput = 1 
+	{
+		int maxInput = 1;
+		int maxOutput = 1;
+		shared_ptr<OFSMTableRow> rowThis = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowThis->set(0, 0, 0);
+		rowThis->set(0, 1, 1);
+		rowThis->set(1, 0, 2);
+		rowThis->set(1, 1, 3);
+		shared_ptr<OFSMTableRow> rowOther = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowOther->set(0, 0, 1);
+		rowOther->set(0, 1, 4);
+		rowOther->set(1, 0, 4);
+		rowOther->set(1, 1, 5);
+		S2CMap s2c(5);
+		s2c[0] = 2;
+		s2c[1] = 2;
+		s2c[2] = 2;
+		s2c[3] = 4;
+		s2c[4] = 2;
+		s2c[5] = 4;
+		fsmlib_assert("TC-OFSMTableRow-NNNN",
+			rowThis->classEquals(s2c, rowOther)
+			&& rowOther->classEquals(s2c, rowThis),
+			"OFSMTableRow::classEquals(const S2CMap & s2c, const std::shared_ptr<OFSMTableRow> r) returns true"
+			" if each io-pair results in poststates s, s' with s2c[s] == s2c[s']");
+	}
+}
+
 
 int main(int argc, char** argv)
 {
@@ -7880,7 +7989,8 @@ int main(int argc, char** argv)
 
 	//testOFSMTableRowConstructor();
 	//testOFSMTableIoEqualsPositive();
-	testOFSMTableIoEqualsNegative();
+	//testOFSMTableIoEqualsNegative();
+	testOFSMTableClassEqualsPositive();
 
 	/*testMinimise();
 	testWMethod();*/
