@@ -7668,6 +7668,70 @@ void testOFSMTableIoEqualsPositive() {
 	}
 }
 
+// tests OFSMTableRow::ioEquals(const std::shared_ptr<OFSMTableRow> r)
+// Negative case
+void testOFSMTableIoEqualsNegative() {
+	// this=[[-1]] other=[[0]], maxInput = 0, maxOutput = 0
+	{
+		int maxInput = 0;
+		int maxOutput = 0;
+		shared_ptr<OFSMTableRow> rowThis = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		shared_ptr<OFSMTableRow> rowOther = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowOther->set(0, 0, 0);
+		fsmlib_assert("TC-OFSMTableRow-NNNN",
+			not rowThis->ioEquals(rowOther)
+			&& not rowOther->ioEquals(rowThis),
+			"OFSMTableRow::ioEquals(const std::shared_ptr<OFSMTableRow> r) returns false if one row contains a -1 entry "
+			"for some io-pair, for which the other row doesn't contain a -1 entry.");
+	}
+
+	// this=[[0,-1], [1,1]] other=[[0,0], [1,1]], maxInput = 1, maxOutput = 1
+	{
+		int maxInput = 1;
+		int maxOutput = 1;
+		shared_ptr<OFSMTableRow> rowThis = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowThis->set(0, 0, 0);
+		rowThis->set(0, 1, -1);
+		rowThis->set(1, 0, 1);
+		rowThis->set(1, 1, 1);
+		shared_ptr<OFSMTableRow> rowOther = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowOther->set(0, 0, 0);
+		rowOther->set(0, 1, 0);
+		rowOther->set(1, 0, 1);
+		rowOther->set(1, 1, 1);
+		fsmlib_assert("TC-OFSMTableRow-NNNN",
+			not rowThis->ioEquals(rowOther)
+			&& not rowOther->ioEquals(rowThis),
+			"OFSMTableRow::ioEquals(const std::shared_ptr<OFSMTableRow> r) returns false if one row contains a -1 entry "
+			"for some io-pair, for which the other row doesn't contain a -1 entry.");
+	}
+
+	// this=[[-1,-1,-1], [-1,-1,-1]] other=[[-1,-1,-1], [-1,0,-1]], maxInput = 1, maxOutput = 2
+	{
+		int maxInput = 1;
+		int maxOutput = 2;
+		shared_ptr<OFSMTableRow> rowThis = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowThis->set(0, 0, -1);
+		rowThis->set(0, 1, -1);
+		rowThis->set(0, 2, -1);
+		rowThis->set(1, 0, -1);
+		rowThis->set(1, 1, -1);
+		rowThis->set(1, 2, -1);
+		shared_ptr<OFSMTableRow> rowOther = make_shared<OFSMTableRow>(maxInput, maxOutput);
+		rowOther->set(0, 0, -1);
+		rowOther->set(0, 1, -1);
+		rowOther->set(0, 2, -1);
+		rowOther->set(1, 0, -1);
+		rowOther->set(1, 1, 0);
+		rowOther->set(1, 2, -1);
+		fsmlib_assert("TC-OFSMTableRow-NNNN",
+			not rowThis->ioEquals(rowOther)
+			&& not rowOther->ioEquals(rowThis),
+			"OFSMTableRow::ioEquals(const std::shared_ptr<OFSMTableRow> r) returns false if one row contains a -1 entry "
+			"for some io-pair, for which the other row doesn't contain a -1 entry.");
+	}
+}
+
 
 int main(int argc, char** argv)
 {
@@ -7815,7 +7879,8 @@ int main(int argc, char** argv)
 	//testDFSMTableGetP1Table();
 
 	//testOFSMTableRowConstructor();
-	testOFSMTableIoEqualsPositive();
+	//testOFSMTableIoEqualsPositive();
+	testOFSMTableIoEqualsNegative();
 
 	/*testMinimise();
 	testWMethod();*/
