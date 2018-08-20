@@ -29,6 +29,7 @@
 #include "fsm/PkTable.h"
 #include "fsm/DFSMTable.h"
 #include "fsm/DFSMTableRow.h"
+#include "fsm/OFSMTableRow.h"
 
 
 using namespace std;
@@ -7524,6 +7525,72 @@ void testDFSMTableGetP1Table() {
 
 }
 
+//===================================== OFSMTableRow Tests ===================================================
+
+// tests OFSMTableRow::OFSMTableRow(const int maxInput, const int maxOutput)
+void testOFSMTableRowConstructor() {
+	// maxInput = 0, maxOutput = 0
+	{
+		int maxInput = 0;
+		int maxOutput = 0;
+		OFSMTableRow row(maxInput, maxOutput);
+		for (int input = 0; input <= maxInput; ++input) {
+			for (int output = 0; output <= maxOutput; ++output) {
+				fsmlib_assert("TC-OFSMTableRow-NNNN",
+					row.get(input, output) == -1,
+					"OFSMTableRow::OFSMTableRow(const int maxInput, const int maxOutput) initializes each possible "
+					"combination of input and output with -1");
+			}
+		}
+	}
+
+	// maxInput = 1, maxOutput = 0
+	{
+		int maxInput = 1;
+		int maxOutput = 0;
+		OFSMTableRow row(maxInput, maxOutput);
+		for (int input = 0; input <= maxInput; ++input) {
+			for (int output = 0; output <= maxOutput; ++output) {
+				fsmlib_assert("TC-OFSMTableRow-NNNN",
+					row.get(input, output) == -1,
+					"OFSMTableRow::OFSMTableRow(const int maxInput, const int maxOutput) initializes each possible "
+					"combination of input and output with -1");
+			}
+		}
+	}
+
+	// maxInput = 0, maxOutput = 1
+	{
+		int maxInput = 0;
+		int maxOutput = 1;
+		OFSMTableRow row(maxInput, maxOutput);
+		for (int input = 0; input <= maxInput; ++input) {
+			for (int output = 0; output <= maxOutput; ++output) {
+				fsmlib_assert("TC-OFSMTableRow-NNNN",
+					row.get(input, output) == -1,
+					"OFSMTableRow::OFSMTableRow(const int maxInput, const int maxOutput) initializes each possible "
+					"combination of input and output with -1");
+			}
+		}
+	}
+
+	// maxInput = 1, maxOutput = 1
+	{
+		int maxInput = 1;
+		int maxOutput = 1;
+		OFSMTableRow row(maxInput, maxOutput);
+		for (int input = 0; input <= maxInput; ++input) {
+			for (int output = 0; output <= maxOutput; ++output) {
+				fsmlib_assert("TC-OFSMTableRow-NNNN",
+					row.get(input, output) == -1,
+					"OFSMTableRow::OFSMTableRow(const int maxInput, const int maxOutput) initializes each possible "
+					"combination of input and output with -1");
+			}
+		}
+	}
+}
+
+
 int main(int argc, char** argv)
 {
     
@@ -7667,7 +7734,9 @@ int main(int argc, char** argv)
 	//testPkTableGetMembers();
 	//testPkTableToFsm();
 
-	testDFSMTableGetP1Table();
+	//testDFSMTableGetP1Table();
+
+	testOFSMTableRowConstructor();
 
 	/*testMinimise();
 	testWMethod();*/
