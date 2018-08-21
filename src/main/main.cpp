@@ -8024,6 +8024,82 @@ void testOFSMTableConstructor() {
 			&& table.getS2C().at(n2->getId()) == 0,
 			"Constructed OFSMTable maps each state to equivalence class 0.");
 	}
+}
+
+// tests OFSMTable::maxClassId()
+void testOFSMTableMaxClassId() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	int maxInput = 4;
+	int maxOutput = 2;
+	vector<std::shared_ptr<OFSMTableRow>> rows;
+	// s2c = [-1] -> all s2c ids are smaller than 0
+	{
+		int numStates = 1;		
+		OFSMTable table(numStates, maxInput, maxOutput, rows, pl);
+		S2CMap s2c(0);
+		s2c[0] = -1;
+		table.setS2C(s2c);
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			table.maxClassId() == 0,
+			"OFSMTable::maxClassId() returns 0 if all elements from s2c are smaller than 0");
+	}
+
+	// s2c = [-1,0] -> not all s2c ids are smaller than 0
+	{
+		int numStates = 2;
+		OFSMTable table(numStates, maxInput, maxOutput, rows, pl);
+		S2CMap s2c(1);
+		s2c[0] = -1;
+		s2c[1] = 0;
+		table.setS2C(s2c);
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			table.maxClassId() == 0,
+			"OFSMTable::maxClassId() returns greatest value of s2c");
+	}
+
+	// s2c = [0,0,1]
+	{
+		int numStates = 3;
+		OFSMTable table(numStates, maxInput, maxOutput, rows, pl);
+		S2CMap s2c(2);
+		s2c[0] = 0;
+		s2c[1] = 0;
+		s2c[2] = 1;
+		table.setS2C(s2c);
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			table.maxClassId() == 1,
+			"OFSMTable::maxClassId() returns greatest value of s2c");
+	}
+
+	// s2c = [0,1,2,1]
+	{
+		int numStates = 4;
+		OFSMTable table(numStates, maxInput, maxOutput, rows, pl);
+		S2CMap s2c(3);
+		s2c[0] = 0;
+		s2c[1] = 1;
+		s2c[2] = 2;
+		s2c[3] = 1;
+		table.setS2C(s2c);
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			table.maxClassId() == 2,
+			"OFSMTable::maxClassId() returns greatest value of s2c");
+	}
+
+	// s2c = [0,1,3,3]
+	{
+		int numStates = 4;
+		OFSMTable table(numStates, maxInput, maxOutput, rows, pl);
+		S2CMap s2c(3);
+		s2c[0] = 0;
+		s2c[1] = 1;
+		s2c[2] = 3;
+		s2c[3] = 3;
+		table.setS2C(s2c);
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			table.maxClassId() == 3,
+			"OFSMTable::maxClassId() returns greatest value of s2c");
+	}
 
 }
 
@@ -8179,7 +8255,8 @@ int main(int argc, char** argv)
 	//testOFSMTableClassEqualsPositive();
 	//testOFSMTableClassEqualsNegative();
 
-	testOFSMTableConstructor();
+	//testOFSMTableConstructor();
+	testOFSMTableMaxClassId();
 
 	/*testMinimise();
 	testWMethod();*/
