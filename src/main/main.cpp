@@ -30,6 +30,9 @@
 #include "fsm/DFSMTable.h"
 #include "fsm/DFSMTableRow.h"
 #include "fsm/OFSMTableRow.h"
+#include "fsm/OFSMTable.h"
+#include "fsm/FsmTransition.h"
+#include "fsm/FsmLabel.h"
 
 
 using namespace std;
@@ -7935,6 +7938,95 @@ void testOFSMTableClassEqualsNegative() {
 	}
 }
 
+//===================================== OFSMTable Tests ===================================================
+
+// tests OFSMTable::OFSMTable(const vector<shared_ptr<FsmNode>>& nodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer)
+void testOFSMTableConstructor() {
+
+	// nodes contains only one FsmNode which hasn't any transition.
+	{
+		int maxInput = 0;
+		int maxOutput = 0;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		vector<shared_ptr<FsmNode>> nodes{ n0 };
+		OFSMTable table(nodes, maxInput, maxOutput, pl);
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			table.get(n0->getId(), 0, 0) == -1,
+			"Constructed OFSMTable marks each non-existing transitions with -1");
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			table.getS2C().at(n0->getId()) == 0,
+			"Constructed OFSMTable maps each state to equivalence class 0.");
+	}
+
+	// nodes contains two FsmNodes with transitions.
+	// n0 --(0/1)--> n0; n0 --(1/1)--> n1; n1 --(0/0)--> n0; n1 --(1/0)--> n0;
+	{
+		int maxInput = 1;
+		int maxOutput = 1;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 1, pl)));
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl)));
+		n1->addTransition(make_shared<FsmTransition>(n1, n0, make_shared<FsmLabel>(0, 0, pl)));
+		n1->addTransition(make_shared<FsmTransition>(n1, n0, make_shared<FsmLabel>(1, 0, pl)));
+		vector<shared_ptr<FsmNode>> nodes{ n0, n1 };
+		OFSMTable table(nodes, maxInput, maxOutput, pl);
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			table.get(n0->getId(), 0, 0) == -1
+			&& table.get(n0->getId(), 0, 1) == n0->getId()
+			&& table.get(n0->getId(), 1, 0) == -1
+			&& table.get(n0->getId(), 1, 1) == n1->getId()
+			&& table.get(n1->getId(), 0, 0) == n0->getId()
+			&& table.get(n1->getId(), 0, 1) == -1
+			&& table.get(n1->getId(), 1, 0) == n0->getId()
+			&& table.get(n1->getId(), 1, 1) == -1,
+			"Each row from constructed OFSMTable represents correctly the corresponding FsmNode (nodes[i] ~ rows[i])");
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			table.getS2C().at(n0->getId()) == 0
+			&& table.getS2C().at(n1->getId()) == 0,
+			"Constructed OFSMTable maps each state to equivalence class 0.");
+	}
+
+	// nodes contains three FsmNodes with transitions.
+	// n0 --(0/0)--> n1; n1 --(1/1)--> n2; n2 --(0/0)--> n2; n2 --(1/0)--> n0;
+	{
+		int maxInput = 1;
+		int maxOutput = 1;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(0, 0, pl)));
+		n1->addTransition(make_shared<FsmTransition>(n1, n2, make_shared<FsmLabel>(1, 1, pl)));
+		n2->addTransition(make_shared<FsmTransition>(n2, n2, make_shared<FsmLabel>(0, 0, pl)));
+		n2->addTransition(make_shared<FsmTransition>(n2, n0, make_shared<FsmLabel>(1, 0, pl)));
+		vector<shared_ptr<FsmNode>> nodes{ n0, n1, n2 };
+		OFSMTable table(nodes, maxInput, maxOutput, pl);
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			table.get(n0->getId(), 0, 0) == n1->getId()
+			&& table.get(n0->getId(), 0, 1) == -1
+			&& table.get(n0->getId(), 1, 0) == -1
+			&& table.get(n0->getId(), 1, 1) == -1
+			&& table.get(n1->getId(), 0, 0) == -1
+			&& table.get(n1->getId(), 0, 1) == -1
+			&& table.get(n1->getId(), 1, 0) == -1
+			&& table.get(n1->getId(), 1, 1) == n2->getId()
+			&& table.get(n2->getId(), 0, 0) == n2->getId()
+			&& table.get(n2->getId(), 0, 1) == -1
+			&& table.get(n2->getId(), 1, 0) == n0->getId()
+			&& table.get(n2->getId(), 1, 1) == -1,
+			"Each row from constructed OFSMTable represents correctly the corresponding FsmNode (nodes[i] ~ rows[i])");
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			table.getS2C().at(n0->getId()) == 0
+			&& table.getS2C().at(n1->getId()) == 0
+			&& table.getS2C().at(n2->getId()) == 0,
+			"Constructed OFSMTable maps each state to equivalence class 0.");
+	}
+
+}
+
 
 int main(int argc, char** argv)
 {
@@ -8085,7 +8177,9 @@ int main(int argc, char** argv)
 	//testOFSMTableIoEqualsPositive();
 	//testOFSMTableIoEqualsNegative();
 	//testOFSMTableClassEqualsPositive();
-	testOFSMTableClassEqualsNegative();
+	//testOFSMTableClassEqualsNegative();
+
+	testOFSMTableConstructor();
 
 	/*testMinimise();
 	testWMethod();*/
