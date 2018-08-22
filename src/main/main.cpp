@@ -8105,7 +8105,7 @@ void testOFSMTableMaxClassId() {
 // Checks if stateID1 and stateID2 (only) have transitions for the same io-pairs
 bool isIOEquivalent(int stateID1, int stateID2, OFSMTable &table, int maxInput, int maxOutput) {
 	for (int input = 0; input <= maxInput; ++input) {
-		for (int output = 0; output <= maxOutput; ++maxOutput) {
+		for (int output = 0; output <= maxOutput; ++output) {
 			if (table.get(stateID1, input, output) < 0 && table.get(stateID2, input, output) >= 0) return false;
 
 			if (table.get(stateID1, input, output) >= 0 && table.get(stateID2, input, output) < 0) return false;
@@ -8114,11 +8114,125 @@ bool isIOEquivalent(int stateID1, int stateID2, OFSMTable &table, int maxInput, 
 	return true;
 }
 
-// Checks if all states in the same class are io-equivalent.
-bool checkOFSM1TableProperty() {
-
+// Checks if all states in the same class are io-equivalent and if all io-equivalent states are in the same class.
+// Can be used to check if table is a correct OFSM 1 Table
+bool checkOFSM1TableProperty(OFSMTable &table, int numStates, int maxInput, int maxOutput) {
+	for (int i = 0; i < numStates; ++i) {
+		S2CMap s2c = table.getS2C();
+		for (int j = i + 1; j < numStates; ++j) {
+			if (s2c.at(i) == s2c.at(j)) {
+				// => non io-equivalent states in the same ofsm 1 class
+				if (not isIOEquivalent(i, j, table, maxInput, maxOutput)) {
+					return false;
+				}
+			}
+			else {
+				// => io-equivalent states in different ofsm 1 classes.
+				if (isIOEquivalent(i, j, table, maxInput, maxOutput)) {
+					return false;
+				}
+			}
+		}
+	}
+	return true;
 }
 
+struct OFSMTableTestCase
+{
+	shared_ptr<FsmPresentationLayer> presentationLayer;
+	shared_ptr<OFSMTable> ofsmTable;
+	int maxInput;
+	int maxOutput;
+	int numStates;
+};
+
+OFSMTableTestCase getOFSMTableTestCase1() {
+	std::shared_ptr<FsmPresentationLayer> presentationLayer = make_shared<FsmPresentationLayer>();
+	int maxInput = 1;
+	int maxOutput = 1;
+
+	// create all OFSMTableRows
+	shared_ptr<OFSMTableRow> r0 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r0->set(0, 0, 1);
+	r0->set(0, 1, 3);
+	r0->set(1, 0, 6);
+	r0->set(1, 1, 0);
+	shared_ptr<OFSMTableRow> r1 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r1->set(0, 0, 2);
+	r1->set(0, 1, 2);
+	r1->set(1, 0, 3);
+	r1->set(1, 1, -1);
+	shared_ptr<OFSMTableRow> r2 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r2->set(0, 0, -1);
+	r2->set(0, 1, 0);
+	r2->set(1, 0, -1);
+	r2->set(1, 1, 2);
+	shared_ptr<OFSMTableRow> r3 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r3->set(0, 0, 4);
+	r3->set(0, 1, 5);
+	r3->set(1, 0, 1);
+	r3->set(1, 1, -1);
+	shared_ptr<OFSMTableRow> r4 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r4->set(0, 0, -1);
+	r4->set(0, 1, 0);
+	r4->set(1, 0, -1);
+	r4->set(1, 1, 4);
+	shared_ptr<OFSMTableRow> r5 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r5->set(0, 0, -1);
+	r5->set(0, 1, 0);
+	r5->set(1, 0, -1);
+	r5->set(1, 1, 2);
+	shared_ptr<OFSMTableRow> r6 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r6->set(0, 0, 7);
+	r6->set(0, 1, 7);
+	r6->set(1, 0, 3);
+	r6->set(1, 1, -1);
+	shared_ptr<OFSMTableRow> r7 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r7->set(0, 0, 8);
+	r7->set(0, 1, 8);
+	r7->set(1, 0, -1);
+	r7->set(1, 1, 7);
+	shared_ptr<OFSMTableRow> r8 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r8->set(0, 0, 7);
+	r8->set(0, 1, 4);
+	r8->set(1, 0, 6);
+	r8->set(1, 1, 8);
+
+	vector<shared_ptr<OFSMTableRow>> rows;
+	rows.push_back(r0);
+	rows.push_back(r1);
+	rows.push_back(r2);
+	rows.push_back(r3);
+	rows.push_back(r4);
+	rows.push_back(r5);
+	rows.push_back(r6);
+	rows.push_back(r7);
+	rows.push_back(r8);
+
+	// create OFSMTable from OFSMTableRows
+	int numStates = rows.size();
+	OFSMTable ofsmTable(numStates, maxInput, maxOutput, rows, presentationLayer);
+
+	//// set classes. pkTable becomes P1 Table.
+	//pkTable.setClass(0, 0);
+	//pkTable.setClass(1, 1);
+	//pkTable.setClass(2, 0);
+	//pkTable.setClass(3, 1);
+	//pkTable.setClass(4, 0);
+	//pkTable.setClass(5, 1);
+	//pkTable.setClass(6, 0);
+	//pkTable.setClass(7, 0);
+	//pkTable.setClass(8, 1);
+
+	OFSMTableTestCase testStructure;
+	testStructure.presentationLayer = presentationLayer;
+	testStructure.ofsmTable = make_shared<OFSMTable>(ofsmTable);
+	testStructure.maxInput = maxInput;
+	testStructure.maxOutput = maxOutput;
+	testStructure.numStates = numStates;
+
+	return testStructure;
+}
 
 // test OFSMTable::next()
 void testOFSMTableNext() {
@@ -8161,13 +8275,12 @@ void testOFSMTableNext() {
 		r1->set(0, 0, 0);
 		vector<std::shared_ptr<OFSMTableRow>> rows{ r0, r1 };
 		OFSMTable table(numStates, maxInput, maxOutput, rows, pl);
-		std::cout << table << std::endl;
 		shared_ptr<OFSMTable> nextAfterZero = table.next();
-		std::cout << *nextAfterZero << std::endl;
 		fsmlib_assert("TC-OFSMTable-NNNN",
 			nextAfterZero->getS2C().at(0) != -1
 			&& nextAfterZero->getS2C().at(1) != -1
-			&& nextAfterZero->getS2C().at(0) != nextAfterZero->getS2C().at(1),
+			&& nextAfterZero->getS2C().at(0) != nextAfterZero->getS2C().at(1)
+			&& checkOFSM1TableProperty(*nextAfterZero, numStates, maxInput, maxOutput),
 			"OFSMTable::nextAfterZero() maps two states to the same s2c-class iff they are io-equivalent (wrt. OFSMTableRow::ioEquals)");
 
 		fsmlib_assert("TC-OFSMTable-NNNN",
@@ -8211,25 +8324,14 @@ void testOFSMTableNext() {
 		r4->set(1, 1, 0);
 		vector<std::shared_ptr<OFSMTableRow>> rows{ r0, r1, r2, r3, r4 };
 		OFSMTable table(numStates, maxInput, maxOutput, rows, pl);
-		std::cout << table << std::endl;
 		shared_ptr<OFSMTable> nextAfterZero = table.next();
-		std::cout << *nextAfterZero << std::endl;
 		fsmlib_assert("TC-OFSMTable-NNNN",
 			nextAfterZero->getS2C().at(0) != -1
 			&& nextAfterZero->getS2C().at(1) != -1
 			&& nextAfterZero->getS2C().at(2) != -1
 			&& nextAfterZero->getS2C().at(3) != -1
 			&& nextAfterZero->getS2C().at(4) != -1
-			&& nextAfterZero->getS2C().at(0) != nextAfterZero->getS2C().at(1)
-			&& nextAfterZero->getS2C().at(0) == nextAfterZero->getS2C().at(2)
-			&& nextAfterZero->getS2C().at(0) != nextAfterZero->getS2C().at(3)
-			&& nextAfterZero->getS2C().at(0) != nextAfterZero->getS2C().at(4)
-			&& nextAfterZero->getS2C().at(1) != nextAfterZero->getS2C().at(2)
-			&& nextAfterZero->getS2C().at(1) == nextAfterZero->getS2C().at(3)
-			&& nextAfterZero->getS2C().at(1) != nextAfterZero->getS2C().at(4)
-			&& nextAfterZero->getS2C().at(2) != nextAfterZero->getS2C().at(3)
-			&& nextAfterZero->getS2C().at(2) != nextAfterZero->getS2C().at(4)
-			&& nextAfterZero->getS2C().at(3) != nextAfterZero->getS2C().at(4),
+			&& checkOFSM1TableProperty(*nextAfterZero, numStates, maxInput, maxOutput),
 			"OFSMTable::nextAfterZero() maps two states to the same s2c-class iff they are io-equivalent (wrt. OFSMTableRow::ioEquals)");
 
 		fsmlib_assert("TC-OFSMTable-NNNN",
@@ -8237,7 +8339,6 @@ void testOFSMTableNext() {
 			"OFSMTable::nextAfterZero() sets tblId to 1");
 	}
 }
-
 
 int main(int argc, char** argv)
 {
