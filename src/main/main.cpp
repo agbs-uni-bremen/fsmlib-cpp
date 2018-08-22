@@ -8338,6 +8338,46 @@ void testOFSMTableNext() {
 			nextAfterZero->getId() == 1,
 			"OFSMTable::nextAfterZero() sets tblId to 1");
 	}
+
+	// test of successive invokations (full minimisation process)
+	{
+		OFSMTableTestCase ofsmTableTestCase = getOFSMTableTestCase1();
+		shared_ptr<OFSMTable> currentTable = ofsmTableTestCase.ofsmTable;
+		currentTable = currentTable->next();
+		S2CMap s2c = currentTable->getS2C();
+		// currentTable is now OFSM Table 1
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			s2c.at(0) == s2c.at(8)
+			&& s2c.at(1) == s2c.at(3)
+			&& s2c.at(1) == s2c.at(6)
+			&& s2c.at(2) == s2c.at(4)
+			&& s2c.at(2) == s2c.at(5)
+			&& s2c.at(0) != s2c.at(1)
+			&& s2c.at(0) != s2c.at(2)
+			&& s2c.at(0) != s2c.at(7)
+			&& s2c.at(1) != s2c.at(2)
+			&& s2c.at(1) != s2c.at(7)
+			&& s2c.at(2) != s2c.at(7),
+			"OFSMTable::next() maps each state to the correct equivalence class.");
+
+		currentTable = currentTable->next();
+		s2c = currentTable->getS2C();
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			s2c.at(1) == s2c.at(3)
+			&& s2c.at(2) == s2c.at(4)
+			&& s2c.at(2) == s2c.at(5)
+			&& s2c.at(0) != s2c.at(1) && s2c.at(0) != s2c.at(2) && s2c.at(0) != s2c.at(6) && s2c.at(0) != s2c.at(7) && s2c.at(0) != s2c.at(8)
+			&& s2c.at(1) != s2c.at(2) && s2c.at(1) != s2c.at(6) && s2c.at(1) != s2c.at(7) && s2c.at(1) != s2c.at(8)
+			&& s2c.at(2) != s2c.at(6) && s2c.at(2) != s2c.at(7) && s2c.at(2) != s2c.at(8)
+			&& s2c.at(6) != s2c.at(7) && s2c.at(6) != s2c.at(8)
+			&& s2c.at(7) != s2c.at(8),
+			"OFSMTable::next() maps each state to the correct equivalence class.");
+
+		currentTable = currentTable->next();
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			currentTable == nullptr,
+			"OFSMTable::next() returns nullptr if no new class can be generated");
+	}
 }
 
 int main(int argc, char** argv)
