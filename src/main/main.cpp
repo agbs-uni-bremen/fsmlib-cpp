@@ -8213,17 +8213,6 @@ OFSMTableTestCase getOFSMTableTestCase1() {
 	int numStates = rows.size();
 	OFSMTable ofsmTable(numStates, maxInput, maxOutput, rows, presentationLayer);
 
-	//// set classes. pkTable becomes P1 Table.
-	//pkTable.setClass(0, 0);
-	//pkTable.setClass(1, 1);
-	//pkTable.setClass(2, 0);
-	//pkTable.setClass(3, 1);
-	//pkTable.setClass(4, 0);
-	//pkTable.setClass(5, 1);
-	//pkTable.setClass(6, 0);
-	//pkTable.setClass(7, 0);
-	//pkTable.setClass(8, 1);
-
 	OFSMTableTestCase testStructure;
 	testStructure.presentationLayer = presentationLayer;
 	testStructure.ofsmTable = make_shared<OFSMTable>(ofsmTable);
@@ -8380,6 +8369,139 @@ void testOFSMTableNext() {
 	}
 }
 
+// Returns the index of the first OFSMTableRow in Table with class c. 
+// Returns -1 if no such row exists.
+int selectRowIndexWithClass(int c, shared_ptr<OFSMTable> table, int numStates) {
+	S2CMap s2c = table->getS2C();
+	for (int i = 0; i < numStates; ++i) {
+		if (s2c.at(i) == c) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+// Calculates the number of transitions that are defined in the state represented by OFSMTableRow at index rowIndex in table.
+int getNumberOfTransitionsOfOFSMTableRow(shared_ptr<OFSMTable> table, int rowIndex, int maxInput, int maxOutput) {
+	int counter = 0;
+	for (int i = 0; i <= maxInput; ++i) {
+		for (int j = 0; j <= maxOutput; ++j) {
+			if (table->get(rowIndex, i, j) >= 0) {
+				++counter;
+			}
+		}
+	}
+	return counter;
+}
+
+// Check if each FsmTransition of n is also represented in row at rowIndex.
+bool matchFsmNodeAgainstOFSMTableRow(shared_ptr<FsmNode> n, shared_ptr<OFSMTable> table, int rowIndex) {
+	S2CMap s2c = table->getS2C();
+	for (shared_ptr<FsmTransition> t : n->getTransitions()) {
+		int postStateID = table->get(rowIndex, t->getLabel()->getInput(), t->getLabel()->getOutput());
+		if (s2c.at(postStateID) != t->getTarget()->getId()) {
+			return false;
+		}
+	}
+	return true;
+}
+
+// Select and return all FsmTransitions of n labeled with input/output.
+vector<shared_ptr<FsmTransition>> getFsmTransitionsForIO(shared_ptr<FsmNode> n, int input, int output) {
+	vector<shared_ptr<FsmTransition>> transitions;
+	for (shared_ptr<FsmTransition> t : n->getTransitions()) {
+		if (t->getLabel()->getInput() == input && t->getLabel()->getOutput() == output) {
+			transitions.push_back(t);
+		}
+	}
+	return transitions;
+}
+
+// Check if each transition in the row at rowIndex is also represented as a FsmTransition of n.
+bool matchOFSMTableRowAgainstFsmNode(shared_ptr<FsmNode> n, shared_ptr<OFSMTable> table, int rowIndex, int maxInput, int maxOutput) {
+	S2CMap s2c = table->getS2C();
+	for (int i = 0; i <= maxInput; ++i) {
+		for (int o = 0; o <= maxOutput; ++o) {
+			int postState = table->get(rowIndex, i, o);
+			// => no transition for i,o
+			if (postState < 0) continue;
+			
+			vector<shared_ptr<FsmTransition>> transitions = getFsmTransitionsForIO(n, i, o);
+			if (transitions.size() != 1) return false;
+			if (transitions.at(0)->getTarget()->getId() != s2c.at(postState)) return false;
+		}
+	}
+	return true;
+}
+
+// Checks if given FsmNode n corresponds to OFSMTable row in table at index rowIndex.
+// True if both have the same number of transitions, io-labels of transitions match and targets of transitions match.
+// False otherwise.
+bool matchFsmNodeWithOFSMTableRow(shared_ptr<FsmNode> n, shared_ptr<OFSMTable> table, int rowIndex, int maxInput, int maxOutput) {
+	if (n->getTransitions().size() != getNumberOfTransitionsOfOFSMTableRow(table, rowIndex, maxInput, maxOutput)) {
+		return false;
+	}
+	if (not matchFsmNodeAgainstOFSMTableRow(n, table, rowIndex)) {
+		return false;
+	}
+	if (not matchOFSMTableRowAgainstFsmNode(n, table, rowIndex, maxInput, maxOutput)) {
+		return false;
+	}
+	return true;
+}
+
+// Check if each FsmNode from Fsm has corresponding OFSMTableRow in table.
+bool matchAllFsmNodes(Fsm &fsm, shared_ptr<OFSMTable> table, int numStates, int maxInput, int maxOutput) {
+	for (shared_ptr<FsmNode> n : fsm.getNodes()) {
+		int rowIndex = selectRowIndexWithClass(n->getId(), table, numStates);
+		if (not matchFsmNodeWithOFSMTableRow(n, table, rowIndex, maxInput, maxOutput)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+// Check if each OFSMTableRow in table has a corresponding FsmNode in Fsm.
+bool matchAllOFSMRows(Fsm &fsm, shared_ptr<OFSMTable> table, int numStates, int maxInput, int maxOutput) {
+	S2CMap s2c = table->getS2C();
+	for (int i = 0; i < numStates; ++i) {
+		int nodeID = s2c.at(i);
+		shared_ptr<FsmNode> node = fsm.getNodes().at(nodeID);
+		if (not matchFsmNodeWithOFSMTableRow(node, table, i, maxInput, maxOutput)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+//tests OFSMTable::toFsm(const string & name)
+void testOFSMTableToFsm() {
+	{
+		OFSMTableTestCase ofsmTableTestCase = getOFSMTableTestCase1();
+		shared_ptr<OFSMTable> table = ofsmTableTestCase.ofsmTable;
+		shared_ptr<OFSMTable> next = table->next();
+		while (next != nullptr) {
+			table = next;
+			next = next->next();
+		}
+		
+		Fsm fsm = table->toFsm("");
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			fsm.getNodes().size() == table->maxClassId() + 1,
+			"OFSMTable::toFsm(const string & name) creates Fsm with correct number of FsmNodes "
+			"(equal to the number of generated classes)");
+
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			matchAllFsmNodes(fsm, table, ofsmTableTestCase.numStates, ofsmTableTestCase.maxInput, ofsmTableTestCase.maxOutput),
+			"OFSMTable::toFsm(const string & name): Each FsmNode from constructed Fsm has corresponding OFSMTableRow in table.");
+
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			matchAllOFSMRows(fsm, table, ofsmTableTestCase.numStates, ofsmTableTestCase.maxInput, ofsmTableTestCase.maxOutput),
+			"OFSMTable::toFsm(const string & name): Each OFSMTableRow from the OFSMTable has a corresponding FsmNode in the constructed Fsm");
+		
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -8533,7 +8655,8 @@ int main(int argc, char** argv)
 
 	//testOFSMTableConstructor();
 	//testOFSMTableMaxClassId();
-	testOFSMTableNext();
+	//testOFSMTableNext();
+	testOFSMTableToFsm();
 
 	/*testMinimise();
 	testWMethod();*/
