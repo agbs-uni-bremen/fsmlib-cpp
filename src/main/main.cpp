@@ -8223,6 +8223,95 @@ OFSMTableTestCase getOFSMTableTestCase1() {
 	return testStructure;
 }
 
+OFSMTableTestCase getOFSMTableTestCase2() {
+	std::shared_ptr<FsmPresentationLayer> presentationLayer = make_shared<FsmPresentationLayer>();
+	int maxInput = 2;
+	int maxOutput = 2;
+
+	// create all OFSMTableRows
+	// a = 0, b = 1, c = 2
+	shared_ptr<OFSMTableRow> r0 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r0->set(0, 0, -1); r0->set(0, 2, 4);
+	r0->set(1, 1, 1); r0->set(1, 2, 0);
+	r0->set(2, 1, 2);
+	shared_ptr<OFSMTableRow> r1 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r1->set(0, 0, -1); r1->set(0, 2, 3);
+	r1->set(1, 1, 2); r1->set(1, 2, 0);
+	r1->set(2, 1, 1);
+	shared_ptr<OFSMTableRow> r2 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r2->set(0, 0, 2); r2->set(0, 2, -1);
+	r2->set(1, 1, -1); r2->set(1, 2, 3);
+	r2->set(2, 1, 0);
+	shared_ptr<OFSMTableRow> r3 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r3->set(0, 0, 2); r3->set(0, 2, 0);
+	r3->set(1, 1, 3); r3->set(1, 2, -1);
+	r3->set(2, 1, 3);
+	shared_ptr<OFSMTableRow> r4 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r4->set(0, 0, 2); r4->set(0, 2, 3); 
+	r4->set(1, 1, 2); r4->set(1, 2, 5);
+	r4->set(2, 1, 6);
+	shared_ptr<OFSMTableRow> r5 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r5->set(0, 0, 2); r5->set(0, 2, 7); 
+	r5->set(1, 1, 8); r5->set(1, 2, 0);
+	r5->set(2, 1, 9);
+	shared_ptr<OFSMTableRow> r6 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r6->set(0, 0, -1); r6->set(0, 2, 10); 
+	r6->set(1, 1, 4); r6->set(1, 2, 0);
+	r6->set(2, 1, 4);
+	shared_ptr<OFSMTableRow> r7 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r7->set(0, 0, 2); r7->set(0, 2, 10); 
+	r7->set(1, 1, 4); r7->set(1, 2, 5);
+	r7->set(2, 1, 7);
+	shared_ptr<OFSMTableRow> r8 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r8->set(0, 0, 2); r8->set(0, 2, 5); 
+	r8->set(1, 1, 9); r8->set(1, 2, 0);
+	r8->set(2, 1, 8);
+	shared_ptr<OFSMTableRow> r9 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r9->set(0, 0, 2); r9->set(0, 2, 0);
+	r9->set(1, 1, 3); r9->set(1, 2, 3);
+	r9->set(2, 1, 5);
+	shared_ptr<OFSMTableRow> r10 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r10->set(0, 0, 2); r10->set(0, 2, 5);
+	r10->set(1, 1, 9); r10->set(1, 2, 5);
+	r10->set(2, 1, 11);
+	shared_ptr<OFSMTableRow> r11 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r11->set(0, 0, 2); r11->set(0, 2, 12); // 2 12 10 0 10 
+	r11->set(1, 1, 10); r11->set(1, 2, 0);
+	r11->set(2, 1, 10);
+	shared_ptr<OFSMTableRow> r12 = make_shared<OFSMTableRow>(maxInput, maxOutput);
+	r12->set(0, 0, 2); r12->set(0, 2, 12);
+	r12->set(1, 1, 10); r12->set(1, 2, 5);
+	r12->set(2, 1, 12);
+
+	vector<shared_ptr<OFSMTableRow>> rows;
+	rows.push_back(r0);
+	rows.push_back(r1);
+	rows.push_back(r2);
+	rows.push_back(r3);
+	rows.push_back(r4);
+	rows.push_back(r5);
+	rows.push_back(r6);
+	rows.push_back(r7);
+	rows.push_back(r8);
+	rows.push_back(r9);
+	rows.push_back(r10);
+	rows.push_back(r11);
+	rows.push_back(r12);
+
+	// create OFSMTable from OFSMTableRows
+	int numStates = rows.size();
+	OFSMTable ofsmTable(numStates, maxInput, maxOutput, rows, presentationLayer);
+
+	OFSMTableTestCase testStructure;
+	testStructure.presentationLayer = presentationLayer;
+	testStructure.ofsmTable = make_shared<OFSMTable>(ofsmTable);
+	testStructure.maxInput = maxInput;
+	testStructure.maxOutput = maxOutput;
+	testStructure.numStates = numStates;
+
+	return testStructure;
+}
+
 // test OFSMTable::next()
 void testOFSMTableNext() {
 	// test OFSMTable::nextAfterZero() (call next() on table with id 0)
@@ -8476,6 +8565,7 @@ bool matchAllOFSMRows(Fsm &fsm, shared_ptr<OFSMTable> table, int numStates, int 
 
 //tests OFSMTable::toFsm(const string & name)
 void testOFSMTableToFsm() {
+	// using OFSMTable from lecture (Minimisation of OFSM Table)
 	{
 		OFSMTableTestCase ofsmTableTestCase = getOFSMTableTestCase1();
 		shared_ptr<OFSMTable> table = ofsmTableTestCase.ofsmTable;
@@ -8499,6 +8589,31 @@ void testOFSMTableToFsm() {
 			matchAllOFSMRows(fsm, table, ofsmTableTestCase.numStates, ofsmTableTestCase.maxInput, ofsmTableTestCase.maxOutput),
 			"OFSMTable::toFsm(const string & name): Each OFSMTableRow from the OFSMTable has a corresponding FsmNode in the constructed Fsm");
 		
+	}
+
+	// Table is already minimal
+	{
+		OFSMTableTestCase ofsmTableTestCase = getOFSMTableTestCase2();
+		shared_ptr<OFSMTable> table = ofsmTableTestCase.ofsmTable;
+		shared_ptr<OFSMTable> next = table->next();
+		while (next != nullptr) {
+			table = next;
+			next = next->next();
+		}
+
+		Fsm fsm = table->toFsm("");
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			fsm.getNodes().size() == table->maxClassId() + 1,
+			"OFSMTable::toFsm(const string & name) creates Fsm with correct number of FsmNodes "
+			"(equal to the number of generated classes)");
+
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			matchAllFsmNodes(fsm, table, ofsmTableTestCase.numStates, ofsmTableTestCase.maxInput, ofsmTableTestCase.maxOutput),
+			"OFSMTable::toFsm(const string & name): Each FsmNode from constructed Fsm has corresponding OFSMTableRow in table.");
+
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			matchAllOFSMRows(fsm, table, ofsmTableTestCase.numStates, ofsmTableTestCase.maxInput, ofsmTableTestCase.maxOutput),
+			"OFSMTable::toFsm(const string & name): Each OFSMTableRow from the OFSMTable has a corresponding FsmNode in the constructed Fsm");
 	}
 }
 
