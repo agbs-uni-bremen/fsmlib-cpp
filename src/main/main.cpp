@@ -8312,6 +8312,28 @@ OFSMTableTestCase getOFSMTableTestCase2() {
 	return testStructure;
 }
 
+// Checks if s2c-class of stateID is equal to the classes of the state ids in compareIDs.
+bool classEquals(int stateID, const vector<int> &compareIDs, S2CMap & s2c) {
+	int cls = s2c.at(stateID);
+	for (int i : compareIDs) {
+		if (cls != s2c.at(i)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+// Checks if s2c-class of stateID is different than all classes of the states in compareIDs.
+bool classUnequals(int stateID, const vector<int> &compareIDs, S2CMap & s2c) {
+	int cls = s2c.at(stateID);
+	for (int i : compareIDs) {
+		if (cls == s2c.at(i)) {
+			return false;
+		}
+	}
+	return true;
+}
+
 // test OFSMTable::next()
 void testOFSMTableNext() {
 	// test OFSMTable::nextAfterZero() (call next() on table with id 0)
@@ -8417,7 +8439,7 @@ void testOFSMTableNext() {
 			"OFSMTable::nextAfterZero() sets tblId to 1");
 	}
 
-	// test of successive invokations (full minimisation process)
+	// test of successive invokations (full minimisation process) - using getOFSMTableTestCase1()
 	{
 		OFSMTableTestCase ofsmTableTestCase = getOFSMTableTestCase1();
 		shared_ptr<OFSMTable> currentTable = ofsmTableTestCase.ofsmTable;
@@ -8450,6 +8472,86 @@ void testOFSMTableNext() {
 			&& s2c.at(6) != s2c.at(7) && s2c.at(6) != s2c.at(8)
 			&& s2c.at(7) != s2c.at(8),
 			"OFSMTable::next() maps each state to the correct equivalence class.");
+
+		currentTable = currentTable->next();
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			currentTable == nullptr,
+			"OFSMTable::next() returns nullptr if no new class can be generated");
+	}
+
+	// test of successive invokations (full minimisation process) - using getOFSMTableTestCase2()
+	{
+		OFSMTableTestCase ofsmTableTestCase = getOFSMTableTestCase2();
+		shared_ptr<OFSMTable> currentTable = ofsmTableTestCase.ofsmTable;
+		currentTable = currentTable->next();
+		S2CMap s2c = currentTable->getS2C();
+
+		// currentTable is now OFSM Table 1
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			currentTable->maxClassId() == 3,
+			"Result of OFSMTable::next() contains the right number of classes.");
+
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			classEquals(0, vector<int>{0,1,6}, s2c) // class 0
+			&& classEquals(2, vector<int>{2}, s2c)  // class 1
+			&& classEquals(3, vector<int>{3}, s2c)  // class 2
+			&& classEquals(4, vector<int>{4,5,7,8,9,10,11,12}, s2c)  // class 3
+			&& classUnequals(0, vector<int>{2,3,4,5, 7, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(2, vector<int>{0, 1, 3, 4, 6, 5, 7, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(3, vector<int>{0, 1, 2, 4, 6, 5, 7, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(4, vector<int>{0, 1, 2, 3, 6,}, s2c),
+			"OFSMTable::next() maps each state to the correct equivalence class.");
+
+		currentTable = currentTable->next();
+		s2c = currentTable->getS2C();
+
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			currentTable->maxClassId() == 8,
+			"Result of OFSMTable::next() contains the right number of classes.");
+
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			classEquals(0, vector<int>{0}, s2c) // class 0
+			&& classEquals(1, vector<int>{1}, s2c) // class 4
+			&& classEquals(2, vector<int>{2}, s2c) // class 1
+			&& classEquals(3, vector<int>{3}, s2c) // class 2
+			&& classEquals(4, vector<int>{4}, s2c) // class 3
+			&& classEquals(5, vector<int>{5,8,11}, s2c) // class 6
+			&& classEquals(6, vector<int>{6}, s2c) // class 5
+			&& classEquals(7, vector<int>{7, 10, 12}, s2c) // class 7
+			&& classEquals(9, vector<int>{9}, s2c) // class 8
+			&& classUnequals(0, vector<int>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(1, vector<int>{0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(2, vector<int>{0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(3, vector<int>{0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(4, vector<int>{0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(5, vector<int>{0, 1, 2, 3, 4, 6, 7, 9, 10, 12}, s2c)
+			&& classUnequals(6, vector<int>{0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(7, vector<int>{0, 1, 2, 3, 4, 5, 6, 8, 9, 11}, s2c),
+			"OFSMTable::next() maps each state to the correct equivalence class.");
+
+		currentTable = currentTable->next();
+		s2c = currentTable->getS2C();
+
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			currentTable->maxClassId() == 12,
+			"Result of OFSMTable::next() contains the right number of classes.");
+
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			classUnequals(0, vector<int>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(1, vector<int>{0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(2, vector<int>{0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(3, vector<int>{0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(4, vector<int>{0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(5, vector<int>{0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(6, vector<int>{0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(7, vector<int>{0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12}, s2c)
+			&& classUnequals(8, vector<int>{0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12}, s2c)
+			&& classUnequals(9, vector<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12}, s2c)
+			&& classUnequals(10, vector<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12}, s2c)
+			&& classUnequals(11, vector<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12}, s2c)
+			&& classUnequals(12, vector<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, s2c),
+			"OFSMTable::next() maps each state to the correct equivalence class.");
+
 
 		currentTable = currentTable->next();
 		fsmlib_assert("TC-OFSMTable-NNNN",
@@ -8613,6 +8715,40 @@ void testOFSMTableToFsm() {
 
 		fsmlib_assert("TC-OFSMTable-NNNN",
 			matchAllOFSMRows(fsm, table, ofsmTableTestCase.numStates, ofsmTableTestCase.maxInput, ofsmTableTestCase.maxOutput),
+			"OFSMTable::toFsm(const string & name): Each OFSMTableRow from the OFSMTable has a corresponding FsmNode in the constructed Fsm");
+	}
+
+	// Generation of random FSMs. These are transformed to OFSMTables, which are minimised with OFSMTable::next(). 
+	// The last table is transformed to a FSM with toFsm(). 
+	{
+		int maxInput = 3;
+		int maxOutput = 3;
+		int maxState = 10;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<Fsm> originalFsm = Fsm::createRandomFsm("original", maxInput, maxOutput, maxState, pl);
+		Fsm ofsm = originalFsm->transformToObservableFSM();
+		shared_ptr<OFSMTable> table = make_shared<OFSMTable>(OFSMTable(ofsm.getNodes(), maxInput, maxOutput, pl));		
+		shared_ptr<OFSMTable> next = table->next();
+		while (next != nullptr) {
+			table = next;
+			next = next->next();
+		}
+
+		Fsm fsm = table->toFsm("");
+		int numStates = ofsm.getNodes().size();
+
+
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			fsm.getNodes().size() == table->maxClassId() + 1,
+			"OFSMTable::toFsm(const string & name) creates Fsm with correct number of FsmNodes "
+			"(equal to the number of generated classes)");
+
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			matchAllFsmNodes(fsm, table, numStates, maxInput, maxOutput),
+			"OFSMTable::toFsm(const string & name): Each FsmNode from constructed Fsm has corresponding OFSMTableRow in table.");
+
+		fsmlib_assert("TC-OFSMTable-NNNN",
+			matchAllOFSMRows(fsm, table, numStates, maxInput, maxOutput),
 			"OFSMTable::toFsm(const string & name): Each OFSMTableRow from the OFSMTable has a corresponding FsmNode in the constructed Fsm");
 	}
 }
