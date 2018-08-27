@@ -7184,28 +7184,135 @@ PkTableTestCase getPkTableTestCase1() {
 	return testStructure;
 }
 
+PkTableTestCase getPkTableTestCase2() {
+	std::shared_ptr<FsmPresentationLayer> presentationLayer = make_shared<FsmPresentationLayer>();
+	int maxInput = 2;
+	int maxOutput = 1;
+
+	// create all PkTableRows
+	// (maps are declared static because their references are stored in the created rows)
+	static IOMap ioMap1(maxInput);
+	ioMap1[0] = 0;
+	ioMap1[1] = 0;
+	static I2PMap i2pMap1(maxInput);
+	i2pMap1[0] = 0;
+	i2pMap1[1] = 1;
+	PkTableRow row1(ioMap1, i2pMap1);
+
+	static IOMap ioMap2(maxInput);
+	ioMap2[2] = 1;
+	static I2PMap i2pMap2(maxInput);
+	i2pMap2[2] = 2;
+	PkTableRow row2(ioMap2, i2pMap2);
+
+	static IOMap ioMap3(maxInput);
+	ioMap3[0] = 0;
+	ioMap3[1] = 0;
+	static I2PMap i2pMap3(maxInput);
+	i2pMap3[0] = 3;
+	i2pMap3[1] = 1;
+	PkTableRow row3(ioMap3, i2pMap3);
+
+	static IOMap ioMap4(maxInput);
+	ioMap4[0] = 0;
+	ioMap4[1] = 0;
+	ioMap4[2] = 0;
+	static I2PMap i2pMap4(maxInput);
+	i2pMap4[0] = 3;
+	i2pMap4[1] = 4;
+	i2pMap4[2] = 5;
+	PkTableRow row4(ioMap4, i2pMap4);
+
+	static IOMap ioMap5(maxInput);
+	ioMap5[0] = 0;
+	ioMap5[1] = 0;
+	static I2PMap i2pMap5(maxInput);
+	i2pMap5[0] = 0;
+	i2pMap5[1] = 2;
+	PkTableRow row5(ioMap5, i2pMap5);
+
+	static IOMap ioMap6(maxInput);
+	ioMap6[2] = 1;
+	static I2PMap i2pMap6(maxInput);
+	i2pMap6[2] = 2;
+	PkTableRow row6(ioMap6, i2pMap6);
+
+	std::vector<std::shared_ptr<PkTableRow>> rows;
+	rows.push_back(make_shared<PkTableRow>(row1));
+	rows.push_back(make_shared<PkTableRow>(row2));
+	rows.push_back(make_shared<PkTableRow>(row3));
+	rows.push_back(make_shared<PkTableRow>(row4));
+	rows.push_back(make_shared<PkTableRow>(row5));
+	rows.push_back(make_shared<PkTableRow>(row6));
+
+	// create PkTable from PkTableRows
+	int numStates = rows.size();
+	PkTable pkTable(numStates, maxInput, rows, presentationLayer);
+
+	// set classes. pkTable becomes P1 Table.
+	pkTable.setClass(0, 0);
+	pkTable.setClass(1, 1);
+	pkTable.setClass(2, 0);
+	pkTable.setClass(3, 2);
+	pkTable.setClass(4, 0);
+	pkTable.setClass(5, 1);
+
+	PkTableTestCase testStructure;
+	testStructure.presentationLayer = presentationLayer;
+	testStructure.pkTable = make_shared<PkTable>(pkTable);
+	testStructure.maxInput = maxInput;
+	testStructure.maxOutput = maxOutput;
+	testStructure.numStates = numStates;
+
+	return testStructure;
+}
+
 // tests PkTable::getPkPlusOneTable()
 void testPkTableGetPkPlusOneTable() {
 
-    PkTableTestCase pkTableTestCase = getPkTableTestCase1();
-	int k = 1;
-	shared_ptr<PkTable> currentTable = pkTableTestCase.pkTable;
-	do {
-		IOListContainer iolc(pkTableTestCase.maxInput, k, k, pkTableTestCase.presentationLayer);
-		fsmlib_assert("TC-PkTable-NNNN",
-			checkPkEqualityOfClasses(*currentTable, iolc, k, pkTableTestCase.numStates),
-			"PkTableRows with the same class in s2c are k equivalent");
-		fsmlib_assert("TC-PkTable-NNNN",
-			checkPkUnequalityOfClasses(*currentTable, iolc, k, pkTableTestCase.numStates),
-			"PkTableRows with the different classes in s2c are not k equivalent");
+	{
+		PkTableTestCase pkTableTestCase = getPkTableTestCase1();
+		int k = 1;
+		shared_ptr<PkTable> currentTable = pkTableTestCase.pkTable;
+		do {
+			IOListContainer iolc(pkTableTestCase.maxInput, k, k, pkTableTestCase.presentationLayer);
+			fsmlib_assert("TC-PkTable-NNNN",
+				checkPkEqualityOfClasses(*currentTable, iolc, k, pkTableTestCase.numStates),
+				"PkTableRows with the same class in s2c are k equivalent");
+			fsmlib_assert("TC-PkTable-NNNN",
+				checkPkUnequalityOfClasses(*currentTable, iolc, k, pkTableTestCase.numStates),
+				"PkTableRows with the different classes in s2c are not k equivalent");
 
-		currentTable = currentTable->getPkPlusOneTable();
-		++k;
-	} while (currentTable != nullptr);
+			currentTable = currentTable->getPkPlusOneTable();
+			++k;
+		} while (currentTable != nullptr);
 
-	fsmlib_assert("TC-PkTable-NNNN",
-		k == 5,
-		"PkTable::getPkPlusOneTable() returns nullptr if no new equivalence classes are generated.");
+		fsmlib_assert("TC-PkTable-NNNN",
+			k == 5,
+			"PkTable::getPkPlusOneTable() returns nullptr if no new equivalence classes are generated.");
+	}
+ 
+	{
+		PkTableTestCase pkTableTestCase = getPkTableTestCase2();
+		int k = 1;
+		shared_ptr<PkTable> currentTable = pkTableTestCase.pkTable;
+		do {
+			IOListContainer iolc(pkTableTestCase.maxInput, k, k, pkTableTestCase.presentationLayer);
+			fsmlib_assert("TC-PkTable-NNNN",
+				checkPkEqualityOfClasses(*currentTable, iolc, k, pkTableTestCase.numStates),
+				"PkTableRows with the same class in s2c are k equivalent");
+			fsmlib_assert("TC-PkTable-NNNN",
+				checkPkUnequalityOfClasses(*currentTable, iolc, k, pkTableTestCase.numStates),
+				"PkTableRows with the different classes in s2c are not k equivalent");
+
+			currentTable = currentTable->getPkPlusOneTable();
+			++k;
+		} while (currentTable != nullptr);
+
+		fsmlib_assert("TC-PkTable-NNNN",
+			k == 3,
+			"PkTable::getPkPlusOneTable() returns nullptr if no new equivalence classes are generated.");
+	}
 }
 
 // tests PkTable::getMembers(const int c)
@@ -7326,20 +7433,39 @@ bool checkPkTableToFsmProperty(PkTable &pkTable, const Dfsm &dfsm, int maxInput,
 
 // tests PkTable::toFsm(std::string name, const int maxOutput)
 void testPkTableToFsm() {
-	PkTableTestCase pkTableTestCase = getPkTableTestCase1();
+	{
+		PkTableTestCase pkTableTestCase = getPkTableTestCase1();
 
-	shared_ptr<PkTable> currentTable = pkTableTestCase.pkTable;
-	do {
-		Dfsm dfsm = currentTable->toFsm("", pkTableTestCase.maxOutput);
-		fsmlib_assert("TC-PkTable-NNNN",
-			dfsm.getNodes().size() == (currentTable->maxClassId() + 1),
-			"Number of FsmNodes of PkTable::toFsm(std::string name, const int maxOutput) matches the number of k-equivalence classes.");
-		fsmlib_assert("TC-PkTable-NNNN",
-			checkPkTableToFsmProperty(*currentTable, dfsm, pkTableTestCase.maxInput, pkTableTestCase.presentationLayer, pkTableTestCase.numStates),
-			"Each k-equivalence class has a matching FsmNode");
+		shared_ptr<PkTable> currentTable = pkTableTestCase.pkTable;
+		do {
+			Dfsm dfsm = currentTable->toFsm("", pkTableTestCase.maxOutput);
+			fsmlib_assert("TC-PkTable-NNNN",
+				dfsm.getNodes().size() == (currentTable->maxClassId() + 1),
+				"Number of FsmNodes of PkTable::toFsm(std::string name, const int maxOutput) matches the number of k-equivalence classes.");
+			fsmlib_assert("TC-PkTable-NNNN",
+				checkPkTableToFsmProperty(*currentTable, dfsm, pkTableTestCase.maxInput, pkTableTestCase.presentationLayer, pkTableTestCase.numStates),
+				"Each k-equivalence class has a matching FsmNode");
+			currentTable = currentTable->getPkPlusOneTable();
+		} while (currentTable != nullptr);
+	}
 
-		currentTable = currentTable->getPkPlusOneTable();
-	} while (currentTable != nullptr);
+	{
+		PkTableTestCase pkTableTestCase = getPkTableTestCase2();
+
+		shared_ptr<PkTable> currentTable = pkTableTestCase.pkTable;
+		do {
+			Dfsm dfsm = currentTable->toFsm("", pkTableTestCase.maxOutput);
+			fsmlib_assert("TC-PkTable-NNNN",
+				dfsm.getNodes().size() == (currentTable->maxClassId() + 1),
+				"Number of FsmNodes of PkTable::toFsm(std::string name, const int maxOutput) matches the number of k-equivalence classes.");
+			fsmlib_assert("TC-PkTable-NNNN",
+				checkPkTableToFsmProperty(*currentTable, dfsm, pkTableTestCase.maxInput, pkTableTestCase.presentationLayer, pkTableTestCase.numStates),
+				"Each k-equivalence class has a matching FsmNode");
+
+			currentTable = currentTable->getPkPlusOneTable();
+		} while (currentTable != nullptr);
+	}
+	
 }
 
 //===================================== DFSMTable Tests ===================================================
@@ -8753,6 +8879,45 @@ void testOFSMTableToFsm() {
 	}
 }
 
+//===================================== FsmLabel Tests ===================================================
+
+void testFsmLabelOperatorLessThan() {
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		fsmlib_assert("TC-FsmLabel-NNNN",
+			not (FsmLabel(1, 0, pl) < FsmLabel(1, 0, pl)),
+			"operator<(FsmLabel const & label1, FsmLabel const & label2) returns false if label1 == label2");
+		fsmlib_assert("TC-FsmLabel-NNNN",
+			(FsmLabel(1, 0, pl) < FsmLabel(1, 1, pl)),
+			"operator<(FsmLabel const & label1, FsmLabel const & label2) returns true if inputs "
+			"are the same but label1.output is less than label2.output");
+		fsmlib_assert("TC-FsmLabel-NNNN",
+			not (FsmLabel(1, 0, pl) < FsmLabel(0, 1, pl)),
+			"operator<(FsmLabel const & label1, FsmLabel const & label2) returns false if label1.input > label2.input");
+		fsmlib_assert("TC-FsmLabel-NNNN",
+			not (FsmLabel(1, 1, pl) < FsmLabel(1, 0, pl)),
+			"operator<(FsmLabel const & label1, FsmLabel const & label2) returns false if inputs are the same but "
+			"label1.output >= label2.output");
+		fsmlib_assert("TC-FsmLabel-NNNN",
+			not (FsmLabel(1, 1, pl) < FsmLabel(1, 1, pl)),
+			"operator<(FsmLabel const & label1, FsmLabel const & label2) returns false if label1 == label2");
+		fsmlib_assert("TC-FsmLabel-NNNN",
+			not (FsmLabel(1, 1, pl) < FsmLabel(0, 1, pl)),
+			"operator<(FsmLabel const & label1, FsmLabel const & label2) returns false if label1.input > label2.input");
+		fsmlib_assert("TC-FsmLabel-NNNN",
+			(FsmLabel(0, 1, pl) < FsmLabel(1, 0, pl)),
+			"operator<(FsmLabel const & label1, FsmLabel const & label2) returns true if label1.input < label2.input");
+		fsmlib_assert("TC-FsmLabel-NNNN",
+			(FsmLabel(0, 1, pl) < FsmLabel(1, 1, pl)),
+			"operator<(FsmLabel const & label1, FsmLabel const & label2) returns true if label1.input < label2.input");
+		fsmlib_assert("TC-FsmLabel-NNNN",
+			not (FsmLabel(0, 1, pl) < FsmLabel(0, 1, pl)),
+			"operator<(FsmLabel const & label1, FsmLabel const & label2) returns true if label1 == label2");
+	}
+
+	
+}
+
 int main(int argc, char** argv)
 {
     
@@ -8907,7 +9072,9 @@ int main(int argc, char** argv)
 	//testOFSMTableConstructor();
 	//testOFSMTableMaxClassId();
 	//testOFSMTableNext();
-	testOFSMTableToFsm();
+	//testOFSMTableToFsm();
+
+	testFsmLabelOperatorLessThan();
 
 	/*testMinimise();
 	testWMethod();*/
