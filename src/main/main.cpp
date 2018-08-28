@@ -8914,8 +8914,141 @@ void testFsmLabelOperatorLessThan() {
 			not (FsmLabel(0, 1, pl) < FsmLabel(0, 1, pl)),
 			"operator<(FsmLabel const & label1, FsmLabel const & label2) returns true if label1 == label2");
 	}
+}
 
-	
+//===================================== FsmNode Tests ===================================================
+
+// tests FsmNode::addTransition(std::shared_ptr<FsmTransition> transition)
+void testFsmNodeAddTransition() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+	// At the beginning n0 has no transition. A transition from n0 to n0 labeled with 0/1 is added to n0.
+	shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+
+	// original state
+	int originalColor = n0->getColor();
+	int originalID = n0->getId();
+	string originalName = n0->getName();
+	auto originalPair = n0->getPair();
+	vector<string> originalSatisfied = n0->getSatisfied();
+
+	shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 1, pl));
+	n0->addTransition(tr0);
+
+	fsmlib_assert("TC-FsmNode-NNNN",
+		n0->getTransitions().size() == 1		
+		&& n0->getTransitions().at(0) == tr0,
+		"FsmNode::addTransition(std::shared_ptr<FsmTransition> transition) adds transition to the node "
+		"if it doesn't have a transition with equal target and label already.");
+
+	fsmlib_assert("TC-FsmNode-NNNN",
+		n0->getColor() == originalColor
+		&& n0->getId() == originalID
+		&& n0->getName() == originalName
+		&& n0->getPair() == originalPair
+		&& n0->getSatisfied() == originalSatisfied,
+		"FsmNode::addTransition(std::shared_ptr<FsmTransition> transition) changes only transitions");
+
+	vector<shared_ptr<FsmTransition>> oldTransitions = n0->getTransitions();
+
+	// Add a new transition which has the same label and target as tr0 (target = n0, label=0/1)
+	shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 1, pl));
+	n0->addTransition(tr1);
+
+	fsmlib_assert("TC-FsmNode-NNNN",
+		n0->getTransitions().size() == 1
+		&& n0->getTransitions() == oldTransitions,
+		"FsmNode::addTransition(std::shared_ptr<FsmTransition> transition) ignores transition "
+		"if node already has a transition with equal target and label.");
+
+	fsmlib_assert("TC-FsmNode-NNNN",
+		n0->getColor() == originalColor
+		&& n0->getId() == originalID
+		&& n0->getName() == originalName
+		&& n0->getPair() == originalPair
+		&& n0->getSatisfied() == originalSatisfied,
+		"FsmNode::addTransition(std::shared_ptr<FsmTransition> transition) changes only transitions");
+
+	// Add transition from n0 to n1 with label 1/1.
+	shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+	shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl));
+	n0->addTransition(tr2);
+
+	fsmlib_assert("TC-FsmNode-NNNN",
+		n0->getTransitions().size() == 2
+		&& find(n0->getTransitions().cbegin(), n0->getTransitions().cend(), tr0) != n0->getTransitions().cend()
+		&& find(n0->getTransitions().cbegin(), n0->getTransitions().cend(), tr2) != n0->getTransitions().cend(),
+		"FsmNode::addTransition(std::shared_ptr<FsmTransition> transition) adds transition to the node "
+		"if it doesn't have a transition with equal target and label already.");
+
+	fsmlib_assert("TC-FsmNode-NNNN",
+		n0->getColor() == originalColor
+		&& n0->getId() == originalID
+		&& n0->getName() == originalName
+		&& n0->getPair() == originalPair
+		&& n0->getSatisfied() == originalSatisfied,
+		"FsmNode::addTransition(std::shared_ptr<FsmTransition> transition) changes only transitions");
+
+	// Add transition from n0 to n1 with label 0/1.	
+	shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(0, 1, pl));
+	n0->addTransition(tr3);
+
+	fsmlib_assert("TC-FsmNode-NNNN",
+		n0->getTransitions().size() == 3
+		&& find(n0->getTransitions().cbegin(), n0->getTransitions().cend(), tr0) != n0->getTransitions().cend()
+		&& find(n0->getTransitions().cbegin(), n0->getTransitions().cend(), tr2) != n0->getTransitions().cend()
+		&& find(n0->getTransitions().cbegin(), n0->getTransitions().cend(), tr3) != n0->getTransitions().cend(),
+		"FsmNode::addTransition(std::shared_ptr<FsmTransition> transition) adds transition to the node "
+		"if it doesn't have a transition with equal target and label already.");
+
+	fsmlib_assert("TC-FsmNode-NNNN",
+		n0->getColor() == originalColor
+		&& n0->getId() == originalID
+		&& n0->getName() == originalName
+		&& n0->getPair() == originalPair
+		&& n0->getSatisfied() == originalSatisfied,
+		"FsmNode::addTransition(std::shared_ptr<FsmTransition> transition) changes only transitions");
+
+	oldTransitions = n0->getTransitions();
+
+	// Add transition from n0 to n1 with label 1/1.	(Already contained in n0.transitions)
+	shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl));
+	n0->addTransition(tr4);
+
+	fsmlib_assert("TC-FsmNode-NNNN",
+		n0->getTransitions() == oldTransitions,
+		"FsmNode::addTransition(std::shared_ptr<FsmTransition> transition) ignores transition "
+		"if node already has a transition with equal target and label.");
+
+	fsmlib_assert("TC-FsmNode-NNNN",
+		n0->getColor() == originalColor
+		&& n0->getId() == originalID
+		&& n0->getName() == originalName
+		&& n0->getPair() == originalPair
+		&& n0->getSatisfied() == originalSatisfied,
+		"FsmNode::addTransition(std::shared_ptr<FsmTransition> transition) changes only transitions");
+
+	// Add transition from n0 to n0 with label 1/1.	(new transition)
+	shared_ptr<FsmTransition> tr5 = make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(1, 1, pl));
+	n0->addTransition(tr5);
+
+	fsmlib_assert("TC-FsmNode-NNNN",
+		n0->getTransitions().size() == 4
+		&& find(n0->getTransitions().cbegin(), n0->getTransitions().cend(), tr0) != n0->getTransitions().cend()
+		&& find(n0->getTransitions().cbegin(), n0->getTransitions().cend(), tr2) != n0->getTransitions().cend()
+		&& find(n0->getTransitions().cbegin(), n0->getTransitions().cend(), tr3) != n0->getTransitions().cend()
+		&& find(n0->getTransitions().cbegin(), n0->getTransitions().cend(), tr5) != n0->getTransitions().cend(),
+		"FsmNode::addTransition(std::shared_ptr<FsmTransition> transition) adds transition to the node "
+		"if it doesn't have a transition with equal target and label already.");
+
+	fsmlib_assert("TC-FsmNode-NNNN",
+		n0->getColor() == originalColor
+		&& n0->getId() == originalID
+		&& n0->getName() == originalName
+		&& n0->getPair() == originalPair
+		&& n0->getSatisfied() == originalSatisfied,
+		"FsmNode::addTransition(std::shared_ptr<FsmTransition> transition) changes only transitions");
+
 }
 
 int main(int argc, char** argv)
@@ -9074,7 +9207,9 @@ int main(int argc, char** argv)
 	//testOFSMTableNext();
 	//testOFSMTableToFsm();
 
-	testFsmLabelOperatorLessThan();
+	//testFsmLabelOperatorLessThan();
+
+	testFsmNodeAddTransition();
 
 	/*testMinimise();
 	testWMethod();*/
