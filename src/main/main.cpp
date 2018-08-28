@@ -9048,7 +9048,272 @@ void testFsmNodeAddTransition() {
 		&& n0->getPair() == originalPair
 		&& n0->getSatisfied() == originalSatisfied,
 		"FsmNode::addTransition(std::shared_ptr<FsmTransition> transition) changes only transitions");
+}
 
+// tests FsmNode::apply(const InputTrace& itrc, bool markAsVisited)
+void testFsmNodeApply() {
+	// n0 has no transition. 
+	// inTrc = [1,2]
+	// => inTrc starts with input for which n0 has no transition.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		InputTrace inTrc(vector<int>{1, 2}, pl);
+		OutputTree outTree = n0->apply(inTrc, true);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTree.getInputTrace() == inTrc,
+			"FsmNode::apply(const InputTrace& itrc, bool markAsVisited) returns OutputTree which has itrc set as InputTrace.");
+
+		OutputTree expected(make_shared<TreeNode>(), inTrc, pl);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTree == expected,
+			"Result of FsmNode::apply(const InputTrace& itrc, bool markAsVisited) is the empty OutputTree if n0 has "
+			"no outgoing transitions.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			n0->hasBeenVisited(),
+			"Each expected FsmNode has been visited.");
+	}
+
+	// n0 --1/1--> n1 
+	// inTrc = [2]
+	// => inTrc starts with input for which n0 has no transition.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --1/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl)));
+		InputTrace inTrc(vector<int>{2}, pl);
+		OutputTree outTree = n0->apply(inTrc, true);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTree.getInputTrace() == inTrc,
+			"FsmNode::apply(const InputTrace& itrc, bool markAsVisited) returns OutputTree which has itrc set as InputTrace.");
+
+		OutputTree expected(make_shared<TreeNode>(), inTrc, pl);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTree == expected,
+			"Result of FsmNode::apply(const InputTrace& itrc, bool markAsVisited) is the empty OutputTree if itrc starts with some input "
+			"that differs from the input of every transition of n0.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			n0->hasBeenVisited(),
+			"Each expected FsmNode has been visited.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			not n1->hasBeenVisited(),
+			"Only expected FsmNodes have been visited.");
+	}
+
+	// n0 --1/1--> n1 
+	// inTrc = []
+	// => inTrc is empty.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --1/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl)));
+		InputTrace inTrc(vector<int>{}, pl);
+		OutputTree outTree = n0->apply(inTrc, true);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTree.getInputTrace() == inTrc,
+			"FsmNode::apply(const InputTrace& itrc, bool markAsVisited) returns OutputTree which has itrc set as InputTrace.");
+
+		OutputTree expected(make_shared<TreeNode>(), inTrc, pl);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTree == expected,
+			"Result of FsmNode::apply(const InputTrace& itrc, bool markAsVisited) is the empty OutputTree if itrc is empty.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			not n0->hasBeenVisited()
+			&& not n1->hasBeenVisited(),
+			"FsmNode::apply(const InputTrace& itrc, bool markAsVisited) visits no FsmNode if itrc is empty.");
+	}
+
+	// n0 --1/1--> n1; n0 --0/0--> n0
+	// inTrc = [0,1]
+	// => inTrc matches exactly one path starting at n0 (completely).
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --1/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl)));
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+		InputTrace inTrc(vector<int>{0, 1}, pl);
+		OutputTree outTree = n0->apply(inTrc, true);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTree.getInputTrace() == inTrc,
+			"FsmNode::apply(const InputTrace& itrc, bool markAsVisited) returns OutputTree which has itrc set as InputTrace.");
+
+		vector<OutputTrace> outTrcs = outTree.getOutputTraces();
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTrcs.size() == 1,
+			"Result of FsmNode::apply(const InputTrace& itrc, bool markAsVisited) contains the expected number of OutputTraces");
+
+		OutputTrace expectedTrc0(vector<int>{0, 1}, pl);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			find(outTrcs.cbegin(), outTrcs.cend(), expectedTrc0) != outTrcs.cend(),
+			"Result of FsmNode::apply(const InputTrace& itrc, bool markAsVisited) contains each expected OutputTrace");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			n0->hasBeenVisited()
+			&& n1->hasBeenVisited(),
+			"Each expected FsmNode has been visited.");
+	}
+
+	// n0 --0/1--> n1; n0 --0/0--> n0; n1 --1/1--> n1
+	// inTrc = [0,1]
+	// => inTrc matches more than one path (nondeterminism of n0) completely.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --0/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(0, 1, pl)));
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+		// n1 --1/1--> n1
+		n1->addTransition(make_shared<FsmTransition>(n1, n1, make_shared<FsmLabel>(1, 1, pl)));
+		InputTrace inTrc(vector<int>{0, 1}, pl);
+		OutputTree outTree = n0->apply(inTrc);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTree.getInputTrace() == inTrc,
+			"FsmNode::apply(const InputTrace& itrc, bool markAsVisited) returns OutputTree which has itrc set as InputTrace.");
+
+		vector<OutputTrace> outTrcs = outTree.getOutputTraces();
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTrcs.size() == 2,
+			"Result of FsmNode::apply(const InputTrace& itrc, bool markAsVisited) contains the expected number of OutputTraces");
+
+		OutputTrace expectedTrc0(vector<int>{1, 1}, pl);
+		OutputTrace expectedTrc1(vector<int>{0}, pl);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			find(outTrcs.cbegin(), outTrcs.cend(), expectedTrc0) != outTrcs.cend()
+			&& find(outTrcs.cbegin(), outTrcs.cend(), expectedTrc1) != outTrcs.cend(),
+			"Result of FsmNode::apply(const InputTrace& itrc, bool markAsVisited) contains each expected OutputTrace");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			not n0->hasBeenVisited()
+			&& not n1->hasBeenVisited(),
+			"If markAsVisited is set to false no FsmNode is marked as visited by "
+			"FsmNode::apply(const InputTrace& itrc, bool markAsVisited)");
+	}
+
+	// n0 --0/0--> n1; n1 --1/1--> n1; n0 --1/1--> n2;
+	// inTrc = [0,1,1] / [0,1,1,2]
+	// => inTrc matches only one path and doesn't visit each FsmNode. In the [0,1,1,2]-case only a prefix can be applied.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		// n0 --0/0--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(0, 0, pl)));
+		// n1 --1/1--> n1
+		n1->addTransition(make_shared<FsmTransition>(n1, n1, make_shared<FsmLabel>(1, 1, pl)));
+		// n0 --1/1--> n2
+		n0->addTransition(make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(1, 1, pl)));
+		InputTrace inTrc(vector<int>{0, 1, 1}, pl);
+		OutputTree outTree = n0->apply(inTrc, true);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTree.getInputTrace() == inTrc,
+			"FsmNode::apply(const InputTrace& itrc, bool markAsVisited) returns OutputTree which has itrc set as InputTrace.");
+
+		vector<OutputTrace> outTrcs = outTree.getOutputTraces();
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTrcs.size() == 1,
+			"Result of FsmNode::apply(const InputTrace& itrc, bool markAsVisited) contains the expected number of OutputTraces");
+
+		const OutputTrace expectedTrc0(vector<int>{0, 1, 1}, pl);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			find(outTrcs.cbegin(), outTrcs.cend(), expectedTrc0) != outTrcs.cend(),
+			"Result of FsmNode::apply(const InputTrace& itrc, bool markAsVisited) contains each expected OutputTrace");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			n0->hasBeenVisited()
+			&& n1->hasBeenVisited(),
+			"Each expected FsmNode has been visited.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			not n2->hasBeenVisited(),
+			"Only expected FsmNodes have been visited.");
+
+		// now inTrc = [0,1,1,2] is applied
+		inTrc = InputTrace(vector<int>{0, 1, 1, 2}, pl);
+		OutputTree newOutTree = n0->apply(inTrc, true);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			newOutTree.getInputTrace() == inTrc,
+			"FsmNode::apply(const InputTrace& itrc, bool markAsVisited) returns OutputTree which has itrc set as InputTrace.");
+
+		outTrcs = newOutTree.getOutputTraces();
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTrcs.size() == 1,
+			"Result of FsmNode::apply(const InputTrace& itrc, bool markAsVisited) contains the expected number of OutputTraces");
+
+		// expectedTrc0 is still [0,1,1]
+		fsmlib_assert("TC-FsmNode-NNNN",
+			find(outTrcs.cbegin(), outTrcs.cend(), expectedTrc0) != outTrcs.cend(),
+			"Result of FsmNode::apply(const InputTrace& itrc, bool markAsVisited) contains each expected OutputTrace");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			n0->hasBeenVisited()
+			&& n1->hasBeenVisited(),
+			"Each expected FsmNode has been visited.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			not n2->hasBeenVisited(),
+			"Only expected FsmNodes have been visited.");
+	}
+
+	// n0 --0/0--> n1; n1 --1/1--> n1; n0 --0/1--> n2; n2 --1/3--> n2; n2 --1/2--> n1;
+	// inTrc = [0,1,1]
+	// => inTrc matches several paths.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		// n0 --0/0--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(0, 0, pl)));
+		// n1 --1/1--> n1
+		n1->addTransition(make_shared<FsmTransition>(n1, n1, make_shared<FsmLabel>(1, 1, pl)));
+		// n0 --0/1--> n2
+		n0->addTransition(make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(0, 1, pl)));
+		// n2 --1/3--> n2
+		n2->addTransition(make_shared<FsmTransition>(n2, n2, make_shared<FsmLabel>(1, 3, pl)));
+		// n2 --1/2--> n1
+		n2->addTransition(make_shared<FsmTransition>(n2, n1, make_shared<FsmLabel>(1, 2, pl)));
+		InputTrace inTrc(vector<int>{0, 1, 1}, pl);
+		OutputTree outTree = n0->apply(inTrc, true);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTree.getInputTrace() == inTrc,
+			"FsmNode::apply(const InputTrace& itrc, bool markAsVisited) returns OutputTree which has itrc set as InputTrace.");
+
+		vector<OutputTrace> outTrcs = outTree.getOutputTraces();
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTrcs.size() == 4,
+			"Result of FsmNode::apply(const InputTrace& itrc, bool markAsVisited) contains the expected number of OutputTraces");
+
+		const OutputTrace expectedTrc0(vector<int>{0, 1, 1}, pl);
+		const OutputTrace expectedTrc1(vector<int>{1, 2, 1}, pl);
+		const OutputTrace expectedTrc2(vector<int>{1, 3, 2}, pl);
+		const OutputTrace expectedTrc3(vector<int>{1, 3, 3}, pl);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			find(outTrcs.cbegin(), outTrcs.cend(), expectedTrc0) != outTrcs.cend()
+			&& find(outTrcs.cbegin(), outTrcs.cend(), expectedTrc1) != outTrcs.cend()
+			&& find(outTrcs.cbegin(), outTrcs.cend(), expectedTrc2) != outTrcs.cend()
+			&& find(outTrcs.cbegin(), outTrcs.cend(), expectedTrc3) != outTrcs.cend(),
+			"Result of FsmNode::apply(const InputTrace& itrc, bool markAsVisited) contains each expected OutputTrace");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			n0->hasBeenVisited()
+			&& n1->hasBeenVisited()
+			&& n2->hasBeenVisited(),
+			"Each expected FsmNode has been visited.");
+	}
 }
 
 int main(int argc, char** argv)
@@ -9209,7 +9474,8 @@ int main(int argc, char** argv)
 
 	//testFsmLabelOperatorLessThan();
 
-	testFsmNodeAddTransition();
+	//testFsmNodeAddTransition();
+	testFsmNodeApply();
 
 	/*testMinimise();
 	testWMethod();*/
