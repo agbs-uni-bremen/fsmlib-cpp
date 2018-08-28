@@ -9316,6 +9316,228 @@ void testFsmNodeApply() {
 	}
 }
 
+// tests FsmNode::after(const InputTrace& itrc) and FsmNode::after(const vector<int>& itrc)
+void testFsmNodeAfter() {
+	// n0 has no transition. 
+	// inTrc = [1,2]
+	// => inTrc starts with input for which n0 has no transition.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		InputTrace inTrc(vector<int>{1, 2}, pl);
+		unordered_set<shared_ptr<FsmNode>> reached = n0->after(inTrc);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.empty(),
+			"Result of FsmNode::after(const InputTrace& itrc) is empty if n0 has no outgoing transition "
+			"and itrc can't be fully applied");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached == n0->after(inTrc.get()),
+			"FsmNode::after(const InputTrace& itrc) == FsmNode::after(const vector<int>& itrc)");
+	}
+
+	// n0 --1/1--> n1 
+	// inTrc = [2]
+	// => inTrc starts with input for which n0 has no transition.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --1/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl)));
+		InputTrace inTrc(vector<int>{2}, pl);
+		unordered_set<shared_ptr<FsmNode>> reached = n0->after(inTrc);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.empty(),
+			"Result of FsmNode::after(const InputTrace& itrc) is empty if n0 has no outgoing transition "
+			"for the first input of itrc.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached == n0->after(inTrc.get()),
+			"FsmNode::after(const InputTrace& itrc) == FsmNode::after(const vector<int>& itrc)");
+	}
+
+	// n0 --1/1--> n1 
+	// inTrc = []
+	// => inTrc is empty.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --1/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl)));
+		InputTrace inTrc(vector<int>{}, pl);
+		unordered_set<shared_ptr<FsmNode>> reached = n0->after(inTrc);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.size() == 1
+			&& reached.count(n0) == 1,
+			"Result of FsmNode::after(const InputTrace& itrc) contains only n0 if itrc is empty.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached == n0->after(inTrc.get()),
+			"FsmNode::after(const InputTrace& itrc) == FsmNode::after(const vector<int>& itrc)");
+	}
+
+	// n0 --1/1--> n1, n0 --0/0--> n0 
+	// inTrc = [1]
+	// => inTrc applied to n0 reaches only n1.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --1/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl)));
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+		InputTrace inTrc(vector<int>{1}, pl);
+		unordered_set<shared_ptr<FsmNode>> reached = n0->after(inTrc);
+		fsmlib_assert("TC-FsmNode-NNNN",			
+			reached.count(n1) == 1,
+			"Result of FsmNode::after(const InputTrace& itrc) contains each expected FsmNode.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.size() == 1,
+			"Result of FsmNode::after(const InputTrace& itrc) contains only expected FsmNodes.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached == n0->after(inTrc.get()),
+			"FsmNode::after(const InputTrace& itrc) == FsmNode::after(const vector<int>& itrc)");		
+	}
+
+	// n0 --1/1--> n1, n0 --0/0--> n0 
+	// inTrc = [0,1]
+	// => inTrc applied to n0 reaches only n1.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --1/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl)));
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+		InputTrace inTrc(vector<int>{0,1}, pl);
+		unordered_set<shared_ptr<FsmNode>> reached = n0->after(inTrc);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.count(n1) == 1,
+			"Result of FsmNode::after(const InputTrace& itrc) contains each expected FsmNode.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.size() == 1,
+			"Result of FsmNode::after(const InputTrace& itrc) contains only expected FsmNodes.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached == n0->after(inTrc.get()),
+			"FsmNode::after(const InputTrace& itrc) == FsmNode::after(const vector<int>& itrc)");
+	}
+
+	// n0 --1/1--> n1, n0 --0/0--> n0 
+	// inTrc = [1,1]
+	// => inTrc can't be completely applied to n0 so no FsmNode is reached.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --1/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl)));
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+		InputTrace inTrc(vector<int>{1, 1}, pl);
+		unordered_set<shared_ptr<FsmNode>> reached = n0->after(inTrc);
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.empty(),
+			"Result of FsmNode::after(const InputTrace& itrc) is empty if itrc can't be completely applied to n0.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached == n0->after(inTrc.get()),
+			"FsmNode::after(const InputTrace& itrc) == FsmNode::after(const vector<int>& itrc)");
+	}
+
+	// n0 --0/0--> n1, n0 --0/1--> n2 
+	// inTrc = [0]
+	// => More than one FsmNode can be reached with itrc.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		// n0 --0/0--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(0, 0, pl)));
+		// n0 --0/1--> n2
+		n0->addTransition(make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(0, 1, pl)));
+		InputTrace inTrc(vector<int>{0}, pl);
+		unordered_set<shared_ptr<FsmNode>> reached = n0->after(inTrc);
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.count(n1) == 1
+			&& reached.count(n2) == 1,
+			"Result of FsmNode::after(const InputTrace& itrc) contains each expected FsmNode.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.size() == 2,
+			"Result of FsmNode::after(const InputTrace& itrc) contains only expected FsmNodes.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached == n0->after(inTrc.get()),
+			"FsmNode::after(const InputTrace& itrc) == FsmNode::after(const vector<int>& itrc)");
+	}
+
+	// n0 --0/0--> n1, n0 --0/1--> n2; n0 --0/3--> n3; n1 --1/2--> n2; n1 --1/3--> n0;
+	// inTrc = [0, 1]
+	// => Two FsmNodes can be reached with itrc.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		shared_ptr<FsmNode> n3 = make_shared<FsmNode>(3, pl);
+		// n0 --0/0--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(0, 0, pl)));
+		// n0 --0/1--> n2
+		n0->addTransition(make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(0, 1, pl)));
+		// n0 --0/3--> n3
+		n0->addTransition(make_shared<FsmTransition>(n0, n3, make_shared<FsmLabel>(0, 3, pl)));
+		// n1 --1/2--> n2 
+		n1->addTransition(make_shared<FsmTransition>(n1, n2, make_shared<FsmLabel>(1, 2, pl)));
+		// n1 --1/3--> n0
+		n1->addTransition(make_shared<FsmTransition>(n1, n0, make_shared<FsmLabel>(1, 3, pl)));
+		InputTrace inTrc(vector<int>{0, 1}, pl);
+		unordered_set<shared_ptr<FsmNode>> reached = n0->after(inTrc);
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.count(n0) == 1
+			&& reached.count(n2) == 1,
+			"Result of FsmNode::after(const InputTrace& itrc) contains each expected FsmNode.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.size() == 2,
+			"Result of FsmNode::after(const InputTrace& itrc) contains only expected FsmNodes.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached == n0->after(inTrc.get()),
+			"FsmNode::after(const InputTrace& itrc) == FsmNode::after(const vector<int>& itrc)");
+
+
+		// now apply inTrc = [0,1,0]
+		inTrc = InputTrace(vector<int>{0, 1, 0}, pl);
+		reached = n0->after(inTrc);
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.count(n1) == 1
+			&& reached.count(n2) == 1
+			&& reached.count(n3) == 1,
+			"Result of FsmNode::after(const InputTrace& itrc) contains each expected FsmNode.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.size() == 3,
+			"Result of FsmNode::after(const InputTrace& itrc) contains only expected FsmNodes.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached == n0->after(inTrc.get()),
+			"FsmNode::after(const InputTrace& itrc) == FsmNode::after(const vector<int>& itrc)");
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -9475,7 +9697,8 @@ int main(int argc, char** argv)
 	//testFsmLabelOperatorLessThan();
 
 	//testFsmNodeAddTransition();
-	testFsmNodeApply();
+	//testFsmNodeApply();
+	testFsmNodeAfter();
 
 	/*testMinimise();
 	testWMethod();*/
