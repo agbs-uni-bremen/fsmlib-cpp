@@ -1,5 +1,5 @@
 #include "IOTreeContainer.h"
-#include "logging/easylogging++.h"
+#include "utils/Logger.hpp"
 
 using namespace std;
 
@@ -22,26 +22,26 @@ shared_ptr<vector<shared_ptr<InputOutputTree>>> IOTreeContainer::getList() const
 
 IOListContainer IOTreeContainer::toIOList() const
 {
-    VLOG(8) << "toIOList()";
+    LOG("VERBOSE_8") << "toIOList()";
     IOListContainer result = IOListContainer(presentationLayer);
     bool containsEmpty = false;
     for (shared_ptr<InputOutputTree> tree : *list)
     {
-        VLOG(8) << "tree: " << tree->str();
+        LOG("VERBOSE_8") << "tree: " << tree->str();
         if (tree->isEmpty())
         {
-            VLOG(8) << "  Tree is empty.";
+            LOG("VERBOSE_8") << "  Tree is empty.";
             if (!containsEmpty)
             {
-                VLOG(8) << "  Adding empty tree.";
+                LOG("VERBOSE_8") << "  Adding empty tree.";
                 result.addUnique((Trace({})));
             }
             continue;
         }
         IOListContainer container = tree->getInputLists();
-        VLOG(8) << "  Tree as input list: " << container;
+        LOG("VERBOSE_8") << "  Tree as input list: " << container;
         shared_ptr<vector<vector<int>>> set = container.getIOLists();
-        VLOG(8) << "  Tree as IO set: ";
+        LOG("VERBOSE_8") << "  Tree as IO set: ";
         for (vector<int> e : *set)
         {
             stringstream ss;
@@ -51,7 +51,7 @@ IOListContainer IOTreeContainer::toIOList() const
                 ss << i << ",";
             }
             ss << "]";
-            VLOG(8) << ss.str();
+            LOG("VERBOSE_8") << ss.str();
         }
         for (vector<int> trace : *set)
         {
@@ -62,9 +62,9 @@ IOListContainer IOTreeContainer::toIOList() const
                 ss << i << ",";
             }
             ss << "]";
-            VLOG(8) << ss.str();
+            LOG("VERBOSE_8") << ss.str();
             result.addUniqueRemovePrefixes(Trace(trace, presentationLayer));
-            VLOG(8) << "  result: " << result;
+            LOG("VERBOSE_8") << "  result: " << result;
         }
     }
     return result;

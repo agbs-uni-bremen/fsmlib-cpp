@@ -49,5 +49,4 @@ set (FSM_FSM_SOURCES
 	typedef.inc
 )
 
-add_library (fsm-fsm ${FSM_FSM_SOURCES})
-target_link_libraries (fsm-fsm easyloggingpp)
+add_library (fsm-fsm OBJECT ${FSM_FSM_SOURCES})

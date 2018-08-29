@@ -1,5 +1,4 @@
 #include "IOTraceContainer.h"
-#include "logging/easylogging++.h"
 
 using namespace std;
 
@@ -57,7 +56,6 @@ void IOTraceContainer::removePrefixes(const shared_ptr<const IOTrace>& trc)
 
 void IOTraceContainer::add(const IOTraceContainer& container)
 {
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(6));
     list.insert(container.cbegin(), container.cend());
 }
 
@@ -112,7 +110,6 @@ void IOTraceContainer::concatenate(IOTraceContainer& container)
 
 void IOTraceContainer::concatenateToFront(const shared_ptr<InputTrace>& inputTrace, const shared_ptr<OutputTrace>& outputTrace)
 {
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(1));
     shared_ptr<IOTrace> newIOTrace = make_shared<IOTrace>(*inputTrace, *outputTrace);
     concatenateToFront(newIOTrace);
 }
@@ -135,7 +132,6 @@ void IOTraceContainer::clear()
 
 bool IOTraceContainer::remove(const shared_ptr<const IOTrace>& trace)
 {
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(1));
     return list.erase(trace) > 0;
 }
 

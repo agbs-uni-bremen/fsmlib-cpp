@@ -3,7 +3,8 @@ set (FSM_HARNESS_SOURCES
 )
 
 
-add_executable (fsm-harness ${FSM_HARNESS_SOURCES})
+add_executable (fsm-harness ${FSM_HARNESS_SOURCES}
+  $<TARGET_OBJECTS:fsm-example>
+)
 
-target_link_libraries (fsm-harness fsm-example)
 

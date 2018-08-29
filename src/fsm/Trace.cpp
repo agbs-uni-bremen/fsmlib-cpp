@@ -3,9 +3,11 @@
  * 
  * Licensed under the EUPL V.1.1
  */
+#include <sstream>
+
 #include "fsm/Trace.h"
-#include "logging/easylogging++.h"
 #include "fsm/FsmLabel.h"
+#include "utils/Logger.hpp"
 
 Trace::Trace(const std::shared_ptr<FsmPresentationLayer const>& presentationLayer)
 	: presentationLayer(presentationLayer)
@@ -212,7 +214,10 @@ Trace Trace::getSuffix(const Trace& prefix) const
 {
     if (!isPrefix(prefix))
     {
-        LOG(FATAL) << "The given prefix is not a prefix of this trace.";
+        std::stringstream ss;
+        ss << "The given prefix is not a prefix of this trace.";
+        LOG("FATAL") << ss.str();
+        throw ss.str();
     }
 
     const Trace& thisCopy = removeEpsilon();

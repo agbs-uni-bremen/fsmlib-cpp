@@ -14,7 +14,7 @@ set (FSM_WINDOW_SOURCES
 	OpenFileWindow.h
 )
 
-add_library (fsm-window ${FSM_WINDOW_SOURCES} ${MANAGER_MOC} MainWindow.ui)
+add_library (fsm-window OBJECT ${FSM_WINDOW_SOURCES} ${MANAGER_MOC} MainWindow.ui)
 
 target_link_libraries (fsm-window Qt5::Widgets)
 
@@ -23,7 +23,7 @@ set (FSM_MAIN_SOURCES
 	gui.cpp
 )
 
-add_executable (fsm-gui ${FSM_MAIN_SOURCES})
+add_executable (fsm-gui OBJECT ${FSM_MAIN_SOURCES})
 
 target_link_libraries (fsm-gui fsm-window fsm-fsm fsm-interface fsm-sets fsm-trees Qt5::Widgets ${QT_QTMAIN_LIBRARY})
 

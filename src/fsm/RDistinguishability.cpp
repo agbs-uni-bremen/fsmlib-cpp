@@ -4,7 +4,7 @@
 #include "trees/InputOutputTree.h"
 #include "trees/AdaptiveTreeNode.h"
 #include "fsm/FsmNode.h"
-#include "logging/easylogging++.h"
+#include "utils/Logger.hpp"
 
 using namespace std;
 RDistinguishability::RDistinguishability(const shared_ptr<FsmPresentationLayer>& presentationLayer) : presentationLayer(presentationLayer)
@@ -33,7 +33,7 @@ void RDistinguishability::initRDistinguishable(size_t i)
     }
     else
     {
-        LOG(WARNING) << "Overwriting r-distinguishability.";
+        LOG("WARNING") << "Overwriting r-distinguishability.";
         rDistinguishableWith[i] = {};
     }
 }
@@ -112,7 +112,7 @@ bool RDistinguishability::isRDistinguishableWith(size_t i, std::shared_ptr<FsmNo
             {
                 return true;
             }
-        } catch (out_of_range e) {
+        } catch (out_of_range &e) {
             continue;
         }
 

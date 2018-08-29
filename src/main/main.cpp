@@ -28,8 +28,7 @@
 #include <trees/OutputTree.h>
 #include <trees/TestSuite.h>
 #include "json/json.h"
-#include "logging/easylogging++.h"
-#include "logging/Logging.h"
+#include "utils/Logger.hpp"
 
 #include <unistd.h>
 #include <errno.h>
@@ -276,7 +275,7 @@ struct AdaptiveTestResult
 void assertInconclusive(string tc, string comment = "") {
     
     string sVerdict("INCONCLUSIVE");
-    CLOG(INFO, logging::testParameters) << sVerdict << ": " << tc << " : " << comment <<  endl;
+    LOG("INFO") << sVerdict << ": " << tc << " : " << comment <<  endl;
 }
 
 void fsmlib_assert(string tc, bool verdict, string comment = "") {
@@ -288,7 +287,7 @@ void fsmlib_assert(string tc, bool verdict, string comment = "") {
         out += ": " + comment;
     }
 
-    CLOG(INFO, logging::testParameters) << out;
+    LOG("INFO") << out;
 }
 
 void assertOnFail(string tc, bool verdict, string comment = "") {
@@ -296,11 +295,11 @@ void assertOnFail(string tc, bool verdict, string comment = "") {
     string sVerdict = (verdict) ? "PASS: " + tc : "FAIL: " + tc + ": " + comment;
     if (verdict)
     {
-        CLOG(INFO, logging::testParameters) << sVerdict;
+        LOG("INFO") << sVerdict;
     }
     else
     {
-        CLOG(ERROR, logging::testParameters) << sVerdict;
+        LOG("ERROR") << sVerdict;
     }
 }
 
@@ -1327,7 +1326,7 @@ string getFieldFromResult(const AdaptiveTestResult& result, const CsvField& fiel
         out << result.pass;
         break;
     default:
-        CLOG(FATAL, logging::globalLogger) << "Unhandled case in CSV Logging.";
+        LOG("FATAL") << "Unhandled case in CSV Logging.";
     }
     return out.str();
 }
@@ -1487,8 +1486,8 @@ ofstream newCsvFile(string testName, const CsvConfig& csvConfig)
 
 void printTestBegin(string name)
 {
-    CLOG(INFO, logging::testParameters) << "#################### Test " << name << " ####################";
-    CLOG(INFO, logging::globalLogger) << "-------------------- Test " << name << " --------------------";
+    LOG("INFO") << "#################### Test " << name << " ####################";
+    LOG("INFO") << "-------------------- Test " << name << " --------------------";
 }
 
 void printSummary(const string& testName,
@@ -1498,56 +1497,56 @@ void printSummary(const string& testName,
                   const long& durationS,
                   const long& durationM)
 {
-    CLOG(INFO, logging::globalLogger) << "#################### SUMMARY ####################";
-    CLOG(INFO, logging::globalLogger) << "# Test name    : " << testName;
-    CLOG(INFO, logging::globalLogger) << "# Total tests  : " << executed;
-    CLOG(INFO, logging::globalLogger) << "# Passed       : " << passed;
-    CLOG(INFO, logging::globalLogger) << "# Failed       : " << executed - passed;
-    CLOG(INFO, logging::globalLogger) << "# Not executed : " << notExecuted;
-    CLOG(INFO, logging::globalLogger) << "# Duration     : " << durationS << " s (" << durationM << " min).";
-    CLOG(INFO, logging::globalLogger) << "#################################################" << endl;
+    LOG("INFO") << "#################### SUMMARY ####################";
+    LOG("INFO") << "# Test name    : " << testName;
+    LOG("INFO") << "# Total tests  : " << executed;
+    LOG("INFO") << "# Passed       : " << passed;
+    LOG("INFO") << "# Failed       : " << executed - passed;
+    LOG("INFO") << "# Not executed : " << notExecuted;
+    LOG("INFO") << "# Duration     : " << durationS << " s (" << durationM << " min).";
+    LOG("INFO") << "#################################################" << endl;
 }
 
 void printTestConfig(const AdaptiveTestConfig& config)
 {
-    CLOG(INFO, logging::testParameters) << "-------------------- Test Config --------------------";
-    CLOG(INFO, logging::testParameters) << "numFsm: " << config.numFsm;
-    CLOG(INFO, logging::testParameters) << "minInput: " << config.minInput + 1;
-    CLOG(INFO, logging::testParameters) << "maxInput: " << config.maxInput + 1;
-    CLOG(INFO, logging::testParameters) << "minOutput: " << config.minOutput + 1;
-    CLOG(INFO, logging::testParameters) << "maxOutput: " << config.maxOutput + 1;
-    CLOG(INFO, logging::testParameters) << "minStates: " << config.minStates + 1;
-    CLOG(INFO, logging::testParameters) << "maxStates: " << config.maxStates + 1;
+    LOG("INFO") << "-------------------- Test Config --------------------";
+    LOG("INFO") << "numFsm: " << config.numFsm;
+    LOG("INFO") << "minInput: " << config.minInput + 1;
+    LOG("INFO") << "maxInput: " << config.maxInput + 1;
+    LOG("INFO") << "minOutput: " << config.minOutput + 1;
+    LOG("INFO") << "maxOutput: " << config.maxOutput + 1;
+    LOG("INFO") << "minStates: " << config.minStates + 1;
+    LOG("INFO") << "maxStates: " << config.maxStates + 1;
 
-    CLOG(INFO, logging::testParameters) << "minOutFaults: " << config.minOutFaults;
-    CLOG(INFO, logging::testParameters) << "maxOutFaults: " << config.maxOutFaults;
-    CLOG(INFO, logging::testParameters) << "minTransFaults: " << config.minTransFaults;
-    CLOG(INFO, logging::testParameters) << "maxTransFaults: " << config.maxTransFaults;
+    LOG("INFO") << "minOutFaults: " << config.minOutFaults;
+    LOG("INFO") << "maxOutFaults: " << config.maxOutFaults;
+    LOG("INFO") << "minTransFaults: " << config.minTransFaults;
+    LOG("INFO") << "maxTransFaults: " << config.maxTransFaults;
 
-    CLOG(INFO, logging::testParameters) << "minDegreeOfCompleteness: " << config.minDegreeOfCompleteness;
-    CLOG(INFO, logging::testParameters) << "maxDegreeOfCompleteness: " << config.maxDegreeOfCompleteness;
-    CLOG(INFO, logging::testParameters) << "maxDegreeOfNonDeterminism: " << config.maxDegreeOfNonDeterminism;
+    LOG("INFO") << "minDegreeOfCompleteness: " << config.minDegreeOfCompleteness;
+    LOG("INFO") << "maxDegreeOfCompleteness: " << config.maxDegreeOfCompleteness;
+    LOG("INFO") << "maxDegreeOfNonDeterminism: " << config.maxDegreeOfNonDeterminism;
 
-    CLOG(INFO, logging::testParameters) << "dontTestReductions: " << std::boolalpha << config.dontTestReductions;
-    CLOG(INFO, logging::testParameters) << "forceTestParameters: " << std::boolalpha << config.forceTestParameters;
-    CLOG(INFO, logging::testParameters) << "seed: " << config.seed;
-    CLOG(INFO, logging::testParameters) << "--------------------------------------------------------";
+    LOG("INFO") << "dontTestReductions: " << std::boolalpha << config.dontTestReductions;
+    LOG("INFO") << "forceTestParameters: " << std::boolalpha << config.forceTestParameters;
+    LOG("INFO") << "seed: " << config.seed;
+    LOG("INFO") << "--------------------------------------------------------";
 }
 
 void printTestResult(AdaptiveTestResult& result, const CsvConfig& csvConfig,
                      const LoggingConfig& loggingConfig, ofstream& csvOut)
 {
 
-    CLOG(INFO, logging::testParameters) << "Test                       : " << result.testName;
-    CLOG(INFO, logging::testParameters) << "numStates                  : " << result.numStates;
-    CLOG(INFO, logging::testParameters) << "numInputs                  : " << result.numInputs;
-    CLOG(INFO, logging::testParameters) << "numOutputs                 : " << result.numOutputs;
-    CLOG(INFO, logging::testParameters) << "numDReachableStates        : " << result.numDReachableStates;
+    LOG("INFO") << "Test                       : " << result.testName;
+    LOG("INFO") << "numStates                  : " << result.numStates;
+    LOG("INFO") << "numInputs                  : " << result.numInputs;
+    LOG("INFO") << "numOutputs                 : " << result.numOutputs;
+    LOG("INFO") << "numDReachableStates        : " << result.numDReachableStates;
 
 
     if (loggingConfig.printSetsOfMaximalRDistStates)
     {
-        CLOG(INFO, logging::testParameters) << "setsOfMaximalRDistStates   : ";
+        LOG("INFO") << "setsOfMaximalRDistStates   : ";
         for (auto v : result.setsOfMaximalRDistStates)
         {
             stringstream ss;
@@ -1557,46 +1556,46 @@ void printTestResult(AdaptiveTestResult& result, const CsvConfig& csvConfig,
                 ss << e->getName() << ", ";
             }
             ss << "}";
-            CLOG(INFO, logging::testParameters) << ss.str();
+            LOG("INFO") << ss.str();
         }
     }
 
-    CLOG(INFO, logging::testParameters) << "numSetsOfMaximalRDistStates: " << result.numSetsOfMaximalRDistStates;
-    CLOG(INFO, logging::testParameters) << "numOutFaults               : " << result.numOutFaults;
-    CLOG(INFO, logging::testParameters) << "numTransFaults             : " << result.numTransFaults;
-    CLOG(INFO, logging::testParameters) << "degreeOfCompleteness       : " << result.degreeOfCompleteness;
-    CLOG(INFO, logging::testParameters) << "degreeOfNonDeterminism     : " << result.degreeOfNonDeterminism;
-    CLOG(INFO, logging::testParameters) << "iutIsReduction             : " << std::boolalpha << result.iutIsReduction;
-    CLOG(INFO, logging::testParameters) << "removedTransitions         : " << result.removedTransitions;
+    LOG("INFO") << "numSetsOfMaximalRDistStates: " << result.numSetsOfMaximalRDistStates;
+    LOG("INFO") << "numOutFaults               : " << result.numOutFaults;
+    LOG("INFO") << "numTransFaults             : " << result.numTransFaults;
+    LOG("INFO") << "degreeOfCompleteness       : " << result.degreeOfCompleteness;
+    LOG("INFO") << "degreeOfNonDeterminism     : " << result.degreeOfNonDeterminism;
+    LOG("INFO") << "iutIsReduction             : " << std::boolalpha << result.iutIsReduction;
+    LOG("INFO") << "removedTransitions         : " << result.removedTransitions;
     if (result.failTraceFound)
     {
-        CLOG(INFO, logging::testParameters) << "failTraceFound             : " << *result.failTraceFound;
+        LOG("INFO") << "failTraceFound             : " << *result.failTraceFound;
     }
     else
     {
-        CLOG(INFO, logging::testParameters) << "failTraceFound             : None";
+        LOG("INFO") << "failTraceFound             : None";
     }
-    CLOG(INFO, logging::testParameters) << "adaptiveStateCountingResult: " << std::boolalpha
+    LOG("INFO") << "adaptiveStateCountingResult: " << std::boolalpha
                                       << result.adaptiveStateCountingResult;
     if (result.createRandomFsmSeed != 0)
     {
-        CLOG(INFO, logging::testParameters) << "createRandomFsmSeed        : " << result.createRandomFsmSeed;
+        LOG("INFO") << "createRandomFsmSeed        : " << result.createRandomFsmSeed;
     }
     if (result.createMutantSeed != 0)
     {
-        CLOG(INFO, logging::testParameters) << "createMutantSeed           : " << result.createMutantSeed;
+        LOG("INFO") << "createMutantSeed           : " << result.createMutantSeed;
     }
-    CLOG(INFO, logging::testParameters) << "longestObservedTrace       : " << *result.longestObservedTrace;
-    CLOG(INFO, logging::testParameters) << "length longestObservedTrace: " << result.longestObservedTrace->size();
-    CLOG(INFO, logging::testParameters) << "observedTraces size        : " << result.numObservedTraces;
+    LOG("INFO") << "longestObservedTrace       : " << *result.longestObservedTrace;
+    LOG("INFO") << "length longestObservedTrace: " << result.longestObservedTrace->size();
+    LOG("INFO") << "observedTraces size        : " << result.numObservedTraces;
     if (loggingConfig.printObservedTraces)
     {
-        CLOG(INFO, logging::testParameters) << "observedTraces             : " << result.observedTraces;
+        LOG("INFO") << "observedTraces             : " << result.observedTraces;
     }
-    CLOG(INFO, logging::testParameters) << "iterations                 : " << result.iterations;
-    CLOG(INFO, logging::testParameters) << "Calculation took " << result.durationMS << " ms ("
+    LOG("INFO") << "iterations                 : " << result.iterations;
+    LOG("INFO") << "Calculation took " << result.durationMS << " ms ("
                                       << result.durationM << " minutes).";
-    CLOG(INFO, logging::testParameters) << "-------------------------------------------";
+    LOG("INFO") << "-------------------------------------------";
 
     if (csvConfig.logEveryIteration)
     {
@@ -1655,7 +1654,7 @@ void executeAdaptiveTest(const string& testName, Fsm& spec, Fsm& iut, size_t m, 
     }
 
     if (result.iutIsReduction && dontTestReductions) {
-        CLOG_IF(VLOG_IS_ON(1), INFO, logging::globalLogger) << "Won't test this one, since it is a reduction.";
+        LOG("INFO") << "Won't test this one, since it is a reduction.";
         throw unexpected_reduction("Interrupting testing, since IUT is an unexcpected reduction of the specification.");
     }
 
@@ -1701,22 +1700,22 @@ void createAndExecuteAdaptiveTest(
         AdaptiveTestResult& result)
 {
 
-    CLOG(INFO, logging::testParameters) << testSepLine;
-    CLOG(INFO, logging::testParameters) << "createAndExecuteAdaptiveTest()";
-    CLOG(INFO, logging::testParameters) << "Name                     : " << result.testName;
-    CLOG(INFO, logging::testParameters) << "numStates                : " << numStates + 1;
-    CLOG(INFO, logging::testParameters) << "numInputs                : " << numInputs + 1;
-    CLOG(INFO, logging::testParameters) << "numOutputs               : " << numOutputs + 1;
-    CLOG(INFO, logging::testParameters) << "numOutFaults             : " << numOutFaults;
-    CLOG(INFO, logging::testParameters) << "numTransFaults           : " << numTransFaults;
-    CLOG(INFO, logging::testParameters) << "degreeOfCompleteness     : " << degreeOfCompleteness;
-    CLOG(INFO, logging::testParameters) << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism;
-    CLOG(INFO, logging::testParameters) << "createReduction          : " << boolalpha << createReduction;
-    CLOG(INFO, logging::testParameters) << "createRandomFsmSeed      : " << createRandomFsmSeed;
-    CLOG(INFO, logging::testParameters) << "createMutantSeed         : " << createMutantSeed;
-    CLOG(INFO, logging::testParameters) << "-------------------------------------------";
+    LOG("INFO") << testSepLine;
+    LOG("INFO") << "createAndExecuteAdaptiveTest()";
+    LOG("INFO") << "Name                     : " << result.testName;
+    LOG("INFO") << "numStates                : " << numStates + 1;
+    LOG("INFO") << "numInputs                : " << numInputs + 1;
+    LOG("INFO") << "numOutputs               : " << numOutputs + 1;
+    LOG("INFO") << "numOutFaults             : " << numOutFaults;
+    LOG("INFO") << "numTransFaults           : " << numTransFaults;
+    LOG("INFO") << "degreeOfCompleteness     : " << degreeOfCompleteness;
+    LOG("INFO") << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism;
+    LOG("INFO") << "createReduction          : " << boolalpha << createReduction;
+    LOG("INFO") << "createRandomFsmSeed      : " << createRandomFsmSeed;
+    LOG("INFO") << "createMutantSeed         : " << createMutantSeed;
+    LOG("INFO") << "-------------------------------------------";
 
-    CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Creating FSM.";
+    LOG("INFO") << "Creating FSM.";
     shared_ptr<Fsm> spec = Fsm::createRandomFsm(prefix + "-spec",
                                                 numInputs,
                                                 numOutputs,
@@ -1729,7 +1728,7 @@ void createAndExecuteAdaptiveTest(
                                                 true,
                                                 createRandomFsmSeed);
 
-    CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Creating mutant.";
+    LOG("INFO") << "Creating mutant.";
 
     shared_ptr<Fsm> iut;
     if (createReduction)
@@ -1756,20 +1755,20 @@ void createAndExecuteAdaptiveTest(
     result.createMutantSeed = createMutantSeed;
 
 
-    CLOG(INFO, logging::testParameters) << "Starting adaptive state counting.";
-    CLOG(INFO, logging::testParameters) << "Name                     : " << result.testName;
-    CLOG(INFO, logging::testParameters) << "numStates                : " << result.numStates;
-    CLOG(INFO, logging::testParameters) << "numInputs                : " << result.numInputs;
-    CLOG(INFO, logging::testParameters) << "numOutputs               : " << result.numOutputs;
-    CLOG(INFO, logging::testParameters) << "numOutFaults             : " << result.numOutFaults;
-    CLOG(INFO, logging::testParameters) << "numTransFaults           : " << result.numTransFaults;
-    CLOG(INFO, logging::testParameters) << "degreeOfCompleteness tgt : " << degreeOfCompleteness;
-    CLOG(INFO, logging::testParameters) << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism;
-    CLOG(INFO, logging::testParameters) << "createReduction          : " << boolalpha << createReduction;
-    CLOG(INFO, logging::testParameters) << "removedTransitions       : " << result.removedTransitions;
-    CLOG(INFO, logging::testParameters) << "createRandomFsmSeed      : " << result.createRandomFsmSeed;
-    CLOG(INFO, logging::testParameters) << "createMutantSeed         : " << result.createMutantSeed;
-    CLOG(INFO, logging::testParameters) << "-------------------------------------------";
+    LOG("INFO") << "Starting adaptive state counting.";
+    LOG("INFO") << "Name                     : " << result.testName;
+    LOG("INFO") << "numStates                : " << result.numStates;
+    LOG("INFO") << "numInputs                : " << result.numInputs;
+    LOG("INFO") << "numOutputs               : " << result.numOutputs;
+    LOG("INFO") << "numOutFaults             : " << result.numOutFaults;
+    LOG("INFO") << "numTransFaults           : " << result.numTransFaults;
+    LOG("INFO") << "degreeOfCompleteness tgt : " << degreeOfCompleteness;
+    LOG("INFO") << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism;
+    LOG("INFO") << "createReduction          : " << boolalpha << createReduction;
+    LOG("INFO") << "removedTransitions       : " << result.removedTransitions;
+    LOG("INFO") << "createRandomFsmSeed      : " << result.createRandomFsmSeed;
+    LOG("INFO") << "createMutantSeed         : " << result.createMutantSeed;
+    LOG("INFO") << "-------------------------------------------";
 
     executeAdaptiveTest(result.testName, *spec, *iut, static_cast<size_t>(iut->getMaxNodes()),
                         prefix + "-intersect", loggingConfig.toDot, loggingConfig.toFsm, dontTestReductions, result);
@@ -1803,7 +1802,6 @@ int getRandom(std::mt19937& gen)
 void adaptiveTestRandom(AdaptiveTestConfig& config)
 {
 
-    logging::setLogfileSuffix(config.testName, logging::testParameters);
     printTestBegin(config.testName);
     ofstream csvOut = newCsvFile(config.testName, config.csvConfig);
 
@@ -1817,7 +1815,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
             config.maxTransFaults < 0 ||
             config.maxDegreeOfNonDeterminism < 0)
     {
-        CLOG(FATAL, logging::globalLogger) << "Please provide all required parameters.";
+        LOG("FATAL") << "Please provide all required parameters.";
     }
 
     config.maxInput--;
@@ -1848,12 +1846,12 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
 
     if (diffInput <= 0 || diffOutput <= 0 || diffStates <= 0 || diffOutFaults <= 0 || diffTransFaults <= 0 || degreeOfCompletenessIterations <= 0)
     {
-        CLOG(FATAL, logging::globalLogger) << "Please check the test parameters.";
+        LOG("FATAL") << "Please check the test parameters.";
     }
 
     if (config.maxDegreeOfNonDeterminism <= 0 && config.createReduction)
     {
-        CLOG(FATAL, logging::globalLogger) << "Can't create reduction of a deterministic FSM.";
+        LOG("FATAL") << "Can't create reduction of a deterministic FSM.";
     }
 
     float divisor = (diffInput * diffOutput * diffStates * diffOutFaults * diffTransFaults * degreeOfCompletenessIterations);
@@ -1862,18 +1860,18 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
 
     printTestConfig(config);
 
-    CLOG(INFO, logging::testParameters) << "Seed           : " << config.seed;
-    CLOG(INFO, logging::testParameters) << "divisor        : " << divisor;
-    CLOG(INFO, logging::testParameters) << "innerIterations: " << innerIterations;
-    CLOG(INFO, logging::testParameters) << "totalIterations: " << totalIterations;
-    CLOG(INFO, logging::testParameters) << "";
-    CLOG(INFO, logging::testParameters) << "diffInput      : " << diffInput;
-    CLOG(INFO, logging::testParameters) << "diffOutput     : " << diffOutput;
-    CLOG(INFO, logging::testParameters) << "diffStates     : " << diffStates;
-    CLOG(INFO, logging::testParameters) << "diffOutFaults  : " << diffOutFaults;
-    CLOG(INFO, logging::testParameters) << "diffTransFaults: " << diffTransFaults;
-    CLOG(INFO, logging::testParameters) << "degreeOfCompletenessIterations: " << degreeOfCompletenessIterations;
-    CLOG(INFO, logging::testParameters) << "";
+    LOG("INFO") << "Seed           : " << config.seed;
+    LOG("INFO") << "divisor        : " << divisor;
+    LOG("INFO") << "innerIterations: " << innerIterations;
+    LOG("INFO") << "totalIterations: " << totalIterations;
+    LOG("INFO") << "";
+    LOG("INFO") << "diffInput      : " << diffInput;
+    LOG("INFO") << "diffOutput     : " << diffOutput;
+    LOG("INFO") << "diffStates     : " << diffStates;
+    LOG("INFO") << "diffOutFaults  : " << diffOutFaults;
+    LOG("INFO") << "diffTransFaults: " << diffTransFaults;
+    LOG("INFO") << "degreeOfCompletenessIterations: " << degreeOfCompletenessIterations;
+    LOG("INFO") << "";
 
     const float degStep = 0.1f;
 
@@ -1935,34 +1933,34 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                             if (config.minDegreeOfCompleteness <= 0 && config.maxDegreeOfCompleteness <= 0)
                             {
                                 degreeOfCompleteness = -1;
-                                CLOG(INFO, logging::testParameters) << "Degree of completeness does not matter.";
+                                LOG("INFO") << "Degree of completeness does not matter.";
                             }
                             else if (config.minDegreeOfCompleteness > 0 && config.maxDegreeOfCompleteness <= 0)
                             {
                                 degreeOfCompleteness = config.minDegreeOfCompleteness +
                                         static_cast<float>(rand()) / (static_cast <float> (RAND_MAX/(1.0f - config.minDegreeOfCompleteness)));
-                                CLOG(INFO, logging::testParameters) << "Selected random degree of completeness with a minimal value of " <<
+                                LOG("INFO") << "Selected random degree of completeness with a minimal value of " <<
                                                                      config.minDegreeOfCompleteness << ": " << degreeOfCompleteness;
                             }
                             else if (config.minDegreeOfCompleteness <= 0 && config.maxDegreeOfCompleteness <=1)
                             {
                                 degreeOfCompleteness = 0.1f +
                                         static_cast<float>(rand()) / (static_cast <float> (RAND_MAX/(1.0f - 0.1f)));
-                                CLOG(INFO, logging::testParameters) << "Selected random degree of completeness with a maximal value of " <<
+                                LOG("INFO") << "Selected random degree of completeness with a maximal value of " <<
                                                                      config.maxDegreeOfCompleteness << ": " << degreeOfCompleteness;
                             }
                             else
                             {
 
                                 degreeOfCompleteness = config.minDegreeOfCompleteness + (degStep * degreeCount);
-                                CLOG(INFO, logging::testParameters) << "Degree of completeness: " << degreeOfCompleteness;
+                                LOG("INFO") << "Degree of completeness: " << degreeOfCompleteness;
                             }
 
                             for (int ctInnerIt = 0; ctInnerIt < innerIterations; ++ctInnerIt)
                             {
-                                CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger)
+                                LOG("INFO")
                                         << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-                                CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << ctInput << " "
+                                LOG("INFO") << ctInput << " "
                                                                                     << ctOutput << " "
                                                                                     << ctState << " "
                                                                                     << ctOutFault << " "
@@ -1976,11 +1974,6 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                 ss << setw(numberDigits) << setfill('0') << i;
                                 string iteration = ss.str();
 
-                    #ifdef ENABLE_DEBUG_MACRO
-                                logging::setLogfileSuffix(config.testName + "-" + iteration);
-                    #endif
-
-
                                 int numInputs = ctInput;
                                 int numOutputs = ctOutput;
                                 int numStates = ctState;
@@ -1990,12 +1983,12 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
 
                                 if (numOutputs < 1 && numOutFaults > 0)
                                 {
-                                    CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
-                                    CLOG(INFO, logging::globalLogger) << "numInput: " << numInputs + 1;
-                                    CLOG(INFO, logging::globalLogger) << "numOutput: " << numOutputs + 1;
-                                    CLOG(INFO, logging::globalLogger) << "numOutFaults: " << numOutFaults;
-                                    CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
-                                    CLOG(WARNING, logging::globalLogger) << "Too little outputs. Can not create requested number of "
+                                    LOG("INFO") << "numStates: " << numStates + 1;
+                                    LOG("INFO") << "numInput: " << numInputs + 1;
+                                    LOG("INFO") << "numOutput: " << numOutputs + 1;
+                                    LOG("INFO") << "numOutFaults: " << numOutFaults;
+                                    LOG("INFO") << "numTransFaults: " << numTransFaults;
+                                    LOG("WARNING") << "Too little outputs. Can not create requested number of "
                                                                          << "output faults. Could not create mutant. Skipping.";
                                     ++i;
                                     continue;
@@ -2010,16 +2003,15 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                     maxDegNonDet = 0.5f + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(1.0f - 0.5f)));
                                     if (config.maxDegreeOfNonDeterminism < 0.5f || maxDegNonDet > config.maxDegreeOfNonDeterminism)
                                     {
-                                        CLOG_IF(VLOG_IS_ON(2), WARNING, logging::globalLogger)
+                                        LOG("WARNING")
                                                 << "Chosen maximal degree of non-determinism very low. Adjusting.";
                                     }
                                 }
 
-                                TIMED_SCOPE(timerBlkObj, "heavy-iter");
                                 AdaptiveTestResult result;
                                 result.testName = config.testName + "-" + iteration;
 
-                                CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "testName: " << result.testName;
+                                LOG("INFO") << "testName: " << result.testName;
 
                                 bool couldCreateIut = false;
                                 bool abort = false;
@@ -2028,7 +2020,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                 {
                                     if (newSeeds)
                                     {
-                                        CLOG_IF(VLOG_IS_ON(1), INFO, logging::globalLogger) << "Generating new seeds.";
+                                        LOG("INFO") << "Generating new seeds.";
                                         createRandomFsmSeed = static_cast<unsigned int>(getRandom(gen));
                                         createMutantSeed = static_cast<unsigned int>(getRandom(gen));
                                         newSeeds = false;
@@ -2066,7 +2058,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                     }
                                     catch (unexpected_reduction& e)
                                     {
-                                        CLOG_IF(VLOG_IS_ON(1), INFO, logging::globalLogger) << "IUT is a reduction of the specification.";
+                                        LOG("INFO") << "IUT is a reduction of the specification.";
                                         if (config.forceTestParameters)
                                         {
                                             newSeeds = true;
@@ -2078,11 +2070,11 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                     }
                                     catch (too_many_transition_faults& e)
                                     {
-                                        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Could not create mutant.";
+                                        LOG("INFO") << "Could not create mutant.";
                                         if (!config.forceTestParameters
                                                 && numTransFaults - 1 >= config.minTransFaults && numTransFaults - 1 > 0) {
                                             --numTransFaults;
-                                            CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing transition faults.";
+                                            LOG("INFO") << "Decreasing transition faults.";
                                             continue;
                                         }
                                         else if (config.forceTestParameters)
@@ -2097,18 +2089,18 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                     }
                                     catch (too_many_output_faults& e)
                                     {
-                                        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Could not create mutant.";
+                                        LOG("INFO") << "Could not create mutant.";
                                         if (!config.forceTestParameters
                                                 && numOutFaults - 1 >= config.minOutFaults && numOutFaults - 1 > 0) {
                                             --numOutFaults;
-                                            CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing output faults.";
+                                            LOG("INFO") << "Decreasing output faults.";
                                             continue;
                                         }
                                         else if (!config.forceTestParameters
                                                  && numTransFaults - 1 >= config.minTransFaults && numTransFaults - 1 > 0)
                                         {
                                             --numTransFaults;
-                                            CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Decreasing transition faults.";
+                                            LOG("INFO") << "Decreasing transition faults.";
                                             continue;
                                         }
                                         else if (config.forceTestParameters)
@@ -2123,21 +2115,21 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                     }
                                     catch (reduction_not_possible& e)
                                     {
-                                        CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger) << "Could not create reduction.";
+                                        LOG("INFO") << "Could not create reduction.";
                                         newSeeds = true;
                                     }
                                 } while (!couldCreateIut && !abort);
                                 if (!couldCreateIut)
                                 {
                                     ++i;
-                                    CLOG(INFO, logging::globalLogger) << "numStates: " << numStates + 1;
-                                    CLOG(INFO, logging::globalLogger) << "numInput: " << numInputs + 1;
-                                    CLOG(INFO, logging::globalLogger) << "numOutput: " << numOutputs + 1;
-                                    CLOG(INFO, logging::globalLogger) << "numOutFaults: " << numOutFaults;
-                                    CLOG(INFO, logging::globalLogger) << "numTransFaults: " << numTransFaults;
-                                    CLOG(INFO, logging::globalLogger) << "createRandomFsmSeed: " << createRandomFsmSeed;
-                                    CLOG(INFO, logging::globalLogger) << "createMutantSeed: " << createMutantSeed;
-                                    CLOG(WARNING, logging::globalLogger) << "Could not create requested mutant. Skipping.";
+                                    LOG("INFO") << "numStates: " << numStates + 1;
+                                    LOG("INFO") << "numInput: " << numInputs + 1;
+                                    LOG("INFO") << "numOutput: " << numOutputs + 1;
+                                    LOG("INFO") << "numOutFaults: " << numOutFaults;
+                                    LOG("INFO") << "numTransFaults: " << numTransFaults;
+                                    LOG("INFO") << "createRandomFsmSeed: " << createRandomFsmSeed;
+                                    LOG("INFO") << "createMutantSeed: " << createMutantSeed;
+                                    LOG("WARNING") << "Could not create requested mutant. Skipping.";
                                     continue;
                                 }
 
@@ -2267,7 +2259,7 @@ void trial(bool debug)
 
     if (debug)
     {
-        CLOG(INFO, logging::globalLogger) << "############## Debugging ##############";
+        LOG("INFO") << "############## Debugging ##############";
 
         AdaptiveTestConfigDebug debugConfig;
         debugConfig.numStates = 4;
@@ -2335,7 +2327,7 @@ void test00_00()
     executeAdaptiveTest(result.testName, spec, iut, static_cast<size_t>(iut.getMaxNodes()), "00-00-inter", true, false, false, result);
     printTestResult(result, csvConfig, loggingConfig);
     fsmlib_assert(result.testName, result.pass);
-    CLOG(INFO, logging::globalLogger) << testSepLine;
+    LOG("INFO") << testSepLine;
 }
 
 void test00_01()
@@ -2356,7 +2348,7 @@ void test00_01()
     executeAdaptiveTest(result.testName, spec, iut, static_cast<size_t>(iut.getMaxNodes()), "00-01-inter", true, false, false, result);
     printTestResult(result, csvConfig, loggingConfig);
     fsmlib_assert(result.testName, result.pass);
-    CLOG(INFO, logging::globalLogger) << testSepLine;
+    LOG("INFO") << testSepLine;
 }
 
 /**
@@ -2754,16 +2746,22 @@ void runAdaptiveStateCountingTests()
     RED_OUTP();
 }
 
+void setLoggingVerbosity() {
+    LogCoordinator::getStandardLogger().bindAllToDevNull();
+    LogCoordinator::getStandardLogger().bindToStream("INFO", std::cout);
+    LogCoordinator::getStandardLogger().bindToStream("WARNING", std::cerr);
+    LogCoordinator::getStandardLogger().bindToStream("ERROR", std::cerr);
+    LogCoordinator::getStandardLogger().bindToStream("FATAL", std::cerr);
+}
+
 int main(int argc, char** argv)
 {
-
-    START_EASYLOGGINGPP(argc, argv);
+    setLoggingVerbosity();
     nowText = initialize();
-    logging::initLogging(nowText);
 
 
 #ifdef ENABLE_DEBUG_MACRO
-    CLOG(INFO, logging::globalLogger) << "This is a debug build!";
+    LOG("INFO") << "This is a debug build!";
 #endif
 
 #if 0

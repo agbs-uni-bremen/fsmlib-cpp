@@ -20,7 +20,7 @@
 #include "trees/TreeNode.h"
 #include "trees/IOListContainer.h"
 #include "interface/FsmPresentationLayer.h"
-#include "logging/easylogging++.h"
+#include "utils/Logger.hpp"
 
 using namespace std;
 
@@ -241,7 +241,10 @@ void FsmNode::getPossibleOutputs(const InputTrace& inputTrace,
 
     if (nextOutputs.size() != nextTargets.size())
     {
-        LOG(FATAL) << "Number of produced outputs and targets does not match.";
+        stringstream ss;
+ss << "Number of produced outputs and targets does not match.";
+std::cerr << ss.str();
+throw ss.str();
     }
 
     vector<shared_ptr<OutputTrace>> newlyProducedOutputTraces;
@@ -277,21 +280,21 @@ void FsmNode::getPossibleOutputs(const InputTrace& inputTrace,
     }
     producedOutputTraces = newlyProducedOutputTraces;
 
-    VLOG(3) << "getPossibleOutputs(): " << getName() << ", " << inputTrace << ", " << producedOutputTraces.size() << ", " << reachedNodes.size();
+    LOG("VERBOSE_3") << "getPossibleOutputs(): " << getName() << ", " << inputTrace << ", " << producedOutputTraces.size() << ", " << reachedNodes.size();
     stringstream ss;
     ss << "  reached nodes: ";
     for (auto n : reachedNodes)
     {
         ss << n->getName() << ", ";
     }
-    VLOG(3) << ss.str();
+    LOG("VERBOSE_3") << ss.str();
     ss.str(std::string());
     ss << "  outputs: ";
     for (auto n : producedOutputTraces)
     {
         ss << *n << ", ";
     }
-    VLOG(3) << ss.str();
+    LOG("VERBOSE_3") << ss.str();
 }
 
 void FsmNode::getPossibleOutputs(const InputTrace& input, vector<shared_ptr<OutputTrace>>& producedOutputs) const
@@ -341,7 +344,7 @@ bool FsmNode::hasTransition(const int input) const
 
 vector<int> FsmNode::getNotDefinedInputs(const int& maxInput) const
 {
-    VLOG(2) << "getNotDefinedInputs()";
+    LOG("VERBOSE_2") << "getNotDefinedInputs()";
     vector<int> result;
     for (int i = 0; i <= maxInput; ++i)
     {
@@ -355,7 +358,7 @@ vector<int> FsmNode::getNotDefinedInputs(const int& maxInput) const
             }
         }
         if (!inputDefined){
-            VLOG(2) << "  " << presentationLayer->getInId(static_cast<unsigned int>(i));
+            LOG("VERBOSE_2") << "  " << presentationLayer->getInId(static_cast<unsigned int>(i));
             result.push_back(i);
         }
     }
@@ -364,7 +367,7 @@ vector<int> FsmNode::getNotDefinedInputs(const int& maxInput) const
 
 vector<int> FsmNode::getNotDefinedOutputs(const int& input, const int& maxOutput) const
 {
-    VLOG(2) << "getNotDefinedOutputs() for input " << presentationLayer->getInId(static_cast<unsigned int>(input));
+    LOG("VERBOSE_2") << "getNotDefinedOutputs() for input " << presentationLayer->getInId(static_cast<unsigned int>(input));
     vector<int> result;
     for (int o = 0; o <= maxOutput; ++o)
     {
@@ -379,7 +382,7 @@ vector<int> FsmNode::getNotDefinedOutputs(const int& input, const int& maxOutput
         }
         if (!outputDefined)
         {
-            VLOG(2) << "  " << presentationLayer->getOutId(static_cast<unsigned int>(o));
+            LOG("VERBOSE_2") << "  " << presentationLayer->getOutId(static_cast<unsigned int>(o));
             result.push_back(o);
         }
     }
@@ -673,7 +676,7 @@ shared_ptr<DFSMTableRow> FsmNode::getDFSMTableRow(const int maxInput)
          by the same input. In this case we cannot calculate a  DFSMTableRow.*/
         if (io.at(x) >= 0)
         {
-            LOG(ERROR) << "Cannot calculated DFSM table for nondeterministic FSM.";
+            LOG("ERROR") << "Cannot calculated DFSM table for nondeterministic FSM.";
             return nullptr;
         }
         
@@ -899,9 +902,9 @@ bool FsmNode::isObservable() const
             auto otherLbl = transitions[other]->getLabel();
             if ( *lbl == *otherLbl )
             {
-                VLOG(1) << "Node " << getName() << " is not observable:";
-                VLOG(1) << "  " << transitions[t]->str();
-                VLOG(1) << "  " << transitions[other]->str();
+                LOG("VERBOSE_1") << "Node " << getName() << " is not observable:";
+                LOG("VERBOSE_1") << "  " << transitions[t]->str();
+                LOG("VERBOSE_1") << "  " << transitions[other]->str();
                 return false;
             }
         }
