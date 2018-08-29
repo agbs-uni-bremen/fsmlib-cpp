@@ -9690,6 +9690,113 @@ void testFsmNodeAfter2() {
 	}
 }
 
+// Checks if row contains transitions for other inputs (between 0 and maxInput) than those contained in except.
+bool hasUnexpectedTransitionInRow(shared_ptr<DFSMTableRow> row, int maxInput, unordered_set<int> & except) {
+	for (int i = 0; i <= maxInput; ++i) {
+		if (except.count(i) == 1) continue;
+		if (row->geti2postSection().at(i) != -1 || row->getioSection().at(i) != -1) return false;
+	}
+	return true;
+}
+
+// tests FsmNode::getDFSMTableRow(const int maxInput)
+void testFsmNodeGetDFSMTableRow() {
+	// n0 has no outgoing transition.
+	// maxInput = 3
+	{
+		const int maxInput = 3;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+
+		shared_ptr<DFSMTableRow> row = n0->getDFSMTableRow(maxInput);
+		unordered_set<int> except;
+		fsmlib_assert("TC-FsmNode-NNNN",
+			hasUnexpectedTransitionInRow(row, maxInput, except),
+			"FsmNode::getDFSMTableRow(const int maxInput): Constructed row contains no transition if n0 has no outgoing transition.");
+	}
+
+	// n0 --1/1--> n0
+	// maxInput = 3
+	{
+		const int maxInput = 3;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+
+		// n0 --1/1--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(1, 1, pl)));
+
+		shared_ptr<DFSMTableRow> row = n0->getDFSMTableRow(maxInput);
+		unordered_set<int> except{1};
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			row->geti2postSection().at(1) == 0 && row->getioSection().at(1) == 1,
+			"FsmNode::getDFSMTableRow(const int maxInput): Constructed row contains each expected transition with the right values.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			hasUnexpectedTransitionInRow(row, maxInput, except),
+			"FsmNode::getDFSMTableRow(const int maxInput): Constructed row contains no transition if n0 has no outgoing transition.");
+	}
+
+	// n0 --0/0--> n0; n0 --1/2--> n1
+	// maxInput = 2
+	{
+		const int maxInput = 2;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+		// n0 --1/2--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 2, pl)));
+
+		shared_ptr<DFSMTableRow> row = n0->getDFSMTableRow(maxInput);
+		unordered_set<int> except{ 0,1 };
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			row->geti2postSection().at(0) == 0 && row->getioSection().at(0) == 0
+			&& row->geti2postSection().at(1) == 1 && row->getioSection().at(1) == 2,
+			"FsmNode::getDFSMTableRow(const int maxInput): Constructed row contains each expected transition with the right values.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			hasUnexpectedTransitionInRow(row, maxInput, except),
+			"FsmNode::getDFSMTableRow(const int maxInput): Constructed row contains no transition if n0 has no outgoing transition.");
+	}
+
+	// n0 --0/0--> n0; n0 --1/1--> n0; n0 --2/0--> n1; n0 --3/4--> n2;
+	// maxInput = 3
+	{
+		const int maxInput = 3;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+		// n0 --1/1--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(1, 1, pl)));
+		// n0 --2/0--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(2, 0, pl)));
+		// n0 --3/4--> n2
+		n0->addTransition(make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(3, 4, pl)));
+
+		shared_ptr<DFSMTableRow> row = n0->getDFSMTableRow(maxInput);
+		unordered_set<int> except{ 0,1,2,3 };
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			row->geti2postSection().at(0) == 0 && row->getioSection().at(0) == 0
+			&& row->geti2postSection().at(1) == 0 && row->getioSection().at(1) == 1
+			&& row->geti2postSection().at(2) == 1 && row->getioSection().at(2) == 0
+			&& row->geti2postSection().at(3) == 2 && row->getioSection().at(3) == 4,
+			"FsmNode::getDFSMTableRow(const int maxInput): Constructed row contains each expected transition with the right values.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			hasUnexpectedTransitionInRow(row, maxInput, except),
+			"FsmNode::getDFSMTableRow(const int maxInput): Constructed row contains no transition if n0 has no outgoing transition.");
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -9851,7 +9958,8 @@ int main(int argc, char** argv)
 	//testFsmNodeAddTransition();
 	//testFsmNodeApply();
 	//testFsmNodeAfter1();
-	testFsmNodeAfter2();
+	//testFsmNodeAfter2();
+	testFsmNodeGetDFSMTableRow();
 
 	/*testMinimise();
 	testWMethod();*/
