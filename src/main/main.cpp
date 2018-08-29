@@ -9317,7 +9317,7 @@ void testFsmNodeApply() {
 }
 
 // tests FsmNode::after(const InputTrace& itrc) and FsmNode::after(const vector<int>& itrc)
-void testFsmNodeAfter() {
+void testFsmNodeAfter1() {
 	// n0 has no transition. 
 	// inTrc = [1,2]
 	// => inTrc starts with input for which n0 has no transition.
@@ -9538,6 +9538,158 @@ void testFsmNodeAfter() {
 	}
 }
 
+// tests FsmNode::after(const std::shared_ptr<TraceSegment> seg)
+void testFsmNodeAfter2() {
+	// n0 has no outgoing transition 
+	// seg = [1,2] , 
+	// seg.prefix = std::string::npos => seg can't be completely applied
+	// seg.prefix = 0 => only initial node is reached.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		//shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		//shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		//shared_ptr<FsmNode> n3 = make_shared<FsmNode>(3, pl);
+
+		// n0 --0/0--> n1
+		//n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(0, 0, pl)));
+		
+		shared_ptr<TraceSegment> seg = make_shared<TraceSegment>(make_shared<vector<int>>(vector<int>{1,2}));
+		unordered_set<shared_ptr<FsmNode>> reached = n0->after(seg);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.empty(),
+			"Result of FsmNode::after(const std::shared_ptr<TraceSegment> seg) is empty if seg can't be completely applied to n0.");
+
+		seg = make_shared<TraceSegment>(make_shared<vector<int>>(vector<int>{1, 2}), 0);
+		reached = n0->after(seg);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.size() == 1
+			&& reached.count(n0) == 1,
+			"Result of FsmNode::after(const std::shared_ptr<TraceSegment> seg) is initial node n0 if seg.prefix == 0");
+	}
+
+	// n0 --0/1--> n1; n1 --1/2--> n2; n0 --0/2--> n2; n2 --1/1--> n2
+	// seg = [0,1] , 
+	// seg.prefix = std::string::npos => seg can be completely applied.
+	// seg.prefix = 1 => only prefix of seg can be applied
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		//shared_ptr<FsmNode> n3 = make_shared<FsmNode>(3, pl);
+
+		// n0 --0/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(0, 1, pl)));
+		// n1 --1/2--> n2
+		n1->addTransition(make_shared<FsmTransition>(n1, n2, make_shared<FsmLabel>(1, 2, pl)));
+		// n0 --0/2--> n2
+		n0->addTransition(make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(0, 2, pl)));
+		// n2 --1/1--> n2
+		n2->addTransition(make_shared<FsmTransition>(n2, n2, make_shared<FsmLabel>(1, 1, pl)));
+
+		shared_ptr<TraceSegment> seg = make_shared<TraceSegment>(make_shared<vector<int>>(vector<int>{0, 1}));
+		unordered_set<shared_ptr<FsmNode>> reached = n0->after(seg);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.count(n2) == 1,
+			"Result of FsmNode::after(const std::shared_ptr<TraceSegment> seg) contains each expected FsmNode.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.size() == 1,
+			"Result of FsmNode::after(const std::shared_ptr<TraceSegment> seg) contains only expected FsmNodes.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached == n0->after(*seg->get()),
+			"FsmNode::after(const std::shared_ptr<TraceSegment> seg) == FsmNode::after(const vector<int>& itrc) "
+			"if seg.prefix == string::npos");
+
+		seg->setPrefix(1);
+		reached = n0->after(seg);
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.count(n1) == 1
+			&& reached.count(n2) == 1,
+			"Result of FsmNode::after(const std::shared_ptr<TraceSegment> seg) contains each expected FsmNode.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.size() == 2,
+			"Result of FsmNode::after(const std::shared_ptr<TraceSegment> seg) contains only expected FsmNodes.");
+	}
+
+	// n0 --1/0--> n1; n1 --2/1--> n2; n2 --1/1--> n3;
+	// seg = [1,2,1] , 
+	// seg.prefix = npos => seg can be completely applied.
+	// seg.prefix = 3 => seg can be completely applied (seg.prefix equals size of seg)
+	// seg.prefix = 2 => only prefix of seg can be applied
+	// seg.prefix = 0 => nothing of seg is applied. Only initial node n0 is reached.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		shared_ptr<FsmNode> n3 = make_shared<FsmNode>(3, pl);
+
+		// n0 --1/0--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 0, pl)));
+		// n1 --2/1--> n2
+		n1->addTransition(make_shared<FsmTransition>(n1, n2, make_shared<FsmLabel>(2, 1, pl)));
+		// n2 --1/1--> n3
+		n2->addTransition(make_shared<FsmTransition>(n2, n3, make_shared<FsmLabel>(1, 1, pl)));
+
+		// prefix = string::npos
+		shared_ptr<TraceSegment> seg = make_shared<TraceSegment>(make_shared<vector<int>>(vector<int>{1, 2, 1}));
+		unordered_set<shared_ptr<FsmNode>> reached = n0->after(seg);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.count(n3) == 1,
+			"Result of FsmNode::after(const std::shared_ptr<TraceSegment> seg) contains each expected FsmNode.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.size() == 1,
+			"Result of FsmNode::after(const std::shared_ptr<TraceSegment> seg) contains only expected FsmNodes.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached == n0->after(*seg->get()),
+			"FsmNode::after(const std::shared_ptr<TraceSegment> seg) == FsmNode::after(const vector<int>& itrc) "
+			"if seg.prefix == string::npos");
+
+		// prefix = 3
+		seg->setPrefix(3);
+		reached = n0->after(seg);
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.count(n3) == 1,
+			"Result of FsmNode::after(const std::shared_ptr<TraceSegment> seg) contains each expected FsmNode.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.size() == 1,
+			"Result of FsmNode::after(const std::shared_ptr<TraceSegment> seg) contains only expected FsmNodes.");
+
+		// prefix = 2
+		seg->setPrefix(2);
+		reached = n0->after(seg);
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.count(n2) == 1,
+			"Result of FsmNode::after(const std::shared_ptr<TraceSegment> seg) contains each expected FsmNode.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.size() == 1,
+			"Result of FsmNode::after(const std::shared_ptr<TraceSegment> seg) contains only expected FsmNodes.");
+
+		// prefix = 0
+		seg->setPrefix(0);
+		reached = n0->after(seg);
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.count(n0) == 1,
+			"Result of FsmNode::after(const std::shared_ptr<TraceSegment> seg) contains each expected FsmNode.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.size() == 1,
+			"Result of FsmNode::after(const std::shared_ptr<TraceSegment> seg) contains only expected FsmNodes.");
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -9698,7 +9850,8 @@ int main(int argc, char** argv)
 
 	//testFsmNodeAddTransition();
 	//testFsmNodeApply();
-	testFsmNodeAfter();
+	//testFsmNodeAfter1();
+	testFsmNodeAfter2();
 
 	/*testMinimise();
 	testWMethod();*/
