@@ -9797,6 +9797,129 @@ void testFsmNodeGetDFSMTableRow() {
 	}
 }
 
+// tests FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, shared_ptr<Tree> w)
+// Positive Case (InputTrace returned)
+void testFsmNodeDistinguishedPositive() {
+	// w contains only one Trace ([1,2]). This Trace produces different sets of OutputTraces (distinguishes both FsmNodes.)
+	// n0 --1/1--> n0; n0 --2/2--> n1
+	// o_n0 --1/1--> o_n0; o_n0 --2/2--> o_n1; o_n0 --2/3--> o_n2
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		InputTrace itrc(vector<int>{1, 2}, pl);
+
+		// construction of w.
+		shared_ptr<Tree> w = make_shared<Tree>(make_shared<TreeNode>(), pl);
+		w->addToRoot(itrc.get());
+
+		// construction of first Fsm
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --1/1--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(1, 1, pl)));
+		// n0 --2/2--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(2, 2, pl)));
+
+		// construction of other Fsm
+		shared_ptr<FsmNode> o_n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> o_n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> o_n2 = make_shared<FsmNode>(2, pl);
+		// o_n0 --1/1--> o_n0
+		o_n0->addTransition(make_shared<FsmTransition>(o_n0, o_n0, make_shared<FsmLabel>(1, 1, pl)));
+		// o_n0 --2/2--> o_n1
+		o_n0->addTransition(make_shared<FsmTransition>(o_n0, o_n1, make_shared<FsmLabel>(2, 2, pl)));
+		// o_n0 --2/3--> o_n2
+		o_n0->addTransition(make_shared<FsmTransition>(o_n0, o_n2, make_shared<FsmLabel>(2, 3, pl)));
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			*n0->distinguished(o_n0, w) == itrc
+			&& *o_n0->distinguished(n0, w) == itrc,
+			"FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, shared_ptr<Tree> w) returns pointer to distinguishing trace.");
+	}
+
+	// w contains [1,1] and [1,2]. Only one of the Traces distinguishes the FsmNodes.
+	// n0 --1/1--> n1; n1 --1/1--> n1; n1 --2/0--> n0
+	// o_n0 --1/1--> o_n0; o_n0 --2/1--> o_n1 
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> trc0{ 1,1 };
+		vector<int> trc1{ 1,2 };
+
+		// construction of w.
+		shared_ptr<Tree> w = make_shared<Tree>(make_shared<TreeNode>(), pl);
+		w->addToRoot(trc0);
+		w->addToRoot(trc1);
+
+		// construction of first Fsm
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --1/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl)));
+		// n1 --1/1--> n1
+		n1->addTransition(make_shared<FsmTransition>(n1, n1, make_shared<FsmLabel>(1, 1, pl)));
+		// n1 --2/0--> n0
+		n1->addTransition(make_shared<FsmTransition>(n1, n0, make_shared<FsmLabel>(2, 0, pl)));
+
+		// construction of other Fsm
+		shared_ptr<FsmNode> o_n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> o_n1 = make_shared<FsmNode>(1, pl);
+		// o_n0 --1/1--> o_n0
+		o_n0->addTransition(make_shared<FsmTransition>(o_n0, o_n0, make_shared<FsmLabel>(1, 1, pl)));
+		// o_n0 --2/1--> o_n1
+		o_n0->addTransition(make_shared<FsmTransition>(o_n0, o_n1, make_shared<FsmLabel>(2, 1, pl)));
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			n0->distinguished(o_n0, w)->get() == trc1
+			&& o_n0->distinguished(n0, w)->get() == trc1,
+			"FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, shared_ptr<Tree> w) returns pointer to distinguishing trace.");
+	}
+	// w contains [1,1], [1,2] and [3,4]. More than one Trace distinguishes the FsmNodes.
+	// n0 --1/1--> n1; n1 --1/0--> n1; n1 --2/1--> n0; n0 --3/3--> n2
+	// o_n0 --1/1--> o_n1; o_n1 --1/0--> o_n0; o_n0 --3/3--> o_n2; o_n2 --4/3--> o_n2
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> trc0{ 1,1 };
+		vector<int> trc1{ 1,2 };
+		vector<int> trc2{ 3,4 };
+
+		// construction of w.
+		shared_ptr<Tree> w = make_shared<Tree>(make_shared<TreeNode>(), pl);
+		w->addToRoot(trc0);
+		w->addToRoot(trc1);
+		w->addToRoot(trc2);
+
+		// construction of first Fsm
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		// n0 --1/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl)));
+		// n1 --1/0--> n1
+		n1->addTransition(make_shared<FsmTransition>(n1, n1, make_shared<FsmLabel>(1, 0, pl)));
+		// n1 --2/1--> n0
+		n1->addTransition(make_shared<FsmTransition>(n1, n0, make_shared<FsmLabel>(2, 1, pl)));
+		// n0 --3/3--> n2
+		n0->addTransition(make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(3, 3, pl)));
+
+		// construction of other Fsm
+		shared_ptr<FsmNode> o_n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> o_n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> o_n2 = make_shared<FsmNode>(2, pl);
+		// o_n0 --1/1--> o_n1
+		o_n0->addTransition(make_shared<FsmTransition>(o_n0, o_n1, make_shared<FsmLabel>(1, 1, pl)));
+		// o_n1 --1/0--> o_n0
+		o_n1->addTransition(make_shared<FsmTransition>(o_n1, o_n0, make_shared<FsmLabel>(1, 0, pl)));
+		// o_n0 --3/3--> o_n2
+		o_n0->addTransition(make_shared<FsmTransition>(o_n0, o_n2, make_shared<FsmLabel>(3, 3, pl)));
+		// o_n2 --4/3--> o_n2
+		o_n2->addTransition(make_shared<FsmTransition>(o_n2, o_n2, make_shared<FsmLabel>(4, 3, pl)));
+		fsmlib_assert("TC-FsmNode-NNNN",
+			(n0->distinguished(o_n0, w)->get() == trc1 || n0->distinguished(o_n0, w)->get() == trc2)
+			&& (o_n0->distinguished(n0, w)->get() == trc1 || o_n0->distinguished(n0, w)->get() == trc2),
+			"FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, shared_ptr<Tree> w) returns pointer to distinguishing trace.");
+	}
+
+}
+
 int main(int argc, char** argv)
 {
     
@@ -9959,7 +10082,8 @@ int main(int argc, char** argv)
 	//testFsmNodeApply();
 	//testFsmNodeAfter1();
 	//testFsmNodeAfter2();
-	testFsmNodeGetDFSMTableRow();
+	//testFsmNodeGetDFSMTableRow();
+	testFsmNodeDistinguishedPositive();
 
 	/*testMinimise();
 	testWMethod();*/
