@@ -10030,6 +10030,33 @@ void testFsmNodeDistinguishedNegative() {
 			"FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, shared_ptr<Tree> w) returns nullptr "
 			"if both FsmNodes can't be distinguished by w.");
 	}
+
+	IOListContainer iolc(5, 10, 10, make_shared<FsmPresentationLayer>());
+}
+
+// tests FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode, const vector<shared_ptr<PkTable>>& pktblLst, const int maxInput)
+void testFsmNodeCalcDistinguishingTrace() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	Dfsm dfsm("../../../resources/TC-FsmNode-calcDistinguishingTrace1.fsm", pl, "m1");
+	const int maxInput = 4;
+
+	//dfsm = dfsm.minimise();
+	dfsm.calcPkTables();
+	vector<shared_ptr<PkTable>> pkTables = dfsm.getPktblLst();
+	
+	vector<shared_ptr<FsmNode>> nodes = dfsm.getNodes();
+	for (shared_ptr<FsmNode> n : nodes) {
+		for (shared_ptr<FsmNode> o_n : nodes) {
+			if (n != o_n) {
+				InputTrace distTrc = n->calcDistinguishingTrace(o_n, dfsm.getPktblLst(), maxInput);
+				std::cout << distTrc << endl;
+			}
+			else {
+				cout << "n != o_n" << endl;
+			}
+			
+		}
+	}
 }
 
 int main(int argc, char** argv)
@@ -10196,7 +10223,8 @@ int main(int argc, char** argv)
 	//testFsmNodeAfter2();
 	//testFsmNodeGetDFSMTableRow();
 	//testFsmNodeDistinguishedPositive();
-	testFsmNodeDistinguishedNegative();
+	//testFsmNodeDistinguishedNegative();
+	testFsmNodeCalcDistinguishingTrace();
 
 	/*testMinimise();
 	testWMethod();*/
