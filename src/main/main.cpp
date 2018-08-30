@@ -9917,7 +9917,93 @@ void testFsmNodeDistinguishedPositive() {
 			&& (o_n0->distinguished(n0, w)->get() == trc1 || o_n0->distinguished(n0, w)->get() == trc2),
 			"FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, shared_ptr<Tree> w) returns pointer to distinguishing trace.");
 	}
+}
 
+// tests FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, shared_ptr<Tree> w)
+// Positive Case (InputTrace returned)
+void testFsmNodeDistinguishedNegative() {
+	// w contains only one Trace ([1,2]). This Trace doesn't distinguish the FsmNodes.
+	// n0 --1/1--> n0; n0 --2/0--> n1
+	// o_n0 --1/1--> o_n0; o_n0 --2/0--> o_n0
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		InputTrace itrc(vector<int>{1, 2}, pl);
+
+		// construction of w.
+		shared_ptr<Tree> w = make_shared<Tree>(make_shared<TreeNode>(), pl);
+		w->addToRoot(itrc.get());
+
+		// construction of first Fsm
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --1/1--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(1, 1, pl)));
+		// n0 --2/0--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(2, 0, pl)));
+
+		// construction of other Fsm
+		shared_ptr<FsmNode> o_n0 = make_shared<FsmNode>(0, pl);
+		// o_n0 --1/1--> o_n0
+		o_n0->addTransition(make_shared<FsmTransition>(o_n0, o_n0, make_shared<FsmLabel>(1, 1, pl)));
+		// o_n0 --2/0--> o_n0
+		o_n0->addTransition(make_shared<FsmTransition>(o_n0, o_n0, make_shared<FsmLabel>(2, 0, pl)));
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			n0->distinguished(o_n0, w) == nullptr
+			&& o_n0->distinguished(n0, w) == nullptr,
+			"FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, shared_ptr<Tree> w) returns nullptr "
+			"if both FsmNodes can't be distinguished by w.");
+	}
+
+	// w contains [1,1] and [1,2]. 
+	// n0 --1/1--> n1; n0 --1/0--> n1; n1 --1/1--> n1; n1 --2/2--> n2
+	// o_n0 --1/1--> o_n1; o_n0 --1/0--> o_n2; o_n1 --1/1--> o_n1; o_n1 --2/2--> o_n2; o_n2 --1/1--> o_n2; o_n2 --2/2--> o_n1
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<int> trc0{ 1,1 };
+		vector<int> trc1{ 1,2 };
+
+		// construction of w.
+		shared_ptr<Tree> w = make_shared<Tree>(make_shared<TreeNode>(), pl);
+		w->addToRoot(trc0);
+		w->addToRoot(trc1);
+
+		// construction of first Fsm
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		// n0 --1/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl)));
+		// n0 --1/0--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 0, pl)));
+		// n1 --1/1--> n1
+		n1->addTransition(make_shared<FsmTransition>(n1, n1, make_shared<FsmLabel>(1, 1, pl)));
+		// n1 --2/2--> n2
+		n1->addTransition(make_shared<FsmTransition>(n1, n2, make_shared<FsmLabel>(2, 2, pl)));
+
+		// construction of other Fsm
+		shared_ptr<FsmNode> o_n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> o_n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> o_n2 = make_shared<FsmNode>(2, pl);
+		// o_n0 --1/1--> o_n1
+		o_n0->addTransition(make_shared<FsmTransition>(o_n0, o_n1, make_shared<FsmLabel>(1, 1, pl)));
+		// o_n0 --1/0--> o_n2
+		o_n0->addTransition(make_shared<FsmTransition>(o_n0, o_n2, make_shared<FsmLabel>(1, 0, pl)));
+		// o_n1 --1/1--> o_n1
+		o_n1->addTransition(make_shared<FsmTransition>(o_n1, o_n1, make_shared<FsmLabel>(1, 1, pl)));
+		// o_n1 --2/2--> o_n2
+		o_n1->addTransition(make_shared<FsmTransition>(o_n1, o_n2, make_shared<FsmLabel>(2, 2, pl)));
+		// o_n2 --1/1--> o_n2
+		o_n2->addTransition(make_shared<FsmTransition>(o_n2, o_n2, make_shared<FsmLabel>(1, 1, pl)));
+		// o_n2 --2/2--> o_n1
+		o_n2->addTransition(make_shared<FsmTransition>(o_n2, o_n1, make_shared<FsmLabel>(2, 2, pl)));
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			n0->distinguished(o_n0, w) == nullptr
+			&& o_n0->distinguished(n0, w) == nullptr,
+			"FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, shared_ptr<Tree> w) returns nullptr "
+			"if both FsmNodes can't be distinguished by w.");
+	}
 }
 
 int main(int argc, char** argv)
@@ -10083,7 +10169,8 @@ int main(int argc, char** argv)
 	//testFsmNodeAfter1();
 	//testFsmNodeAfter2();
 	//testFsmNodeGetDFSMTableRow();
-	testFsmNodeDistinguishedPositive();
+	//testFsmNodeDistinguishedPositive();
+	testFsmNodeDistinguishedNegative();
 
 	/*testMinimise();
 	testWMethod();*/
