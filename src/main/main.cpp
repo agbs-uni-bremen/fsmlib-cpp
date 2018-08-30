@@ -9920,8 +9920,34 @@ void testFsmNodeDistinguishedPositive() {
 }
 
 // tests FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, shared_ptr<Tree> w)
-// Positive Case (InputTrace returned)
+// Negative Case (nullptr returned)
 void testFsmNodeDistinguishedNegative() {
+	// w is empty. 
+	// n0 --0/0--> n0
+	// o_n0 --0/1--> o_n0
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+		// construction of w.
+		shared_ptr<Tree> w = make_shared<Tree>(make_shared<TreeNode>(), pl);
+
+		// construction of first Fsm
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+
+		// construction of other Fsm
+		shared_ptr<FsmNode> o_n0 = make_shared<FsmNode>(0, pl);
+		// o_n0 --0/1--> o_n0
+		o_n0->addTransition(make_shared<FsmTransition>(o_n0, o_n0, make_shared<FsmLabel>(0, 1, pl)));
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			n0->distinguished(o_n0, w) == nullptr
+			&& o_n0->distinguished(n0, w) == nullptr,
+			"FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, shared_ptr<Tree> w) returns nullptr "
+			"if both FsmNodes can't be distinguished by w.");
+	}
+
 	// w contains only one Trace ([1,2]). This Trace doesn't distinguish the FsmNodes.
 	// n0 --1/1--> n0; n0 --2/0--> n1
 	// o_n0 --1/1--> o_n0; o_n0 --2/0--> o_n0
