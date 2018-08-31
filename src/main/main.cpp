@@ -10034,29 +10034,241 @@ void testFsmNodeDistinguishedNegative() {
 	IOListContainer iolc(5, 10, 10, make_shared<FsmPresentationLayer>());
 }
 
-// tests FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode, const vector<shared_ptr<PkTable>>& pktblLst, const int maxInput)
-void testFsmNodeCalcDistinguishingTrace() {
-	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	Dfsm dfsm("../../../resources/TC-FsmNode-calcDistinguishingTrace1.fsm", pl, "m1");
-	const int maxInput = 4;
-
-	//dfsm = dfsm.minimise();
-	dfsm.calcPkTables();
-	vector<shared_ptr<PkTable>> pkTables = dfsm.getPktblLst();
-	
-	vector<shared_ptr<FsmNode>> nodes = dfsm.getNodes();
+// Calculates the distinguishing trace for each pair of FsmNodes in nodes with 
+// FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode, const vector<shared_ptr<PkTable>>& pktblLst, const int maxInput).
+// Checks if the calculated trace really distinguishes the current pair.
+// If the calculated trace is empty, both FsmNodes have to be equivalent.
+bool checkCalcDistinguishingTraceForAllPairs(const vector<shared_ptr<FsmNode>> &nodes,
+	const vector<shared_ptr<PkTable>> &pkTables, const int maxInput) {
 	for (shared_ptr<FsmNode> n : nodes) {
 		for (shared_ptr<FsmNode> o_n : nodes) {
-			if (n != o_n) {
-				InputTrace distTrc = n->calcDistinguishingTrace(o_n, dfsm.getPktblLst(), maxInput);
-				std::cout << distTrc << endl;
+			InputTrace distTrc = n->calcDistinguishingTrace(o_n, pkTables, maxInput);
+			if (distTrc.size() > 0) {
+				if (not n->distinguished(o_n, distTrc.get())) {
+					return false;
+				}					
 			}
+			// distTrace.size() == 0 => n ~ o_n
 			else {
-				cout << "n != o_n" << endl;
+				if (pkTables.at(pkTables.size() - 1)->getClass(n->getId()) != pkTables.at(pkTables.size() - 1)->getClass(o_n->getId())) {
+					return false;
+				}
 			}
-			
 		}
 	}
+	return true;
+}
+
+// tests FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode, const vector<shared_ptr<PkTable>>& pktblLst, const int maxInput)
+void testFsmNodeCalcDistinguishingTrace1() {
+	// using the Dfsm specified at "../../../resources/TC-FsmNode-calcDistinguishingTrace1.fsm" (already minimal, completely specified)
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		Dfsm dfsm("../../../resources/TC-FsmNode-calcDistinguishingTrace1.fsm", pl, "m1");
+		const int maxInput = 4;
+
+		dfsm.calcPkTables();
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			checkCalcDistinguishingTraceForAllPairs(dfsm.getNodes(), dfsm.getPktblLst(), maxInput),
+			"Result of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode, const vector<shared_ptr<PkTable>>& pktblLst, const int maxInput)"
+			" is empty if both FsmNodes can't be distinguished. Otherwise it's a non-empty trace that distinguishes both FsmNodes.");
+	}
+
+	// using the Dfsm specified at "../../../resources/TC-FsmNode-calcDistinguishingTrace1.fsm" (not minimal, completely specified)
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		Dfsm dfsm("../../../resources/TC-FsmNode-calcDistinguishingTrace2.fsm", pl, "m1");
+		const int maxInput = 2;
+
+		dfsm.calcPkTables();
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			checkCalcDistinguishingTraceForAllPairs(dfsm.getNodes(), dfsm.getPktblLst(), maxInput),
+			"Result of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode, const vector<shared_ptr<PkTable>>& pktblLst, const int maxInput)"
+			" is empty if both FsmNodes can't be distinguished. Otherwise it's a non-empty trace that distinguishes both FsmNodes.");
+	}
+
+	// calculating and using random DFSMs. Testing each pair of FsmNodes.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		for (int maxNodes = 1; maxNodes <= 13; ++maxNodes) {
+			for (int io = 0; io <= 3; ++io) {
+				Dfsm dfsm("m", maxNodes, io, io, pl);
+				dfsm.calcPkTables();
+				fsmlib_assert("TC-FsmNode-NNNN",
+					checkCalcDistinguishingTraceForAllPairs(dfsm.getNodes(), dfsm.getPktblLst(), io),
+					"Result of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode, const vector<shared_ptr<PkTable>>& pktblLst, const int maxInput)"
+					" is empty if both FsmNodes can't be distinguished. Otherwise it's a non-empty trace that distinguishes both FsmNodes.");
+			}
+		}
+	}
+}
+
+// This is a class only used for tests. It can be used to access protected attributes and methods.
+class FsmTest : public Fsm{
+public:
+	FsmTest(const std::string& fname, const std::shared_ptr<FsmPresentationLayer> presentationLayer,
+		const std::string& fsmName): Fsm(fname, presentationLayer, fsmName){
+	}
+
+	FsmTest(const std::string & fsmName,
+		const int maxInput,
+		const int maxOutput,
+		const std::vector<std::shared_ptr<FsmNode>> lst,
+		const std::shared_ptr<FsmPresentationLayer> presentationLayer): Fsm(fsmName, maxInput, maxOutput, lst, presentationLayer){}
+
+	std::vector<std::shared_ptr<OFSMTable>> getOfsmTableLst(){
+		return ofsmTableLst;
+	}
+
+	void calcOFSMTables() {
+		Fsm::calcOFSMTables();
+	}
+
+	static std::shared_ptr<FsmTest>
+		createRandomFsmTest(const std::string & fsmName, const int maxInput, const int maxOutput, const int maxState,
+			const std::shared_ptr<FsmPresentationLayer> presentationLayer, const unsigned seed = 0) {
+		shared_ptr<Fsm> fsm = Fsm::createRandomFsm(fsmName, maxInput, maxOutput, maxState, presentationLayer, seed);
+		return make_shared<FsmTest>(fsm->getName(), fsm->getMaxInput(), fsm->getMaxOutput(), fsm->getNodes(), fsm->getPresentationLayer());
+	}
+	//Fsm(name + "_O", maxInput, maxOutput, nodeLst, obsPl)
+	FsmTest transformToObservableFSM() const{
+		Fsm fsm = Fsm::transformToObservableFSM();
+		return FsmTest(fsm.getName(), fsm.getMaxInput(), fsm.getMaxOutput(), fsm.getNodes(), fsm.getPresentationLayer());
+	}
+};
+
+// Calculates the distinguishing trace for each pair of FsmNodes in nodes with 
+// calcDistinguishingTrace(const std::shared_ptr<FsmNode> otherNode, const std::vector<std::shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput).
+// Checks if the calculated trace really distinguishes the current pair.
+// If the calculated trace is empty, both FsmNodes have to be equivalent.
+bool checkCalcDistinguishingTraceForAllPairs(const vector<shared_ptr<FsmNode>> &nodes,
+	const vector<shared_ptr<OFSMTable>> &ofsmTables, const int maxInput, const int maxOutput) {
+	for (shared_ptr<FsmNode> n : nodes) {
+		for (shared_ptr<FsmNode> o_n : nodes) {
+			InputTrace distTrc = n->calcDistinguishingTrace(o_n, ofsmTables, maxInput, maxOutput);
+			if (distTrc.size() > 0) {
+				if (not n->distinguished(o_n, distTrc.get())) {
+					return false;
+				}
+			}
+			// distTrace.size() == 0 => n ~ o_n
+			else {
+				S2CMap s2c = ofsmTables.at(ofsmTables.size() - 1)->getS2C();
+				if (s2c.at(n->getId()) != s2c.at(o_n->getId())) {
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+}
+
+// tests calcDistinguishingTrace(const std::shared_ptr<FsmNode> otherNode, const std::vector<std::shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput);
+void testFsmNodeCalcDistinguishingTrace2() {
+	// using FSM specified at "../../../resources/TC-FsmNode-calcDistinguishingTrace3.fsm" (completely specified and observable) 
+	{
+		const int maxInput = 1;
+		const int maxOutput = 1;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		FsmTest fsm_t("../../../resources/TC-FsmNode-calcDistinguishingTrace3.fsm", pl, "M");
+		fsm_t.calcOFSMTables();
+		
+		fsmlib_assert("TC-FsmNode-NNNN",
+			checkCalcDistinguishingTraceForAllPairs(fsm_t.getNodes(), fsm_t.getOfsmTableLst(), maxInput, maxOutput),
+			"Result of "
+			"calcDistinguishingTrace(const std::shared_ptr<FsmNode> otherNode, const std::vector<std::shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput)"
+			" is empty if both FsmNodes can't be distinguished. Otherwise it's a non-empty trace that distinguishes both FsmNodes.");
+	}
+
+	// using test case from the script (page 54 / example 3) (specified at "../../../resources/TC-FsmNode-calcDistinguishingTrace4.fsm")
+	// This FSM is nondeterministic, observable and minimal
+	{
+		const int maxInput = 1;
+		const int maxOutput = 1;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		FsmTest fsm_t("../../../resources/TC-FsmNode-calcDistinguishingTrace4.fsm", pl, "M");
+		fsm_t.calcOFSMTables();
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			checkCalcDistinguishingTraceForAllPairs(fsm_t.getNodes(), fsm_t.getOfsmTableLst(), maxInput, maxOutput),
+			"Result of "
+			"calcDistinguishingTrace(const std::shared_ptr<FsmNode> otherNode, const std::vector<std::shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput)"
+			" is empty if both FsmNodes can't be distinguished. Otherwise it's a non-empty trace that distinguishes both FsmNodes.");
+	}
+
+	// calculating and using random DFSMs. Testing each pair of FsmNodes.
+	{
+		
+
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		for (int maxState = 0; maxState <= 6; ++maxState) {
+			for (int io = 0; io <= 3; ++io) {
+
+				FsmTest o_fsm_t = FsmTest::createRandomFsmTest("M", io, io, maxState, pl)->transformToObservableFSM();
+				o_fsm_t.calcOFSMTables();
+
+				fsmlib_assert("TC-FsmNode-NNNN",
+					checkCalcDistinguishingTraceForAllPairs(o_fsm_t.getNodes(), o_fsm_t.getOfsmTableLst(), io, io),
+					"Result of "
+					"calcDistinguishingTrace(const std::shared_ptr<FsmNode> otherNode, const std::vector<std::shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput)"
+					" is empty if both FsmNodes can't be distinguished. Otherwise it's a non-empty trace that distinguishes both FsmNodes.");
+			}
+		}
+	}
+}
+
+// tests FsmNode::isObservable()
+void testFsmNodeIsObservable() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+	// positive case:
+	{
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			n0->isObservable(),
+			"FsmNode::isObservable() returns true if n0 has no outgoing transition.");
+
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+		fsmlib_assert("TC-FsmNode-NNNN",
+			n0->isObservable(),
+			"FsmNode::isObservable() returns true if each outgoing transition of n0 has a unique label.");
+
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --0/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(0, 1, pl)));
+		fsmlib_assert("TC-FsmNode-NNNN",
+			n0->isObservable(),
+			"FsmNode::isObservable() returns true if each outgoing transition of n0 has a unique label.");
+	}
+
+	// negative case:
+	{
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+
+		// n0 --0/1--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 1, pl)));
+		// n0 --0/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(0, 1, pl)));
+		// n0 --1/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl)));
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			not n0->isObservable(),
+			"FsmNode::isObservable() returns false if n0 has more than one outgoing transition with the same label.");
+
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		// n0 --1/1--> n2
+		n0->addTransition(make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(1, 1, pl)));
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			not n0->isObservable(),
+			"FsmNode::isObservable() returns false if n0 has more than one outgoing transition with the same label.");
+	}
+
 }
 
 int main(int argc, char** argv)
@@ -10224,7 +10436,9 @@ int main(int argc, char** argv)
 	//testFsmNodeGetDFSMTableRow();
 	//testFsmNodeDistinguishedPositive();
 	//testFsmNodeDistinguishedNegative();
-	testFsmNodeCalcDistinguishingTrace();
+	//testFsmNodeCalcDistinguishingTrace1();
+	//testFsmNodeCalcDistinguishingTrace2();
+	testFsmNodeIsObservable();
 
 	/*testMinimise();
 	testWMethod();*/
