@@ -3,12 +3,21 @@
 
 LogCoordinator &LogCoordinator::getStandardLogger() {
     static LogCoordinator standardLogger = LogCoordinator();
-    standardLogger.bindAllToStream(std::cout);
     return standardLogger;
 }
 
 LogCoordinator::LogCoordinator() : defaultStream(devNull) {
     this->devNull.setstate(std::ios::badbit);
+}
+
+void LogCoordinator::createLogTargetAndBind(std::string const &name, std::ostream &stream) {
+    if(this->streams.count(name) == 0) {
+        this->streams.emplace(std::piecewise_construct, std::tuple<std::string const &>(name), std::tuple<std::ostream &>(stream));
+    }
+}
+
+void LogCoordinator::createLogTarget(std::string const &name) {
+    this->createLogTargetAndBind(name, this->defaultStream);
 }
 
 void LogCoordinator::setDefaultStream(std::ostream &stream) {
@@ -36,7 +45,7 @@ void LogCoordinator::bindAllToDevNull() {
 
 std::reference_wrapper<std::ostream> &LogCoordinator::operator[](std::string const &name) {
     if(this->streams.count(name) == 0) {
-        this->streams.emplace(std::piecewise_construct, std::tuple<std::string const &>(name), std::tuple<std::ostream &>(this->defaultStream));
+        this->createLogTarget(name);
     }
     return this->streams.at(name);
 }

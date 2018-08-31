@@ -275,7 +275,7 @@ struct AdaptiveTestResult
 void assertInconclusive(string tc, string comment = "") {
     
     string sVerdict("INCONCLUSIVE");
-    LOG("INFO") << sVerdict << ": " << tc << " : " << comment <<  endl;
+    LOG("INFO") << sVerdict << ": " << tc << " : " << comment <<  endl << std::endl;
 }
 
 void fsmlib_assert(string tc, bool verdict, string comment = "") {
@@ -287,7 +287,7 @@ void fsmlib_assert(string tc, bool verdict, string comment = "") {
         out += ": " + comment;
     }
 
-    LOG("INFO") << out;
+    LOG("INFO") << out << std::endl;
 }
 
 void assertOnFail(string tc, bool verdict, string comment = "") {
@@ -295,11 +295,11 @@ void assertOnFail(string tc, bool verdict, string comment = "") {
     string sVerdict = (verdict) ? "PASS: " + tc : "FAIL: " + tc + ": " + comment;
     if (verdict)
     {
-        LOG("INFO") << sVerdict;
+        LOG("INFO") << sVerdict << std::endl;
     }
     else
     {
-        LOG("ERROR") << sVerdict;
+        LOG("ERROR") << sVerdict << std::endl;
     }
 }
 
@@ -1326,7 +1326,7 @@ string getFieldFromResult(const AdaptiveTestResult& result, const CsvField& fiel
         out << result.pass;
         break;
     default:
-        LOG("FATAL") << "Unhandled case in CSV Logging.";
+        LOG("FATAL") << "Unhandled case in CSV Logging." << std::endl;
     }
     return out.str();
 }
@@ -1486,8 +1486,8 @@ ofstream newCsvFile(string testName, const CsvConfig& csvConfig)
 
 void printTestBegin(string name)
 {
-    LOG("INFO") << "#################### Test " << name << " ####################";
-    LOG("INFO") << "-------------------- Test " << name << " --------------------";
+    LOG("INFO") << "#################### Test " << name << " ####################" << std::endl;
+    LOG("INFO") << "-------------------- Test " << name << " --------------------" << std::endl;
 }
 
 void printSummary(const string& testName,
@@ -1497,56 +1497,56 @@ void printSummary(const string& testName,
                   const long& durationS,
                   const long& durationM)
 {
-    LOG("INFO") << "#################### SUMMARY ####################";
-    LOG("INFO") << "# Test name    : " << testName;
-    LOG("INFO") << "# Total tests  : " << executed;
-    LOG("INFO") << "# Passed       : " << passed;
-    LOG("INFO") << "# Failed       : " << executed - passed;
-    LOG("INFO") << "# Not executed : " << notExecuted;
-    LOG("INFO") << "# Duration     : " << durationS << " s (" << durationM << " min).";
-    LOG("INFO") << "#################################################" << endl;
+    LOG("INFO") << "#################### SUMMARY ####################" << std::endl;
+    LOG("INFO") << "# Test name    : " << testName << std::endl;
+    LOG("INFO") << "# Total tests  : " << executed << std::endl;
+    LOG("INFO") << "# Passed       : " << passed << std::endl;
+    LOG("INFO") << "# Failed       : " << executed - passed << std::endl;
+    LOG("INFO") << "# Not executed : " << notExecuted << std::endl;
+    LOG("INFO") << "# Duration     : " << durationS << " s (" << durationM << " min)." << std::endl;
+    LOG("INFO") << "#################################################" << endl << std::endl;
 }
 
 void printTestConfig(const AdaptiveTestConfig& config)
 {
-    LOG("INFO") << "-------------------- Test Config --------------------";
-    LOG("INFO") << "numFsm: " << config.numFsm;
-    LOG("INFO") << "minInput: " << config.minInput + 1;
-    LOG("INFO") << "maxInput: " << config.maxInput + 1;
-    LOG("INFO") << "minOutput: " << config.minOutput + 1;
-    LOG("INFO") << "maxOutput: " << config.maxOutput + 1;
-    LOG("INFO") << "minStates: " << config.minStates + 1;
-    LOG("INFO") << "maxStates: " << config.maxStates + 1;
+    LOG("INFO") << "-------------------- Test Config --------------------" << std::endl;
+    LOG("INFO") << "numFsm: " << config.numFsm << std::endl;
+    LOG("INFO") << "minInput: " << config.minInput + 1 << std::endl;
+    LOG("INFO") << "maxInput: " << config.maxInput + 1 << std::endl;
+    LOG("INFO") << "minOutput: " << config.minOutput + 1 << std::endl;
+    LOG("INFO") << "maxOutput: " << config.maxOutput + 1 << std::endl;
+    LOG("INFO") << "minStates: " << config.minStates + 1 << std::endl;
+    LOG("INFO") << "maxStates: " << config.maxStates + 1 << std::endl;
 
-    LOG("INFO") << "minOutFaults: " << config.minOutFaults;
-    LOG("INFO") << "maxOutFaults: " << config.maxOutFaults;
-    LOG("INFO") << "minTransFaults: " << config.minTransFaults;
-    LOG("INFO") << "maxTransFaults: " << config.maxTransFaults;
+    LOG("INFO") << "minOutFaults: " << config.minOutFaults << std::endl;
+    LOG("INFO") << "maxOutFaults: " << config.maxOutFaults << std::endl;
+    LOG("INFO") << "minTransFaults: " << config.minTransFaults << std::endl;
+    LOG("INFO") << "maxTransFaults: " << config.maxTransFaults << std::endl;
 
-    LOG("INFO") << "minDegreeOfCompleteness: " << config.minDegreeOfCompleteness;
-    LOG("INFO") << "maxDegreeOfCompleteness: " << config.maxDegreeOfCompleteness;
-    LOG("INFO") << "maxDegreeOfNonDeterminism: " << config.maxDegreeOfNonDeterminism;
+    LOG("INFO") << "minDegreeOfCompleteness: " << config.minDegreeOfCompleteness << std::endl;
+    LOG("INFO") << "maxDegreeOfCompleteness: " << config.maxDegreeOfCompleteness << std::endl;
+    LOG("INFO") << "maxDegreeOfNonDeterminism: " << config.maxDegreeOfNonDeterminism << std::endl;
 
-    LOG("INFO") << "dontTestReductions: " << std::boolalpha << config.dontTestReductions;
-    LOG("INFO") << "forceTestParameters: " << std::boolalpha << config.forceTestParameters;
-    LOG("INFO") << "seed: " << config.seed;
-    LOG("INFO") << "--------------------------------------------------------";
+    LOG("INFO") << "dontTestReductions: " << std::boolalpha << config.dontTestReductions << std::endl;
+    LOG("INFO") << "forceTestParameters: " << std::boolalpha << config.forceTestParameters << std::endl;
+    LOG("INFO") << "seed: " << config.seed << std::endl;
+    LOG("INFO") << "--------------------------------------------------------" << std::endl;
 }
 
 void printTestResult(AdaptiveTestResult& result, const CsvConfig& csvConfig,
                      const LoggingConfig& loggingConfig, ofstream& csvOut)
 {
 
-    LOG("INFO") << "Test                       : " << result.testName;
-    LOG("INFO") << "numStates                  : " << result.numStates;
-    LOG("INFO") << "numInputs                  : " << result.numInputs;
-    LOG("INFO") << "numOutputs                 : " << result.numOutputs;
-    LOG("INFO") << "numDReachableStates        : " << result.numDReachableStates;
+    LOG("INFO") << "Test                       : " << result.testName << std::endl;
+    LOG("INFO") << "numStates                  : " << result.numStates << std::endl;
+    LOG("INFO") << "numInputs                  : " << result.numInputs << std::endl;
+    LOG("INFO") << "numOutputs                 : " << result.numOutputs << std::endl;
+    LOG("INFO") << "numDReachableStates        : " << result.numDReachableStates << std::endl;
 
 
     if (loggingConfig.printSetsOfMaximalRDistStates)
     {
-        LOG("INFO") << "setsOfMaximalRDistStates   : ";
+        LOG("INFO") << "setsOfMaximalRDistStates   : " << std::endl;
         for (auto v : result.setsOfMaximalRDistStates)
         {
             stringstream ss;
@@ -1556,46 +1556,46 @@ void printTestResult(AdaptiveTestResult& result, const CsvConfig& csvConfig,
                 ss << e->getName() << ", ";
             }
             ss << "}";
-            LOG("INFO") << ss.str();
+            LOG("INFO") << ss.str() << std::endl;
         }
     }
 
-    LOG("INFO") << "numSetsOfMaximalRDistStates: " << result.numSetsOfMaximalRDistStates;
-    LOG("INFO") << "numOutFaults               : " << result.numOutFaults;
-    LOG("INFO") << "numTransFaults             : " << result.numTransFaults;
-    LOG("INFO") << "degreeOfCompleteness       : " << result.degreeOfCompleteness;
-    LOG("INFO") << "degreeOfNonDeterminism     : " << result.degreeOfNonDeterminism;
-    LOG("INFO") << "iutIsReduction             : " << std::boolalpha << result.iutIsReduction;
-    LOG("INFO") << "removedTransitions         : " << result.removedTransitions;
+    LOG("INFO") << "numSetsOfMaximalRDistStates: " << result.numSetsOfMaximalRDistStates << std::endl;
+    LOG("INFO") << "numOutFaults               : " << result.numOutFaults << std::endl;
+    LOG("INFO") << "numTransFaults             : " << result.numTransFaults << std::endl;
+    LOG("INFO") << "degreeOfCompleteness       : " << result.degreeOfCompleteness << std::endl;
+    LOG("INFO") << "degreeOfNonDeterminism     : " << result.degreeOfNonDeterminism << std::endl;
+    LOG("INFO") << "iutIsReduction             : " << std::boolalpha << result.iutIsReduction << std::endl;
+    LOG("INFO") << "removedTransitions         : " << result.removedTransitions << std::endl;
     if (result.failTraceFound)
     {
-        LOG("INFO") << "failTraceFound             : " << *result.failTraceFound;
+        LOG("INFO") << "failTraceFound             : " << *result.failTraceFound << std::endl;
     }
     else
     {
-        LOG("INFO") << "failTraceFound             : None";
+        LOG("INFO") << "failTraceFound             : None" << std::endl;
     }
     LOG("INFO") << "adaptiveStateCountingResult: " << std::boolalpha
                                       << result.adaptiveStateCountingResult;
     if (result.createRandomFsmSeed != 0)
     {
-        LOG("INFO") << "createRandomFsmSeed        : " << result.createRandomFsmSeed;
+        LOG("INFO") << "createRandomFsmSeed        : " << result.createRandomFsmSeed << std::endl;
     }
     if (result.createMutantSeed != 0)
     {
-        LOG("INFO") << "createMutantSeed           : " << result.createMutantSeed;
+        LOG("INFO") << "createMutantSeed           : " << result.createMutantSeed << std::endl;
     }
-    LOG("INFO") << "longestObservedTrace       : " << *result.longestObservedTrace;
-    LOG("INFO") << "length longestObservedTrace: " << result.longestObservedTrace->size();
-    LOG("INFO") << "observedTraces size        : " << result.numObservedTraces;
+    LOG("INFO") << "longestObservedTrace       : " << *result.longestObservedTrace << std::endl;
+    LOG("INFO") << "length longestObservedTrace: " << result.longestObservedTrace->size() << std::endl;
+    LOG("INFO") << "observedTraces size        : " << result.numObservedTraces << std::endl;
     if (loggingConfig.printObservedTraces)
     {
-        LOG("INFO") << "observedTraces             : " << result.observedTraces;
+        LOG("INFO") << "observedTraces             : " << result.observedTraces << std::endl;
     }
-    LOG("INFO") << "iterations                 : " << result.iterations;
+    LOG("INFO") << "iterations                 : " << result.iterations << std::endl;
     LOG("INFO") << "Calculation took " << result.durationMS << " ms ("
                                       << result.durationM << " minutes).";
-    LOG("INFO") << "-------------------------------------------";
+    LOG("INFO") << "-------------------------------------------" << std::endl;
 
     if (csvConfig.logEveryIteration)
     {
@@ -1654,7 +1654,7 @@ void executeAdaptiveTest(const string& testName, Fsm& spec, Fsm& iut, size_t m, 
     }
 
     if (result.iutIsReduction && dontTestReductions) {
-        LOG("INFO") << "Won't test this one, since it is a reduction.";
+        LOG("INFO") << "Won't test this one, since it is a reduction." << std::endl;
         throw unexpected_reduction("Interrupting testing, since IUT is an unexcpected reduction of the specification.");
     }
 
@@ -1700,22 +1700,22 @@ void createAndExecuteAdaptiveTest(
         AdaptiveTestResult& result)
 {
 
-    LOG("INFO") << testSepLine;
-    LOG("INFO") << "createAndExecuteAdaptiveTest()";
-    LOG("INFO") << "Name                     : " << result.testName;
-    LOG("INFO") << "numStates                : " << numStates + 1;
-    LOG("INFO") << "numInputs                : " << numInputs + 1;
-    LOG("INFO") << "numOutputs               : " << numOutputs + 1;
-    LOG("INFO") << "numOutFaults             : " << numOutFaults;
-    LOG("INFO") << "numTransFaults           : " << numTransFaults;
-    LOG("INFO") << "degreeOfCompleteness     : " << degreeOfCompleteness;
-    LOG("INFO") << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism;
-    LOG("INFO") << "createReduction          : " << boolalpha << createReduction;
-    LOG("INFO") << "createRandomFsmSeed      : " << createRandomFsmSeed;
-    LOG("INFO") << "createMutantSeed         : " << createMutantSeed;
-    LOG("INFO") << "-------------------------------------------";
+    LOG("INFO") << testSepLine << std::endl;
+    LOG("INFO") << "createAndExecuteAdaptiveTest()" << std::endl;
+    LOG("INFO") << "Name                     : " << result.testName << std::endl;
+    LOG("INFO") << "numStates                : " << numStates + 1 << std::endl;
+    LOG("INFO") << "numInputs                : " << numInputs + 1 << std::endl;
+    LOG("INFO") << "numOutputs               : " << numOutputs + 1 << std::endl;
+    LOG("INFO") << "numOutFaults             : " << numOutFaults << std::endl;
+    LOG("INFO") << "numTransFaults           : " << numTransFaults << std::endl;
+    LOG("INFO") << "degreeOfCompleteness     : " << degreeOfCompleteness << std::endl;
+    LOG("INFO") << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism << std::endl;
+    LOG("INFO") << "createReduction          : " << boolalpha << createReduction << std::endl;
+    LOG("INFO") << "createRandomFsmSeed      : " << createRandomFsmSeed << std::endl;
+    LOG("INFO") << "createMutantSeed         : " << createMutantSeed << std::endl;
+    LOG("INFO") << "-------------------------------------------" << std::endl;
 
-    LOG("INFO") << "Creating FSM.";
+    LOG("INFO") << "Creating FSM." << std::endl;
     shared_ptr<Fsm> spec = Fsm::createRandomFsm(prefix + "-spec",
                                                 numInputs,
                                                 numOutputs,
@@ -1728,7 +1728,7 @@ void createAndExecuteAdaptiveTest(
                                                 true,
                                                 createRandomFsmSeed);
 
-    LOG("INFO") << "Creating mutant.";
+    LOG("INFO") << "Creating mutant." << std::endl;
 
     shared_ptr<Fsm> iut;
     if (createReduction)
@@ -1755,20 +1755,20 @@ void createAndExecuteAdaptiveTest(
     result.createMutantSeed = createMutantSeed;
 
 
-    LOG("INFO") << "Starting adaptive state counting.";
-    LOG("INFO") << "Name                     : " << result.testName;
-    LOG("INFO") << "numStates                : " << result.numStates;
-    LOG("INFO") << "numInputs                : " << result.numInputs;
-    LOG("INFO") << "numOutputs               : " << result.numOutputs;
-    LOG("INFO") << "numOutFaults             : " << result.numOutFaults;
-    LOG("INFO") << "numTransFaults           : " << result.numTransFaults;
-    LOG("INFO") << "degreeOfCompleteness tgt : " << degreeOfCompleteness;
-    LOG("INFO") << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism;
-    LOG("INFO") << "createReduction          : " << boolalpha << createReduction;
-    LOG("INFO") << "removedTransitions       : " << result.removedTransitions;
-    LOG("INFO") << "createRandomFsmSeed      : " << result.createRandomFsmSeed;
-    LOG("INFO") << "createMutantSeed         : " << result.createMutantSeed;
-    LOG("INFO") << "-------------------------------------------";
+    LOG("INFO") << "Starting adaptive state counting." << std::endl;
+    LOG("INFO") << "Name                     : " << result.testName << std::endl;
+    LOG("INFO") << "numStates                : " << result.numStates << std::endl;
+    LOG("INFO") << "numInputs                : " << result.numInputs << std::endl;
+    LOG("INFO") << "numOutputs               : " << result.numOutputs << std::endl;
+    LOG("INFO") << "numOutFaults             : " << result.numOutFaults << std::endl;
+    LOG("INFO") << "numTransFaults           : " << result.numTransFaults << std::endl;
+    LOG("INFO") << "degreeOfCompleteness tgt : " << degreeOfCompleteness << std::endl;
+    LOG("INFO") << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism << std::endl;
+    LOG("INFO") << "createReduction          : " << boolalpha << createReduction << std::endl;
+    LOG("INFO") << "removedTransitions       : " << result.removedTransitions << std::endl;
+    LOG("INFO") << "createRandomFsmSeed      : " << result.createRandomFsmSeed << std::endl;
+    LOG("INFO") << "createMutantSeed         : " << result.createMutantSeed << std::endl;
+    LOG("INFO") << "-------------------------------------------" << std::endl;
 
     executeAdaptiveTest(result.testName, *spec, *iut, static_cast<size_t>(iut->getMaxNodes()),
                         prefix + "-intersect", loggingConfig.toDot, loggingConfig.toFsm, dontTestReductions, result);
@@ -1815,7 +1815,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
             config.maxTransFaults < 0 ||
             config.maxDegreeOfNonDeterminism < 0)
     {
-        LOG("FATAL") << "Please provide all required parameters.";
+        LOG("FATAL") << "Please provide all required parameters." << std::endl;
     }
 
     config.maxInput--;
@@ -1846,12 +1846,12 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
 
     if (diffInput <= 0 || diffOutput <= 0 || diffStates <= 0 || diffOutFaults <= 0 || diffTransFaults <= 0 || degreeOfCompletenessIterations <= 0)
     {
-        LOG("FATAL") << "Please check the test parameters.";
+        LOG("FATAL") << "Please check the test parameters." << std::endl;
     }
 
     if (config.maxDegreeOfNonDeterminism <= 0 && config.createReduction)
     {
-        LOG("FATAL") << "Can't create reduction of a deterministic FSM.";
+        LOG("FATAL") << "Can't create reduction of a deterministic FSM." << std::endl;
     }
 
     float divisor = (diffInput * diffOutput * diffStates * diffOutFaults * diffTransFaults * degreeOfCompletenessIterations);
@@ -1860,18 +1860,18 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
 
     printTestConfig(config);
 
-    LOG("INFO") << "Seed           : " << config.seed;
-    LOG("INFO") << "divisor        : " << divisor;
-    LOG("INFO") << "innerIterations: " << innerIterations;
-    LOG("INFO") << "totalIterations: " << totalIterations;
-    LOG("INFO") << "";
-    LOG("INFO") << "diffInput      : " << diffInput;
-    LOG("INFO") << "diffOutput     : " << diffOutput;
-    LOG("INFO") << "diffStates     : " << diffStates;
-    LOG("INFO") << "diffOutFaults  : " << diffOutFaults;
-    LOG("INFO") << "diffTransFaults: " << diffTransFaults;
-    LOG("INFO") << "degreeOfCompletenessIterations: " << degreeOfCompletenessIterations;
-    LOG("INFO") << "";
+    LOG("INFO") << "Seed           : " << config.seed << std::endl;
+    LOG("INFO") << "divisor        : " << divisor << std::endl;
+    LOG("INFO") << "innerIterations: " << innerIterations << std::endl;
+    LOG("INFO") << "totalIterations: " << totalIterations << std::endl;
+    LOG("INFO") << "" << std::endl;
+    LOG("INFO") << "diffInput      : " << diffInput << std::endl;
+    LOG("INFO") << "diffOutput     : " << diffOutput << std::endl;
+    LOG("INFO") << "diffStates     : " << diffStates << std::endl;
+    LOG("INFO") << "diffOutFaults  : " << diffOutFaults << std::endl;
+    LOG("INFO") << "diffTransFaults: " << diffTransFaults << std::endl;
+    LOG("INFO") << "degreeOfCompletenessIterations: " << degreeOfCompletenessIterations << std::endl;
+    LOG("INFO") << "" << std::endl;
 
     const float degStep = 0.1f;
 
@@ -1933,7 +1933,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                             if (config.minDegreeOfCompleteness <= 0 && config.maxDegreeOfCompleteness <= 0)
                             {
                                 degreeOfCompleteness = -1;
-                                LOG("INFO") << "Degree of completeness does not matter.";
+                                LOG("INFO") << "Degree of completeness does not matter." << std::endl;
                             }
                             else if (config.minDegreeOfCompleteness > 0 && config.maxDegreeOfCompleteness <= 0)
                             {
@@ -1953,7 +1953,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                             {
 
                                 degreeOfCompleteness = config.minDegreeOfCompleteness + (degStep * degreeCount);
-                                LOG("INFO") << "Degree of completeness: " << degreeOfCompleteness;
+                                LOG("INFO") << "Degree of completeness: " << degreeOfCompleteness << std::endl;
                             }
 
                             for (int ctInnerIt = 0; ctInnerIt < innerIterations; ++ctInnerIt)
@@ -1983,11 +1983,11 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
 
                                 if (numOutputs < 1 && numOutFaults > 0)
                                 {
-                                    LOG("INFO") << "numStates: " << numStates + 1;
-                                    LOG("INFO") << "numInput: " << numInputs + 1;
-                                    LOG("INFO") << "numOutput: " << numOutputs + 1;
-                                    LOG("INFO") << "numOutFaults: " << numOutFaults;
-                                    LOG("INFO") << "numTransFaults: " << numTransFaults;
+                                    LOG("INFO") << "numStates: " << numStates + 1 << std::endl;
+                                    LOG("INFO") << "numInput: " << numInputs + 1 << std::endl;
+                                    LOG("INFO") << "numOutput: " << numOutputs + 1 << std::endl;
+                                    LOG("INFO") << "numOutFaults: " << numOutFaults << std::endl;
+                                    LOG("INFO") << "numTransFaults: " << numTransFaults << std::endl;
                                     LOG("WARNING") << "Too little outputs. Can not create requested number of "
                                                                          << "output faults. Could not create mutant. Skipping.";
                                     ++i;
@@ -2011,7 +2011,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                 AdaptiveTestResult result;
                                 result.testName = config.testName + "-" + iteration;
 
-                                LOG("INFO") << "testName: " << result.testName;
+                                LOG("INFO") << "testName: " << result.testName << std::endl;
 
                                 bool couldCreateIut = false;
                                 bool abort = false;
@@ -2020,7 +2020,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                 {
                                     if (newSeeds)
                                     {
-                                        LOG("INFO") << "Generating new seeds.";
+                                        LOG("INFO") << "Generating new seeds." << std::endl;
                                         createRandomFsmSeed = static_cast<unsigned int>(getRandom(gen));
                                         createMutantSeed = static_cast<unsigned int>(getRandom(gen));
                                         newSeeds = false;
@@ -2058,7 +2058,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                     }
                                     catch (unexpected_reduction& e)
                                     {
-                                        LOG("INFO") << "IUT is a reduction of the specification.";
+                                        LOG("INFO") << "IUT is a reduction of the specification." << std::endl;
                                         if (config.forceTestParameters)
                                         {
                                             newSeeds = true;
@@ -2070,11 +2070,11 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                     }
                                     catch (too_many_transition_faults& e)
                                     {
-                                        LOG("INFO") << "Could not create mutant.";
+                                        LOG("INFO") << "Could not create mutant." << std::endl;
                                         if (!config.forceTestParameters
                                                 && numTransFaults - 1 >= config.minTransFaults && numTransFaults - 1 > 0) {
                                             --numTransFaults;
-                                            LOG("INFO") << "Decreasing transition faults.";
+                                            LOG("INFO") << "Decreasing transition faults." << std::endl;
                                             continue;
                                         }
                                         else if (config.forceTestParameters)
@@ -2089,18 +2089,18 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                     }
                                     catch (too_many_output_faults& e)
                                     {
-                                        LOG("INFO") << "Could not create mutant.";
+                                        LOG("INFO") << "Could not create mutant." << std::endl;
                                         if (!config.forceTestParameters
                                                 && numOutFaults - 1 >= config.minOutFaults && numOutFaults - 1 > 0) {
                                             --numOutFaults;
-                                            LOG("INFO") << "Decreasing output faults.";
+                                            LOG("INFO") << "Decreasing output faults." << std::endl;
                                             continue;
                                         }
                                         else if (!config.forceTestParameters
                                                  && numTransFaults - 1 >= config.minTransFaults && numTransFaults - 1 > 0)
                                         {
                                             --numTransFaults;
-                                            LOG("INFO") << "Decreasing transition faults.";
+                                            LOG("INFO") << "Decreasing transition faults." << std::endl;
                                             continue;
                                         }
                                         else if (config.forceTestParameters)
@@ -2115,21 +2115,21 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                     }
                                     catch (reduction_not_possible& e)
                                     {
-                                        LOG("INFO") << "Could not create reduction.";
+                                        LOG("INFO") << "Could not create reduction." << std::endl;
                                         newSeeds = true;
                                     }
                                 } while (!couldCreateIut && !abort);
                                 if (!couldCreateIut)
                                 {
                                     ++i;
-                                    LOG("INFO") << "numStates: " << numStates + 1;
-                                    LOG("INFO") << "numInput: " << numInputs + 1;
-                                    LOG("INFO") << "numOutput: " << numOutputs + 1;
-                                    LOG("INFO") << "numOutFaults: " << numOutFaults;
-                                    LOG("INFO") << "numTransFaults: " << numTransFaults;
-                                    LOG("INFO") << "createRandomFsmSeed: " << createRandomFsmSeed;
-                                    LOG("INFO") << "createMutantSeed: " << createMutantSeed;
-                                    LOG("WARNING") << "Could not create requested mutant. Skipping.";
+                                    LOG("INFO") << "numStates: " << numStates + 1 << std::endl;
+                                    LOG("INFO") << "numInput: " << numInputs + 1 << std::endl;
+                                    LOG("INFO") << "numOutput: " << numOutputs + 1 << std::endl;
+                                    LOG("INFO") << "numOutFaults: " << numOutFaults << std::endl;
+                                    LOG("INFO") << "numTransFaults: " << numTransFaults << std::endl;
+                                    LOG("INFO") << "createRandomFsmSeed: " << createRandomFsmSeed << std::endl;
+                                    LOG("INFO") << "createMutantSeed: " << createMutantSeed << std::endl;
+                                    LOG("WARNING") << "Could not create requested mutant. Skipping." << std::endl;
                                     continue;
                                 }
 
@@ -2259,7 +2259,7 @@ void trial(bool debug)
 
     if (debug)
     {
-        LOG("INFO") << "############## Debugging ##############";
+        LOG("INFO") << "############## Debugging ##############" << std::endl;
 
         AdaptiveTestConfigDebug debugConfig;
         debugConfig.numStates = 4;
@@ -2327,7 +2327,7 @@ void test00_00()
     executeAdaptiveTest(result.testName, spec, iut, static_cast<size_t>(iut.getMaxNodes()), "00-00-inter", true, false, false, result);
     printTestResult(result, csvConfig, loggingConfig);
     fsmlib_assert(result.testName, result.pass);
-    LOG("INFO") << testSepLine;
+    LOG("INFO") << testSepLine << std::endl;
 }
 
 void test00_01()
@@ -2348,7 +2348,7 @@ void test00_01()
     executeAdaptiveTest(result.testName, spec, iut, static_cast<size_t>(iut.getMaxNodes()), "00-01-inter", true, false, false, result);
     printTestResult(result, csvConfig, loggingConfig);
     fsmlib_assert(result.testName, result.pass);
-    LOG("INFO") << testSepLine;
+    LOG("INFO") << testSepLine << std::endl;
 }
 
 /**
@@ -2748,10 +2748,10 @@ void runAdaptiveStateCountingTests()
 
 void setLoggingVerbosity() {
     LogCoordinator::getStandardLogger().bindAllToDevNull();
-    LogCoordinator::getStandardLogger().bindToStream("INFO", std::cout);
-    LogCoordinator::getStandardLogger().bindToStream("WARNING", std::cerr);
-    LogCoordinator::getStandardLogger().bindToStream("ERROR", std::cerr);
-    LogCoordinator::getStandardLogger().bindToStream("FATAL", std::cerr);
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("INFO", std::cout);
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("WARNING", std::cerr);
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("ERROR", std::cerr);
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("FATAL", std::cerr);
 }
 
 int main(int argc, char** argv)
@@ -2761,7 +2761,7 @@ int main(int argc, char** argv)
 
 
 #ifdef ENABLE_DEBUG_MACRO
-    LOG("INFO") << "This is a debug build!";
+    LOG("INFO") << "This is a debug build!" << std::endl;
 #endif
 
 #if 0

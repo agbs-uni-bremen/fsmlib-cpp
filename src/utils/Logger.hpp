@@ -12,6 +12,9 @@ public:
 
     void setDefaultStream(std::ostream &);
 
+    void createLogTargetAndBind(std::string const &, std::ostream &);
+    void createLogTarget(std::string const &);
+
     //Single stream redirection
     void bindToStream(std::string const &, std::ostream &);
     void bindToDevNull(std::string const &);

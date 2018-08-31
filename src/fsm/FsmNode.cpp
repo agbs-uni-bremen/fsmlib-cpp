@@ -280,21 +280,21 @@ throw ss.str();
     }
     producedOutputTraces = newlyProducedOutputTraces;
 
-    LOG("VERBOSE_3") << "getPossibleOutputs(): " << getName() << ", " << inputTrace << ", " << producedOutputTraces.size() << ", " << reachedNodes.size();
+    LOG("VERBOSE_3") << "getPossibleOutputs(): " << getName() << ", " << inputTrace << ", " << producedOutputTraces.size() << ", " << reachedNodes.size() << std::endl;
     stringstream ss;
     ss << "  reached nodes: ";
     for (auto n : reachedNodes)
     {
         ss << n->getName() << ", ";
     }
-    LOG("VERBOSE_3") << ss.str();
+    LOG("VERBOSE_3") << ss.str() << std::endl;
     ss.str(std::string());
     ss << "  outputs: ";
     for (auto n : producedOutputTraces)
     {
         ss << *n << ", ";
     }
-    LOG("VERBOSE_3") << ss.str();
+    LOG("VERBOSE_3") << ss.str() << std::endl;
 }
 
 void FsmNode::getPossibleOutputs(const InputTrace& input, vector<shared_ptr<OutputTrace>>& producedOutputs) const
@@ -344,7 +344,7 @@ bool FsmNode::hasTransition(const int input) const
 
 vector<int> FsmNode::getNotDefinedInputs(const int& maxInput) const
 {
-    LOG("VERBOSE_2") << "getNotDefinedInputs()";
+    LOG("VERBOSE_2") << "getNotDefinedInputs()" << std::endl;
     vector<int> result;
     for (int i = 0; i <= maxInput; ++i)
     {
@@ -358,7 +358,7 @@ vector<int> FsmNode::getNotDefinedInputs(const int& maxInput) const
             }
         }
         if (!inputDefined){
-            LOG("VERBOSE_2") << "  " << presentationLayer->getInId(static_cast<unsigned int>(i));
+            LOG("VERBOSE_2") << "  " << presentationLayer->getInId(static_cast<unsigned int>(i)) << std::endl;
             result.push_back(i);
         }
     }
@@ -367,7 +367,7 @@ vector<int> FsmNode::getNotDefinedInputs(const int& maxInput) const
 
 vector<int> FsmNode::getNotDefinedOutputs(const int& input, const int& maxOutput) const
 {
-    LOG("VERBOSE_2") << "getNotDefinedOutputs() for input " << presentationLayer->getInId(static_cast<unsigned int>(input));
+    LOG("VERBOSE_2") << "getNotDefinedOutputs() for input " << presentationLayer->getInId(static_cast<unsigned int>(input)) << std::endl;
     vector<int> result;
     for (int o = 0; o <= maxOutput; ++o)
     {
@@ -382,7 +382,7 @@ vector<int> FsmNode::getNotDefinedOutputs(const int& input, const int& maxOutput
         }
         if (!outputDefined)
         {
-            LOG("VERBOSE_2") << "  " << presentationLayer->getOutId(static_cast<unsigned int>(o));
+            LOG("VERBOSE_2") << "  " << presentationLayer->getOutId(static_cast<unsigned int>(o)) << std::endl;
             result.push_back(o);
         }
     }
@@ -676,7 +676,7 @@ shared_ptr<DFSMTableRow> FsmNode::getDFSMTableRow(const int maxInput)
          by the same input. In this case we cannot calculate a  DFSMTableRow.*/
         if (io.at(x) >= 0)
         {
-            LOG("ERROR") << "Cannot calculated DFSM table for nondeterministic FSM.";
+            LOG("ERROR") << "Cannot calculated DFSM table for nondeterministic FSM." << std::endl;
             return nullptr;
         }
         
@@ -902,9 +902,9 @@ bool FsmNode::isObservable() const
             auto otherLbl = transitions[other]->getLabel();
             if ( *lbl == *otherLbl )
             {
-                LOG("VERBOSE_1") << "Node " << getName() << " is not observable:";
-                LOG("VERBOSE_1") << "  " << transitions[t]->str();
-                LOG("VERBOSE_1") << "  " << transitions[other]->str();
+                LOG("VERBOSE_1") << "Node " << getName() << " is not observable:" << std::endl;
+                LOG("VERBOSE_1") << "  " << transitions[t]->str() << std::endl;
+                LOG("VERBOSE_1") << "  " << transitions[other]->str() << std::endl;
                 return false;
             }
         }

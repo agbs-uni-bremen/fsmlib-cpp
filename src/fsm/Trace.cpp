@@ -216,7 +216,7 @@ Trace Trace::getSuffix(const Trace& prefix) const
     {
         std::stringstream ss;
         ss << "The given prefix is not a prefix of this trace.";
-        LOG("FATAL") << ss.str();
+        LOG("FATAL") << ss.str() << std::endl;
         throw ss.str();
     }
 

@@ -33,7 +33,7 @@ void RDistinguishability::initRDistinguishable(size_t i)
     }
     else
     {
-        LOG("WARNING") << "Overwriting r-distinguishability.";
+        LOG("WARNING") << "Overwriting r-distinguishability." << std::endl;
         rDistinguishableWith[i] = {};
     }
 }
