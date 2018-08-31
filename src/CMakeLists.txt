@@ -65,7 +65,6 @@ endif(gui)
 #set the root source diectory as include directory
 include_directories (${CMAKE_SOURCE_DIR})
 include_directories (${CMAKE_SOURCE_DIR}/externals/jsoncpp-0.10.0/include)
-include_directories (SYSTEM ${CMAKE_SOURCE_DIR}/externals/easyloggingpp_v9.95.0)
 include_directories (${CMAKE_BINARY_DIR})
 
 #add every subdirectory to cmake
@@ -80,6 +79,7 @@ add_subdirectory (example)
 add_subdirectory (generator)
 add_subdirectory (checker)
 add_subdirectory (cloneable)
+add_subdirectory (utils)
 
 if(gui)
 	add_subdirectory (window)

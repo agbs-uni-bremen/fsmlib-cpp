@@ -3,4 +3,4 @@ set (FSM_CLONEABLE_SOURCES
         ICloneable.cpp
 )
 
-add_library (fsm-cloneable ${FSM_CLONEABLE_SOURCES})
+add_library (fsm-cloneable OBJECT ${FSM_CLONEABLE_SOURCES})

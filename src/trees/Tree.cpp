@@ -5,7 +5,6 @@
  */
 #include "fsm/FsmLabel.h"
 #include "trees/Tree.h"
-#include "logging/easylogging++.h"
 
 using namespace std;
 
@@ -151,7 +150,6 @@ IOListContainer Tree::getTestCases()
 
 IOListContainer Tree::getDeterministicTestCases()
 {
-    TIMED_FUNC(timerObj);
 	std::shared_ptr<std::vector<std::vector<int>>> ioll = std::make_shared<std::vector<std::vector<int>>>();
 	std::shared_ptr<TreeNode> currentNode = root;
     ioll->push_back({FsmLabel::EPSILON});

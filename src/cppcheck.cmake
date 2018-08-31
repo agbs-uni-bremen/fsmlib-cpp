@@ -4,9 +4,7 @@
 # HACK this workaround is required to avoid qml files checking ^_^
 file(GLOB_RECURSE ALL_SOURCE_FILES *.cpp *.h)
 file(GLOB_RECURSE EXCLUDE
-    "${CMAKE_SOURCE_DIR}/externals/jsoncpp-0.10.0/*"
-    "${CMAKE_SOURCE_DIR}/externals/easyloggingpp_v9.95.0/logging/easylogging++.cc"
-    "${CMAKE_SOURCE_DIR}/externals/easyloggingpp_v9.95.0/logging/easylogging++.h")
+    "${CMAKE_SOURCE_DIR}/externals/jsoncpp-0.10.0/*")
 list(REMOVE_ITEM ALL_SOURCE_FILES ${EXCLUDE})
 message("${ALL_SOURCE_FILES}")
 #foreach (SOURCE_FILE ${ALL_SOURCE_FILES})

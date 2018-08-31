@@ -6,7 +6,6 @@
 #include "fsm/IOTrace.h"
 #include "fsm/FsmNode.h"
 #include "fsm/FsmLabel.h"
-#include "logging/easylogging++.h"
 
 using namespace std;
 
@@ -170,7 +169,10 @@ IOTrace IOTrace::getSuffix(const IOTrace& prefix) const
 {
     if (!isPrefix(prefix))
     {
-        LOG(FATAL) << "The given prefix is not a prefix of this trace.";
+        stringstream ss;
+ss << "The given prefix is not a prefix of this trace.";
+std::cerr << ss.str();
+throw ss.str();
     }
     const Trace& in = inputTrace.getSuffix(prefix.getInputTrace());
     const Trace& out = outputTrace.getSuffix(prefix.getOutputTrace());

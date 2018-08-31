@@ -8,6 +8,7 @@
 #include <deque>
 #include <algorithm>
 #include <regex>
+#include <math.h>
 
 #include "fsm/Dfsm.h"
 #include "fsm/Fsm.h"
@@ -28,8 +29,7 @@
 #include "trees/TestSuite.h"
 #include "trees/InputOutputTree.h"
 #include "trees/AdaptiveTreeNode.h"
-#include "logging/easylogging++.h"
-#include "logging/Logging.h"
+#include "utils/Logger.hpp"
 
 using namespace std;
 using namespace std::chrono;
@@ -215,7 +215,8 @@ void Fsm::readFsm(const string & fname)
     }
     else
     {
-        LOG(FATAL) << "Unable to open input file";
+        std::cerr << "Unable to open input file";
+        throw "Unable to open input file";
     }
     
 }
@@ -237,7 +238,8 @@ void Fsm::readFsmInitial (const string & fname)
     }
     else
     {
-        LOG(FATAL) << "Unable to open input file";
+        std::cerr << "Unable to open input file";
+        throw "Unable to open input file";
     }
     
 }
@@ -289,7 +291,10 @@ void Fsm::readFsmFromDot (const string & fname, const string name)
 
                 if (in == to_string(FsmLabel::EPSILON) || out == to_string(FsmLabel::EPSILON))
                 {
-                    LOG(FATAL) << "The emty input is not being supported as input or output.";
+                    stringstream ss;
+ss << "The emty input is not being supported as input or output.";
+std::cerr << ss.str();
+throw ss.str();
                 }
 
                 parsedInputs.insert(in);
@@ -302,11 +307,14 @@ void Fsm::readFsmFromDot (const string & fname, const string name)
     }
     else
     {
-        LOG(FATAL) << "Unable to open input file '" << fname << "'";
+        stringstream ss;
+ss << "Unable to open input file '" << fname << "'";
+std::cerr << ss.str();
+throw ss.str();
     }
 
-    VLOG(1) << "maxInput: " << maxInput;
-    VLOG(1) << "maxOutput: " << maxOutput;
+    LOG("VERBOSE_1") << "maxInput: " << maxInput << std::endl;
+    LOG("VERBOSE_1") << "maxOutput: " << maxOutput << std::endl;
 
     // Fill presentation layer with inputs
     int i = 0;
@@ -341,28 +349,31 @@ void Fsm::readFsmFromDot (const string & fname, const string name)
             }
             cmatch matches;
             regex_match(line.c_str(), matches, regNode);
-            VLOG(2) << "line:";
-            VLOG(2) << "  " << line;
-            VLOG(2) << "matches:";
+            LOG("VERBOSE_2") << "line:" << std::endl;
+            LOG("VERBOSE_2") << "  " << line << std::endl;
+            LOG("VERBOSE_2") << "matches:" << std::endl;
             for (unsigned i=0; i<matches.size(); ++i) {
-                VLOG(2) << "  " << matches[i];
+                LOG("VERBOSE_2") << "  " << matches[i] << std::endl;
             }
             if (matches.size() == 3)
             {
                 int nodeId = stoi(matches[1]);
                 string nodeName = matches[2];
                 if(existingNodes.find(nodeId) != existingNodes.end()) {
-                    LOG(FATAL) << "Error while parsing dot file. The node id " << nodeId << "has been assigned more than once.";
+                    stringstream ss;
+ss << "Error while parsing dot file. The node id " << nodeId << "has been assigned more than once.";
+std::cerr << ss.str();
+throw ss.str();
                 }
                 presentationLayer->addState2String(nodeName);
                 shared_ptr<FsmNode> node = make_shared<FsmNode>(nodeIdCount++, presentationLayer);
                 nodes.push_back(node);
                 existingNodes.insert(make_pair(nodeId, node));
                 maxState++;
-                VLOG(1) << "Found state " << node->getName() << ".";
+                LOG("VERBOSE_1") << "Found state " << node->getName() << "." << std::endl;
                 if (nextIsInitial)
                 {
-                    VLOG(1) << "State " << node->getName() << " is initial state.";
+                    LOG("VERBOSE_1") << "State " << node->getName() << " is initial state." << std::endl;
                     initStateIdx = node->getId();
                     node->markAsInitial();
                     nextIsInitial = false;
@@ -374,7 +385,10 @@ void Fsm::readFsmFromDot (const string & fname, const string name)
     }
     else
     {
-        LOG(FATAL) << "Unable to open input file '" << fname << "'";
+        stringstream ss;
+ss << "Unable to open input file '" << fname << "'";
+std::cerr << ss.str();
+throw ss.str();
     }
 
     inputFile.open(fname);
@@ -387,7 +401,7 @@ void Fsm::readFsmFromDot (const string & fname, const string name)
             regex_match(line.c_str(), matches, regTransition);
             if (matches.size() == 5)
             {
-                VLOG(1) << "Transition: " << matches[1] << " -- (" << matches[3] << "/" << matches[4] << ") --> " << matches[2];
+                LOG("VERBOSE_1") << "Transition: " << matches[1] << " -- (" << matches[3] << "/" << matches[4] << ") --> " << matches[2] << std::endl;
                 int sourceId = stoi(matches[1]);
                 int targetId = stoi(matches[2]);
                 string input = matches[3];
@@ -405,7 +419,10 @@ void Fsm::readFsmFromDot (const string & fname, const string name)
     }
     else
     {
-        LOG(FATAL) << "Unable to open input file '" << fname << "'";
+        stringstream ss;
+ss << "Unable to open input file '" << fname << "'";
+std::cerr << ss.str();
+throw ss.str();
     }
 
 }
@@ -616,8 +633,7 @@ void Fsm::dumpFsm(ofstream & outputFile) const
 
 vector<shared_ptr<FsmNode>> Fsm::calcDReachableStates(InputTraceSet& detStateCover)
 {
-    TIMED_FUNC(timerObj);
-    VLOG(2) << "getDReachableStates()";
+    LOG("VERBOSE_2") << "getDReachableStates()" << std::endl;
     resetColor();
     deque<shared_ptr<FsmNode>> bfsLst;
     vector<shared_ptr<FsmNode>> nodes;
@@ -637,7 +653,7 @@ vector<shared_ptr<FsmNode>> Fsm::calcDReachableStates(InputTraceSet& detStateCov
     {
         shared_ptr<FsmNode> thisNode = bfsLst.front();
         bfsLst.pop_front();
-        VLOG(2) << "thisNode: " << thisNode->getName();
+        LOG("VERBOSE_2") << "thisNode: " << thisNode->getName() << std::endl;
 
         shared_ptr<IOTrace> thisNodePath;
 
@@ -646,9 +662,9 @@ vector<shared_ptr<FsmNode>> Fsm::calcDReachableStates(InputTraceSet& detStateCov
             try
             {
                 thisNodePath = paths.at(thisNode);
-                VLOG(2) << "thisNodePath: " << *thisNodePath;
+                LOG("VERBOSE_2") << "thisNodePath: " << *thisNodePath << std::endl;
             }
-            catch (out_of_range e)
+            catch (out_of_range &e)
             {
                 // DO nothing.
             }
@@ -656,18 +672,18 @@ vector<shared_ptr<FsmNode>> Fsm::calcDReachableStates(InputTraceSet& detStateCov
 
         for (int x = 0; x <= maxInput; ++x)
         {
-            VLOG(2) << "x: " << presentationLayer->getInId(x);
+            LOG("VERBOSE_2") << "x: " << presentationLayer->getInId(x) << std::endl;
             vector<int> producedOutputs;
             vector<shared_ptr<FsmNode>> successorNodes = thisNode->after(x, producedOutputs);
-            VLOG(2) << "successorNodes:";
+            LOG("VERBOSE_2") << "successorNodes:" << std::endl;
             for (auto n : successorNodes)
             {
-                VLOG(2) << "  " << n->getName();
+                LOG("VERBOSE_2") << "  " << n->getName() << std::endl;
             }
-            VLOG(2) << "producedOutputs:";
+            LOG("VERBOSE_2") << "producedOutputs:" << std::endl;
             for (auto n : producedOutputs)
             {
-                VLOG(2) << "  " << presentationLayer->getOutId(n);
+                LOG("VERBOSE_2") << "  " << presentationLayer->getOutId(n) << std::endl;
             }
 
             if (successorNodes.size() == 0 || producedOutputs.size() == 0)
@@ -686,7 +702,7 @@ vector<shared_ptr<FsmNode>> Fsm::calcDReachableStates(InputTraceSet& detStateCov
                     const shared_ptr<FsmNode>& other  = successorNodes.at(i);
                     if (n != other)
                     {
-                        VLOG(2) << "Skipping.";
+                        LOG("VERBOSE_2") << "Skipping." << std::endl;
                         skip = true;
                         break;
                     }
@@ -697,14 +713,14 @@ vector<shared_ptr<FsmNode>> Fsm::calcDReachableStates(InputTraceSet& detStateCov
                 }
             }
             shared_ptr<FsmNode> tgt = successorNodes.at(0);
-            VLOG(2) << "tgt:" << tgt->getName();
+            LOG("VERBOSE_2") << "tgt:" << tgt->getName() << std::endl;
             try
             {
                 paths.at(tgt);
                 // Path already exists. Do nothing.
-                VLOG(2) << "Path already exists. Do nothing.";
+                LOG("VERBOSE_2") << "Path already exists. Do nothing." << std::endl;
             }
-            catch (out_of_range e)
+            catch (out_of_range &e)
             {
                 // Create new path, since it doesn't exist.
                 shared_ptr<IOTrace> newPath;
@@ -712,21 +728,21 @@ vector<shared_ptr<FsmNode>> Fsm::calcDReachableStates(InputTraceSet& detStateCov
                 {
                     newPath = make_shared<IOTrace>(*thisNodePath);
                     newPath->append(x, producedOutputs.at(0));
-                    VLOG(2) << "newPath (appended): " << *newPath;
+                    LOG("VERBOSE_2") << "newPath (appended): " << *newPath << std::endl;
                 }
                 else
                 {
                     InputTrace in = InputTrace(x, presentationLayer);
                     OutputTrace out = OutputTrace({producedOutputs.at(0)}, presentationLayer);
                     newPath = make_shared<IOTrace>(in, out);
-                    VLOG(2) << "newPath (new): " << *newPath;
+                    LOG("VERBOSE_2") << "newPath (new): " << *newPath << std::endl;
                 }
                 newPath->setTargetNode(tgt);
                 paths.insert(make_pair(tgt, newPath));
             }
             if (tgt->getColor() == FsmNode::white)
             {
-                VLOG(2) << "Target color is white. Setting grey, adding node, setting d-reach path.";
+                LOG("VERBOSE_2") << "Target color is white. Setting grey, adding node, setting d-reach path." << std::endl;
                 tgt->setColor(FsmNode::grey);
                 bfsLst.push_back(tgt);
                 nodes.push_back(tgt);
@@ -808,21 +824,21 @@ int Fsm::getNumberOfPossibleTransitions(vector<shared_ptr<FsmNode>> nodePool) co
 
 float Fsm::getDegreeOfCompleteness(const int& minus, vector<shared_ptr<FsmNode>> nodePool) const
 {
-    VLOG(2) << "getDegreeOfCompleteness()";
+    LOG("VERBOSE_2") << "getDegreeOfCompleteness()" << std::endl;
     if (nodePool.empty())
     {
         nodePool = nodes;
     }
     int numberOfTransitionsFound = getNumberOfDifferentInputTransitions(nodePool) - minus;
     float numberOfTransitionsPossible = (maxInput + 1.0f) * nodePool.size();
-    VLOG(2) << "  numberOfTransitionsFound: " << numberOfTransitionsFound;
-    VLOG(2) << "  numberOfTransitionsPossible: " << numberOfTransitionsPossible;
+    LOG("VERBOSE_2") << "  numberOfTransitionsFound: " << numberOfTransitionsFound << std::endl;
+    LOG("VERBOSE_2") << "  numberOfTransitionsPossible: " << numberOfTransitionsPossible << std::endl;
     return numberOfTransitionsFound / numberOfTransitionsPossible;
 }
 
 int Fsm::getNumberOfNotDefinedDeterministicTransitions(vector<shared_ptr<FsmNode>> nodePool) const
 {
-    VLOG(2) << "getNumberOfNotDefinedDeterministicTransitions()";
+    LOG("VERBOSE_2") << "getNumberOfNotDefinedDeterministicTransitions()" << std::endl;
     if (nodePool.empty())
     {
         nodePool = nodes;
@@ -841,13 +857,13 @@ int Fsm::getNumberOfNotDefinedDeterministicTransitions(vector<shared_ptr<FsmNode
             }
         }
     }
-    VLOG(2) << "  result: " << result;
+    LOG("VERBOSE_2") << "  result: " << result << std::endl;
     return result;
 }
 
 int Fsm::getNumberOfNonDeterministicTransitions(vector<shared_ptr<FsmNode>> nodePool) const
 {
-    VLOG(2) << "getNumberOfDeterministicTransitions()";
+    LOG("VERBOSE_2") << "getNumberOfDeterministicTransitions()" << std::endl;
     if (nodePool.empty())
     {
         nodePool = nodes;
@@ -871,13 +887,13 @@ int Fsm::getNumberOfNonDeterministicTransitions(vector<shared_ptr<FsmNode>> node
             }
         }
     }
-    VLOG(2) << "  result: " << result;
+    LOG("VERBOSE_2") << "  result: " << result << std::endl;
     return result;
 }
 
 int Fsm::getNumberOfTotalTransitions(vector<shared_ptr<FsmNode>> nodePool) const
 {
-    VLOG(2) << "getNumberOfTotalTransitions()";
+    LOG("VERBOSE_2") << "getNumberOfTotalTransitions()" << std::endl;
 
     if (nodePool.empty())
     {
@@ -889,7 +905,7 @@ int Fsm::getNumberOfTotalTransitions(vector<shared_ptr<FsmNode>> nodePool) const
     {
         result += n->getTransitions().size();
     }
-    VLOG(2) << "  result: " << result;
+    LOG("VERBOSE_2") << "  result: " << result << std::endl;
     return result;
 }
 
@@ -906,7 +922,7 @@ vector<shared_ptr<FsmTransition>> Fsm::getNonDeterministicTransitions() const
 
 float Fsm::getDegreeOfNonDeterminism(const int& diff, vector<shared_ptr<FsmNode>> nodePool) const
 {
-    VLOG(2) << "calcDegreeOfNondeterminism()";
+    LOG("VERBOSE_2") << "calcDegreeOfNondeterminism()" << std::endl;
     if (nodePool.empty())
     {
         nodePool = nodes;
@@ -939,9 +955,9 @@ float Fsm::getDegreeOfNonDeterminism(const int& diff, vector<shared_ptr<FsmNode>
     {
         result = numberNonDeterministicTransitions / totalTransitions;
     }
-    VLOG(2) << "  totalTransitions: " << totalTransitions;
-    VLOG(2) << "  numberNonDeterministicTransitions: " << numberNonDeterministicTransitions;
-    VLOG(2) << "  result: " << result;
+    LOG("VERBOSE_2") << "  totalTransitions: " << totalTransitions << std::endl;
+    LOG("VERBOSE_2") << "  numberNonDeterministicTransitions: " << numberNonDeterministicTransitions << std::endl;
+    LOG("VERBOSE_2") << "  result: " << result << std::endl;
     return result;
 }
 
@@ -1183,7 +1199,6 @@ OutputTree Fsm::apply(const InputTrace & itrc, bool markAsVisited)
 
 void Fsm::apply(const InputTrace& input, vector<shared_ptr<OutputTrace>>& producedOutputs, vector<shared_ptr<FsmNode>>& reachedNodes) const
 {
-    TIMED_FUNC(timerObj);
     return getInitialState()->getPossibleOutputs(input, producedOutputs, reachedNodes);
 }
 
@@ -1330,7 +1345,6 @@ Fsm Fsm::transformToObservableFSM(const string& nameSuffix) const
 
 bool Fsm::isObservable() const
 {
-    TIMED_FUNC(timerObj);
     for (shared_ptr<FsmNode> node : nodes)
     {
         if (!node->isObservable())
@@ -1386,14 +1400,13 @@ Fsm Fsm::minimiseObservableFSM(const std::string& nameSuffix, bool prependFsmNam
 
 Fsm Fsm::minimise(const string& nameSuffixMin, const string& nameSuffixObs, bool prependFsmName)
 {
-    VLOG(1) << "minimise()";
-    TIMED_FUNC(timerObj);
+    LOG("VERBOSE_1") << "minimise()" << std::endl;
     vector<shared_ptr<FsmNode>> uNodes;
     removeUnreachableNodes(uNodes);
     
     if (!isObservable())
     {
-        LOG(INFO) << "Fsm is not observable. Converting.";
+        LOG("INFO") << "Fsm is not observable. Converting." << std::endl;
         return transformToObservableFSM(nameSuffixObs)
                 .minimiseObservableFSM(nameSuffixMin, prependFsmName);
     }
@@ -1455,7 +1468,10 @@ IOListContainer Fsm::getCharacterisationSet()
     // We have to calculate teh chracterisation set from scratch
     if (!isObservable())
     {
-        LOG(FATAL) << "This FSM is not observable - cannot calculate the charactersiation set.";
+        stringstream ss;
+ss << "This FSM is not observable - cannot calculate the charactersiation set.";
+std::cerr << ss.str();
+throw ss.str();
     }
     
     /*Call minimisation algorithm again for creating the OFSM-Tables*/
@@ -1610,8 +1626,8 @@ void Fsm::calcROneDistinguishableStates()
                 }
                 std::stringstream ss;
                 ss << "σ(" << nodes.at(i)->getName() << "," << nodes.at(j)->getName() << ") = " << *tree;
-                VLOG(2) << ss.str();
-            } catch (std::out_of_range e) {
+                LOG("VERBOSE_2") << ss.str() << std::endl;
+            } catch (std::out_of_range &e) {
                // Do nothing.
             }
 
@@ -1622,8 +1638,7 @@ void Fsm::calcROneDistinguishableStates()
 
 void Fsm::calcRDistinguishableStates()
 {
-    TIMED_FUNC(timerObj);
-    VLOG(2) << "calcRDistinguishableStates():";
+    LOG("VERBOSE_2") << "calcRDistinguishableStates():" << std::endl;
     calcROneDistinguishableStates();
 
     size_t limit = nodes.size() * (nodes.size() - 1) / 2;
@@ -1633,7 +1648,7 @@ void Fsm::calcRDistinguishableStates()
     for (size_t l = 2; !allRDistinguishable && newDistinguishabilityCalculated && l <= limit; ++l)
     {
         maxL = l;
-        VLOG(2) << "################ l = " << l << " (max " << limit << ") ################";
+        LOG("VERBOSE_2") << "################ l = " << l << " (max " << limit << ") ################" << std::endl;
         allRDistinguishable = true;
         newDistinguishabilityCalculated = false;
         for (size_t k = 0; k < nodes.size(); ++k)
@@ -1643,7 +1658,7 @@ void Fsm::calcRDistinguishableStates()
         for (size_t k = 0; k < nodes.size(); ++k)
         {
             shared_ptr<FsmNode> q1 = nodes.at(k);
-            VLOG(3) << "q1 = " << q1->getName() << ":";
+            LOG("VERBOSE_3") << "q1 = " << q1->getName() << ":" << std::endl;
             vector<int> notROneDist = q1->getRDistinguishability()->getNotRDistinguishableWith(l);
             for (auto it = notROneDist.begin(); it != notROneDist.end(); ++it)
             {
@@ -1651,7 +1666,7 @@ void Fsm::calcRDistinguishableStates()
                 allRDistinguishable = false;
                 int q2Id = *it;
                 shared_ptr<FsmNode> q2 = getNode(q2Id);
-                VLOG(3) << "  q2 = " << q2->getName() << ":";
+                LOG("VERBOSE_3") << "  q2 = " << q2->getName() << ":" << std::endl;
                 for (int x = 0; x <= maxInput; ++ x)
                 {
                     vector<shared_ptr<OutputTrace>> intersection = getOutputIntersection(q1, q2, x);
@@ -1677,7 +1692,7 @@ void Fsm::calcRDistinguishableStates()
                         }
                         else
                         {
-                            VLOG(3) << "    x = " << presentationLayer->getInId(x) << ":    "
+                            LOG("VERBOSE_3") << "    x = " << presentationLayer->getInId(x) << ":    "
                             << afterNode1->getName() << " != " << afterNode2->getName()
                             << "  ->  " << q1->getName() << " != " << q2->getName();
 
@@ -1689,7 +1704,7 @@ void Fsm::calcRDistinguishableStates()
                             // Put breakpoint at following line and debug.
                             stringstream ss;
                             ss << "      childIO1(" << afterNode1->getName() << "," << afterNode2->getName() << "): " << *childTree1;
-                            VLOG(3) << ss.str();
+                            LOG("VERBOSE_3") << ss.str() << std::endl;
                             ss.str(std::string());
 
                             shared_ptr<AdaptiveTreeNode> childNode1 = static_pointer_cast<AdaptiveTreeNode>(childTree1->getRoot());
@@ -1699,7 +1714,7 @@ void Fsm::calcRDistinguishableStates()
                             //shared_ptr<TreeNode> target2 = make_shared<TreeNode>();
                             shared_ptr<InputOutputTree> childTree2 = afterNode2->getRDistinguishability()->getAdaptiveIOSequence(afterNode1);
                             ss << "      childIO2(" << afterNode2->getName() << "," << afterNode1->getName() << "): " << *childTree2 << endl;
-                            VLOG(3) << ss.str();
+                            LOG("VERBOSE_3") << ss.str() << std::endl;
                             shared_ptr<AdaptiveTreeNode> childNode2 = static_pointer_cast<AdaptiveTreeNode>(childTree2->getRoot());
                             shared_ptr<TreeEdge> edge2 = make_shared<TreeEdge>(y, childNode2);
                             q2Edges.push_back(edge2);
@@ -1764,10 +1779,10 @@ void Fsm::calcRDistinguishableStates()
 
                         stringstream ss;
                         ss << "    q1Tree: " << *q1Tree;
-                        VLOG(2) << ss.str();
+                        LOG("VERBOSE_2") << ss.str() << std::endl;
                         ss.str(std::string());
                         ss << "    q2Tree: " << *q2Tree;
-                        VLOG(2) << ss.str();
+                        LOG("VERBOSE_2") << ss.str() << std::endl;
 
                         q1->getRDistinguishability()->addAdaptiveIOSequence(q2, q1Tree);
                         q2->getRDistinguishability()->addAdaptiveIOSequence(q1, q2Tree);
@@ -1808,10 +1823,13 @@ IOListContainer Fsm::getRStateCharacterisationSet(shared_ptr<FsmNode> node) cons
 {
     if (!node->getRDistinguishability()->hasBeenCalculated())
     {
-        LOG(FATAL) << "r-characterisation sets haven't been calculated yet.";
+        stringstream ss;
+ss << "r-characterisation sets haven't been calculated yet.";
+std::cerr << ss.str();
+throw ss.str();
     }
     IOListContainer result = IOListContainer(presentationLayer);
-    VLOG(1) << "r-state characterisation set for " << node->getName();
+    LOG("VERBOSE_1") << "r-state characterisation set for " << node->getName() << std::endl;
     for (shared_ptr<FsmNode> n : nodes)
     {
         if (n == node)
@@ -1820,7 +1838,10 @@ IOListContainer Fsm::getRStateCharacterisationSet(shared_ptr<FsmNode> node) cons
         }
         if (!n->getRDistinguishability()->hasBeenCalculated())
         {
-            LOG(FATAL) << "r-characterisation sets haven't been calculated yet.";
+            stringstream ss;
+ss << "r-characterisation sets haven't been calculated yet.";
+std::cerr << ss.str();
+throw ss.str();
         }
         shared_ptr<InputOutputTree> sequence = node->getRDistinguishability()->getAdaptiveIOSequence(n);
         if (!sequence->isEmpty())
@@ -1828,7 +1849,7 @@ IOListContainer Fsm::getRStateCharacterisationSet(shared_ptr<FsmNode> node) cons
             IOListContainer container = sequence->getInputLists();
             auto set = container.getIOLists();
 
-            VLOG(2) << "σ(" << node->getName() << "," << n->getName() << "): " << container;
+            LOG("VERBOSE_2") << "σ(" << node->getName() << "," << n->getName() << "): " << container << std::endl;
             for (auto trace : *set)
             {
                 result.addUniqueRemovePrefixes(Trace(trace, presentationLayer));
@@ -1836,14 +1857,14 @@ IOListContainer Fsm::getRStateCharacterisationSet(shared_ptr<FsmNode> node) cons
         }
         else
         {
-            VLOG(2) << "Nodes " << node->getName() << " and " << n->getName() << " are not r-distinguishable.";
+            LOG("VERBOSE_2") << "Nodes " << node->getName() << " and " << n->getName() << " are not r-distinguishable." << std::endl;
         }
     }
-    VLOG(1) << "SCS(" << node->getName() << ") = " << result;
+    LOG("VERBOSE_1") << "SCS(" << node->getName() << ") = " << result << std::endl;
 
-    VLOG(2) << "Node " << node->getName() << " is being distuingished from: ";
+    LOG("VERBOSE_2") << "Node " << node->getName() << " is being distuingished from: " << std::endl;
     for (const shared_ptr<FsmNode>& n1 : nodes) {
-        VLOG(2) << "  " << n1->getName() << ": " << rDistinguishes(node, n1, result);
+        LOG("VERBOSE_2") << "  " << n1->getName() << ": " << rDistinguishes(node, n1, result) << std::endl;
     }
 
     return result;
@@ -1853,10 +1874,13 @@ IOTreeContainer Fsm::getAdaptiveRStateCharacterisationSet(shared_ptr<FsmNode> no
 {
     if (!node->getRDistinguishability()->hasBeenCalculated())
     {
-        LOG(FATAL) << "r-characterisation sets haven't been calculated yet.";
+        stringstream ss;
+ss << "r-characterisation sets haven't been calculated yet.";
+std::cerr << ss.str();
+throw ss.str();
     }
     IOTreeContainer result = IOTreeContainer(presentationLayer);
-    VLOG(1) << "Adaptive r-state characterisation set for " << node->getName();
+    LOG("VERBOSE_1") << "Adaptive r-state characterisation set for " << node->getName() << std::endl;
     for (shared_ptr<FsmNode> n : nodes)
     {
         if (n == node)
@@ -1865,20 +1889,23 @@ IOTreeContainer Fsm::getAdaptiveRStateCharacterisationSet(shared_ptr<FsmNode> no
         }
         if (!n->getRDistinguishability()->hasBeenCalculated())
         {
-            LOG(FATAL) << "r-characterisation sets haven't been calculated yet.";
+            stringstream ss;
+ss << "r-characterisation sets haven't been calculated yet.";
+std::cerr << ss.str();
+throw ss.str();
         }
         shared_ptr<InputOutputTree> sequence = node->getRDistinguishability()->getAdaptiveIOSequence(n);
         if (!sequence->isEmpty())
         {
-            VLOG(2) << "σ(" << node->getName() << "," << n->getName() << "): " << sequence->str();
+            LOG("VERBOSE_2") << "σ(" << node->getName() << "," << n->getName() << "): " << sequence->str() << std::endl;
             result.addUniqueRemovePrefixes(sequence);
         }
     }
-    VLOG(1) << "SCS(" << node->getName() << ") = " << result;
+    LOG("VERBOSE_1") << "SCS(" << node->getName() << ") = " << result << std::endl;
 
-    VLOG(2) << "Node " << node->getName() << " is being r-distuingished from: ";
+    LOG("VERBOSE_2") << "Node " << node->getName() << " is being r-distuingished from: " << std::endl;
     for (const shared_ptr<FsmNode>& n1 : nodes) {
-        VLOG(2) << "  " << n1->getName() << ": " << rDistinguishes(node, n1, result);
+        LOG("VERBOSE_2") << "  " << n1->getName() << ": " << rDistinguishes(node, n1, result) << std::endl;
     }
 
     return result;
@@ -1905,13 +1932,12 @@ void Fsm::addPossibleIOTraces(shared_ptr<FsmNode> node,
                               IOTraceContainer& iOTraceContainer,
                               const bool cleanTrailingEmptyTraces) const
 {
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
-    VLOG(2) << "(" << node->getName() << ") " << "getPossibleIOTraces()";
-    VLOG(2) << "(" << node->getName() << ") " << "  node: " << node->getName();
-    VLOG(2) << "(" << node->getName() << ") " << "  tree: " << tree->str() ;
+    LOG("VERBOSE_2") << "(" << node->getName() << ") " << "getPossibleIOTraces()" << std::endl;
+    LOG("VERBOSE_2") << "(" << node->getName() << ") " << "  node: " << node->getName() << std::endl;
+    LOG("VERBOSE_2") << "(" << node->getName() << ") " << "  tree: " << tree->str()  << std::endl;
     if (tree->isEmpty())
     {
-        VLOG(2)  << "(" << node->getName() << ") " << "  tree is empty. returning.";
+        LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "  tree is empty. returning." << std::endl;
         std::shared_ptr<IOTrace> emptyTrace = IOTrace::getEmptyTrace(presentationLayer);
         emptyTrace->setTargetNode(node);
         return;
@@ -1922,39 +1948,42 @@ void Fsm::addPossibleIOTraces(shared_ptr<FsmNode> node,
         shared_ptr<AdaptiveTreeNode> treeRoot = static_pointer_cast<AdaptiveTreeNode>(tree->getRoot());
         int x = treeRoot->getInput();
         bool isPossibleOutput = node->isPossibleOutput(x, y);
-        VLOG(2)  << "(" << node->getName() << ") " << "  x: " << presentationLayer->getInId(x);
-        VLOG(2)  << "(" << node->getName() << ") " << "  y: " << presentationLayer->getOutId(y);
-        VLOG(2)  << "(" << node->getName() << ") " << "  isPossibleOutput: " << isPossibleOutput;
+        LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "  x: " << presentationLayer->getInId(x) << std::endl;
+        LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "  y: " << presentationLayer->getOutId(y) << std::endl;
+        LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "  isPossibleOutput: " << isPossibleOutput << std::endl;
 
         if (isPossibleOutput)
         {
             unordered_set<shared_ptr<FsmNode>> nextNodes = node->afterAsSet(x, y);
             if (nextNodes.size() != 1)
             {
-                LOG(FATAL)  << "The FSM does not seem to be observable.";
+                stringstream ss;
+ss << "The FSM does not seem to be observable.";
+std::cerr << ss.str();
+throw ss.str();
             }
             shared_ptr<FsmNode> nextNode = *nextNodes.begin();
 
             if (!tree->isDefined(y))
             {
                 const shared_ptr<const IOTrace>& trace = make_shared<const IOTrace>(x, y, nextNode, presentationLayer);
-                VLOG(2)  << "(" << node->getName() << ") " << "  tree is NOT defined. Adding " << *trace;
+                LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "  tree is NOT defined. Adding " << *trace << std::endl;
                 iOTraceContainer.add(trace);
             }
             else if (tree->isDefined(y))
             {
-                VLOG(2)  << "(" << node->getName() << ") " << "  tree is defined.";
-                VLOG(2)  << "(" << node->getName() << ") " << "    nextNode: " << nextNode->getName();
+                LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "  tree is defined." << std::endl;
+                LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    nextNode: " << nextNode->getName() << std::endl;
                 shared_ptr<AdaptiveTreeNode> nextTreeNode = static_pointer_cast<AdaptiveTreeNode>(treeRoot->after(y));
                 shared_ptr<InputOutputTree> nextTree = make_shared<InputOutputTree>(nextTreeNode, presentationLayer);
-                VLOG(2) << "(" << node->getName() << ") " << "    nextTree: " << nextTree->str();
-                VLOG(2) << "++ ENTERING RECURSION.";
+                LOG("VERBOSE_2") << "(" << node->getName() << ") " << "    nextTree: " << nextTree->str() << std::endl;
+                LOG("VERBOSE_2") << "++ ENTERING RECURSION." << std::endl;
                 IOTraceContainer iONext;
                 addPossibleIOTraces(nextNode, nextTree, iONext);
-                VLOG(2) << "-- LEAVING RECURSION.";
-                VLOG(2)  << "(" << node->getName() << ") " << "    iONext: " << iONext;
+                LOG("VERBOSE_2") << "-- LEAVING RECURSION." << std::endl;
+                LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    iONext: " << iONext << std::endl;
                 const shared_ptr<const IOTrace>& trace = make_shared<const IOTrace>(x, y, nextNode, presentationLayer);
-                VLOG(2) << "trace: " << *trace;
+                LOG("VERBOSE_2") << "trace: " << *trace << std::endl;
                 if (iONext.isEmpty())
                 {
                     iONext.add(trace);
@@ -1963,8 +1992,8 @@ void Fsm::addPossibleIOTraces(shared_ptr<FsmNode> node,
                 {
                     iONext.concatenateToFront(trace);
                 }
-                VLOG(2)  << "(" << node->getName() << ") " << "    iONext: " << iONext;
-                VLOG(2)  << "(" << node->getName() << ") " << "    cleanTrailingEmptyTraces: " << cleanTrailingEmptyTraces;
+                LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    iONext: " << iONext << std::endl;
+                LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    cleanTrailingEmptyTraces: " << cleanTrailingEmptyTraces << std::endl;
                 if (cleanTrailingEmptyTraces)
                 {
                     shared_ptr<IOTrace> emptyTrace = IOTrace::getEmptyTrace(presentationLayer);
@@ -1972,23 +2001,23 @@ void Fsm::addPossibleIOTraces(shared_ptr<FsmNode> node,
                     for (auto traceIt = iONext.begin(); traceIt != iONext.end(); ++traceIt)
                     {
                         shared_ptr<const IOTrace> t = *traceIt;
-                        VLOG(2)  << "(" << node->getName() << ") " << "    t.size(): " << t->size();
-                        VLOG(2)  << "(" << node->getName() << ") " << "    isSuffix: " << t->isSuffix(*emptyTrace);
+                        LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    t.size(): " << t->size() << std::endl;
+                        LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    isSuffix: " << t->isSuffix(*emptyTrace) << std::endl;
                         if (t->size() > 1 && t->isSuffix(*emptyTrace))
                         {
-                            VLOG(2)  << "(" << node->getName() << ") " << "    REMOVING EMPTY SUFFIX from " << *t;
+                            LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    REMOVING EMPTY SUFFIX from " << *t << std::endl;
                             t = make_shared<IOTrace>(*t, -1, t->getTargetNode());
                         }
                     }
-                    VLOG(2)  << "(" << node->getName() << ") " << "    iONext: " << iONext;
+                    LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    iONext: " << iONext << std::endl;
                 }
-                VLOG(2)  << "Adding " << iONext << " to result.";
+                LOG("VERBOSE_2")  << "Adding " << iONext << " to result." << std::endl;
                 iOTraceContainer.add(iONext);
             }
         }
-        VLOG(2)  << "(" << node->getName() << ") " << "#####################################";
+        LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "#####################################" << std::endl;
     }
-    VLOG(2)  << "(" << node->getName() << ") " << "--- result: " << iOTraceContainer;
+    LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "--- result: " << iOTraceContainer << std::endl;
 }
 
 void Fsm::addPossibleIOTraces(std::shared_ptr<FsmNode> node,
@@ -1996,7 +2025,6 @@ void Fsm::addPossibleIOTraces(std::shared_ptr<FsmNode> node,
                          IOTraceContainer& iOTraceContainer,
                          const bool cleanTrailingEmptyTraces) const
 {
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(2));
     for (shared_ptr<InputOutputTree> tree : *treeContainer.getList())
     {
         addPossibleIOTraces(node, tree, iOTraceContainer, cleanTrailingEmptyTraces);
@@ -2011,7 +2039,10 @@ bool Fsm::hasFailure() const
         shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> pair = node->getPair();
         if (pair == nullptr)
         {
-            LOG(FATAL) << "This FSM does not seem to be a valid intersection.";
+            stringstream ss;
+ss << "This FSM does not seem to be a valid intersection.";
+std::cerr << ss.str();
+throw ss.str();
         }
 
         const shared_ptr<FsmNode>& specNode = pair->first;
@@ -2030,7 +2061,7 @@ bool Fsm::hasFailure() const
             }
             if (!foundTransition)
             {
-                LOG(INFO) << "The IUT has transition " << otherTrans->str() << " in state " << otherNode->getName()
+                LOG("INFO") << "The IUT has transition " << otherTrans->str() << " in state " << otherNode->getName()
                           << " but it is missing in the specification's state " << specNode->getName() << ".";
                 return true;
             }
@@ -2041,8 +2072,7 @@ bool Fsm::hasFailure() const
 
 IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const IOTrace& trace) const
 {
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
-    VLOG(7) << "bOmega() - adaptiveTestCases.size: " << adaptiveTestCases.size() << ", trace.size(): " << trace.size();
+    LOG("VERBOSE_7") << "bOmega() - adaptiveTestCases.size: " << adaptiveTestCases.size() << ", trace.size(): " << trace.size() << std::endl;
     IOTraceContainer result;
     if (adaptiveTestCases.size() == 0)
     {
@@ -2062,10 +2092,13 @@ IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const IOT
     }
     if (successorNodes.size() != 1)
     {
-        LOG(FATAL) << "The FSM does not seem to be observable.";
+        stringstream ss;
+ss << "The FSM does not seem to be observable.";
+std::cerr << ss.str();
+throw ss.str();
     }
     shared_ptr<FsmNode> successorNode = *successorNodes.begin();
-    VLOG(2) << "bOmega successorNode with " << trace << ": " << successorNode->getName();
+    LOG("VERBOSE_2") << "bOmega successorNode with " << trace << ": " << successorNode->getName() << std::endl;
     addPossibleIOTraces(successorNode, adaptiveTestCases, result);
     return result;
 }
@@ -2074,8 +2107,7 @@ void Fsm::bOmega(const IOTreeContainer& adaptiveTestCases,
                  const InputTraceSet& inputTraces,
                  unordered_set<IOTraceContainer>& result) const
 {
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(6));
-    VLOG(6) << "bOmega() - adaptiveTestCases.size: " << adaptiveTestCases.size() << ", inputTraces.size(): " << inputTraces.size();
+    LOG("VERBOSE_6") << "bOmega() - adaptiveTestCases.size: " << adaptiveTestCases.size() << ", inputTraces.size(): " << inputTraces.size() << std::endl;
     if (adaptiveTestCases.size() == 0)
     {
         return;
@@ -2093,7 +2125,7 @@ void Fsm::bOmega(const IOTreeContainer& adaptiveTestCases,
         {
             IOTrace iOTrace = IOTrace(*inputTrace, *outputTrace);
             IOTraceContainer produced = bOmega(adaptiveTestCases, iOTrace);
-            VLOG(1) << "produced bOmega with " << iOTrace << ": " << produced;
+            LOG("VERBOSE_1") << "produced bOmega with " << iOTrace << ": " << produced << std::endl;
             result.insert(produced);
         }
     }
@@ -2103,11 +2135,10 @@ IOTraceContainer Fsm::r(std::shared_ptr<FsmNode> node,
                    const IOTrace& base,
                    const IOTrace& suffix) const
 {
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
-    VLOG(3) << "r():";
-    VLOG(3) << "node: " << node->getName();
-    VLOG(3) << "base: " << base;
-    VLOG(3) << "suffix: " << suffix;
+    LOG("VERBOSE_3") << "r():" << std::endl;
+    LOG("VERBOSE_3") << "node: " << node->getName() << std::endl;
+    LOG("VERBOSE_3") << "base: " << base << std::endl;
+    LOG("VERBOSE_3") << "suffix: " << suffix << std::endl;
 
 
     IOTraceContainer result = IOTraceContainer();
@@ -2123,33 +2154,33 @@ IOTraceContainer Fsm::r(std::shared_ptr<FsmNode> node,
             prefixes.push_back(prefix);
         }
     }
-    VLOG(3) << "prefixes:";
+    LOG("VERBOSE_3") << "prefixes:" << std::endl;
     for (auto p : prefixes)
     {
-        VLOG(3) << "  " << p;
+        LOG("VERBOSE_3") << "  " << p << std::endl;
     }
 
     for (const IOTrace& prefix : prefixes)
     {
-        VLOG(3) << "prefix = " << prefix;
+        LOG("VERBOSE_3") << "prefix = " << prefix << std::endl;
         const shared_ptr<const IOTrace>& baseExtension = make_shared<const IOTrace>(base, prefix);
-        VLOG(3) << "v = " << baseExtension << " reaches:";
+        LOG("VERBOSE_3") << "v = " << baseExtension << " reaches:" << std::endl;
         unordered_set<shared_ptr<FsmNode>> nodes = getInitialState()->after(baseExtension->getInputTrace(), baseExtension->getOutputTrace());
         for (shared_ptr<FsmNode> n : nodes)
         {
             if (n == node)
             {
-                VLOG(3) << "  " << n->getName() << " (adding " << *baseExtension << " to result), ";
+                LOG("VERBOSE_3") << "  " << n->getName() << " (adding " << *baseExtension << " to result), " << std::endl;
                 result.add(baseExtension);
             }
             else
             {
-                VLOG(3) << "  " <<  n->getName() << ", ";
+                LOG("VERBOSE_3") << "  " <<  n->getName() << ", " << std::endl;
             }
         }
     }
 
-    VLOG(3) << "result: " << result;
+    LOG("VERBOSE_3") << "result: " << result << std::endl;
 
     return result;
 }
@@ -2160,25 +2191,24 @@ IOTraceContainer Fsm::rPlus(std::shared_ptr<FsmNode> node,
                             const IOTraceContainer& vDoublePrime,
                             const bool onlyPlusPortion) const
 {
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
-    VLOG(2) << "rPlus()";
-    VLOG(2) << "node: " << node->getName();
-    VLOG(2) << "base: " << base;
-    VLOG(2) << "suffix: " << suffix;
+    LOG("VERBOSE_2") << "rPlus()" << std::endl;
+    LOG("VERBOSE_2") << "node: " << node->getName() << std::endl;
+    LOG("VERBOSE_2") << "base: " << base << std::endl;
+    LOG("VERBOSE_2") << "suffix: " << suffix << std::endl;
     IOTraceContainer rResult;
     if (!onlyPlusPortion)
     {
         rResult = r(node, base, suffix);
     }
-    VLOG(2) << "rResult: " << rResult;
+    LOG("VERBOSE_2") << "rResult: " << rResult << std::endl;
     if (node->isDReachable())
     {
         IOTraceCont::const_iterator vDoublePrimeElement = vDoublePrime.get(node->getDReachTrace()->getInputTrace());
         if (vDoublePrime.cend() != vDoublePrimeElement)
         {
-            VLOG(2) << "  Adding: " << **vDoublePrimeElement;
+            LOG("VERBOSE_2") << "  Adding: " << **vDoublePrimeElement << std::endl;
             rResult.add(*vDoublePrimeElement);
-            VLOG(2) << "  rPlusResult: " << rResult;
+            LOG("VERBOSE_2") << "  rPlusResult: " << rResult << std::endl;
         }
     }
     return rResult;
@@ -2196,7 +2226,7 @@ bool Fsm::exceedsBound(const size_t m,
                        const Fsm& iut)
 {
     size_t lB = Fsm::lowerBound(base, suffix, states, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
-    VLOG(1) << "lB: " << lB;
+    LOG("VERBOSE_1") << "lB: " << lB << std::endl;
     return lB > m;
 }
 
@@ -2210,70 +2240,69 @@ size_t Fsm::lowerBound(const IOTrace& base,
                        const Fsm& spec,
                        const Fsm& iut)
 {
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(5));
-    VLOG(1) << "lowerBound()";
-    VLOG(1) << "base: " << base;
-    VLOG(1) << "suffix: " << suffix;
-    VLOG(1) << "states:";
+    LOG("VERBOSE_1") << "lowerBound()" << std::endl;
+    LOG("VERBOSE_1") << "base: " << base << std::endl;
+    LOG("VERBOSE_1") << "suffix: " << suffix << std::endl;
+    LOG("VERBOSE_1") << "states:" << std::endl;
     for (auto s : states)
     {
-        VLOG(1) << "  " << s->getName();
+        LOG("VERBOSE_1") << "  " << s->getName() << std::endl;
     }
-    VLOG(1) << "adaptiveTestCases: " << adaptiveTestCases;
-    VLOG(1) << "vDoublePrime: " << vDoublePrime;
-    VLOG(1) << "dReachableStates: ";
+    LOG("VERBOSE_1") << "adaptiveTestCases: " << adaptiveTestCases << std::endl;
+    LOG("VERBOSE_1") << "vDoublePrime: " << vDoublePrime << std::endl;
+    LOG("VERBOSE_1") << "dReachableStates: " << std::endl;
     for (auto s : dReachableStates)
     {
-        VLOG(1) << "  " << s->getName();
+        LOG("VERBOSE_1") << "  " << s->getName() << std::endl;
     }
     size_t result = 0;
-    VLOG(1) << "lb result: " << result;
+    LOG("VERBOSE_1") << "lb result: " << result << std::endl;
 
-    VLOG(1) << "bOmegaT:";
+    LOG("VERBOSE_1") << "bOmegaT:" << std::endl;
     for (const auto& cont : bOmegaT)
     {
-        VLOG(1) << "  " << cont;
+        LOG("VERBOSE_1") << "  " << cont << std::endl;
     }
 
     for (shared_ptr<FsmNode> state : states)
     {
         const IOTraceContainer& rResult = spec.r(state, base, suffix);
-        VLOG(1) << "--- state: " << state->getName();
-        VLOG(1) << "rResult(" << state->getName() << ", " << base << ", " << suffix << "): " << rResult;
+        LOG("VERBOSE_1") << "--- state: " << state->getName() << std::endl;
+        LOG("VERBOSE_1") << "rResult(" << state->getName() << ", " << base << ", " << suffix << "): " << rResult << std::endl;
         result += rResult.size();
-        VLOG(1) << "lb result: " << result;
+        LOG("VERBOSE_1") << "lb result: " << result << std::endl;
         if(find(dReachableStates.begin(), dReachableStates.end(), state) != dReachableStates.end()) {
             ++result;
-            VLOG(1) << "State " << state->getName() << " is d-reachable. Incrementing.";
-            VLOG(1) << "lb result: " << result;
+            LOG("VERBOSE_1") << "State " << state->getName() << " is d-reachable. Incrementing." << std::endl;
+            LOG("VERBOSE_1") << "lb result: " << result << std::endl;
         }
 
         IOTraceContainer rPlusResult = spec.rPlus(state, base, suffix, vDoublePrime, true);
         rPlusResult.add(rResult);
-        VLOG(1) << "rPlusResult: " << rPlusResult;
+        LOG("VERBOSE_1") << "rPlusResult: " << rPlusResult << std::endl;
         for (auto traceIt = rPlusResult.cbegin(); traceIt != rPlusResult.cend(); ++traceIt)
         {
             const shared_ptr<const IOTrace>& trace = *traceIt;
             IOTraceContainer traces = iut.bOmega(adaptiveTestCases, *trace);
-            VLOG(1) << "Removing " << traces << " from testTraces.";
+            LOG("VERBOSE_1") << "Removing " << traces << " from testTraces." << std::endl;
 
             IOTraceContainer::remove(bOmegaT, traces);
 
-            VLOG(1) << "testTraces:";
+            LOG("VERBOSE_1") << "testTraces:" << std::endl;
             for (const auto& cont : bOmegaT)
             {
-                VLOG(1) << "  " << cont;
+                LOG("VERBOSE_1") << "  " << cont << std::endl;
             }
         }
     }
-    VLOG(1) << "bOmegaT size: " << bOmegaT.size();
-    VLOG(1) << "bOmegaT:";
+    LOG("VERBOSE_1") << "bOmegaT size: " << bOmegaT.size() << std::endl;
+    LOG("VERBOSE_1") << "bOmegaT:" << std::endl;
     for (const auto& cont : bOmegaT)
     {
-        VLOG(1) << "  " << cont;
+        LOG("VERBOSE_1") << "  " << cont << std::endl;
     }
     result += bOmegaT.size();
-    VLOG(1) << "lowerBound() result: " << result;
+    LOG("VERBOSE_1") << "lowerBound() result: " << result << std::endl;
     return result;
 }
 
@@ -2282,14 +2311,20 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
                                 shared_ptr<IOTrace>& failTrace,
                                 int& iterations)
 {
-    VLOG(1)<< "adaptiveStateCounting()";
+    LOG("VERBOSE_1")<< "adaptiveStateCounting()" << std::endl;
     if (spec.isMinimal() != True)
     {
-        LOG(FATAL) << "Please ensure to minimize the specification before starting adaptive state counting.";
+        stringstream ss;
+ss << "Please ensure to minimize the specification before starting adaptive state counting.";
+std::cerr << ss.str();
+throw ss.str();
     }
     if (iut.isMinimal() != True)
     {
-        LOG(FATAL) << "Please ensure to minimize the IUT before starting adaptive state counting.";
+        stringstream ss;
+ss << "Please ensure to minimize the IUT before starting adaptive state counting.";
+std::cerr << ss.str();
+throw ss.str();
     }
 #ifdef ENABLE_DEBUG_MACRO
 
@@ -2298,21 +2333,20 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
 #endif
     spec.calcRDistinguishableStates();
     IOListContainer rCharacterisationSet = spec.getRCharacterisationSet();
-    VLOG(1) << "Spec rCharacterisationSet:" << rCharacterisationSet;
+    LOG("VERBOSE_1") << "Spec rCharacterisationSet:" << rCharacterisationSet << std::endl;
 
-    TIMED_FUNC(timerObj);
     observedTraces.clear();
-    LOG(INFO) << "m: " << m;
+    LOG("INFO") << "m: " << m << std::endl;
     /**
      * Adaptive test cases (Ω) for the specification FSM.
      */
     const IOTreeContainer& adaptiveTestCases = spec.getAdaptiveRCharacterisationSet();
-    LOG(INFO) << "adaptiveTestCases: " << adaptiveTestCases;
+    LOG("INFO") << "adaptiveTestCases: " << adaptiveTestCases << std::endl;
     IOListContainer adaptiveList = adaptiveTestCases.toIOList();
-    LOG(INFO) << "adaptiveTestCases as input traces:";
-    LOG(INFO) << adaptiveList;
+    LOG("INFO") << "adaptiveTestCases as input traces:" << std::endl;
+    LOG("INFO") << adaptiveList << std::endl;
     const vector<vector<shared_ptr<FsmNode>>>& maximalSetsOfRDistinguishableStates = spec.getMaximalSetsOfRDistinguishableStates();
-    LOG(INFO) << "maximalSetsOfRDistinguishableStates:";
+    LOG("VERBOSE_1") << "maximalSetsOfRDistinguishableStates:" << std::endl;
     for (auto v : maximalSetsOfRDistinguishableStates)
     {
         stringstream ss;
@@ -2322,21 +2356,21 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
             ss << e->getName() << ", ";
         }
         ss << "}";
-        LOG(INFO) << ss.str();
+        LOG("VERBOSE_1") << ss.str() << std::endl;
     }
 
     InputTraceSet detStateCover;
     const vector<shared_ptr<FsmNode>>& dReachableStates = spec.calcDReachableStates(detStateCover);
 
-    LOG(INFO) << "dReachableStates:";
+    LOG("INFO") << "dReachableStates:" << std::endl;
     for (auto s : dReachableStates)
     {
-        LOG(INFO) << s->getName();
+        LOG("INFO") << s->getName() << std::endl;
     }
-    LOG(INFO) << "detStateCover:";
+    LOG("INFO") << "detStateCover:" << std::endl;
     for (auto t : detStateCover)
     {
-        LOG(INFO) << *t;
+        LOG("INFO") << *t << std::endl;
     }
 
     VPrimeLazy vPrimeLazy(detStateCover, iut);
@@ -2367,18 +2401,18 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
         {
             ss << *w << ", ";
         }
-        LOG(INFO) << ss.str();
+        LOG("VERBOSE_1") << ss.str() << std::endl;
         ss.str(std::string());
         ss << "t: ";
         for (auto w : t)
         {
             ss << *w << ", ";
         }
-        LOG(INFO) << ss.str();
+        LOG("VERBOSE_1") << ss.str() << std::endl;
         ss.str(std::string());
 #endif
-        VLOG(1) << "adaptiveTestCases as input traces:";
-        VLOG(1) << adaptiveList;
+        LOG("VERBOSE_1") << "adaptiveTestCases as input traces:" << std::endl;
+        LOG("VERBOSE_1") << adaptiveList << std::endl;
         map<shared_ptr<InputTrace>, vector<shared_ptr<OutputTrace>>> observedOutputsTCElements;
         size_t numberInputTraces = tC.size();
         size_t inputTraceCount = 0;
@@ -2387,9 +2421,8 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
         // If the FSM observes a failure, adaptive state counting terminates.
         for (const shared_ptr<InputTrace>& inputTrace : tC)
         {
-            TIMED_SCOPE(timerBlkObj, "apply inputTrace");
-            VLOG(1) << "############################################################";
-            VLOG(1) << "  Applying inputTrace " << ++inputTraceCount << " of " << numberInputTraces << ": " << *inputTrace;
+            LOG("VERBOSE_1") << "############################################################" << std::endl;
+            LOG("VERBOSE_1") << "  Applying inputTrace " << ++inputTraceCount << " of " << numberInputTraces << ": " << *inputTrace << std::endl;
             /**
              * Hold the produced output traces for the current input trace.
              */
@@ -2413,7 +2446,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
                     ss << ", ";
                 }
             }
-            VLOG(1) << ss.str();
+            LOG("VERBOSE_1") << ss.str() << std::endl;
             ss.str(std::string());
             ss << "    producedOutputs IUT: ";
             for (size_t i = 0; i < producedOutputsIut.size(); ++i)
@@ -2424,7 +2457,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
                     ss << ", ";
                 }
             }
-            VLOG(1) << ss.str();
+            LOG("VERBOSE_1") << ss.str() << std::endl;
             ss.str(std::string());
             ss << "    reachedNodes spec: ";
             for (size_t i = 0; i < reachedNodesSpec.size(); ++i)
@@ -2435,7 +2468,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
                     ss << ", ";
                 }
             }
-            VLOG(1) << ss.str();
+            LOG("VERBOSE_1") << ss.str() << std::endl;
             ss.str(std::string());
             ss << "    reachedNodes IUT: ";
             for (size_t i = 0; i < reachedNodesIut.size(); ++i)
@@ -2446,7 +2479,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
                     ss << ", ";
                 }
             }
-            VLOG(1) << ss.str();
+            LOG("VERBOSE_1") << ss.str() << std::endl;
             ss.str(std::string());
 #endif
             observedOutputsTCElements.insert(make_pair(inputTrace, producedOutputsIut));
@@ -2456,11 +2489,10 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
                 observedTraces.add(make_shared<const IOTrace>(*inputTrace, *oTrace));
             }
 
-            VLOG(1) << "Checking produced outputs for failures";
+            LOG("VERBOSE_1") << "Checking produced outputs for failures" << std::endl;
             //Chek if the IUT has produced any output that can not be produced by the specification.
             for (size_t i = 0; i < producedOutputsIut.size(); ++i)
             {
-                TIMED_SCOPE_IF(timerBlkObj, "Check produced output for failure", VLOG_IS_ON(1));
                 const shared_ptr<OutputTrace>& outIut = producedOutputsIut.at(i);
                 bool allowed = false;
                 for (size_t j = 0; j < producedOutputsSpec.size(); ++j)
@@ -2473,7 +2505,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
                         if (adaptiveTestCases.size() > 0)
                         {
                             // Applying adaptive test cases to every node reached by the current input/output trace.
-                            VLOG(1) << "----------------- Getting adaptive traces -----------------";
+                            LOG("VERBOSE_1") << "----------------- Getting adaptive traces -----------------" << std::endl;
                             IOTraceContainer observedAdaptiveTracesIut;
                             IOTraceContainer observedAdaptiveTracesSpec;
                             const shared_ptr<FsmNode>& nodeIut = reachedNodesIut.at(i);
@@ -2482,8 +2514,8 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
                             iut.addPossibleIOTraces(nodeIut, adaptiveTestCases, observedAdaptiveTracesIut);
                             spec.addPossibleIOTraces(nodeSpec, adaptiveTestCases, observedAdaptiveTracesSpec);
 
-                            VLOG(1) << "  observedAdaptiveTracesIut (" << nodeIut->getName() << "): " << observedAdaptiveTracesIut;
-                            VLOG(1) << "  observedAdaptiveTracesSpec (" << nodeSpec->getName() << "): " << observedAdaptiveTracesSpec;
+                            LOG("VERBOSE_1") << "  observedAdaptiveTracesIut (" << nodeIut->getName() << "): " << observedAdaptiveTracesIut << std::endl;
+                            LOG("VERBOSE_1") << "  observedAdaptiveTracesSpec (" << nodeSpec->getName() << "): " << observedAdaptiveTracesSpec << std::endl;
 
                             bool failure = false;
                             for (auto traceIt = observedAdaptiveTracesIut.cbegin(); traceIt != observedAdaptiveTracesIut.cend(); ++traceIt)
@@ -2491,28 +2523,28 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
                                 const shared_ptr<const IOTrace>& trace = *traceIt;
                                 if (!observedAdaptiveTracesSpec.contains(trace))
                                 {
-                                    LOG(INFO) << "  Specification does not contain " << *trace;
+                                    LOG("INFO") << "  Specification does not contain " << *trace << std::endl;
                                     failTrace = make_shared<IOTrace>(*inputTrace, *outIut);
                                     IOTrace traceCopy = IOTrace(*trace);
                                     failTrace->append(traceCopy);
-                                    LOG(INFO) << "failTrace: " << *failTrace;
+                                    LOG("INFO") << "failTrace: " << *failTrace << std::endl;
                                     failure = true;
                                     break;
                                 }
                             }
             //                PERFORMANCE_CHECKPOINT_WITH_ID(timerBlkObj, "after observedAdaptiveTracesIut loop");
-                            VLOG(1) << "  concatenating: " << *inputTrace << "/" << *outIut;
+                            LOG("VERBOSE_1") << "  concatenating: " << *inputTrace << "/" << *outIut << std::endl;
                             observedAdaptiveTracesIut.concatenateToFront(inputTrace, outIut);
-                            VLOG(1) << "  observedAdaptiveTraces after concatenation to front: " << observedAdaptiveTracesIut;
+                            LOG("VERBOSE_1") << "  observedAdaptiveTraces after concatenation to front: " << observedAdaptiveTracesIut << std::endl;
                             observedTraces.add(observedAdaptiveTracesIut);
                             if (failure)
                             {
                                 // IUT produced an output that can not be produced by the specification.
-                                LOG(INFO) << "  Failure observed:";
-                                LOG(INFO) << "    Input Trace: " << *inputTrace;
-                                LOG(INFO) << "    Observed adaptive traces:";
-                                LOG(INFO) << observedAdaptiveTracesIut;
-                                VLOG(1) << "IUT is not a reduction of the specification.";
+                                LOG("INFO") << "  Failure observed:" << std::endl;
+                                LOG("INFO") << "    Input Trace: " << *inputTrace << std::endl;
+                                LOG("INFO") << "    Observed adaptive traces:" << std::endl;
+                                LOG("INFO") << observedAdaptiveTracesIut << std::endl;
+                                LOG("VERBOSE_1") << "IUT is not a reduction of the specification." << std::endl;
                                 return false;
                             }
                         }
@@ -2524,8 +2556,8 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
                 if (!allowed)
                 {
                     // IUT produced an output that can not be produced by the specification.
-                    LOG(INFO) << "  Failure observed:";
-                    LOG(INFO) << "    Input Trace: " << *inputTrace;
+                    LOG("INFO") << "  Failure observed:" << std::endl;
+                    LOG("INFO") << "    Input Trace: " << *inputTrace << std::endl;
                     ss << "    Produced Outputs Iut: ";
                     for (size_t i = 0; i < producedOutputsIut.size(); ++i)
                     {
@@ -2535,7 +2567,7 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
                             ss << ", ";
                         }
                     }
-                    LOG(INFO) << ss.str();
+                    LOG("INFO") << ss.str() << std::endl;
                     ss.str(std::string());
 #ifdef ENABLE_DEBUG_MACRO
                     ss << "    Produced Outputs Spec: ";
@@ -2556,13 +2588,13 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
                             ss << ", ";
                         }
                     }
-                    LOG(INFO) << ss.str();
+                    LOG("VERBOSE_1") << ss.str() << std::endl;
                     ss.str(std::string());
 #endif
-                    VLOG(1) << "Specification does not produce output " << *outIut << ".";
-                    VLOG(1) << "IUT is not a reduction of the specification.";
+                    LOG("VERBOSE_1") << "Specification does not produce output " << *outIut << "." << std::endl;
+                    LOG("VERBOSE_1") << "IUT is not a reduction of the specification." << std::endl;
                     failTrace = make_shared<IOTrace>(*inputTrace, *outIut);
-                    LOG(INFO) << "failTrace: " << *failTrace;
+                    LOG("INFO") << "failTrace: " << *failTrace << std::endl;
                     return false;
                 }
             }
@@ -2575,30 +2607,29 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
         }
 
         long numberToCheck = 0;
-        VLOG(1) << "observedOutputsTCElements:";
+        LOG("VERBOSE_1") << "observedOutputsTCElements:" << std::endl;
         for (auto e : observedOutputsTCElements)
         {
-            VLOG(1) << "  " << *e.first << ":";
+            LOG("VERBOSE_1") << "  " << *e.first << ":" << std::endl;
             for (auto o : e.second)
             {
-                VLOG(1) << "    " << *o;
+                LOG("VERBOSE_1") << "    " << *o << std::endl;
                 ++numberToCheck;
             }
         }
-        VLOG(1) << "Number of input/output combinations: " << numberToCheck;
+        LOG("VERBOSE_1") << "Number of input/output combinations: " << numberToCheck << std::endl;
         InputTraceSet newT = t;
         InputTraceSet newTC;
         inputTraceCount = 0;
         for (shared_ptr<InputTrace> inputTrace : tC)
         {
             bool inputTraceMeetsCriteria = true;
-            TIMED_SCOPE(timerBlkObj, "Check input trace");
-            LOG(INFO) << "check inputTrace: " << *inputTrace << " (" << ++inputTraceCount << " of " << numberInputTraces << ")";
+            LOG("INFO") << "check inputTrace: " << *inputTrace << " (" << ++inputTraceCount << " of " << numberInputTraces << ")" << std::endl;
             vector<shared_ptr<OutputTrace>>& producedOutputs = observedOutputsTCElements.at(inputTrace);
-            VLOG(1) << "producedOutputs:";
+            LOG("VERBOSE_1") << "producedOutputs:" << std::endl;
             for (shared_ptr<OutputTrace> outputTrace : producedOutputs)
             {
-                VLOG(1) << "  " << *outputTrace;
+                LOG("VERBOSE_1") << "  " << *outputTrace << std::endl;
             }
             long outputTraceCount = 0;
             size_t numberOutputTraces = producedOutputs.size();
@@ -2606,7 +2637,6 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
             shared_ptr<const InputTrace> maxInputPrefixInV = nullptr;
             for (const shared_ptr<InputTrace>& detStateTransition : detStateCover)
             {
-                TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-find-prefix-in-v", VLOG_IS_ON(4));
                 if (inputTrace->isPrefix(*detStateTransition, false, true) &&
                         ( !maxInputPrefixInV || maxInputPrefixInV->isEmptyTrace() || detStateTransition->size() > maxInputPrefixInV->size()))
                 {
@@ -2615,63 +2645,63 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
             }
             if (!maxInputPrefixInV)
             {
-                LOG(FATAL) << "No prefix for input trace " << *inputTrace << " found in V. This should not happen.";
+                stringstream ss;
+ss << "No prefix for input trace " << *inputTrace << " found in V. This should not happen.";
+std::cerr << ss.str();
+throw ss.str();
             }
-            VLOG(1) << "maxInputPrefixInV: " << *maxInputPrefixInV;
+            LOG("VERBOSE_1") << "maxInputPrefixInV: " << *maxInputPrefixInV << std::endl;
 
             for (shared_ptr<OutputTrace> outputTrace : producedOutputs)
             {
-                TIMED_SCOPE_IF(timerBlkObj, "Check output trace", VLOG_IS_ON(1));
                 if (!inputTraceMeetsCriteria)
                 {
                     break;
                 }
-                LOG(INFO) << "outputTrace: " << *outputTrace << " (" << ++outputTraceCount << " of " << numberOutputTraces << ")";
+                LOG("INFO") << "outputTrace: " << *outputTrace << " (" << ++outputTraceCount << " of " << numberOutputTraces << ")" << std::endl;
                 IOTrace currentTrace(*inputTrace, *outputTrace);
-                VLOG(1) << "currentTrace (x_1/y_1): " << currentTrace;
+                LOG("VERBOSE_1") << "currentTrace (x_1/y_1): " << currentTrace << std::endl;
                 bool outputTraceMeetsCriteria = false;
                 vPrimeLazy.reset();
 
-                VLOG(1) << "maxInputPrefixInV.size(): " << maxInputPrefixInV->size();
+                LOG("VERBOSE_1") << "maxInputPrefixInV.size(): " << maxInputPrefixInV->size() << std::endl;
                 shared_ptr<const IOTrace> maxIOPrefixInV = make_shared<const IOTrace>(*static_pointer_cast<const Trace>(maxInputPrefixInV),
                                                                                       *outputTrace->getPrefix(maxInputPrefixInV->size(), true));
-                VLOG(1) << "maxIOPrefixInV (v/v'): " << *maxIOPrefixInV;
+                LOG("VERBOSE_1") << "maxIOPrefixInV (v/v'): " << *maxIOPrefixInV << std::endl;
                 IOTrace suffix(InputTrace(spec.presentationLayer), OutputTrace(spec.presentationLayer));
                 suffix = currentTrace.getSuffix(*maxIOPrefixInV);
-                VLOG(1) << "suffix (x/y): " << suffix;
+                LOG("VERBOSE_1") << "suffix (x/y): " << suffix << std::endl;
 
-                VLOG(1) << "vPrimeLazy.hasNext(): " << vPrimeLazy.hasNext();
+                LOG("VERBOSE_1") << "vPrimeLazy.hasNext(): " << vPrimeLazy.hasNext() << std::endl;
                 while (vPrimeLazy.hasNext())
                 {
                     const IOTraceContainer& vDoublePrime = vPrimeLazy.getNext();
-                    TIMED_SCOPE_IF(timerBlkObj, "Check vDoublePrime", VLOG_IS_ON(1));
                     if (outputTraceMeetsCriteria)
                     {
                         break;
                     }
-                    VLOG(1) << "vDoublePrime: " << vDoublePrime;
+                    LOG("VERBOSE_1") << "vDoublePrime: " << vDoublePrime << std::endl;
 
                     if (!vDoublePrime.contains(maxIOPrefixInV))
                     {
-                        VLOG(1) << "vDoublePrime does not contain prefix " << *maxIOPrefixInV << ". Skipping.";
-                        VLOG(1) << "vPrimeLazy.hasNext(): " << vPrimeLazy.hasNext();
+                        LOG("VERBOSE_1") << "vDoublePrime does not contain prefix " << *maxIOPrefixInV << ". Skipping." << std::endl;
+                        LOG("VERBOSE_1") << "vPrimeLazy.hasNext(): " << vPrimeLazy.hasNext() << std::endl;
                         continue;
                     }
                     for (const vector<shared_ptr<FsmNode>>& rDistStates : maximalSetsOfRDistinguishableStates)
                     {
-                        VLOG(1) << "rDistStates:";
+                        LOG("VERBOSE_1") << "rDistStates:" << std::endl;
                         for (auto r : rDistStates)
                         {
-                            VLOG(1) << "  " << r->getName();
+                            LOG("VERBOSE_1") << "  " << r->getName() << std::endl;
                         }
-                        TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-loop-2-1-3", VLOG_IS_ON(4));
                          //size_t lB = Fsm::lowerBound(*maxPrefix, suffix, t, rDistStates, adaptiveTestCases, vDoublePrime, dReachableStates, spec, iut);
-                        //VLOG(1) << "lB: " << lB;
+                        //LOG("VERBOSE_1") << "lB: " << lB << std::endl;
                         bool exceedsBound = Fsm::exceedsBound(m, *maxIOPrefixInV, suffix, rDistStates, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
-                        VLOG(1) << "exceedsBound: " << exceedsBound;
+                        LOG("VERBOSE_1") << "exceedsBound: " << exceedsBound << std::endl;
                         if (exceedsBound)
                         {
-                            VLOG(1) << "Exceeded lower bound. Output trace " << *outputTrace << " meets criteria.";
+                            LOG("VERBOSE_1") << "Exceeded lower bound. Output trace " << *outputTrace << " meets criteria." << std::endl;
                             outputTraceMeetsCriteria = true;
                             break;
                         }
@@ -2686,14 +2716,14 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
             if (!inputTraceMeetsCriteria)
             {
                 // Keeping current input trace in T_C
-                VLOG(1) << "Keeping " << *inputTrace << " in T_C.";
+                LOG("VERBOSE_1") << "Keeping " << *inputTrace << " in T_C." << std::endl;
                 newTC.insert(inputTrace);
                 // Next input trace.
                 continue;
             }
             else
             {
-                VLOG(1) << "Removing " << *inputTrace << " from T_C.";
+                LOG("VERBOSE_1") << "Removing " << *inputTrace << " from T_C." << std::endl;
             }
         }
         ss << "newTC: ";
@@ -2701,17 +2731,16 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
         {
             ss << *w << ", ";
         }
-        VLOG(1) << ss.str() << endl;
+        LOG("VERBOSE_1") << ss.str() << endl << std::endl;
         ss.str(std::string());
         // Expanding sequences.
         InputTraceSet expandedTC;
         InputTraceSet tracesAddedToT;
-        LOG(INFO) << "Expanding input sequences.";
+        LOG("INFO") << "Expanding input sequences." << std::endl;
         for (int x = 0; x <= spec.maxInput; ++x)
         {
             for (const shared_ptr<InputTrace>& inputTrace : newTC)
             {
-                TIMED_SCOPE_IF(timerBlkObj, "adaptiveStateCounting-expansion", VLOG_IS_ON(2));
 
                 shared_ptr<InputTrace> concat;
                 if (inputTrace->isEmptyTrace())
@@ -2735,29 +2764,29 @@ bool Fsm::adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
                 }
             }
         }
-        LOG(INFO) << "Finished expansion.";
+        LOG("INFO") << "Finished expansion." << std::endl;
         iut.bOmega(adaptiveTestCases, tracesAddedToT, bOmegaT);
-        LOG(INFO) << "Finished calculating bOmega.";
+        LOG("INFO") << "Finished calculating bOmega." << std::endl;
 
         ss << "expandedTC: ";
         for (auto w : expandedTC)
         {
             ss << *w << ", ";
         }
-        VLOG(1) << ss.str() << endl;
+        LOG("VERBOSE_1") << ss.str() << endl << std::endl;
         ss.str(std::string());
         ss << "newT: ";
         for (auto w : newT)
         {
             ss << *w << ", ";
         }
-        VLOG(1) << ss.str() << endl;
+        LOG("VERBOSE_1") << ss.str() << endl << std::endl;
         ss.str(std::string());
         tC = expandedTC;
         t = newT;
     }
-    VLOG(1) << "  RESULT: " << observedTraces;
-    VLOG(1) << "IUT is a reduction of the specification.";
+    LOG("VERBOSE_1") << "  RESULT: " << observedTraces << std::endl;
+    LOG("VERBOSE_1") << "IUT is a reduction of the specification." << std::endl;
     return true;
 }
 
@@ -2765,7 +2794,6 @@ bool Fsm::rDistinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
                             std::vector<std::shared_ptr<FsmNode>>& nodesB,
                             const IOTreeContainer& adaptiveTestCases) const
 {
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
     for (size_t i = 0; i < nodesA.size(); ++i)
     {
         shared_ptr<FsmNode> nodeA = nodesA.at(i);
@@ -2774,7 +2802,7 @@ bool Fsm::rDistinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
             shared_ptr<FsmNode> nodeB = nodesB.at(j);
             if (nodeA == nodeB)
             {
-                LOG(DEBUG) << nodeA->getName() << " == " << nodeB->getName();
+                LOG("DEBUG") << nodeA->getName() << " == " << nodeB->getName() << std::endl;
                 return false;
             }
             if (!rDistinguishes(nodeA, nodeB, adaptiveTestCases))
@@ -2790,7 +2818,6 @@ bool Fsm::distinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
                             std::vector<std::shared_ptr<FsmNode>>& nodesB,
                             const IOTreeContainer& adaptiveTestCases) const
 {
-    TIMED_FUNC_IF(timerObj, VLOG_IS_ON(7));
     for (size_t i = 0; i < nodesA.size(); ++i)
     {
         shared_ptr<FsmNode> nodeA = nodesA.at(i);
@@ -2799,7 +2826,7 @@ bool Fsm::distinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
             shared_ptr<FsmNode> nodeB = nodesB.at(j);
             if (nodeA == nodeB)
             {
-                LOG(DEBUG) << nodeA->getName() << " == " << nodeB->getName();
+                LOG("DEBUG") << nodeA->getName() << " == " << nodeB->getName() << std::endl;
                 return false;
             }
             if (!distinguishes(nodeA, nodeB, adaptiveTestCases))
@@ -2918,7 +2945,6 @@ bool Fsm::distinguishes(shared_ptr<FsmNode> nodeA,
 
 IOTreeContainer Fsm::getAdaptiveRCharacterisationSet() const
 {
-    TIMED_FUNC(timerObj);
     IOTreeContainer result = IOTreeContainer(presentationLayer);
     for (shared_ptr<FsmNode> n : nodes)
     {
@@ -2933,13 +2959,12 @@ IOTreeContainer Fsm::getAdaptiveRCharacterisationSet() const
 
 vector<vector<shared_ptr<FsmNode>>> Fsm::getMaximalSetsOfRDistinguishableStates() const
 {
-    TIMED_FUNC(timerObj);
-    VLOG(2) << "getMaximalSetsOfRDistinguishableStates()";
+    LOG("VERBOSE_2") << "getMaximalSetsOfRDistinguishableStates()" << std::endl;
     vector<vector<shared_ptr<FsmNode>>> result;
     result.reserve(static_cast<size_t>(getMaxNodes()));
     for (shared_ptr<FsmNode> node : nodes)
     {
-        VLOG(3) << "Looking for node " << node->getName();
+        LOG("VERBOSE_3") << "Looking for node " << node->getName() << std::endl;
         bool skip = false;
         for (vector<shared_ptr<FsmNode>>& set : result)
         {
@@ -2958,29 +2983,28 @@ vector<vector<shared_ptr<FsmNode>>> Fsm::getMaximalSetsOfRDistinguishableStates(
         }
         if (skip)
         {
-            VLOG(3) << "Skipping node " << node->getName();
+            LOG("VERBOSE_3") << "Skipping node " << node->getName() << std::endl;
             continue;
         }
         vector<shared_ptr<FsmNode>> set = {node};
         set.reserve(static_cast<size_t>(getMaxNodes()));
-        VLOG(2) << "Creating set for node " << node->getName();
+        LOG("VERBOSE_2") << "Creating set for node " << node->getName() << std::endl;
         for (shared_ptr<FsmNode> n : nodes)
         {
             if (node == n)
             {
                 continue;
             }
-            TIMED_SCOPE_IF(timerBlkObj, "Inserting node", VLOG_IS_ON(3));
             if (n->getRDistinguishability()->isRDistinguishableWith(set))
             {
                 set.push_back(n);
             }
         }
-        VLOG(2) << "Set size: " << set.size();
+        LOG("VERBOSE_2") << "Set size: " << set.size() << std::endl;
         set.resize(set.size());
         result.push_back(set);
     }
-    VLOG(2) << "result size: " << result.size();
+    LOG("VERBOSE_2") << "result size: " << result.size() << std::endl;
     result.resize(result.size());
     return result;
 }
@@ -2989,12 +3013,18 @@ void Fsm::calcStateIdentificationSets()
 {
     if (!isObservable())
     {
-        LOG(FATAL) << "This FSM is not observable - cannot calculate the charactersiation set.";
+        stringstream ss;
+ss << "This FSM is not observable - cannot calculate the charactersiation set.";
+std::cerr << ss.str();
+throw ss.str();
     }
     
     if (characterisationSet == nullptr)
     {
-        LOG(FATAL) << "Missing characterisation set - exit.";
+        stringstream ss;
+ss << "Missing characterisation set - exit.";
+std::cerr << ss.str();
+throw ss.str();
     }
     
     /*Create empty state identification sets for every FSM state*/
@@ -3083,12 +3113,18 @@ void Fsm::calcStateIdentificationSetsFast()
 {
     if (!isObservable())
     {
-        LOG(FATAL) << "This FSM is not observable - cannot calculate the charactersiation set.";
+        stringstream ss;
+ss << "This FSM is not observable - cannot calculate the charactersiation set.";
+std::cerr << ss.str();
+throw ss.str();
     }
     
     if (characterisationSet == nullptr)
     {
-        LOG(FATAL) << "Missing characterisation set - exit.";
+        stringstream ss;
+ss << "Missing characterisation set - exit.";
+std::cerr << ss.str();
+throw ss.str();
     }
     
     /*Create empty state identification sets for every FSM state*/
@@ -3264,7 +3300,10 @@ IOListContainer Fsm::hsiMethod(const unsigned int numAddStates)
 
     if (!isObservable())
     {
-        LOG(FATAL) << "This FSM is not observable - cannot calculate the harmonized state identification set.";
+        stringstream ss;
+ss << "This FSM is not observable - cannot calculate the harmonized state identification set.";
+std::cerr << ss.str();
+throw ss.str();
     }
     
     IOListContainer wSet = getCharacterisationSet();
@@ -3310,7 +3349,7 @@ IOListContainer Fsm::hsiMethod(const unsigned int numAddStates)
                 }
             }
             if (!distinguished) {
-                LOG(ERROR)  << "[ERR] Found inconsistency when applying HSI-Method: FSM not minimal." << endl;
+                LOG("ERROR")  << "[ERR] Found inconsistency when applying HSI-Method: FSM not minimal." << endl << std::endl;
             }
         }
     }
@@ -3373,7 +3412,7 @@ bool Fsm::isCompletelyDefined() const
             }
             if (!found)
             {
-                LOG(INFO) << "Incomplete FSM : for state " << nn->getName() << " (" << nn->getId() << "), input " << x << " does not have a transition." << endl;
+                LOG("INFO") << "Incomplete FSM : for state " << nn->getName() << " (" << nn->getId() << "), input " << x << " does not have a transition." << endl << std::endl;
                 cDefd = false;
             }
         }
@@ -3449,16 +3488,15 @@ Fsm::createRandomFsm(const string & fsmName,
                      const shared_ptr<FsmPresentationLayer>& pl,
                      const bool observable,
                      const unsigned seed) {
-    TIMED_FUNC(timerObj);
     // Initialisation of random number generation
     if ( seed == 0 ) {
         unsigned int s = getRandomSeed();
         srand(s);
-        LOG(DEBUG) << "createRandomFsm seed: " << s;
+        LOG("DEBUG") << "createRandomFsm seed: " << s << std::endl;
     }
     else {
         srand(seed);
-        LOG(DEBUG) << "createRandomFsm seed: " << seed;
+        LOG("DEBUG") << "createRandomFsm seed: " << seed << std::endl;
     }
 
     // Produce the nodes and put them into a vector.
@@ -3572,19 +3610,19 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
                                      const bool& observable,
                                      const unsigned& seed)
 {
-    VLOG(1) << "**createRandomFsm()";
-    VLOG(1) << "maxInput: " << maxInput;
-    VLOG(1) << "maxOutput: " << maxOutput;
-    VLOG(1) << "maxState: " << maxState;
+    LOG("VERBOSE_1") << "**createRandomFsm()" << std::endl;
+    LOG("VERBOSE_1") << "maxInput: " << maxInput << std::endl;
+    LOG("VERBOSE_1") << "maxOutput: " << maxOutput << std::endl;
+    LOG("VERBOSE_1") << "maxState: " << maxState << std::endl;
     // Initialisation of random number generation
     if ( seed == 0 ) {
         unsigned int s = getRandomSeed();
         srand(s);
-        LOG(DEBUG) << "createRandomFsm seed: " << s;
+        LOG("DEBUG") << "createRandomFsm seed: " << s << std::endl;
     }
     else {
         srand(seed);
-        LOG(DEBUG) << "createRandomFsm seed: " << seed;
+        LOG("DEBUG") << "createRandomFsm seed: " << seed << std::endl;
     }
 
     int numIn = maxInput + 1;
@@ -3592,16 +3630,19 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
     int numStates = maxState + 1;
     const bool degreeOfCompletenessRequired = degreeOfCompleteness > 0;
 
-    VLOG(1) << "numIn: " << numIn;
-    VLOG(1) << "numOut: " << numOut;
-    VLOG(1) << "numStates: " << numStates;
-    VLOG(1) << "degreeOfCompleteness: " << degreeOfCompleteness;
-    VLOG(1) << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism;
-    VLOG(1) << "forceNonDeterminism: " << boolalpha << forceNonDeterminism;
+    LOG("VERBOSE_1") << "numIn: " << numIn << std::endl;
+    LOG("VERBOSE_1") << "numOut: " << numOut << std::endl;
+    LOG("VERBOSE_1") << "numStates: " << numStates << std::endl;
+    LOG("VERBOSE_1") << "degreeOfCompleteness: " << degreeOfCompleteness << std::endl;
+    LOG("VERBOSE_1") << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism << std::endl;
+    LOG("VERBOSE_1") << "forceNonDeterminism: " << boolalpha << forceNonDeterminism << std::endl;
 
     if (forceNonDeterminism && numOut < 2)
     {
-        LOG(FATAL) << "Can not create non-determinism with less than two output symbols.";
+        stringstream ss;
+ss << "Can not create non-determinism with less than two output symbols.";
+std::cerr << ss.str();
+throw ss.str();
     }
 
     // Produce the nodes and put them into a vector.
@@ -3636,22 +3677,25 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
         // We could not find a source node or a valid label.
         if (!srcNode || !label)
         {
-            LOG(FATAL) << "createRandomFsm(): Could not create requested number of transitions. This shouldn't happen.";
+            stringstream ss;
+ss << "createRandomFsm(): Could not create requested number of transitions. This shouldn't happen.";
+std::cerr << ss.str();
+throw ss.str();
         }
 
         shared_ptr<FsmTransition> transition = make_shared<FsmTransition>(srcNode, targetNode, label);
         srcNode->addTransition(transition);
 
         reachedNodes.push_back(targetNode);
-        VLOG(1) << "Created transition " << transition->str();
+        LOG("VERBOSE_1") << "Created transition " << transition->str() << std::endl;
     }
-    VLOG(2) << "Connected all nodes.";
+    LOG("VERBOSE_2") << "Connected all nodes." << std::endl;
 
     fsm->addRandomTransitions(maxDegreeOfNonDeterminism, false, observable, 1.0f);
 
     if (degreeOfCompletenessRequired)
     {
-        VLOG(2) << "Creating or removing transitions to comply with the given degree of completeness.";
+        LOG("VERBOSE_2") << "Creating or removing transitions to comply with the given degree of completeness." << std::endl;
         fsm->meetDegreeOfCompleteness(degreeOfCompleteness, maxDegreeOfNonDeterminism, observable);
     }
 
@@ -3662,11 +3706,11 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
 
     if (minimal)
     {
-        VLOG(2) << "Fsm has to be minimal. Minimizing. Num states: " << fsm->size();
-        VLOG(2) << *fsm;
+        LOG("VERBOSE_2") << "Fsm has to be minimal. Minimizing. Num states: " << fsm->size() << std::endl;
+        LOG("VERBOSE_2") << *fsm << std::endl;
         Fsm fsmMin = fsm->minimise("", "", false);
         fsmMin.presentationLayer = pl;
-        VLOG(2) << "Num states after minimizing: " << fsmMin.size();
+        LOG("VERBOSE_2") << "Num states after minimizing: " << fsmMin.size() << std::endl;
 
         float degreeOfCompletenessMin = fsmMin.getDegreeOfCompleteness();
         size_t numStatesMin = fsmMin.size();
@@ -3676,27 +3720,25 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
         bool metNonDeterminism = (!forceNonDeterminism || fsm->getNumberOfNonDeterministicTransitions() > 0);
 
         int retryCount = 0;
-        VLOG(2) << "metDegreeOfCompleteness: " << std::boolalpha << metDegreeOfCompleteness;
-        VLOG(2) << "metnumberOfStates: " << std::boolalpha << metNumberOfStates;
-        VLOG(2) << "metNonDeterminism: " << std::boolalpha << metNonDeterminism;
+        LOG("VERBOSE_2") << "metDegreeOfCompleteness: " << std::boolalpha << metDegreeOfCompleteness << std::endl;
+        LOG("VERBOSE_2") << "metnumberOfStates: " << std::boolalpha << metNumberOfStates << std::endl;
+        LOG("VERBOSE_2") << "metNonDeterminism: " << std::boolalpha << metNonDeterminism << std::endl;
         while (!metDegreeOfCompleteness || !metNumberOfStates || !metNonDeterminism)
         {
             ++retryCount;
             if (retryCount > 15)
             {
-                LOG(WARNING) << "Could not create the requested FSM. Trying new seed.";
-                CLOG_IF(VLOG_IS_ON(2), INFO, logging::globalLogger)
-                        << "Could not create the requested FSM. Trying new seed.";
+                LOG("WARNING") << "Could not create the requested FSM. Trying new seed." << std::endl;
                 const unsigned int newSeed = static_cast<unsigned int>(rand());
                 return createRandomFsm(fsmName, maxInput, maxOutput, maxState, pl, degreeOfCompleteness, maxDegreeOfNonDeterminism,
                                        forceNonDeterminism, minimal, observable, newSeed);
 
             }
-            VLOG(2) << "FSM does not meet all criteria yet:";
-            VLOG(2) << fsmMin;
+            LOG("VERBOSE_2") << "FSM does not meet all criteria yet:" << std::endl;
+            LOG("VERBOSE_2") << fsmMin << std::endl;
             if (!metNumberOfStates)
             {
-                VLOG(1) << "Minimal FSM does not contain requested number of states: "
+                LOG("VERBOSE_1") << "Minimal FSM does not contain requested number of states: "
                         << numStatesMin << " < " << numStates;
                 vector<shared_ptr<FsmNode>> newNodes;
                 fsmMin.meetNumberOfStates(maxState, maxDegreeOfNonDeterminism, observable, newNodes);
@@ -3704,13 +3746,13 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
             }
             else if (!metDegreeOfCompleteness)
             {
-                VLOG(1) << "Minimal FSM does not meet degree of completeness: "
+                LOG("VERBOSE_1") << "Minimal FSM does not meet degree of completeness: "
                         << degreeOfCompletenessMin << " != " << degreeOfCompleteness;
                 fsmMin.meetDegreeOfCompleteness(degreeOfCompleteness, maxDegreeOfNonDeterminism, observable);
             }
             else if (!metNonDeterminism)
             {
-                VLOG(1) << "Minimal FSM is not non-deterministic.";
+                LOG("VERBOSE_1") << "Minimal FSM is not non-deterministic." << std::endl;
                 fsm->addRandomTransitions(maxDegreeOfNonDeterminism, true, observable, 1.0f);
             }
 
@@ -3721,14 +3763,14 @@ shared_ptr<Fsm> Fsm::createRandomFsm(const std::string& fsmName,
             metDegreeOfCompleteness = fsmMin.doesMeetDegreeOfCompleteness(degreeOfCompleteness);
             metNumberOfStates = (numStatesMin == static_cast<size_t>(numStates));
             metNonDeterminism = (!forceNonDeterminism || fsm->getNumberOfNonDeterministicTransitions() > 0);
-            VLOG(2) << "metDegreeOfCompleteness: " << std::boolalpha << metDegreeOfCompleteness;
-            VLOG(2) << "metnumberOfStates: " << std::boolalpha << metNumberOfStates;
-            VLOG(2) << "metNonDeterminism: " << std::boolalpha << metNonDeterminism;
+            LOG("VERBOSE_2") << "metDegreeOfCompleteness: " << std::boolalpha << metDegreeOfCompleteness << std::endl;
+            LOG("VERBOSE_2") << "metnumberOfStates: " << std::boolalpha << metNumberOfStates << std::endl;
+            LOG("VERBOSE_2") << "metNonDeterminism: " << std::boolalpha << metNonDeterminism << std::endl;
         }
         fsm = make_shared<Fsm>(fsmMin);
     }
 
-    VLOG(1) << "Created FSM with " << fsm->size() << " states and degreeOfCompleteness: "
+    LOG("VERBOSE_1") << "Created FSM with " << fsm->size() << " states and degreeOfCompleteness: "
             << fsm->getDegreeOfCompleteness();
 
     return fsm;
@@ -3741,11 +3783,12 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                                   const bool keepObservability,
                                   const unsigned seed,
                                   const shared_ptr<FsmPresentationLayer>& pLayer){
-    TIMED_FUNC(timerObj);
-
     if (keepObservability && !isObservable())
     {
-        LOG(FATAL) << "Can not keep an FSM observable that is not already observable.";
+        stringstream ss;
+ss << "Can not keep an FSM observable that is not already observable.";
+std::cerr << ss.str();
+throw ss.str();
     }
 
     if (numOutputFaults > 0 && maxOutput < 1)
@@ -3756,15 +3799,15 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
     if ( seed == 0 ) {
         unsigned int s = getRandomSeed();
         srand(s);
-        LOG(DEBUG) << "createMutant seed: " << s;
+        LOG("DEBUG") << "createMutant seed: " << s << std::endl;
     }
     else {
         srand(seed);
-        LOG(DEBUG) << "createMutant seed: " << seed;
+        LOG("DEBUG") << "createMutant seed: " << seed << std::endl;
     }
 
-    LOG(DEBUG) << "numOutputFaults: " << numOutputFaults;
-    LOG(DEBUG) << "numTransitionFaults: " << numTransitionFaults;
+    LOG("DEBUG") << "numOutputFaults: " << numOutputFaults << std::endl;
+    LOG("DEBUG") << "numTransitionFaults: " << numTransitionFaults << std::endl;
 
     shared_ptr<FsmPresentationLayer> pl;
     if (pLayer == nullptr)
@@ -3818,7 +3861,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
             }
             std::vector<int>::iterator srcNodeIt = srcNodeIdsCpy.begin() + (rand() % srcNodeIdsCpy.size());
             size_t srcNodeId = static_cast<size_t>(*srcNodeIt);
-            VLOG(2) << "srcNodeId: " << srcNodeId;
+            LOG("VERBOSE_2") << "srcNodeId: " << srcNodeId << std::endl;
             srcNodeIdsCpy.erase(srcNodeIt);
 
             tgtNodeIdsCpy = srcNodeIds;
@@ -3831,7 +3874,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                 }
                 std::vector<int>::iterator tgtNodeIt = tgtNodeIdsCpy.begin() + (rand() % tgtNodeIdsCpy.size());
                 size_t newTgtNodeId = static_cast<size_t>(*tgtNodeIt);
-                VLOG(2) << "  newTgtNodeId: " << newTgtNodeId;
+                LOG("VERBOSE_2") << "  newTgtNodeId: " << newTgtNodeId << std::endl;
                 tgtNodeIdsCpy.erase(tgtNodeIt);
 
 
@@ -3840,22 +3883,22 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                 {
                     std::vector<shared_ptr<FsmTransition>>::iterator transitionIt = transitions.begin() + (rand() % transitions.size());
                     shared_ptr<FsmTransition> tr = *transitionIt;
-                    VLOG(2) << "    tr: " << tr->str();
+                    LOG("VERBOSE_2") << "    tr: " << tr->str() << std::endl;
                     transitions.erase(transitionIt);
 
                     if (find(cantTouchThis.begin(), cantTouchThis.end(), tr) != cantTouchThis.end())
                     {
-                        LOG(INFO) << "(Transition fault) Won't touch transition " << tr->str();
+                        LOG("INFO") << "(Transition fault) Won't touch transition " << tr->str() << std::endl;
                         continue;
                     }
 
                     if (tr->getTarget()->getId() == static_cast<int>(newTgtNodeId)) {
                         continue;
                     }
-                    LOG(INFO) << "Adding transition fault:";
-                    LOG(INFO) << "  Old transition: " << tr->str();
+                    LOG("INFO") << "Adding transition fault:" << std::endl;
+                    LOG("INFO") << "  Old transition: " << tr->str() << std::endl;
                     tr->setTarget(lst[newTgtNodeId]);
-                    LOG(INFO) << "  New transition: " << tr->str();
+                    LOG("INFO") << "  New transition: " << tr->str() << std::endl;
                     ++createdTransitionFaults;
                     cantTouchThis.push_back(tr);
                     addedFault = true;
@@ -3868,7 +3911,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
 
     if (createdTransitionFaults < numTransitionFaults)
     {
-        LOG(INFO) << "Could not create all requested transition faults.";
+        LOG("INFO") << "Could not create all requested transition faults." << std::endl;
         throw too_many_transition_faults("Could not create all requested transition faults.");
     }
     
@@ -3899,7 +3942,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
 
                 if (find(cantTouchThis.begin(), cantTouchThis.end(), tr) != cantTouchThis.end())
                 {
-                    LOG(INFO) << "(Output fault) Won't touch transition " << tr->str();
+                    LOG("INFO") << "(Output fault) Won't touch transition " << tr->str() << std::endl;
                     continue;
                 }
 
@@ -3966,10 +4009,10 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                     auto newLbl = make_shared<FsmLabel>(tr->getLabel()->getInput(),
                                                         newOutVal,
                                                         pl);
-                    LOG(INFO) << "Adding output fault:";
-                    LOG(INFO) << "  Old transition: " << tr->str();
+                    LOG("INFO") << "Adding output fault:" << std::endl;
+                    LOG("INFO") << "  Old transition: " << tr->str() << std::endl;
                     tr->setLabel(newLbl);
-                    LOG(INFO) << "  New transition: " << tr->str();
+                    LOG("INFO") << "  New transition: " << tr->str() << std::endl;
                     ++createdOutputFaults;
                     cantTouchThis.push_back(tr);
                     addedFault = true;
@@ -3980,7 +4023,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
     }
     if (createdOutputFaults < numOutputFaults)
     {
-        LOG(INFO) << "Could not create all requested output faults.";
+        LOG("INFO") << "Could not create all requested output faults." << std::endl;
         throw too_many_output_faults("Could not create all requested output faults.");
     }
     
@@ -3995,19 +4038,19 @@ shared_ptr<Fsm> Fsm::createReduction(const string& fsmName,
                                      const unsigned seed,
                                      const std::shared_ptr<FsmPresentationLayer>& pLayer) const
 {
-    VLOG(1) << "**createReduction()";
+    LOG("VERBOSE_1") << "**createReduction()" << std::endl;
     if ( seed == 0 ) {
         unsigned int s = getRandomSeed();
         srand(s);
-        LOG(DEBUG) << "createReduction seed: " << s;
+        LOG("DEBUG") << "createReduction seed: " << s << std::endl;
     }
     else {
         srand(seed);
-        LOG(DEBUG) << "createReduction seed: " << seed;
+        LOG("DEBUG") << "createReduction seed: " << seed << std::endl;
     }
 
-    VLOG(2) << "Fsm:";
-    VLOG(2) << *this;
+    LOG("VERBOSE_2") << "Fsm:" << std::endl;
+    LOG("VERBOSE_2") << *this << std::endl;
 
     shared_ptr<FsmPresentationLayer> pl;
     if (pLayer == nullptr)
@@ -4027,7 +4070,7 @@ shared_ptr<Fsm> Fsm::createReduction(const string& fsmName,
 
     if (nonDetTransitions.empty() && force)
     {
-        VLOG(1) << "Could not create reduction.";
+        LOG("VERBOSE_1") << "Could not create reduction." << std::endl;
         throw reduction_not_possible("There are no deterministic transitions.");
     }
 
@@ -4036,17 +4079,17 @@ shared_ptr<Fsm> Fsm::createReduction(const string& fsmName,
     {
         size_t idx = static_cast<size_t>(rand()) % nonDetTransitions.size();
         const shared_ptr<FsmTransition>& transition = nonDetTransitions.at(idx);
-        VLOG(2) << "Removing transition " << transition->str();
+        LOG("VERBOSE_2") << "Removing transition " << transition->str() << std::endl;
         transition->getSource()->removeTransition(transition);
         ++removedTransitions;
 
         nonDetTransitions = red->getNonDeterministicTransitions();
         size_t size = nonDetTransitions.size();
         int mod = 10 * static_cast<int>(ceil(size * size / 2.0f));
-        VLOG(2) << "size: " << size;
-        VLOG(2) << "mod: " << mod;
+        LOG("VERBOSE_2") << "size: " << size << std::endl;
+        LOG("VERBOSE_2") << "mod: " << mod << std::endl;
         keepGoing = (mod == 0) ? false : (rand() % mod) > 7;
-        VLOG(2) << "keepGoing: " << boolalpha << keepGoing;
+        LOG("VERBOSE_2") << "keepGoing: " << boolalpha << keepGoing << std::endl;
     }
 
     return red;
@@ -4112,16 +4155,16 @@ bool Fsm::moreTransitionsPossible(const float& maxDegreeOfNonDeterminism,
                              const bool& onlyNonDeterministic,
                              vector<shared_ptr<FsmNode>> nodePool) const
 {
-    VLOG(2) << "moreTransitionsPossible()";
+    LOG("VERBOSE_2") << "moreTransitionsPossible()" << std::endl;
     const float newDegreeofNonDet = getDegreeOfNonDeterminism(1, nodePool);
     const int notDefDet = getNumberOfNotDefinedDeterministicTransitions();
     const int transPossible = getNumberOfPossibleTransitions(nodePool);
     const int totalDefined = getNumberOfTotalTransitions(nodePool);
 
-    VLOG(2) << "newDegreeofNonDet: " << newDegreeofNonDet;
-    VLOG(2) << "notDefDet: " << notDefDet;
-    VLOG(2) << "transPossible: " << transPossible;
-    VLOG(2) << "totalDefined: " << totalDefined;
+    LOG("VERBOSE_2") << "newDegreeofNonDet: " << newDegreeofNonDet << std::endl;
+    LOG("VERBOSE_2") << "notDefDet: " << notDefDet << std::endl;
+    LOG("VERBOSE_2") << "transPossible: " << transPossible << std::endl;
+    LOG("VERBOSE_2") << "totalDefined: " << totalDefined << std::endl;
 
     if (totalDefined >= transPossible)
     {
@@ -4154,24 +4197,21 @@ void Fsm::addRandomTransitions(const float& maxDegreeOfNonDeterminism,
                                const float& factor,
                                vector<shared_ptr<FsmNode>> nodePool)
 {
-    VLOG(1) << "**addRandomTransitions()";
-    VLOG(2) << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism;
-    VLOG(2) << "onlyNonDeterministic: " << onlyNonDeterministic;
-    VLOG(2) << "observable: " << observable;
-    VLOG(2) << "factor: " << factor;
+    LOG("VERBOSE_1") << "**addRandomTransitions()" << std::endl;
+    LOG("VERBOSE_2") << "maxDegreeOfNonDeterminism: " << maxDegreeOfNonDeterminism << std::endl;
+    LOG("VERBOSE_2") << "onlyNonDeterministic: " << onlyNonDeterministic << std::endl;
+    LOG("VERBOSE_2") << "observable: " << observable << std::endl;
+    LOG("VERBOSE_2") << "factor: " << factor << std::endl;
 
     if (nodePool.empty())
     {
         nodePool = nodes;
     }
 
-    if (VLOG_IS_ON(2))
+    LOG("VERBOSE_2") << "Add random transitions for nodes" << std::endl;
+    for (const shared_ptr<FsmNode>& n : nodePool)
     {
-        VLOG(2) << "Add random transitions for nodes";
-        for (const shared_ptr<FsmNode>& n : nodePool)
-        {
-            VLOG(2) << "  " << n->getName() << " (" << n << ")";
-        }
+        LOG("VERBOSE_2") << "  " << n->getName() << " (" << n << ")" << std::endl;
     }
 
     const int numStates = static_cast<int>(nodePool.size());
@@ -4181,11 +4221,11 @@ void Fsm::addRandomTransitions(const float& maxDegreeOfNonDeterminism,
 
     while (keepGoing && !impossible)
     {
-        VLOG(2) << "Allowed target nodes:";
+        LOG("VERBOSE_2") << "Allowed target nodes:" << std::endl;
         vector<shared_ptr<FsmNode>> allowedTargetNodes;
         for (const shared_ptr<FsmNode>& n : nodes)
         {
-            VLOG(2) << "  " << n->getName() << " (" << n << ")";
+            LOG("VERBOSE_2") << "  " << n->getName() << " (" << n << ")" << std::endl;
             allowedTargetNodes.push_back(n);
         }
 
@@ -4198,14 +4238,14 @@ void Fsm::addRandomTransitions(const float& maxDegreeOfNonDeterminism,
             size_t targetNodeIndex = static_cast<size_t>(rand()) % (allowedTargetNodes.size());
             targetNode = allowedTargetNodes.at(targetNodeIndex);
 
-            VLOG(2) << "Trying to create transition to target node " << targetNode->getName();
+            LOG("VERBOSE_2") << "Trying to create transition to target node " << targetNode->getName() << std::endl;
 
             selectRandomNodeAndCreateLabel(nodePool, maxDegreeOfNonDeterminism, onlyNonDeterministic, observable, srcNode, label);
 
             // We could not find a source node or a valid label.
             if (!srcNode || !label)
             {
-                VLOG(2) << "Could not create transition to target node " << targetNode->getName() << ". Trying next node.";
+                LOG("VERBOSE_2") << "Could not create transition to target node " << targetNode->getName() << ". Trying next node." << std::endl;
                 allowedTargetNodes.erase(allowedTargetNodes.begin()
                                          + static_cast<vector<shared_ptr<FsmNode>>::difference_type>(targetNodeIndex));
                 continue;
@@ -4215,7 +4255,7 @@ void Fsm::addRandomTransitions(const float& maxDegreeOfNonDeterminism,
 
         if (!srcNode || !label)
         {
-            LOG(ERROR) << "Could not create transition.";
+            LOG("ERROR") << "Could not create transition." << std::endl;
             impossible = true;
         }
         else
@@ -4223,8 +4263,8 @@ void Fsm::addRandomTransitions(const float& maxDegreeOfNonDeterminism,
             shared_ptr<FsmTransition> transition = make_shared<FsmTransition>(srcNode, targetNode, label);
             srcNode->addTransition(transition);
             ++numberOfTransitionsCreated;
-            VLOG(1) << "Created transition " << transition->str();
-            VLOG(2) << "numberOfTransitionsCreated: " << numberOfTransitionsCreated;
+            LOG("VERBOSE_1") << "Created transition " << transition->str() << std::endl;
+            LOG("VERBOSE_2") << "numberOfTransitionsCreated: " << numberOfTransitionsCreated << std::endl;
         }
 
         keepGoing = !impossible && moreTransitionsPossible(maxDegreeOfNonDeterminism, onlyNonDeterministic, nodePool);
@@ -4233,7 +4273,7 @@ void Fsm::addRandomTransitions(const float& maxDegreeOfNonDeterminism,
             float observableFactor = (observable) ? 1.0f : 1.75f;
             keepGoing = (rand() % static_cast<int>(round((10.0f * numStates * observableFactor * factor)))) >= numStates * 2;
         }
-        VLOG(2) << "keepGoing: " << boolalpha << keepGoing;
+        LOG("VERBOSE_2") << "keepGoing: " << boolalpha << keepGoing << std::endl;
     }
 
 }
@@ -4243,7 +4283,7 @@ bool Fsm::meetDegreeOfCompleteness(const float& degreeOfCompleteness,
                                    const bool& observable,
                                    vector<shared_ptr<FsmNode>> nodePool)
 {
-    VLOG(1) << "**meetDegreeOfCompleteness()";
+    LOG("VERBOSE_1") << "**meetDegreeOfCompleteness()" << std::endl;
 
     if (nodePool.empty())
     {
@@ -4251,13 +4291,13 @@ bool Fsm::meetDegreeOfCompleteness(const float& degreeOfCompleteness,
     }
 
     float actualDegreeOfCompleteness = getDegreeOfCompleteness(0, nodePool);
-    VLOG(2) << "actualDegreeOfCompleteness: " << actualDegreeOfCompleteness;
+    LOG("VERBOSE_2") << "actualDegreeOfCompleteness: " << actualDegreeOfCompleteness << std::endl;
 
     bool metRequirement = false;
     if (actualDegreeOfCompleteness < degreeOfCompleteness)
     {
-        VLOG(2) << "Degree of completeness: " << actualDegreeOfCompleteness << " < " << degreeOfCompleteness;
-        VLOG(2) << "Going to add transitions.";
+        LOG("VERBOSE_2") << "Degree of completeness: " << actualDegreeOfCompleteness << " < " << degreeOfCompleteness << std::endl;
+        LOG("VERBOSE_2") << "Going to add transitions." << std::endl;
         while (actualDegreeOfCompleteness < degreeOfCompleteness)
         {
             size_t targetNodeIndex = static_cast<size_t>(rand()) % (nodes.size());
@@ -4271,27 +4311,30 @@ bool Fsm::meetDegreeOfCompleteness(const float& degreeOfCompleteness,
             // We could not find a source node or a valid label.
             if (!srcNode || !label)
             {
-                LOG(FATAL) << "meetDegreeOfCompleteness(): Could not create requested number of transitions. This shouldn't happen.";
+                stringstream ss;
+ss << "meetDegreeOfCompleteness(): Could not create requested number of transitions. This shouldn't happen.";
+std::cerr << ss.str();
+throw ss.str();
             }
 
             shared_ptr<FsmTransition> transition = make_shared<FsmTransition>(srcNode, targetNode, label);
             srcNode->addTransition(transition);
 
-            VLOG(1) << "Created transition " << transition->str();
+            LOG("VERBOSE_1") << "Created transition " << transition->str() << std::endl;
             actualDegreeOfCompleteness = getDegreeOfCompleteness(0, nodePool);
         }
         metRequirement = true;
     }
     else if (actualDegreeOfCompleteness > degreeOfCompleteness)
     {
-        VLOG(2) << "Degree of completeness: " << actualDegreeOfCompleteness << " > " << degreeOfCompleteness;
-        VLOG(2) << "Going to remove transitions.";
+        LOG("VERBOSE_2") << "Degree of completeness: " << actualDegreeOfCompleteness << " > " << degreeOfCompleteness << std::endl;
+        LOG("VERBOSE_2") << "Going to remove transitions." << std::endl;
         while (actualDegreeOfCompleteness >= degreeOfCompleteness && !metRequirement)
         {
 
             if (doesMeetDegreeOfCompleteness(degreeOfCompleteness, nodePool))
             {
-                VLOG(1) << "Won't remove any transition, as degree of completeness would be too small afterwards.";
+                LOG("VERBOSE_1") << "Won't remove any transition, as degree of completeness would be too small afterwards." << std::endl;
                 metRequirement = true;
                 break;
             }
@@ -4311,17 +4354,20 @@ bool Fsm::meetDegreeOfCompleteness(const float& degreeOfCompleteness,
             {
                 nodeIdx = static_cast<size_t>(rand()) % selectFrom.size();
                 node = selectFrom.at(nodeIdx);
-                VLOG(2) << "Selected node " << node->getName();
+                LOG("VERBOSE_2") << "Selected node " << node->getName() << std::endl;
                 vector<shared_ptr<FsmTransition>> detTrans = node->getDeterminisitcTransitions();
-                VLOG(2) << "Found " << detTrans.size() << " deterministic transitions.";
+                LOG("VERBOSE_2") << "Found " << detTrans.size() << " deterministic transitions." << std::endl;
                 if (!detTrans.empty())
                 {
                     size_t transIndex = static_cast<size_t>(rand()) % detTrans.size();
                     const shared_ptr<FsmTransition>& tr = detTrans.at(transIndex);
-                    VLOG(2) << "Removing transition " << tr->str();
+                    LOG("VERBOSE_2") << "Removing transition " << tr->str() << std::endl;
                     if (!node->removeTransition(tr))
                     {
-                        LOG(FATAL) << "Could not remove transition " << tr->str() << " from node " << node->getName();
+                        stringstream ss;
+ss << "Could not remove transition " << tr->str() << " from node " << node->getName();
+std::cerr << ss.str();
+throw ss.str();
                     }
                     detTrans.erase(detTrans.begin()
                                    + static_cast<vector<shared_ptr<FsmTransition>>::difference_type>(transIndex));
@@ -4330,7 +4376,7 @@ bool Fsm::meetDegreeOfCompleteness(const float& degreeOfCompleteness,
                 else
                 {
                     // No deterministic transition found. Trying next node.
-                    VLOG(2) << "No deterministic transitions found. Trying next node.";
+                    LOG("VERBOSE_2") << "No deterministic transitions found. Trying next node." << std::endl;
                     selectFrom.erase(selectFrom.begin()
                                      + static_cast<vector<shared_ptr<FsmTransition>>::difference_type>(nodeIdx));
                 }
@@ -4343,7 +4389,7 @@ bool Fsm::meetDegreeOfCompleteness(const float& degreeOfCompleteness,
                 continue;
             }
 
-            VLOG(2) << "Could not find any node with deterministic transitions. "
+            LOG("VERBOSE_2") << "Could not find any node with deterministic transitions. "
                     << "Going to remove several transitions instead.";
 
             selectFrom = nodePool;
@@ -4352,14 +4398,14 @@ bool Fsm::meetDegreeOfCompleteness(const float& degreeOfCompleteness,
             {
                 nodeIdx = static_cast<size_t>(rand()) % selectFrom.size();
                 node = selectFrom.at(nodeIdx);
-                VLOG(2) << "Selected node " << node->getName();
+                LOG("VERBOSE_2") << "Selected node " << node->getName() << std::endl;
                 vector<shared_ptr<FsmTransition>> transitions = node->getTransitions();
-                VLOG(2) << "Found " << transitions.size() << " transitions.";
+                LOG("VERBOSE_2") << "Found " << transitions.size() << " transitions." << std::endl;
                 if (!transitions.empty())
                 {
                     const shared_ptr<FsmTransition>& trans = transitions.at(static_cast<size_t>(rand()) % transitions.size());
                     int input = trans->getLabel()->getInput();
-                    VLOG(2) << "Removing all transitions with input " << input;
+                    LOG("VERBOSE_2") << "Removing all transitions with input " << input << std::endl;
 
                     vector<shared_ptr<FsmTransition>> keepTrans;
 
@@ -4371,7 +4417,7 @@ bool Fsm::meetDegreeOfCompleteness(const float& degreeOfCompleteness,
                         }
                         else
                         {
-                            VLOG(2) << "Removing transition " << t->str();
+                            LOG("VERBOSE_2") << "Removing transition " << t->str() << std::endl;
                         }
                     }
                     node->setTransitions(keepTrans);
@@ -4380,7 +4426,7 @@ bool Fsm::meetDegreeOfCompleteness(const float& degreeOfCompleteness,
                 else
                 {
                     // No deterministic transition found. Trying next node.
-                    VLOG(2) << "No transitions found. Trying next node.";
+                    LOG("VERBOSE_2") << "No transitions found. Trying next node." << std::endl;
                     selectFrom.erase(selectFrom.begin()
                                      + static_cast<vector<shared_ptr<FsmTransition>>::difference_type>(nodeIdx));
                 }
@@ -4394,23 +4440,23 @@ bool Fsm::meetDegreeOfCompleteness(const float& degreeOfCompleteness,
             }
             else
             {
-                LOG(ERROR) << "Could not comply with the required degree of completeness.";
+                LOG("ERROR") << "Could not comply with the required degree of completeness." << std::endl;
                 break;
             }
 
         }
         if (!metRequirement)
         {
-            LOG(ERROR) << "Could not comply with the required degree of completeness.";
+            LOG("ERROR") << "Could not comply with the required degree of completeness." << std::endl;
         }
     }
-    VLOG(2) << "Finished with new degree of completeness: " << actualDegreeOfCompleteness;
+    LOG("VERBOSE_2") << "Finished with new degree of completeness: " << actualDegreeOfCompleteness << std::endl;
     return metRequirement;
 }
 
 bool Fsm::doesMeetDegreeOfCompleteness(const float& degreeOfCompleteness, vector<shared_ptr<FsmNode>> nodePool) const
 {
-    VLOG(2) << "doesMeetDegreeOfCompleteness()";
+    LOG("VERBOSE_2") << "doesMeetDegreeOfCompleteness()" << std::endl;
 
     if (degreeOfCompleteness <= 0)
     {
@@ -4423,10 +4469,7 @@ bool Fsm::doesMeetDegreeOfCompleteness(const float& degreeOfCompleteness, vector
     }
 
     const float current = getDegreeOfCompleteness(0, nodePool);
-    if(VLOG_IS_ON(2))
-    {
-        VLOG(2) << "Current degree of completeness: " << current;
-    }
+    LOG("VERBOSE_2") << "Current degree of completeness: " << current << std::endl;
 
     bool yes;
     if (current >= degreeOfCompleteness)
@@ -4435,13 +4478,13 @@ bool Fsm::doesMeetDegreeOfCompleteness(const float& degreeOfCompleteness, vector
         yes = current >= degreeOfCompleteness && newDegreeOfCompleteness < degreeOfCompleteness;
         if (newDegreeOfCompleteness < degreeOfCompleteness)
         {
-            VLOG(2) << "Fsm does meet degree of completeness, as removing one transition would "
+            LOG("VERBOSE_2") << "Fsm does meet degree of completeness, as removing one transition would "
                     << "reduce degree to " << newDegreeOfCompleteness << " < " << degreeOfCompleteness;
         }
     }
     else
     {
-        VLOG(2) << "Fsm does not meet degree of completeness.";
+        LOG("VERBOSE_2") << "Fsm does not meet degree of completeness." << std::endl;
         yes = false;
     }
     return yes;
@@ -4452,24 +4495,24 @@ void Fsm::meetNumberOfStates(const int& maxState,
                              const bool& observable,
                              vector<shared_ptr<FsmNode>>& createdNodes)
 {
-    VLOG(1) << "**meetNumberOfStates()";
-    VLOG(2) << "maxState: " << maxState;
+    LOG("VERBOSE_1") << "**meetNumberOfStates()" << std::endl;
+    LOG("VERBOSE_2") << "maxState: " << maxState << std::endl;
 
     int numIn = maxInput + 1;
     int numOut = maxOutput + 1;
     int numStates = maxState + 1;
 
-    VLOG(2) << "numIn: " << numIn;
-    VLOG(2) << "numOut: " << numOut;
-    VLOG(2) << "numStates: " << numStates;
+    LOG("VERBOSE_2") << "numIn: " << numIn << std::endl;
+    LOG("VERBOSE_2") << "numOut: " << numOut << std::endl;
+    LOG("VERBOSE_2") << "numStates: " << numStates << std::endl;
 
     int currentNumberNodes = static_cast<int>(size());
     int missingStates = numStates - currentNumberNodes;
-    VLOG(2) << "missingStates: " << missingStates;
-    VLOG(2) << "currentNumberNodes: " << currentNumberNodes;
+    LOG("VERBOSE_2") << "missingStates: " << missingStates << std::endl;
+    LOG("VERBOSE_2") << "currentNumberNodes: " << currentNumberNodes << std::endl;
     for (size_t i = 0; i < nodes.size(); ++i)
     {
-        VLOG(2) << "  Node at index " << i << " has ID " << nodes.at(i)->getId();
+        LOG("VERBOSE_2") << "  Node at index " << i << " has ID " << nodes.at(i)->getId() << std::endl;
     }
 
     // Produce the nodes and put them into a vector.
@@ -4479,7 +4522,7 @@ void Fsm::meetNumberOfStates(const int& maxState,
     int highestId = lowestId + missingStates - 1;
     for (int n = highestId; n >=lowestId; --n) {
         shared_ptr<FsmNode> node = make_shared<FsmNode>(n, name, presentationLayer);
-        VLOG(2) << "Created node " << node->getName() << " with id " << n << " (" << node << ")";
+        LOG("VERBOSE_2") << "Created node " << node->getName() << " with id " << n << " (" << node << ")" << std::endl;
         unReachedNodes.push_back(node);
         createdNodes.push_back(node);
     }
@@ -4488,7 +4531,7 @@ void Fsm::meetNumberOfStates(const int& maxState,
     while (unReachedNodes.size() > 0)
     {
         const shared_ptr<FsmNode>& targetNode = unReachedNodes.back();
-        VLOG(2) << "targetNode: " << targetNode->getName();
+        LOG("VERBOSE_2") << "targetNode: " << targetNode->getName() << std::endl;
 
         shared_ptr<FsmNode> srcNode;
         shared_ptr<FsmLabel> label;
@@ -4500,20 +4543,23 @@ void Fsm::meetNumberOfStates(const int& maxState,
         {
             if (srcNode)
             {
-                VLOG(1) << "Could not create requested number of transitions.";
-                VLOG(1) << "Going to change the target of an existing one instead";
+                LOG("VERBOSE_1") << "Could not create requested number of transitions." << std::endl;
+                LOG("VERBOSE_1") << "Going to change the target of an existing one instead" << std::endl;
                 const vector<shared_ptr<FsmTransition>>& transitions = srcNode->getTransitions();
                 shared_ptr<FsmTransition> transition = transitions.at(static_cast<size_t>(rand()) % transitions.size());
-                VLOG(2) << "Selected transition: " << transition->str();
-                VLOG(2) << "Replacing target node " << transition->getTarget()->getName() << " with node " << targetNode->getName();
+                LOG("VERBOSE_2") << "Selected transition: " << transition->str() << std::endl;
+                LOG("VERBOSE_2") << "Replacing target node " << transition->getTarget()->getName() << " with node " << targetNode->getName() << std::endl;
                 transition->setTarget(targetNode);
                 nodes.push_back(targetNode);
-                VLOG(2) << "Modified transition: " << transition->str();
+                LOG("VERBOSE_2") << "Modified transition: " << transition->str() << std::endl;
                 unReachedNodes.pop_back();
             }
             else
             {
-                LOG(FATAL) << "meetNumberOfStates(): Could not create requested number of transitions. This shouldn't happen.";
+                stringstream ss;
+ss << "meetNumberOfStates(): Could not create requested number of transitions. This shouldn't happen.";
+std::cerr << ss.str();
+throw ss.str();
             }
         }
         else
@@ -4522,23 +4568,26 @@ void Fsm::meetNumberOfStates(const int& maxState,
             srcNode->addTransition(transition);
             nodes.push_back(targetNode);
             unReachedNodes.pop_back();
-            VLOG(1) << "Created transition " << transition->str();
+            LOG("VERBOSE_1") << "Created transition " << transition->str() << std::endl;
         }
     }
 
-    VLOG(2) << "Checking node IDs:";
+    LOG("VERBOSE_2") << "Checking node IDs:" << std::endl;
 
     for (size_t i = 0; i < nodes.size(); ++i)
     {
-        VLOG(2) << "Node at index " << i << " has ID " << nodes.at(i)->getId();
+        LOG("VERBOSE_2") << "Node at index " << i << " has ID " << nodes.at(i)->getId() << std::endl;
         if (i != static_cast<size_t>(nodes.at(i)->getId()))
         {
-            LOG(FATAL) << "Node at index " << i << " has ID " << nodes.at(i)->getId() << ". "
-                       << "This is an invalid internal state and should not happen!.";
+            stringstream ss;
+            ss << "Node at index " << i << " has ID " << nodes.at(i)->getId() << ". ";
+            ss << "This is an invalid internal state and should not happen!.";
+            LOG("FATAL") << ss.str() << std::endl;
+            throw ss.str();
         }
     }
 
-    VLOG(2) << "Connected all nodes.";
+    LOG("VERBOSE_2") << "Connected all nodes." << std::endl;
 }
 
 shared_ptr<FsmLabel> Fsm::createRandomLabel(const shared_ptr<FsmNode>& srcNode,
@@ -4546,26 +4595,29 @@ shared_ptr<FsmLabel> Fsm::createRandomLabel(const shared_ptr<FsmNode>& srcNode,
                                             const bool& onlyNonDeterministic,
                                             const bool& observable) const
 {
-    VLOG(2) << "createRandomLabel()";
+    LOG("VERBOSE_2") << "createRandomLabel()" << std::endl;
 
     const int numIn = maxInput + 1;
     const int numOut = maxOutput + 1;
 
     const bool couldAddMoreNonDet = getDegreeOfNonDeterminism(1, nodes) <= maxDegreeOfNonDeterminism;
-    VLOG(2) << "couldAddMoreNonDet: " << boolalpha << couldAddMoreNonDet;
+    LOG("VERBOSE_2") << "couldAddMoreNonDet: " << boolalpha << couldAddMoreNonDet << std::endl;
 
     shared_ptr<FsmLabel> label;
 
     if (numIn == 0 || numOut == 0)
     {
         // We can't create a label without an input or an output.
-        VLOG(2) << "No input or output allowed.";
+        LOG("VERBOSE_2") << "No input or output allowed." << std::endl;
         return label;
     }
 
     if (onlyNonDeterministic && maxDegreeOfNonDeterminism <= 0)
     {
-        LOG(FATAL) << "Invalid choice of parameters.";
+        stringstream ss;
+ss << "Invalid choice of parameters.";
+std::cerr << ss.str();
+throw ss.str();
     }
 
     // Find valid input and output values.
@@ -4578,47 +4630,50 @@ shared_ptr<FsmLabel> Fsm::createRandomLabel(const shared_ptr<FsmNode>& srcNode,
         {
             if (onlyNonDeterministic)
             {
-                LOG(FATAL) << "Requested to create only non-determinisitc lacels, "
-                           << "but the degree of non-determinism is already too high.";
+                stringstream ss;
+                ss << "Requested to create only non-determinisitc lacels, ";
+                ss << "but the degree of non-determinism is already too high.";
+                LOG("FATAL") << ss.str() << std::endl;
+                throw ss.str();
             }
             // Allow only inputs that are not defined in the source node,
             // but allow every output.
             // Observability isn't an issue in this case, since we choose only
             // inputs that are not yet defined.
-            VLOG(2) << "Use only inputs that are not yet defined in node " << srcNode->getName();
+            LOG("VERBOSE_2") << "Use only inputs that are not yet defined in node " << srcNode->getName() << std::endl;
             allowedInputs = srcNode->getNotDefinedInputs(maxInput);
 
             if (allowedInputs.empty())
             {
-                VLOG(2) << "No input allowed. Impossible to create label.";
+                LOG("VERBOSE_2") << "No input allowed. Impossible to create label." << std::endl;
                 // The source node has no input left under the given circumstances.
                 impossible = true;
                 break;
             }
 
             // Allow every output.
-            VLOG(2) << "All outputs allowed:";
+            LOG("VERBOSE_2") << "All outputs allowed:" << std::endl;
             for (int o = 0; o < numOut; ++o)
             {
-                VLOG(2) << "  " << presentationLayer->getOutId(static_cast<unsigned int>(o));
+                LOG("VERBOSE_2") << "  " << presentationLayer->getOutId(static_cast<unsigned int>(o)) << std::endl;
                 allowedOutputs.push_back(o);
             }
             int input = allowedInputs.at(static_cast<size_t>(rand()) % allowedInputs.size());
             int output = allowedOutputs.at(static_cast<size_t>(rand()) % allowedOutputs.size());
-            VLOG(2) << "Selected input: " << presentationLayer->getInId(static_cast<unsigned int>(input));
-            VLOG(2) << "Selected output: " << presentationLayer->getOutId(static_cast<unsigned int>(output));
+            LOG("VERBOSE_2") << "Selected input: " << presentationLayer->getInId(static_cast<unsigned int>(input)) << std::endl;
+            LOG("VERBOSE_2") << "Selected output: " << presentationLayer->getOutId(static_cast<unsigned int>(output)) << std::endl;
             label = make_shared<FsmLabel>(input, output, presentationLayer);
         }
         else
         {
             // We can still create non-deterministic transitions.
-            VLOG(2) << "Non-determinsism allowed. Allowed inputs:";
+            LOG("VERBOSE_2") << "Non-determinsism allowed. Allowed inputs:" << std::endl;
             for (int i = 0; i < numIn; ++i)
             {
                 // Check if we have to create non-deterministic transitions only.
                 if (!onlyNonDeterministic || srcNode->hasTransition(i))
                 {
-                    VLOG(2) << "  " << presentationLayer->getInId(static_cast<unsigned int>(i));
+                    LOG("VERBOSE_2") << "  " << presentationLayer->getInId(static_cast<unsigned int>(i)) << std::endl;
                     allowedInputs.push_back(i);
                 }
             }
@@ -4627,13 +4682,13 @@ shared_ptr<FsmLabel> Fsm::createRandomLabel(const shared_ptr<FsmNode>& srcNode,
                 // But we have to stay observable. Therefore we have to pick an
                 // input and see, if there is any non-defined output left for
                 // that input.
-                VLOG(2) << "Fsm has to be observable.";
+                LOG("VERBOSE_2") << "Fsm has to be observable." << std::endl;
                 while (!allowedInputs.empty())
                 {
-                    VLOG(2) << "Still inputs left.";
+                    LOG("VERBOSE_2") << "Still inputs left." << std::endl;
                     size_t inputIndex = static_cast<size_t>(rand()) % allowedInputs.size();
                     int input = allowedInputs.at(inputIndex);
-                    VLOG(2) << "Getting allowed outputs for input "
+                    LOG("VERBOSE_2") << "Getting allowed outputs for input "
                             << presentationLayer->getInId(static_cast<unsigned int>(input));
                     allowedOutputs = srcNode->getNotDefinedOutputs(input, maxOutput);
 
@@ -4641,7 +4696,7 @@ shared_ptr<FsmLabel> Fsm::createRandomLabel(const shared_ptr<FsmNode>& srcNode,
                     {
                         // There are no more outputs left. Remove selected input from
                         // allowed inputs and try again.
-                        VLOG(2) << "No outputs allowed for the given input. Trying next input.";
+                        LOG("VERBOSE_2") << "No outputs allowed for the given input. Trying next input." << std::endl;
                         allowedInputs.erase(allowedInputs.begin()
                                             + static_cast<vector<shared_ptr<int>>::difference_type>(inputIndex));
                         continue;
@@ -4649,7 +4704,7 @@ shared_ptr<FsmLabel> Fsm::createRandomLabel(const shared_ptr<FsmNode>& srcNode,
                     else
                     {
                         int output = allowedOutputs.at(static_cast<size_t>(rand()) % allowedOutputs.size());
-                        VLOG(2) << "Selected output: " << presentationLayer->getOutId(static_cast<unsigned int>(output));
+                        LOG("VERBOSE_2") << "Selected output: " << presentationLayer->getOutId(static_cast<unsigned int>(output)) << std::endl;
                         label = make_shared<FsmLabel>(input, output, presentationLayer);
                         break;
                     }
@@ -4657,7 +4712,7 @@ shared_ptr<FsmLabel> Fsm::createRandomLabel(const shared_ptr<FsmNode>& srcNode,
                 if (allowedInputs.empty())
                 {
                     // The source node has no input left under the given circumstances.
-                    VLOG(2) << "No input allowed. Impossible to create label.";
+                    LOG("VERBOSE_2") << "No input allowed. Impossible to create label." << std::endl;
                     impossible = true;
                     break;
                 }
@@ -4666,10 +4721,10 @@ shared_ptr<FsmLabel> Fsm::createRandomLabel(const shared_ptr<FsmNode>& srcNode,
             {
                 // We can have non-determinism and the FSM does not have to
                 // be observable. Any output is allowed.
-                VLOG(2) << "No need for observability. All outputs allowed:";
+                LOG("VERBOSE_2") << "No need for observability. All outputs allowed:" << std::endl;
                 for (int o = 0; o < numOut; ++o)
                 {
-                    VLOG(2) << "  " << presentationLayer->getOutId(static_cast<unsigned int>(o));
+                    LOG("VERBOSE_2") << "  " << presentationLayer->getOutId(static_cast<unsigned int>(o)) << std::endl;
                     allowedOutputs.push_back(o);
                 }
                 int input = allowedInputs.at(static_cast<size_t>(rand()) % allowedInputs.size());
@@ -4680,11 +4735,11 @@ shared_ptr<FsmLabel> Fsm::createRandomLabel(const shared_ptr<FsmNode>& srcNode,
     }
     if (label)
     {
-        VLOG(2) << "Created label: " << *label;
+        LOG("VERBOSE_2") << "Created label: " << *label << std::endl;
     }
     else
     {
-        VLOG(2) << "Could not create a label.";
+        LOG("VERBOSE_2") << "Could not create a label." << std::endl;
     }
     return label;
 }
@@ -4697,32 +4752,32 @@ void Fsm::selectRandomNodeAndCreateLabel(
         std::shared_ptr<FsmNode>& node,
         std::shared_ptr<FsmLabel>& label) const
 {
-    VLOG(2) << "selectRandomNodeAndCreateLabel()";
+    LOG("VERBOSE_2") << "selectRandomNodeAndCreateLabel()" << std::endl;
 
     node = nullptr;
     label = nullptr;
 
     // Select a reached node at random.
-    VLOG(2) << "Trying to find a source node. Allowed:";
+    LOG("VERBOSE_2") << "Trying to find a source node. Allowed:" << std::endl;
     vector<shared_ptr<FsmNode>> allowedSourceNodes;
     for (const shared_ptr<FsmNode>& n : srcNodePool)
     {
         if (!onlyNonDeterministic || !n->getTransitions().empty())
         {
             allowedSourceNodes.push_back(n);
-            VLOG(2) << "  " << n->getName();
+            LOG("VERBOSE_2") << "  " << n->getName() << std::endl;
         }
     }
     while ((!node || !label) && !allowedSourceNodes.empty())
     {
         size_t srcNodeIndex = static_cast<size_t>(rand()) % (allowedSourceNodes.size());
         node = allowedSourceNodes.at(srcNodeIndex);
-        VLOG(2) << "Trying node " << node->getName();
+        LOG("VERBOSE_2") << "Trying node " << node->getName() << std::endl;
         label = createRandomLabel(node, maxDegreeOfNonDeterminism, onlyNonDeterministic, observable);
         if (!label)
         {
             // No label found. We have to try another source node
-            VLOG(2) << "Could not find a label. Discarding node " << node->getName();
+            LOG("VERBOSE_2") << "Could not find a label. Discarding node " << node->getName() << std::endl;
             allowedSourceNodes.erase(allowedSourceNodes.begin()
                                      + static_cast<vector<shared_ptr<FsmNode>>::difference_type>(srcNodeIndex));
         }
@@ -4764,7 +4819,7 @@ void Fsm::accept(FsmVisitor& v) {
 
 
 bool Fsm::removeUnreachableNodes(std::vector<shared_ptr<FsmNode>>& unreachableNodes) {
-    VLOG(1) << "removeUnreachableNodes()";
+    LOG("VERBOSE_1") << "removeUnreachableNodes()" << std::endl;
     vector<shared_ptr<FsmNode>> newNodes;
     FsmVisitor v;
     
@@ -4785,7 +4840,7 @@ bool Fsm::removeUnreachableNodes(std::vector<shared_ptr<FsmNode>>& unreachableNo
 
     for ( auto n : nodes ) {
         if ( not n->hasBeenVisited() ) {
-            VLOG(1) << "Removing node " << oldNames.at(n->getId()) << " (" << n->getId() << ", " << n << ").";
+            LOG("VERBOSE_1") << "Removing node " << oldNames.at(n->getId()) << " (" << n->getId() << ", " << n << ")." << std::endl;
             unreachableNodes.push_back(n);
             presentationLayer->removeState2String(n->getId() - subtractFromId);
             ++subtractFromId;
