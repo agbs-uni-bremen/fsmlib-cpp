@@ -1477,10 +1477,10 @@ void writeCsvHeader(ofstream& csvOut, const CsvConfig& config)
     csvOut << header << endl;
 }
 
-ofstream newCsvFile(string testName, const CsvConfig& csvConfig)
+std::unique_ptr<ofstream> newCsvFile(string testName, const CsvConfig& csvConfig)
 {
-    ofstream csvOut(ascCsvDirectory + "Results-" + nowText + "-" + testName + ".csv");
-    writeCsvHeader(csvOut, csvConfig);
+    std::unique_ptr<ofstream> csvOut(new ofstream(ascCsvDirectory + "Results-" + nowText + "-" + testName + ".csv"));
+    writeCsvHeader(*csvOut, csvConfig);
     return csvOut;
 }
 
@@ -1606,7 +1606,7 @@ void printTestResult(AdaptiveTestResult& result, const CsvConfig& csvConfig,
 void printTestResult(AdaptiveTestResult& result, const CsvConfig& csvConfig,
                      const LoggingConfig& loggingConfig)
 {
-    ofstream dummyout = ofstream();
+    ofstream dummyout;
     printTestResult(result, csvConfig, loggingConfig, dummyout);
 }
 
@@ -1803,7 +1803,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
 {
 
     printTestBegin(config.testName);
-    ofstream csvOut = newCsvFile(config.testName, config.csvConfig);
+    std::unique_ptr<ofstream> csvOut = newCsvFile(config.testName, config.csvConfig);
 
     std::chrono::steady_clock::time_point totalStart = std::chrono::steady_clock::now();
 
@@ -2027,7 +2027,7 @@ void adaptiveTestRandom(AdaptiveTestConfig& config)
                                     }
                                     try {
                                         createAndExecuteAdaptiveTest(
-                                                    csvOut,
+                                                    *csvOut,
                                                     iteration,
                                                     numStates,
                                                     numInputs,
@@ -2280,7 +2280,7 @@ void trial(bool debug)
 
         AdaptiveTestResult result;
 
-        ofstream dummyStream = ofstream();
+        ofstream dummyStream;
 
         createAndExecuteAdaptiveTest(
                     dummyStream,

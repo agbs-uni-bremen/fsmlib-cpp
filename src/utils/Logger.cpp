@@ -10,6 +10,11 @@ LogCoordinator::LogCoordinator() : defaultStream(devNull) {
     this->devNull.setstate(std::ios::badbit);
 }
 
+LogCoordinator::LogCoordinator(LogCoordinator &&other) : defaultStream(devNull) {
+    this->devNull.setstate(std::ios::badbit);
+    std::swap(this->streams, other.streams);
+}
+
 void LogCoordinator::createLogTargetAndBind(std::string const &name, std::ostream &stream) {
     if(this->streams.count(name) == 0) {
         this->streams.emplace(std::piecewise_construct, std::tuple<std::string const &>(name), std::tuple<std::ostream &>(stream));
