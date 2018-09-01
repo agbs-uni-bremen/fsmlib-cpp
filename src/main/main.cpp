@@ -10165,7 +10165,7 @@ bool checkCalcDistinguishingTraceForAllPairs(const vector<shared_ptr<FsmNode>> &
 	return true;
 }
 
-// tests calcDistinguishingTrace(const std::shared_ptr<FsmNode> otherNode, const std::vector<std::shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput);
+// tests FsmNode::calcDistinguishingTrace(const std::shared_ptr<FsmNode> otherNode, const std::vector<std::shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput);
 void testFsmNodeCalcDistinguishingTrace2() {
 	// using FSM specified at "../../../resources/TC-FsmNode-calcDistinguishingTrace3.fsm" (completely specified and observable) 
 	{
@@ -10268,7 +10268,39 @@ void testFsmNodeIsObservable() {
 			not n0->isObservable(),
 			"FsmNode::isObservable() returns false if n0 has more than one outgoing transition with the same label.");
 	}
+}
 
+// tests FsmNode::isDeterministic()
+void testFsmNodeIsDeterministic() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+
+	fsmlib_assert("TC-FsmNode-NNNN",
+		n0->isDeterministic(),
+		"FsmNode::isDeterministic() returns true if n0 has at most one outgoing transition for each element in the input alphabet.");
+
+	// n0 --0/1--> n0
+	n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 1, pl)));
+
+	fsmlib_assert("TC-FsmNode-NNNN",
+		n0->isDeterministic(),
+		"FsmNode::isDeterministic() returns true if n0 has at most one outgoing transition for each element in the input alphabet.");
+
+	shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+	// n0 --1/2--> n1
+	n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 2, pl)));
+
+	fsmlib_assert("TC-FsmNode-NNNN",
+		n0->isDeterministic(),
+		"FsmNode::isDeterministic() returns true if n0 has at most one outgoing transition for each element in the input alphabet.");
+
+	shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+	// n0 --1/1--> n2
+	n0->addTransition(make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(1, 1, pl)));
+	
+	fsmlib_assert("TC-FsmNode-NNNN",
+		not n0->isDeterministic(),
+		"FsmNode::isDeterministic() returns false if n0 has more than one outgoing transition for some element in the input alphabet.");
 }
 
 int main(int argc, char** argv)
@@ -10438,7 +10470,9 @@ int main(int argc, char** argv)
 	//testFsmNodeDistinguishedNegative();
 	//testFsmNodeCalcDistinguishingTrace1();
 	//testFsmNodeCalcDistinguishingTrace2();
-	testFsmNodeIsObservable();
+	//testFsmNodeIsObservable();
+	testFsmNodeIsDeterministic();
+
 
 	/*testMinimise();
 	testWMethod();*/
