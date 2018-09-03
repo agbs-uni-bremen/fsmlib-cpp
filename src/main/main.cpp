@@ -10303,6 +10303,152 @@ void testFsmNodeIsDeterministic() {
 		"FsmNode::isDeterministic() returns false if n0 has more than one outgoing transition for some element in the input alphabet.");
 }
 
+//===================================== Fsm Traversal Tests ===================================================
+
+//Fsm(const std::string & fsmName,
+//	const int maxInput,
+//	const int maxOutput,
+//	const std::vector<std::shared_ptr<FsmNode>> lst,
+//	const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+
+// tests the traversal of a Fsm with help of the Fsm::accept(FsmVisitor& v) method.
+void testFsmAccept() {
+	// Fsm contains only FsmNode n0 which has no outgoing transition.
+	{
+		const int maxInput = 2;
+		const int maxOutput = 2;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		vector<shared_ptr<FsmNode>> nodes;
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		nodes.push_back(n0);
+		Fsm fsm("M", maxInput, maxOutput, nodes, pl);
+		FsmPrintVisitor v;
+		//FsmSimVisitor v;
+		//FsmOraVisitor v;
+		fsm.accept(v);
+		cout << endl;
+		fsmlib_assert("TC-Fsm-NNNN",
+			n0->hasBeenVisited(),
+			"Fsm::accept(FsmVisitor& v) causes a complete traversal of the Fsm. Each FsmNode reachable from the initial node is "
+			"marked as visited.");
+	}
+
+	// Fsm contains only FsmNode n0 which has only one outgoing transition to itself.
+	// n0 --0/0--> n0
+	{
+		const int maxInput = 0;
+		const int maxOutput = 0;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+		vector<shared_ptr<FsmNode>> nodes;
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+		nodes.push_back(n0);
+
+		Fsm fsm("M", maxInput, maxOutput, nodes, pl);
+		//FsmPrintVisitor v;
+		FsmSimVisitor v;
+		//FsmOraVisitor v;
+		fsm.accept(v);
+		cout << endl;
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			n0->hasBeenVisited(),
+			"Fsm::accept(FsmVisitor& v) causes a complete traversal of the Fsm. Each FsmNode reachable from the initial node is "
+			"marked as visited.");
+
+	}
+
+	// Each FsmNode of the Fsm is reachable from the inition node n0. The Fsm is non-observable.
+	// n0 --0/0--> n0; n0 --0/0--> n1; n1 --1/1--> n1; n1 --1/1--> n0
+	{
+		const int maxInput = 1;
+		const int maxOutput = 1;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+		vector<shared_ptr<FsmNode>> nodes;
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+		// n0 --0/0--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(0, 0, pl)));
+		// n1 --1/1--> n1
+		n1->addTransition(make_shared<FsmTransition>(n1, n1, make_shared<FsmLabel>(1, 1, pl)));
+		// n1 --1/1--> n0
+		n1->addTransition(make_shared<FsmTransition>(n1, n0, make_shared<FsmLabel>(1, 1, pl)));
+		nodes.push_back(n0);
+		nodes.push_back(n1);
+
+		Fsm fsm("M", maxInput, maxOutput, nodes, pl);
+		FsmPrintVisitor v;
+		//FsmSimVisitor v;
+		//FsmOraVisitor v;
+		fsm.accept(v);
+		cout << endl;
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			n0->hasBeenVisited()
+			&& n1->hasBeenVisited(),
+			"Fsm::accept(FsmVisitor& v) causes a complete traversal of the Fsm. Each FsmNode reachable from the initial node is "
+			"marked as visited.");
+
+	}
+
+	// n4 is not reachable from initial node n0. The Fsm is deterministic.
+	// n0 --1/2--> n2; n0 --3/4--> n1; n1 --0/0--> n2; n2 --5/5--> n3; n3 --1/2--> n1; n3 --2/3--> n0;    n4
+	{
+		const int maxInput = 5;
+		const int maxOutput = 5;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+		vector<shared_ptr<FsmNode>> nodes;
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		shared_ptr<FsmNode> n3 = make_shared<FsmNode>(3, pl);
+		shared_ptr<FsmNode> n4 = make_shared<FsmNode>(4, pl);
+		// n0 --1/2--> n2
+		n0->addTransition(make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(1, 2, pl)));
+		// n0 --3/4--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(3, 4, pl)));
+		// n1 --0/0--> n2
+		n1->addTransition(make_shared<FsmTransition>(n1, n2, make_shared<FsmLabel>(0, 0, pl)));
+		// n2 --5/5--> n3
+		n2->addTransition(make_shared<FsmTransition>(n2, n3, make_shared<FsmLabel>(5, 5, pl)));
+		// n3 --1/2--> n1
+		n3->addTransition(make_shared<FsmTransition>(n3, n1, make_shared<FsmLabel>(1, 2, pl)));
+		// n3 --2/3--> n0
+		n3->addTransition(make_shared<FsmTransition>(n3, n0, make_shared<FsmLabel>(2, 3, pl)));
+		nodes.push_back(n0);
+		nodes.push_back(n1);
+		nodes.push_back(n2);
+		nodes.push_back(n3);
+		nodes.push_back(n4);
+
+		Fsm fsm("M", maxInput, maxOutput, nodes, pl);
+		//FsmPrintVisitor v;
+		//FsmSimVisitor v;
+		FsmOraVisitor v;
+		fsm.accept(v);
+		cout << endl;
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			n0->hasBeenVisited()
+			&& n1->hasBeenVisited()
+			&& n2->hasBeenVisited()
+			&& n3->hasBeenVisited(),
+			"Fsm::accept(FsmVisitor& v) causes a complete traversal of the Fsm. Each FsmNode reachable from the initial node is "
+			"marked as visited.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			not n4->hasBeenVisited(),
+			"Unreachable FsmNodes are not visited.");
+
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -10471,7 +10617,8 @@ int main(int argc, char** argv)
 	//testFsmNodeCalcDistinguishingTrace1();
 	//testFsmNodeCalcDistinguishingTrace2();
 	//testFsmNodeIsObservable();
-	testFsmNodeIsDeterministic();
+	//testFsmNodeIsDeterministic();
+    testFsmAccept();
 
 
 	/*testMinimise();
