@@ -10528,6 +10528,10 @@ void testFsmDeepCopyConstructor() {
 		fsmlib_assert("TC-Fsm-NNNN",
 			isNodeLstDeepCopy(fsm.getNodes(), copy.getNodes()),
 			"Fsm::Fsm(const Fsm& other): The node list of the created Fsm is a deep copy of the node list of other.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			copy.getInitialState()->isInitial(),
+			"Fsm::Fsm(const Fsm& other): The expected initial state is marked as 'initial'");
 	}
 
 	// n0 --0/0--> n0
@@ -10554,6 +10558,10 @@ void testFsmDeepCopyConstructor() {
 		fsmlib_assert("TC-Fsm-NNNN",
 			isNodeLstDeepCopy(fsm.getNodes(), copy.getNodes()),
 			"Fsm::Fsm(const Fsm& other): The node list of the created Fsm is a deep copy of the node list of other.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			copy.getInitialState()->isInitial(),
+			"Fsm::Fsm(const Fsm& other): The expected initial state is marked as 'initial'");
 	}
 
 	// n0 --1/0--> n1
@@ -10581,6 +10589,10 @@ void testFsmDeepCopyConstructor() {
 		fsmlib_assert("TC-Fsm-NNNN",
 			isNodeLstDeepCopy(fsm.getNodes(), copy.getNodes()),
 			"Fsm::Fsm(const Fsm& other): The node list of the created Fsm is a deep copy of the node list of other.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			copy.getInitialState()->isInitial(),
+			"Fsm::Fsm(const Fsm& other): The expected initial state is marked as 'initial'");
 	}
 
 	// n0 --0/0--> n0; n0 --1/0--> n1
@@ -10610,6 +10622,10 @@ void testFsmDeepCopyConstructor() {
 		fsmlib_assert("TC-Fsm-NNNN",
 			isNodeLstDeepCopy(fsm.getNodes(), copy.getNodes()),
 			"Fsm::Fsm(const Fsm& other): The node list of the created Fsm is a deep copy of the node list of other.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			copy.getInitialState()->isInitial(),
+			"Fsm::Fsm(const Fsm& other): The expected initial state is marked as 'initial'");
 	}
 
 	// n0 --1/0--> n1; n1 --1/1--> n1; n0 --2/2--> n2; n2 --2/1--> n0; n2 --2/1--> n1
@@ -10647,6 +10663,10 @@ void testFsmDeepCopyConstructor() {
 		fsmlib_assert("TC-Fsm-NNNN",
 			isNodeLstDeepCopy(fsm.getNodes(), copy.getNodes()),
 			"Fsm::Fsm(const Fsm& other): The node list of the created Fsm is a deep copy of the node list of other.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			copy.getInitialState()->isInitial(),
+			"Fsm::Fsm(const Fsm& other): The expected initial state is marked as 'initial'");
 	}
 
 	// n0 --1/1--> n1; n0 --1/0--> n2; n1 --2/2--> n2; n1 --2/3--> n3; n4
@@ -10684,6 +10704,10 @@ void testFsmDeepCopyConstructor() {
 		fsmlib_assert("TC-Fsm-NNNN",
 			isNodeLstDeepCopy(fsm.getNodes(), copy.getNodes()),
 			"Fsm::Fsm(const Fsm& other): The node list of the created Fsm is a deep copy of the node list of other.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			copy.getInitialState()->isInitial(),
+			"Fsm::Fsm(const Fsm& other): The expected initial state is marked as 'initial'");
 	}
 }
 
