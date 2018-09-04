@@ -10449,6 +10449,244 @@ void testFsmAccept() {
 	}
 }
 
+//===================================== Fsm Tests ===================================================
+
+// Checks if tr2 is a deep copy of tr1. True if both have the same label, the same target IDs, but both are different Objects and
+// the their FsmLabels are different Objects.
+// False otherwise.
+bool isFsmTransitionDeepCopy(shared_ptr<FsmTransition> tr1, shared_ptr<FsmTransition> tr2) {
+	// same object => copy can't be deep.
+	if (tr1 == tr2) return false;
+	if (tr1->getLabel() == tr2->getLabel()) return false;
+	if (tr1->getSource() == tr2->getSource()) return false;
+	if (tr1->getTarget() == tr2->getTarget()) return false;
+	// => copy has to by deep. Now check if both have the same values.
+	if (tr1->getSource()->getId() != tr2->getSource()->getId()) return false;
+	if (tr1->getTarget()->getId() != tr2->getTarget()->getId()) return false;
+	if (not(*tr1->getLabel() == *tr2->getLabel())) return false;
+
+	return true;
+}
+
+// checks if n2 is a deep copy of n1. True if both have the same id, the same number of outgoing transitions and if
+// for all 0 <= i < n1.transitions.size: n2.transitions[i] is a deep copy of n1.transitions[i]. 
+// Both FsmNodes have to be different objects/identities.
+// False otherwise.
+bool isFsmNodeDeepCopy(shared_ptr<FsmNode> n1, shared_ptr<FsmNode> n2) {
+	// same object => copy can't be deep
+	if (n1 == n2) {
+		return false;
+	}
+	if (n1->getId() != n2->getId()) {
+		return false;
+	}
+	if (n1->getTransitions().size() != n2->getTransitions().size()) {
+		return false;
+	}
+	for (int i = 0; i < n1->getTransitions().size(); ++i) {
+		if (not isFsmTransitionDeepCopy(n1->getTransitions().at(i), n2->getTransitions().at(i))) return false;
+	}
+	return true;
+}
+
+// Checks if fsm2Nodes is a copy of fsm1Nodes. 
+// True if both lists have the same size and fsm2Nodes[i] is a copy of fsm1Nodes[i], for all 0 <= i < fsm2Nodes.size.
+// False otherwise.
+bool isNodeLstDeepCopy(const vector<shared_ptr<FsmNode>> &fsm1Nodes, const vector<shared_ptr<FsmNode>> &fsm2Nodes) {	
+	if (fsm1Nodes.size() != fsm2Nodes.size()) {
+		return false;
+	}
+	for (int i = 0; i < fsm1Nodes.size(); ++i) {
+		if (not isFsmNodeDeepCopy(fsm1Nodes.at(i), fsm2Nodes.at(i))) {
+			return false;
+		}
+	}
+	return true;
+}
+
+// tests Fsm::Fsm(const Fsm& other)
+void testFsmDeepCopyConstructor() {
+	// Fsm consists of one FsmNode without outgoing transitions.
+	{
+		const int maxInput = 5;
+		const int maxOutput = 0;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		Fsm fsm("M", maxInput, maxOutput, vector<shared_ptr<FsmNode>>{n0}, pl);
+		Fsm copy(fsm);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			fsm.getInitStateIdx() == copy.getInitStateIdx()
+			&& fsm.getName() == copy.getName()
+			&& fsm.getMaxInput() == copy.getMaxInput()
+			&& fsm.getMaxOutput() == copy.getMaxOutput()
+			&& fsm.getMaxNodes() == copy.getMaxNodes()
+			&& fsm.getPresentationLayer() == copy.getPresentationLayer()
+			&& fsm.isMinimal() == copy.isMinimal(),
+			"Fsm::Fsm(const Fsm& other): Created Fsm has the same values for the expected attributes as other.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			isNodeLstDeepCopy(fsm.getNodes(), copy.getNodes()),
+			"Fsm::Fsm(const Fsm& other): The node list of the created Fsm is a deep copy of the node list of other.");
+	}
+
+	// n0 --0/0--> n0
+	{
+		const int maxInput = 3;
+		const int maxOutput = 3;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+		Fsm fsm("M", maxInput, maxOutput, vector<shared_ptr<FsmNode>>{n0}, pl);
+		Fsm copy(fsm);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			fsm.getInitStateIdx() == copy.getInitStateIdx()
+			&& fsm.getName() == copy.getName()
+			&& fsm.getMaxInput() == copy.getMaxInput()
+			&& fsm.getMaxOutput() == copy.getMaxOutput()
+			&& fsm.getMaxNodes() == copy.getMaxNodes()
+			&& fsm.getPresentationLayer() == copy.getPresentationLayer()
+			&& fsm.isMinimal() == copy.isMinimal(),
+			"Fsm::Fsm(const Fsm& other): Created Fsm has the same values for the expected attributes as other.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			isNodeLstDeepCopy(fsm.getNodes(), copy.getNodes()),
+			"Fsm::Fsm(const Fsm& other): The node list of the created Fsm is a deep copy of the node list of other.");
+	}
+
+	// n0 --1/0--> n1
+	{
+		const int maxInput = 1;
+		const int maxOutput = 0;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --1/0--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 0, pl)));
+		Fsm fsm("M", maxInput, maxOutput, vector<shared_ptr<FsmNode>>{n0, n1}, pl);
+		Fsm copy(fsm);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			fsm.getInitStateIdx() == copy.getInitStateIdx()
+			&& fsm.getName() == copy.getName()
+			&& fsm.getMaxInput() == copy.getMaxInput()
+			&& fsm.getMaxOutput() == copy.getMaxOutput()
+			&& fsm.getMaxNodes() == copy.getMaxNodes()
+			&& fsm.getPresentationLayer() == copy.getPresentationLayer()
+			&& fsm.isMinimal() == copy.isMinimal(),
+			"Fsm::Fsm(const Fsm& other): Created Fsm has the same values for the expected attributes as other.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			isNodeLstDeepCopy(fsm.getNodes(), copy.getNodes()),
+			"Fsm::Fsm(const Fsm& other): The node list of the created Fsm is a deep copy of the node list of other.");
+	}
+
+	// n0 --0/0--> n0; n0 --1/0--> n1
+	{
+		const int maxInput = 1;
+		const int maxOutput = 0;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+		// n0 --1/0--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 0, pl)));
+		Fsm fsm("M", maxInput, maxOutput, vector<shared_ptr<FsmNode>>{n0, n1}, pl);
+		Fsm copy(fsm);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			fsm.getInitStateIdx() == copy.getInitStateIdx()
+			&& fsm.getName() == copy.getName()
+			&& fsm.getMaxInput() == copy.getMaxInput()
+			&& fsm.getMaxOutput() == copy.getMaxOutput()
+			&& fsm.getMaxNodes() == copy.getMaxNodes()
+			&& fsm.getPresentationLayer() == copy.getPresentationLayer()
+			&& fsm.isMinimal() == copy.isMinimal(),
+			"Fsm::Fsm(const Fsm& other): Created Fsm has the same values for the expected attributes as other.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			isNodeLstDeepCopy(fsm.getNodes(), copy.getNodes()),
+			"Fsm::Fsm(const Fsm& other): The node list of the created Fsm is a deep copy of the node list of other.");
+	}
+
+	// n0 --1/0--> n1; n1 --1/1--> n1; n0 --2/2--> n2; n2 --2/1--> n0; n2 --2/1--> n1
+	// (non observable fsm)
+	{
+		const int maxInput = 2;
+		const int maxOutput = 2;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		// n0 --1/0--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 0, pl)));
+		// n1 --1/1--> n1
+		n1->addTransition(make_shared<FsmTransition>(n1, n1, make_shared<FsmLabel>(1, 1, pl)));
+		// n0 --2/2--> n2
+		n0->addTransition(make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(2, 2, pl)));
+		// n2 --2/1--> n0
+		n2->addTransition(make_shared<FsmTransition>(n2, n0, make_shared<FsmLabel>(2, 1, pl)));
+		// n2 --2/1--> n1
+		n2->addTransition(make_shared<FsmTransition>(n2, n1, make_shared<FsmLabel>(2, 1, pl)));
+		Fsm fsm("M", maxInput, maxOutput, vector<shared_ptr<FsmNode>>{n0, n1, n2}, pl);
+		Fsm copy(fsm);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			fsm.getInitStateIdx() == copy.getInitStateIdx()
+			&& fsm.getName() == copy.getName()
+			&& fsm.getMaxInput() == copy.getMaxInput()
+			&& fsm.getMaxOutput() == copy.getMaxOutput()
+			&& fsm.getMaxNodes() == copy.getMaxNodes()
+			&& fsm.getPresentationLayer() == copy.getPresentationLayer()
+			&& fsm.isMinimal() == copy.isMinimal(),
+			"Fsm::Fsm(const Fsm& other): Created Fsm has the same values for the expected attributes as other.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			isNodeLstDeepCopy(fsm.getNodes(), copy.getNodes()),
+			"Fsm::Fsm(const Fsm& other): The node list of the created Fsm is a deep copy of the node list of other.");
+	}
+
+	// n0 --1/1--> n1; n0 --1/0--> n2; n1 --2/2--> n2; n1 --2/3--> n3; n4
+	// (non observable fsm)
+	{
+		const int maxInput = 2;
+		const int maxOutput = 3;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		shared_ptr<FsmNode> n3 = make_shared<FsmNode>(3, pl);
+		shared_ptr<FsmNode> n4 = make_shared<FsmNode>(4, pl);
+		// n0 --1/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl)));
+		// n0 --1/0--> n2
+		n0->addTransition(make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(1, 0, pl)));
+		// n1 --2/2--> n2
+		n1->addTransition(make_shared<FsmTransition>(n1, n2, make_shared<FsmLabel>(2, 2, pl)));
+		// n1 --2/3--> n3
+		n1->addTransition(make_shared<FsmTransition>(n1, n3, make_shared<FsmLabel>(2, 3, pl)));
+		Fsm fsm("M", maxInput, maxOutput, vector<shared_ptr<FsmNode>>{n0, n1, n2, n3, n4}, pl);
+		Fsm copy(fsm);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			fsm.getInitStateIdx() == copy.getInitStateIdx()
+			&& fsm.getName() == copy.getName()
+			&& fsm.getMaxInput() == copy.getMaxInput()
+			&& fsm.getMaxOutput() == copy.getMaxOutput()
+			&& fsm.getMaxNodes() == copy.getMaxNodes()
+			&& fsm.getPresentationLayer() == copy.getPresentationLayer()
+			&& fsm.isMinimal() == copy.isMinimal(),
+			"Fsm::Fsm(const Fsm& other): Created Fsm has the same values for the expected attributes as other.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			isNodeLstDeepCopy(fsm.getNodes(), copy.getNodes()),
+			"Fsm::Fsm(const Fsm& other): The node list of the created Fsm is a deep copy of the node list of other.");
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -10618,7 +10856,8 @@ int main(int argc, char** argv)
 	//testFsmNodeCalcDistinguishingTrace2();
 	//testFsmNodeIsObservable();
 	//testFsmNodeIsDeterministic();
-    testFsmAccept();
+    //testFsmAccept();
+	testFsmDeepCopyConstructor();
 
 
 	/*testMinimise();
