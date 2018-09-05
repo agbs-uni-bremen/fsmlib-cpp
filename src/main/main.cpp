@@ -10924,6 +10924,215 @@ void testFsmConstructor1() {
 	}
 }
 
+// tests Fsm::Fsm(const string& fname, const shared_ptr<FsmPresentationLayer> presentationLayer, const string& fsmName)
+void testFsmConstructor2() {
+	// uses Fsm specified in file ../../../resources/TC-Fsm-Constructor1.fsm
+	// Contains only one line: 0 0 0 0
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		const string name = "FSM";
+		Fsm fsm("../../../resources/TC-Fsm-Constructor1.fsm", pl, name);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			fsm.getMaxNodes() == 1
+			&& fsm.getMaxInput() == 0
+			&& fsm.getMaxOutput() == 0
+			&& fsm.getName() == name
+			&& fsm.isMinimal() == Minimal::Maybe,
+			"Constructed Fsm contains expected number of Nodes and has expected maxInput, expected maxOutput and expected name.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			fsm.getInitStateIdx() == 0
+			&& fsm.getInitialState()->isInitial(),
+			"initStateIdx is set to the first value of the file and the initial state is marked as initial.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			hasTransition(0, 0, 0, 0, fsm),
+			"Constructed Fsm contains each expected FsmTransition.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			getFsmNodeWithId(fsm, 0)->getTransitions().size() == 1,
+			"Constructed Fsm contains only the expected FsmTransitions.");
+	}
+
+	// uses Fsm specified in file ../../../resources/TC-Fsm-Constructor2.fsm
+	// Contains only one line: 0 1 2 2
+	// State with ID 1 has no incoming or outgoing transitions.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		const string name = "FSM";
+		Fsm fsm("../../../resources/TC-Fsm-Constructor2.fsm", pl, name);
+		fsmlib_assert("TC-Fsm-NNNN",
+			fsm.getMaxNodes() == 3
+			&& fsm.getMaxInput() == 1
+			&& fsm.getMaxOutput() == 2
+			&& fsm.getName() == name
+			&& fsm.isMinimal() == Minimal::Maybe,
+			"Constructed Fsm has expected maxInput, expected maxOutput and expected name.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			getFsmNodeWithId(fsm, 1) == nullptr,
+			"States without incoming and outgoing Transitions are nullptr.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			getFsmNodeWithId(fsm, 0) != nullptr
+			&& getFsmNodeWithId(fsm, 2) != nullptr,
+			"States with incoming or outgoing Transitions aren't nullptr.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			fsm.getInitStateIdx() == 0
+			&& fsm.getInitialState()->isInitial(),
+			"initStateIdx is set to the first value of the file and the initial state is marked as initial.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			not getFsmNodeWithId(fsm, 2)->isInitial(),
+			"Only the expected FsmNode is marked as initial.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			hasTransition(0, 1, 2, 2, fsm),
+			"Constructed Fsm contains each expected FsmTransition.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			getFsmNodeWithId(fsm, 0)->getTransitions().size() == 1
+			&& getFsmNodeWithId(fsm, 2)->getTransitions().size() == 0,
+			"Constructed Fsm contains only the expected FsmTransitions.");
+	}
+
+	// uses Fsm specified in file ../../../resources/TC-Fsm-Constructor3.fsm
+	// Contains three lines / transitions. ID of the initial state is 1.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		const string name = "FSM";
+		Fsm fsm("../../../resources/TC-Fsm-Constructor3.fsm", pl, name);
+		fsmlib_assert("TC-Fsm-NNNN",
+			fsm.getMaxNodes() == 2
+			&& fsm.getMaxInput() == 2
+			&& fsm.getMaxOutput() == 4
+			&& fsm.getName() == name
+			&& fsm.isMinimal() == Minimal::Maybe,
+			"Constructed Fsm has expected maxInput, expected maxOutput and expected name.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			getFsmNodeWithId(fsm, 0) != nullptr
+			&& getFsmNodeWithId(fsm, 1) != nullptr,
+			"States with incoming or outgoing Transitions aren't nullptr.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			fsm.getInitStateIdx() == 1
+			&& fsm.getInitialState()->isInitial(),
+			"initStateIdx is set to the first value of the file and the initial state is marked as initial.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			not getFsmNodeWithId(fsm, 0)->isInitial(),
+			"Only the expected FsmNode is marked as initial.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			hasTransition(1, 1, 1, 0, fsm)
+			&& hasTransition(0, 2, 3, 0, fsm)
+			&& hasTransition(1, 2, 4, 0, fsm),
+			"Constructed Fsm contains each expected FsmTransition.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			getFsmNodeWithId(fsm, 0)->getTransitions().size() == 1
+			&& getFsmNodeWithId(fsm, 1)->getTransitions().size() == 2,
+			"Constructed Fsm contains only the expected FsmTransitions.");
+	}
+
+	// uses Fsm specified in file ../../../resources/TC-Fsm-Constructor4.fsm
+	// Contains six lines / transitions. Specified Fsm is non-observable. 
+	// State 1 is not reachable, but has outgoing transitions to reachable states.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		const string name = "FSM";
+		Fsm fsm("../../../resources/TC-Fsm-Constructor4.fsm", pl, name);
+		fsmlib_assert("TC-Fsm-NNNN",
+			fsm.getMaxNodes() == 4
+			&& fsm.getMaxInput() == 4
+			&& fsm.getMaxOutput() == 5
+			&& fsm.getName() == name
+			&& fsm.isMinimal() == Minimal::Maybe,
+			"Constructed Fsm has expected maxInput, expected maxOutput and expected name.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			getFsmNodeWithId(fsm, 0) != nullptr
+			&& getFsmNodeWithId(fsm, 1) != nullptr
+			&& getFsmNodeWithId(fsm, 2) != nullptr
+			&& getFsmNodeWithId(fsm, 3) != nullptr,
+			"States with incoming or outgoing Transitions aren't nullptr.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			fsm.getInitStateIdx() == 0
+			&& fsm.getInitialState()->isInitial(),
+			"initStateIdx is set to the first value of the file and the initial state is marked as initial.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			not getFsmNodeWithId(fsm, 1)->isInitial()
+			&& not getFsmNodeWithId(fsm, 2)->isInitial()
+			&& not getFsmNodeWithId(fsm, 3)->isInitial(),
+			"Only the expected FsmNode is marked as initial.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			hasTransition(0, 0, 0, 2, fsm)
+			&& hasTransition(3, 4, 5, 2, fsm)
+			&& hasTransition(1, 1, 1, 0, fsm)
+			&& hasTransition(1, 1, 1, 1, fsm)
+			&& hasTransition(0, 2, 0, 3, fsm)
+			&& hasTransition(0, 0, 0, 0, fsm),
+			"Constructed Fsm contains each expected FsmTransition.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			getFsmNodeWithId(fsm, 0)->getTransitions().size() == 3
+			&& getFsmNodeWithId(fsm, 1)->getTransitions().size() == 2
+			&& getFsmNodeWithId(fsm, 2)->getTransitions().size() == 0
+			&& getFsmNodeWithId(fsm, 3)->getTransitions().size() == 1,
+			"Constructed Fsm contains only the expected FsmTransitions.");
+	}
+
+	// uses Fsm specified in file ../../../resources/TC-Fsm-Constructor5.fsm
+	// Contains four lines / transitions. 
+	// File contains two identical lines (1 1 1 2). => It is expected that only one transition is created for both identical lines.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		const string name = "FSM";
+		Fsm fsm("../../../resources/TC-Fsm-Constructor5.fsm", pl, name);
+		fsmlib_assert("TC-Fsm-NNNN",
+			fsm.getMaxNodes() == 3
+			&& fsm.getMaxInput() == 2
+			&& fsm.getMaxOutput() == 1
+			&& fsm.getName() == name
+			&& fsm.isMinimal() == Minimal::Maybe,
+			"Constructed Fsm has expected maxInput, expected maxOutput and expected name.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			getFsmNodeWithId(fsm, 0) != nullptr
+			&& getFsmNodeWithId(fsm, 1) != nullptr
+			&& getFsmNodeWithId(fsm, 2) != nullptr,
+			"States with incoming or outgoing Transitions aren't nullptr.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			fsm.getInitStateIdx() == 0
+			&& fsm.getInitialState()->isInitial(),
+			"initStateIdx is set to the first value of the file and the initial state is marked as initial.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			not getFsmNodeWithId(fsm, 1)->isInitial()
+			&& not getFsmNodeWithId(fsm, 2)->isInitial(),
+			"Only the expected FsmNode is marked as initial.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			hasTransition(0, 1, 0, 1, fsm)
+			&& hasTransition(1, 1, 1, 2, fsm)
+			&& hasTransition(2, 2, 1, 0, fsm),
+			"Constructed Fsm contains each expected FsmTransition.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			getFsmNodeWithId(fsm, 0)->getTransitions().size() == 1
+			&& getFsmNodeWithId(fsm, 1)->getTransitions().size() == 1
+			&& getFsmNodeWithId(fsm, 2)->getTransitions().size() == 1,
+			"Constructed Fsm contains only the expected FsmTransitions.");
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -11095,7 +11304,8 @@ int main(int argc, char** argv)
 	//testFsmNodeIsDeterministic();
     //testFsmAccept();
 	//testFsmDeepCopyConstructor();
-	testFsmConstructor1();
+	//testFsmConstructor1();
+	testFsmConstructor2();
 
 
 	/*testMinimise();
