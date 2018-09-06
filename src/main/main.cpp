@@ -10490,7 +10490,7 @@ bool isFsmNodeDeepCopy(shared_ptr<FsmNode> n1, shared_ptr<FsmNode> n2) {
 }
 
 // Checks if fsm2Nodes is a copy of fsm1Nodes. 
-// True if both lists have the same size and fsm2Nodes[i] is a copy of fsm1Nodes[i], for all 0 <= i < fsm2Nodes.size.
+// True if both lists have the same size and fsm2Nodes[i] is a deep copy of fsm1Nodes[i], for all 0 <= i < fsm2Nodes.size.
 // False otherwise.
 bool isNodeLstDeepCopy(const vector<shared_ptr<FsmNode>> &fsm1Nodes, const vector<shared_ptr<FsmNode>> &fsm2Nodes) {	
 	if (fsm1Nodes.size() != fsm2Nodes.size()) {
@@ -11133,6 +11133,102 @@ void testFsmConstructor2() {
 	}
 }
 
+// Checks if given fsm contains a transition with a label containing an input > maxInput or an output > maxOutput.
+bool containsTransitionWithGreaterIO(const shared_ptr<const Fsm> fsm, const int maxInput, const int maxOutput) {
+	for (shared_ptr<FsmNode> n : fsm->getNodes()) {
+		for (shared_ptr<FsmTransition> tr : n->getTransitions()) {
+			if (tr->getLabel()->getInput() > maxInput) return true;
+			if (tr->getLabel()->getOutput() > maxOutput) return true;
+		}
+	}
+	return false;
+}
+
+void testFsmCreateRandomFsm(const int maxInput, const int maxOutput, const int maxState, const string &name, const unsigned seed) {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	shared_ptr<Fsm> fsm = Fsm::createRandomFsm(name, maxInput, maxOutput, maxState, pl, seed);
+
+	fsmlib_assert("TC-Fsm-NNNN",
+		fsm->getNodes().size() == maxState + 1,
+		"Fsm::createRandomFsm(const string & fsmName, const int maxInput, const int maxOutput, const int maxState, const shared_ptr<FsmPresentationLayer> pl, const unsigned seed): "
+		"Constructed Fsm contains maxState + 1 FsmNodes.");
+
+	fsmlib_assert("TC-Fsm-NNNN",
+		fsm->getMaxInput() == maxInput
+		&& fsm->getMaxOutput() == maxOutput
+		&& fsm->getName() == name
+		&& fsm->isMinimal() == Minimal::Maybe,
+		"Fsm::createRandomFsm(const string & fsmName, const int maxInput, const int maxOutput, const int maxState, const shared_ptr<FsmPresentationLayer> pl, const unsigned seed): "
+		"Constructed Fsm has expected maxInput, maxOutput and name values.");
+
+	fsmlib_assert("TC-Fsm-NNNN",
+		not containsTransitionWithGreaterIO(fsm, maxInput, maxOutput),
+		"Fsm::createRandomFsm(const string & fsmName, const int maxInput, const int maxOutput, const int maxState, const shared_ptr<FsmPresentationLayer> pl, const unsigned seed): "
+		"Constructed Fsm contains no transition labeled with some input > maxInput or some output > maxOutput.");
+
+	vector<shared_ptr<FsmNode>> unreachableNodes;
+	fsmlib_assert("TC-Fsm-NNNN",
+		not fsm->removeUnreachableNodes(unreachableNodes),
+		"Fsm::createRandomFsm(const string & fsmName, const int maxInput, const int maxOutput, const int maxState, const shared_ptr<FsmPresentationLayer> pl, const unsigned seed): "
+		"Constructed Fsm contains no unreachable FsmNode.");
+
+	fsmlib_assert("TC-Fsm-NNNN",
+		fsm->isCompletelyDefined(),
+		"Fsm::createRandomFsm(const string & fsmName, const int maxInput, const int maxOutput, const int maxState, const shared_ptr<FsmPresentationLayer> pl, const unsigned seed): "
+		"Constructed Fsm is completely specified.");
+
+	int numberOfInitialNodes = 0;
+	for (int i = 0; i <= maxState; ++i) {
+		if (fsm->getNodes().at(i)->isInitial()) ++numberOfInitialNodes;
+	}
+
+	fsmlib_assert("TC-Fsm-NNNN",
+		fsm->getInitStateIdx() == 0
+		&& fsm->getInitialState()->isInitial()
+		&& numberOfInitialNodes == 1,
+		"Fsm::createRandomFsm(const string & fsmName, const int maxInput, const int maxOutput, const int maxState, const shared_ptr<FsmPresentationLayer> pl, const unsigned seed): "
+		"initStateIdx is set to 0, the initial state is marked as initial and there is only one initial state.");
+}
+
+// tests Fsm::createRandomFsm(const string & fsmName, const int maxInput, const int maxOutput, const int maxState, const shared_ptr<FsmPresentationLayer> pl, const unsigned seed)
+void testFsmCreateRandomFsm() {
+	{		
+		const int maxInput = 0;
+		const int maxOutput = 0;
+		const int maxState = 0;
+		const unsigned seed = 0;
+		const string name = "FSM";
+		testFsmCreateRandomFsm(maxInput, maxOutput, maxState, name, seed);
+	}
+
+	{
+		const int maxInput = 1;
+		const int maxOutput = 2;
+		const int maxState = 1;
+		const unsigned seed = 0;
+		const string name = "FSM";
+		testFsmCreateRandomFsm(maxInput, maxOutput, maxState, name, seed);
+	}
+
+	{
+		const int maxInput = 3;
+		const int maxOutput = 3;
+		const int maxState = 5;
+		const unsigned seed = 1;
+		const string name = "FSM";
+		testFsmCreateRandomFsm(maxInput, maxOutput, maxState, name, seed);
+	}
+
+	{
+		const int maxInput = 5;
+		const int maxOutput = 7;
+		const int maxState = 10;
+		const unsigned seed = 0;
+		const string name = "FSM";
+		testFsmCreateRandomFsm(maxInput, maxOutput, maxState, name, seed);
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -11305,7 +11401,8 @@ int main(int argc, char** argv)
     //testFsmAccept();
 	//testFsmDeepCopyConstructor();
 	//testFsmConstructor1();
-	testFsmConstructor2();
+	//testFsmConstructor2();
+	testFsmCreateRandomFsm();
 
 
 	/*testMinimise();
