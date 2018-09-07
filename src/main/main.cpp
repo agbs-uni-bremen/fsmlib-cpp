@@ -11309,7 +11309,7 @@ bool hasIdenticalTransitions(shared_ptr<Fsm> mutant) {
 // tests Fsm::createMutant(const std::string & fsmName, const size_t numOutputFaults, const size_t numTransitionFaults)
 void testFsmCreateMutant() {
 	// numOutputFault = 0 and numTransitionFaults = 0 => mutant should be identical to original
-	// Fsm: TC-Fsm-CreateMutant1.fsm (non-obserbavle, #states: 4, #transitions: 7, maxInput: 3, maxOutput: 3)
+	// Fsm: TC-Fsm-CreateMutant1.fsm (non-observable, #states: 4, #transitions: 7, maxInput: 3, maxOutput: 3)
 	{
 		const int numOutputFaults = 0;
 		const int numTransitionFaults = 0;
@@ -11401,12 +11401,6 @@ void testFsmCreateMutant() {
 		fsmlib_assert("TC-Fsm-NNNN",
 			not hasIdenticalTransitions(mutant),
 			"Each transition in mutant is contained only once.");
-
-		cout << original << endl;
-		cout << *mutant << endl;
-
-		cout << "numOutFaults: " << calcNumberOfOutputFaults(original, *mutant) << endl;
-		cout << "numTransFaults: " << calcNumberOfTransitionFaults(original, *mutant) << endl;
 	}
 
 	// numOutputFault = 0 and numTransitionFaults = 1 => Mutant differs from original in one transition-target only.
@@ -11458,6 +11452,10 @@ void testFsmCreateMutant() {
 			"The mutant is completely defined iff original is completely defined.");
 
 		fsmlib_assert("TC-Fsm-NNNN",
+			mutant->getInitialState()->isInitial(),
+			"Initial Node of the mutant is marked as initial.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
 			calcNumberOfOutputFaults(original, *mutant) <= numOutputFaults,
 			"The mutant contains at most numOutputFaults many output faults.");
 
@@ -11468,12 +11466,381 @@ void testFsmCreateMutant() {
 		fsmlib_assert("TC-Fsm-NNNN",
 			not hasIdenticalTransitions(mutant),
 			"Each transition in mutant is contained only once.");
+	}
+	
+	// Fsm: n0 --0/0--> n0;
+	// numOutputFault = 0 and numTransitionFaults = 1 => The target state of the only transition can't change because there is only one state.
+	{
+		const int numOutputFaults = 0;
+		const int numTransitionFaults = 1;
+		const int maxInput = 0;
+		const int maxOutput = 0;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+		Fsm original("Original", maxInput, maxOutput, vector<shared_ptr<FsmNode>>{n0}, pl);
+		Fsm copyOfOriginal(original);
+		shared_ptr<Fsm> mutant = original.createMutant("Mutant", numOutputFaults, numTransitionFaults);
 
-		cout << original << endl;
-		cout << *mutant << endl;
+		fsmlib_assert("TC-Fsm-NNNN",
+			isNodeLstDeepCopy(original.getNodes(), copyOfOriginal.getNodes()),
+			"Fsm::createMutant(...) doesn't change the nodes and transitions of original.");
 
-		cout << "numOutFaults: " << calcNumberOfOutputFaults(original, *mutant) << endl;
-		cout << "numTransFaults: " << calcNumberOfTransitionFaults(original, *mutant) << endl;
+		fsmlib_assert("TC-Fsm-NNNN",
+			mutant->getNodes().size() == 1
+			&& hasTransition(0, 0, 0, 0, *mutant),
+			"Fsm::createMutant(...) doesn't insert transition faults if original has only one node.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.getNodes().size() == mutant->getNodes().size(),
+			"Fsm::createMutant(...) creates mutant with the same number of nodes.");
+		
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.getMaxInput() == mutant->getMaxInput()
+			&& original.getMaxOutput() == mutant->getMaxOutput()
+			&& original.getInitStateIdx() == mutant->getInitStateIdx(),
+			"Fsm::createMutant(...) generates mutant which has the same maxInput, maxOutput and the same initStateIdx.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkIfEachNodeHasSameNumberOfTransitions(original, *mutant),
+			"Each Node in the mutant has the same number of transitions as it had in the original fsm.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.isCompletelyDefined() == mutant->isCompletelyDefined(),
+			"The mutant is completely defined iff original is completely defined.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			mutant->getInitialState()->isInitial(),
+			"Initial Node of the mutant is marked as initial.");
+	}
+
+	// Fsm: n0 --0/0--> n0;
+	// numOutputFault = 1 and numTransitionFaults = 0 => The output of the only transition can't change because 0 is the maxOutput.
+	{
+		const int numOutputFaults = 1;
+		const int numTransitionFaults = 0;
+		const int maxInput = 0;
+		const int maxOutput = 0;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+		Fsm original("Original", maxInput, maxOutput, vector<shared_ptr<FsmNode>>{n0}, pl);
+		Fsm copyOfOriginal(original);
+		shared_ptr<Fsm> mutant = original.createMutant("Mutant", numOutputFaults, numTransitionFaults);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			isNodeLstDeepCopy(original.getNodes(), copyOfOriginal.getNodes()),
+			"Fsm::createMutant(...) doesn't change the nodes and transitions of original.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			mutant->getNodes().size() == 1
+			&& hasTransition(0, 0, 0, 0, *mutant),
+			"Fsm::createMutant(...) doesn't insert output faults if maxOutput is 0.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.getNodes().size() == mutant->getNodes().size(),
+			"Fsm::createMutant(...) creates mutant with the same number of nodes.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.getMaxInput() == mutant->getMaxInput()
+			&& original.getMaxOutput() == mutant->getMaxOutput()
+			&& original.getInitStateIdx() == mutant->getInitStateIdx(),
+			"Fsm::createMutant(...) generates mutant which has the same maxInput, maxOutput and the same initStateIdx.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkIfEachNodeHasSameNumberOfTransitions(original, *mutant),
+			"Each Node in the mutant has the same number of transitions as it had in the original fsm.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.isCompletelyDefined() == mutant->isCompletelyDefined(),
+			"The mutant is completely defined iff original is completely defined.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			mutant->getInitialState()->isInitial(),
+			"Initial Node of the mutant is marked as initial.");
+
+	}
+
+	// numOutputFault = 2 and numTransitionFaults = 1 => Both fault types != 0.
+	// Fsm: n0 --1/1--> n1; n1 --0/2--> n1; n0 --2/2--> n2; n2 --1/0--> n1 (deterministic)
+	{
+		const int numOutputFaults = 2;
+		const int numTransitionFaults = 1;
+		const int maxInput = 2;
+		const int maxOutput = 2;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		// n0 --1/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 1, pl)));
+		// n1 --0/2--> n1
+		n1->addTransition(make_shared<FsmTransition>(n1, n1, make_shared<FsmLabel>(0, 2, pl)));
+		// n0 --2/2--> n2
+		n0->addTransition(make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(2, 2, pl)));
+		// n2 --1/0--> n1
+		n2->addTransition(make_shared<FsmTransition>(n2, n1, make_shared<FsmLabel>(1, 0, pl)));
+		Fsm original("Original", maxInput, maxOutput, vector<shared_ptr<FsmNode>>{n0, n1, n2}, pl);
+		Fsm copyOfOriginal(original);
+		shared_ptr<Fsm> mutant = original.createMutant("Mutant", numOutputFaults, numTransitionFaults);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			isNodeLstDeepCopy(original.getNodes(), copyOfOriginal.getNodes()),
+			"Fsm::createMutant(...) doesn't change the nodes and transitions of original.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.getNodes().size() == mutant->getNodes().size(),
+			"Fsm::createMutant(...) creates mutant with the same number of nodes.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.getMaxInput() == mutant->getMaxInput()
+			&& original.getMaxOutput() == mutant->getMaxOutput()
+			&& original.getInitStateIdx() == mutant->getInitStateIdx(),
+			"Fsm::createMutant(...) generates mutant which has the same maxInput, maxOutput and the same initStateIdx.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkIfEachNodeHasSameNumberOfTransitions(original, *mutant),
+			"Each Node in the mutant has the same number of transitions as it had in the original fsm.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			not checkIfInputsOfTransitionsChanged(original, *mutant),
+			"Each transition in the mutant has the same input as it has in the original fsm.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			not containsTransitionWithGreaterIO(mutant, maxInput, maxOutput),
+			"Each input/output in the mutant is less than or equal to maxInput/maxOutput.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.isCompletelyDefined() == mutant->isCompletelyDefined(),
+			"The mutant is completely defined iff original is completely defined.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			mutant->getInitialState()->isInitial(),
+			"Initial Node of the mutant is marked as initial.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			calcNumberOfOutputFaults(original, *mutant) <= numOutputFaults,
+			"The mutant contains at most numOutputFaults many output faults.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			calcNumberOfTransitionFaults(original, *mutant) <= numTransitionFaults,
+			"The mutant contains at most numTransitionFaults many transition faults.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			not hasIdenticalTransitions(mutant),
+			"Each transition in mutant is contained only once.");
+	}
+
+	// numOutputFault = 2 and numTransitionFaults = 2 => Both fault types != 0.
+	// Fsm: TC-Fsm-CreateMutant1.fsm (non-observable, #states: 4, #transitions: 7, maxInput: 3, maxOutput: 3)
+	{
+		const int numOutputFaults = 2;
+		const int numTransitionFaults = 2;
+		const int maxInput = 3;
+		const int maxOutput = 3;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		Fsm original("../../../resources/TC-Fsm-CreateMutant1.fsm", pl, "Original");
+		Fsm copyOfOriginal(original);
+		shared_ptr<Fsm> mutant = original.createMutant("Mutant", numOutputFaults, numTransitionFaults);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			isNodeLstDeepCopy(original.getNodes(), copyOfOriginal.getNodes()),
+			"Fsm::createMutant(...) doesn't change the nodes and transitions of original.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.getNodes().size() == mutant->getNodes().size(),
+			"Fsm::createMutant(...) creates mutant with the same number of nodes.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.getMaxInput() == mutant->getMaxInput()
+			&& original.getMaxOutput() == mutant->getMaxOutput()
+			&& original.getInitStateIdx() == mutant->getInitStateIdx(),
+			"Fsm::createMutant(...) generates mutant which has the same maxInput, maxOutput and the same initStateIdx.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkIfEachNodeHasSameNumberOfTransitions(original, *mutant),
+			"Each Node in the mutant has the same number of transitions as it had in the original fsm.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			not checkIfInputsOfTransitionsChanged(original, *mutant),
+			"Each transition in the mutant has the same input as it has in the original fsm.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			not containsTransitionWithGreaterIO(mutant, maxInput, maxOutput),
+			"Each input/output in the mutant is less than or equal to maxInput/maxOutput.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.isCompletelyDefined() == mutant->isCompletelyDefined(),
+			"The mutant is completely defined iff original is completely defined.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			mutant->getInitialState()->isInitial(),
+			"Initial Node of the mutant is marked as initial.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			calcNumberOfOutputFaults(original, *mutant) <= numOutputFaults,
+			"The mutant contains at most numOutputFaults many output faults.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			calcNumberOfTransitionFaults(original, *mutant) <= numTransitionFaults,
+			"The mutant contains at most numTransitionFaults many transition faults.");
+
+		//fsmlib_assert("TC-Fsm-NNNN",
+		//	not hasIdenticalTransitions(mutant),
+		//	"Each transition in mutant is contained only once.");
+	}
+
+	// numOutputFault = 10 and numTransitionFaults = 10 => Both fault types != 0.
+	// Fsm: TC-Fsm-CreateMutant2.fsm (non-observable, #states: 3, #transitions: 6, maxInput: 1, maxOutput: 1)
+	{
+		const int numOutputFaults = 10;
+		const int numTransitionFaults = 10;
+		const int maxInput = 1;
+		const int maxOutput = 1;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		Fsm original("../../../resources/TC-Fsm-CreateMutant2.fsm", pl, "Original");
+		Fsm copyOfOriginal(original);
+		shared_ptr<Fsm> mutant = original.createMutant("Mutant", numOutputFaults, numTransitionFaults);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			isNodeLstDeepCopy(original.getNodes(), copyOfOriginal.getNodes()),
+			"Fsm::createMutant(...) doesn't change the nodes and transitions of original.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.getNodes().size() == mutant->getNodes().size(),
+			"Fsm::createMutant(...) creates mutant with the same number of nodes.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.getMaxInput() == mutant->getMaxInput()
+			&& original.getMaxOutput() == mutant->getMaxOutput()
+			&& original.getInitStateIdx() == mutant->getInitStateIdx(),
+			"Fsm::createMutant(...) generates mutant which has the same maxInput, maxOutput and the same initStateIdx.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkIfEachNodeHasSameNumberOfTransitions(original, *mutant),
+			"Each Node in the mutant has the same number of transitions as it had in the original fsm.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			not checkIfInputsOfTransitionsChanged(original, *mutant),
+			"Each transition in the mutant has the same input as it has in the original fsm.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			not containsTransitionWithGreaterIO(mutant, maxInput, maxOutput),
+			"Each input/output in the mutant is less than or equal to maxInput/maxOutput.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.isCompletelyDefined() == mutant->isCompletelyDefined(),
+			"The mutant is completely defined iff original is completely defined.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			mutant->getInitialState()->isInitial(),
+			"Initial Node of the mutant is marked as initial.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			calcNumberOfOutputFaults(original, *mutant) <= numOutputFaults,
+			"The mutant contains at most numOutputFaults many output faults.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			calcNumberOfTransitionFaults(original, *mutant) <= numTransitionFaults,
+			"The mutant contains at most numTransitionFaults many transition faults.");
+
+		//fsmlib_assert("TC-Fsm-NNNN",
+		//	not hasIdenticalTransitions(mutant),
+		//	"Each transition in mutant is contained only once.");
+	}
+
+	// numOutputFault = 1 and numTransitionFaults = 0
+	// Fsm: TC-Fsm-CreateMutant3.fsm (#states: 2, #transitions: 4, maxInput: 0, maxOutput: 1)
+	// => each output fault creates a transition, that is already contained.
+	{
+		const int numOutputFaults = 1;
+		const int numTransitionFaults = 0;
+		const int maxInput = 0;
+		const int maxOutput = 1;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		Fsm original("../../../resources/TC-Fsm-CreateMutant3.fsm", pl, "Original");
+		Fsm copyOfOriginal(original);
+		shared_ptr<Fsm> mutant = original.createMutant("Mutant", numOutputFaults, numTransitionFaults);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			isNodeLstDeepCopy(original.getNodes(), copyOfOriginal.getNodes()),
+			"Fsm::createMutant(...) doesn't change the nodes and transitions of original.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.getNodes().size() == mutant->getNodes().size(),
+			"Fsm::createMutant(...) creates mutant with the same number of nodes.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.getMaxInput() == mutant->getMaxInput()
+			&& original.getMaxOutput() == mutant->getMaxOutput()
+			&& original.getInitStateIdx() == mutant->getInitStateIdx(),
+			"Fsm::createMutant(...) generates mutant which has the same maxInput, maxOutput and the same initStateIdx.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			isNodeLstDeepCopy(original.getNodes(),mutant->getNodes()),
+			"Mutant is identical to original because it's impossible to add output faults.");
+	}
+
+	// numOutputFault = 1 and numTransitionFaults = 1
+	// Fsm: TC-Fsm-CreateMutant4.fsm (deterministic, #states: 5, #transitions: 7, maxInput: 2, maxOutput: 2)
+	// not all nodes are reachable
+	{
+		const int numOutputFaults = 1;
+		const int numTransitionFaults = 1;
+		const int maxInput = 2;
+		const int maxOutput = 2;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		Fsm original("../../../resources/TC-Fsm-CreateMutant4.fsm", pl, "Original");
+		Fsm copyOfOriginal(original);
+		shared_ptr<Fsm> mutant = original.createMutant("Mutant", numOutputFaults, numTransitionFaults);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			isNodeLstDeepCopy(original.getNodes(), copyOfOriginal.getNodes()),
+			"Fsm::createMutant(...) doesn't change the nodes and transitions of original.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.getNodes().size() == mutant->getNodes().size(),
+			"Fsm::createMutant(...) creates mutant with the same number of nodes.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.getMaxInput() == mutant->getMaxInput()
+			&& original.getMaxOutput() == mutant->getMaxOutput()
+			&& original.getInitStateIdx() == mutant->getInitStateIdx(),
+			"Fsm::createMutant(...) generates mutant which has the same maxInput, maxOutput and the same initStateIdx.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkIfEachNodeHasSameNumberOfTransitions(original, *mutant),
+			"Each Node in the mutant has the same number of transitions as it had in the original fsm.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			not checkIfInputsOfTransitionsChanged(original, *mutant),
+			"Each transition in the mutant has the same input as it has in the original fsm.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			not containsTransitionWithGreaterIO(mutant, maxInput, maxOutput),
+			"Each input/output in the mutant is less than or equal to maxInput/maxOutput.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			original.isCompletelyDefined() == mutant->isCompletelyDefined(),
+			"The mutant is completely defined iff original is completely defined.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			mutant->getInitialState()->isInitial(),
+			"Initial Node of the mutant is marked as initial.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			calcNumberOfOutputFaults(original, *mutant) <= numOutputFaults,
+			"The mutant contains at most numOutputFaults many output faults.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			calcNumberOfTransitionFaults(original, *mutant) <= numTransitionFaults,
+			"The mutant contains at most numTransitionFaults many transition faults.");
+
+		//fsmlib_assert("TC-Fsm-NNNN",
+		//	not hasIdenticalTransitions(mutant),
+		//	"Each transition in mutant is contained only once.");
 	}
 }
 
