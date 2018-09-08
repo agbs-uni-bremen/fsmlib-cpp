@@ -11622,6 +11622,268 @@ void testFsmCreateMutant() {
 	}
 }
 
+struct FileFormatTransition
+{
+	size_t source;
+	size_t input;
+	size_t output;
+	size_t target;
+};
+
+// Extracts all Transitions contained in file under fileName. ("pre-state input output post-state"-format)
+// Returns vector containing those transitions.
+// If file can't be opened a empty vector is returned.
+shared_ptr<vector<FileFormatTransition>> extractTransitionsFromFile(const string fileName) {
+	vector<FileFormatTransition> transitions;
+	ifstream inputFile(fileName);
+	if (inputFile.is_open())
+	{
+		string line;
+		size_t source;
+		size_t input;
+		size_t output;
+		size_t target;
+		while (getline(inputFile, line)) {
+			stringstream ss(line);
+			ss >> source;
+			ss >> input;
+			ss >> output;
+			ss >> target;
+			transitions.push_back(FileFormatTransition{ source, input, output, target });
+		}
+		inputFile.close();
+	}
+
+	else
+	{
+		cout << "Unable to open input file" << endl;
+		//exit(EXIT_FAILURE);
+	}
+	return make_shared<vector<FileFormatTransition>>(transitions);
+}
+
+// Checks if the given FsmTransition is contained in the list fileTransitions extracted from a .fsm file
+bool checkIfTransitionContainedInFile(shared_ptr<vector<FileFormatTransition>> fileTransitions, shared_ptr<FsmTransition> tr) {
+	for (const auto &fileTr : *fileTransitions) {
+		if (fileTr.source == tr->getSource()->getId()
+			&& fileTr.input == tr->getLabel()->getInput()
+			&& fileTr.output == tr->getLabel()->getOutput()
+			&& fileTr.target == tr->getTarget()->getId()) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// Checks if each transition from the given fsm is contained in the list fileTransitions extracted from a .fsm file.
+bool checkIfEachTransitionContainedInFile(shared_ptr<vector<FileFormatTransition>> fileTransitions, Fsm &fsm) {
+	for (const auto n : fsm.getNodes()) {
+		for (const auto tr : n->getTransitions()) {
+			if (not checkIfTransitionContainedInFile(fileTransitions, tr)) return false;
+		}
+	}
+	return true;
+}
+
+// Checks if each transition in the given list fileTransitions extracted from a .fsm file is contained in the given fsm.
+bool checkIfEachTransitionContainedInFsm(Fsm &fsm, shared_ptr<vector<FileFormatTransition>> fileTransitions) {
+	for (const auto &tr : *fileTransitions) {
+		if (not hasTransition(tr.source, tr.input, tr.output, tr.target, fsm)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+// Calculates the total number of FsmTransitions of the given fsm.
+size_t getNumberOfTransitions(Fsm &fsm) {
+	size_t numTransitions = 0;
+	for (const auto n : fsm.getNodes()) {
+		numTransitions += n->getTransitions().size();
+	}
+	return numTransitions;
+}
+
+// tests Fsm::dumpFsm(std::ofstream & outputFile)
+void testFsmDumpFsm() {
+	// Fsm: n0 --0/0--> n0 (contains only one state and no transition)
+	{
+		const string fileName = "../../../resources/TC-Fsm-DumpFsm.fsm";
+		std::ofstream ofs(fileName);
+		const int maxInput = 0;
+		const int maxOutput = 0;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		Fsm fsm("M", maxInput, maxOutput, vector<shared_ptr<FsmNode>>{n0}, pl);
+		fsm.dumpFsm(ofs);
+		ofs.close();
+
+		shared_ptr<vector<FileFormatTransition>>  transitions = extractTransitionsFromFile(fileName);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			transitions->empty(),
+			"The file contains no transition if the fsm contains no transition.");
+	}
+
+	// Fsm: n0 --0/0--> n0 (contains only one state and one transition)
+	{
+		const string fileName = "../../../resources/TC-Fsm-DumpFsm.fsm";
+		std::ofstream ofs(fileName);
+		const int maxInput = 0;
+		const int maxOutput = 0;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);		
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+		Fsm fsm("M", maxInput, maxOutput, vector<shared_ptr<FsmNode>>{n0}, pl);
+		fsm.dumpFsm(ofs);
+		ofs.close();
+
+		shared_ptr<vector<FileFormatTransition>>  transitions = extractTransitionsFromFile(fileName);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkIfEachTransitionContainedInFile(transitions, fsm),
+			"Each transition of the Fsm is written to the file.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkIfEachTransitionContainedInFsm(fsm, transitions),
+			"Each transition that was written to the file is a FsmTransition of the Fsm.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			getNumberOfTransitions(fsm) == transitions->size(),
+			"The Fsm and the file contain the same number of transitions.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			transitions->at(0).source == fsm.getInitStateIdx(),
+			"The first value that was written to the file is the id of the initial state.");		
+	}
+
+	// Fsm: n0 --1/0--> n1 (contains two states and one transition)
+	{
+		const string fileName = "../../../resources/TC-Fsm-DumpFsm.fsm";
+		std::ofstream ofs(fileName);
+		const int maxInput = 1;
+		const int maxOutput = 0;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		// n0 --1/0--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 0, pl)));
+		Fsm fsm("M", maxInput, maxOutput, vector<shared_ptr<FsmNode>>{n0, n1}, pl);
+		fsm.dumpFsm(ofs);
+		ofs.close();
+
+		shared_ptr<vector<FileFormatTransition>>  transitions = extractTransitionsFromFile(fileName);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkIfEachTransitionContainedInFile(transitions, fsm),
+			"Each transition of the Fsm is written to the file.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkIfEachTransitionContainedInFsm(fsm, transitions),
+			"Each transition that was written to the file is a FsmTransition of the Fsm.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			getNumberOfTransitions(fsm) == transitions->size(),
+			"The Fsm and the file contain the same number of transitions.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			transitions->at(0).source == fsm.getInitStateIdx(),
+			"The first value that was written to the file is the id of the initial state.");
+	}
+
+	// Fsm: n0 --1/0--> n2; n0 --0/0--> n0;
+	{
+		const string fileName = "../../../resources/TC-Fsm-DumpFsm.fsm";
+		std::ofstream ofs(fileName);
+		const int maxInput = 1;
+		const int maxOutput = 0;
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		// n0 --1/0--> n2
+		n0->addTransition(make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(1, 0, pl)));
+		// n0 --0/0--> n0
+		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
+		Fsm fsm("M", maxInput, maxOutput, vector<shared_ptr<FsmNode>>{n0, n1, n2}, pl);
+		fsm.dumpFsm(ofs);
+		ofs.close();
+
+		shared_ptr<vector<FileFormatTransition>>  transitions = extractTransitionsFromFile(fileName);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkIfEachTransitionContainedInFile(transitions, fsm),
+			"Each transition of the Fsm is written to the file.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkIfEachTransitionContainedInFsm(fsm, transitions),
+			"Each transition that was written to the file is a FsmTransition of the Fsm.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			getNumberOfTransitions(fsm) == transitions->size(),
+			"The Fsm and the file contain the same number of transitions.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			transitions->at(0).source == fsm.getInitStateIdx(),
+			"The first value that was written to the file is the id of the initial state.");
+	}
+
+	// Fsm: TC-Fsm-Constructor3.fsm (First value in the file is != 0  =>  id of initial state is 1)
+	{
+		const string fileName = "../../../resources/TC-Fsm-DumpFsm.fsm";
+		std::ofstream ofs(fileName);
+		Fsm fsm("../../../resources/TC-Fsm-Constructor3.fsm", make_shared<FsmPresentationLayer>(), "M");
+		fsm.dumpFsm(ofs);
+		ofs.close();
+
+		shared_ptr<vector<FileFormatTransition>>  transitions = extractTransitionsFromFile(fileName);
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkIfEachTransitionContainedInFile(transitions, fsm),
+			"Each transition of the Fsm is written to the file.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkIfEachTransitionContainedInFsm(fsm, transitions),
+			"Each transition that was written to the file is a FsmTransition of the Fsm.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			getNumberOfTransitions(fsm) == transitions->size(),
+			"The Fsm and the file contain the same number of transitions.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			transitions->at(0).source == fsm.getInitStateIdx(),
+			"The first value that was written to the file is the id of the initial state.");
+	}
+
+	// Fsm: TC-Fsm-Constructor4.fsm (non-observable, #transitions = 6)
+	{
+		const string fileName = "../../../resources/TC-Fsm-DumpFsm.fsm";
+		std::ofstream ofs(fileName);
+		Fsm fsm("../../../resources/TC-Fsm-Constructor4.fsm", make_shared<FsmPresentationLayer>(), "M");
+		fsm.dumpFsm(ofs);
+		ofs.close();
+
+		shared_ptr<vector<FileFormatTransition>>  transitions = extractTransitionsFromFile(fileName);
+	
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkIfEachTransitionContainedInFile(transitions, fsm),
+			"Each transition of the Fsm is written to the file.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkIfEachTransitionContainedInFsm(fsm, transitions),
+			"Each transition that was written to the file is a FsmTransition of the Fsm.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			getNumberOfTransitions(fsm) == transitions->size(),
+			"The Fsm and the file contain the same number of transitions.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			transitions->at(0).source == fsm.getInitStateIdx(),
+			"The first value that was written to the file is the id of the initial state.");
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -11797,7 +12059,8 @@ int main(int argc, char** argv)
 	//testFsmConstructor1();
 	//testFsmConstructor2();
 	//testFsmCreateRandomFsm();
-	testFsmCreateMutant();
+	//testFsmCreateMutant();
+	testFsmDumpFsm();
 
 
 	/*testMinimise();
