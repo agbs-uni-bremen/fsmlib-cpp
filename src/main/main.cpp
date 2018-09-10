@@ -11884,6 +11884,140 @@ void testFsmDumpFsm() {
 	}
 }
 
+// Checks if there is a transition in intersection from source to target labeled with input/output and
+// if fsm1 and fsm2 both have a corresponding transition with the same label, between the corresponding source and target nodes.
+// (specified in the derivedFromPair attribute)
+//bool checkTransitionOfIntersection(shared_ptr<FsmNode> source, shared_ptr<FsmNode> target, int input, int output, Fsm & intersection, Fsm & fsm1, Fsm & fsm2) {
+//	if (hasTransition(source->getId(), input, output, target->getId(), intersection)) {
+//		if()
+//	}
+//}
+
+// Returns list containing all FsmTransitions of the given fsm.
+vector<shared_ptr<FsmTransition>> getAllTransitionsFromFsm(Fsm& fsm) {
+	vector<shared_ptr<FsmTransition>> transitions;
+	for (const auto n : fsm.getNodes()) {
+		transitions.insert(transitions.end(), n->getTransitions().begin(), n->getTransitions().end());
+	}
+	return transitions;
+}
+
+// Checks for all transitions in intersection, if (q_i,s_j)--x/y-->(q_i',s_j') => q_i --x/y--> q_i' and s_j --x/y--> s_j'  
+// (Checks if each transition in intersection has corresponding transitions in fsm1 and fsm2 )
+bool checkEachTransitionOfIntersection(Fsm &intersection, Fsm &fsm1, Fsm &fsm2) {
+	for (const auto tr : getAllTransitionsFromFsm(intersection)) {
+		const auto sourcePair = tr->getSource()->getPair();
+		const auto targetPair = tr->getTarget()->getPair();
+		shared_ptr<FsmLabel> lbl = tr->getLabel();
+		if (not hasTransition(sourcePair->first->getId(), lbl->getInput(), lbl->getOutput(), targetPair->first->getId(), fsm1)) {
+			return false;
+		}
+		if (not hasTransition(sourcePair->second->getId(), lbl->getInput(), lbl->getOutput(), targetPair->second->getId(), fsm2)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+// Gets FsmNode from intersection that is derived from pair n1,n2.
+// Returns nullptr if no such FsmNode exists.
+shared_ptr<FsmNode> getNodeWithPair(Fsm &intersection, shared_ptr<FsmNode> n1, shared_ptr<FsmNode> n2) {
+	for (shared_ptr<FsmNode> n : intersection.getNodes()) {
+		if (n->getPair()->first == n1 && n->getPair()->second == n2) {
+			return n;
+		}
+	}
+	return nullptr;
+}
+
+// Checks if nodeDerivedFromPair has a transition with the same label as tr1 and tr2 (it is assumed that tr1.label == tr2.label),
+// and if the target of this transition is derived from tr1.target and tr2.target.
+bool hasMatchingTransition(shared_ptr<FsmNode> nodeDerivedFromPair, shared_ptr<FsmTransition> tr1, shared_ptr<FsmTransition> tr2) {
+	for (const auto tr : nodeDerivedFromPair->getTransitions()) {
+		if (not (*tr->getLabel() == *tr1->getLabel())) continue;
+		if (tr->getTarget()->getPair()->first == tr1->getTarget() && tr->getTarget()->getPair()->second == tr2->getTarget()) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// Checks if each pair of transitions of n1 and n2 which have the same labels has a corresponding transition in nodeDerivedFromPair.
+bool checkEachTransitionOfPair(shared_ptr<FsmNode> nodeDerivedFromPair, shared_ptr<FsmNode> n1, shared_ptr<FsmNode> n2) {
+	for (const auto tr1 : n1->getTransitions()) {
+		for (const auto tr2 : n2->getTransitions()) {
+			if (not (*tr1->getLabel() == *tr2->getLabel())) continue;
+			// same label => nodeDerivedFromPair must have a transition with same label
+			if (not hasMatchingTransition(nodeDerivedFromPair, tr1, tr2)) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+// Checks if (q,x,y,q') in fsm1 and (s,x,y,s') in fsm2 implies ((q,s),x,y,(q',s')) in intersection,
+// but only for (q,s), that are contained in intersection 
+// (intersection contains only (q,s) that are reachable from the initial state (q0,s0))
+// Note that we separatly check that (q0,s0) is contained as the initial node in the intersection, so that all 
+// Nodes that can be independently reached in fsm1 and fsm2 by the same InputTrace form a tuple/state in the intersection.
+bool checkEachTransitionPair(Fsm &fsm1, Fsm &fsm2, Fsm &intersection) {
+	for (const auto n1 : fsm1.getNodes()) {
+		for (const auto n2 : fsm2.getNodes()) {
+			shared_ptr<FsmNode> nodeDerivedFromPair = getNodeWithPair(intersection, n1, n2);
+			if (nodeDerivedFromPair == nullptr) continue;
+			if (not checkEachTransitionOfPair(nodeDerivedFromPair, n1, n2)) return false;			
+		}
+	}
+	return true;
+}
+
+// tests Fsm::intersect(const Fsm & f)
+void testFsmIntersect() {
+	{
+		Fsm fsm1("../../../resources/TC-Fsm-Intersect1.fsm", make_shared<FsmPresentationLayer>(), "M");
+		Fsm fsm2("../../../resources/TC-Fsm-Intersect1.fsm", make_shared<FsmPresentationLayer>(), "M");
+
+		cout << fsm1.getNodes().size() << endl;
+
+		Fsm intersection = fsm1.intersect(fsm2);
+		cout << intersection.getNodes().size() << endl;
+		IOListContainer iolc(4, intersection.getNodes().size(), intersection.getNodes().size(), make_shared<FsmPresentationLayer>());
+		//for (const auto & v : *iolc.getIOLists()) {
+			//cout << "------------------------------" << endl;
+			//InputTrace itrc{ v, make_shared<FsmPresentationLayer>() };
+			//OutputTree ot1 = intersection.apply(itrc);
+			//cout << ot1 << endl;
+			//OutputTree ot2 = fsm1.apply(itrc);
+			//cout << ot2 << endl;
+			//cout << "------------------------------" << endl;
+		//}
+
+		shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> initialState = intersection.getInitialState()->getPair();
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			intersection.getInitialState()->getPair()->first == fsm1.getInitialState()
+			&& intersection.getInitialState()->getPair()->second == fsm2.getInitialState(),
+			"The initial state (q,s) of the intersection is derived from the initial states q and s.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkEachTransitionOfIntersection(intersection,fsm1,fsm2),
+			"((q,s),x,y,(q',s')) in intersection => (q,x,y,q') in fsm1 and (s,x,y,s') in fsm2.");
+
+		fsmlib_assert("TC-Fsm-NNNN",
+			checkEachTransitionPair(fsm1, fsm2, intersection),
+			"(q,x,y,q') in fsm1 and (s,x,y,s') in fsm2 => ((q,s),x,y,(q',s')) in intersection.");
+
+		//cout << fsm1 << endl;
+
+		//for (auto tr : getAllTransitionsFromFsm(intersection)) {
+		//	cout << *tr << endl;
+		//	cout << tr->getSource()->getPair()->first->getId() << " ";
+		//	cout << tr->getTarget()->getPair()->first->getId() << endl;
+		//}
+	}
+}
+
 int main(int argc, char** argv)
 {
     
@@ -12060,7 +12194,8 @@ int main(int argc, char** argv)
 	//testFsmConstructor2();
 	//testFsmCreateRandomFsm();
 	//testFsmCreateMutant();
-	testFsmDumpFsm();
+	//testFsmDumpFsm();
+	testFsmIntersect();
 
 
 	/*testMinimise();
