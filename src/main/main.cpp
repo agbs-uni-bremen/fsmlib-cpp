@@ -9314,6 +9314,47 @@ void testFsmNodeApply() {
 			&& n2->hasBeenVisited(),
 			"Each expected FsmNode has been visited.");
 	}
+
+	// n0 --1/0--> n1; n1 --2/5--> n4; n0 --1/1--> n2; n2 --1/2--> n3; n3 --2/4--> n5;
+	// itrc: [1,1,2]
+	// itrc can be fully applied on one path but only partially on the other path of the Fsm.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		shared_ptr<FsmNode> n3 = make_shared<FsmNode>(2, pl);
+		shared_ptr<FsmNode> n4 = make_shared<FsmNode>(2, pl);
+		shared_ptr<FsmNode> n5 = make_shared<FsmNode>(2, pl);
+		// n0 --1/0--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 0, pl)));
+		// n1 --2/5--> n4
+		n1->addTransition(make_shared<FsmTransition>(n1, n4, make_shared<FsmLabel>(2, 5, pl)));
+		// n0 --1/1--> n2
+		n0->addTransition(make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(1, 1, pl)));
+		// n2 --1/2--> n3
+		n2->addTransition(make_shared<FsmTransition>(n2, n3, make_shared<FsmLabel>(1, 2, pl)));
+		// n3 --2/4--> n5
+		n3->addTransition(make_shared<FsmTransition>(n3, n5, make_shared<FsmLabel>(2, 4, pl)));
+		InputTrace inTrc(vector<int>{1,1,2}, pl);
+		OutputTree outTree = n0->apply(inTrc, true);
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTree.getInputTrace() == inTrc,
+			"FsmNode::apply(const InputTrace& itrc, bool markAsVisited) returns OutputTree which has itrc set as InputTrace.");
+
+		vector<OutputTrace> outTrcs = outTree.getOutputTraces();
+		fsmlib_assert("TC-FsmNode-NNNN",
+			outTrcs.size() == 2,
+			"Result of FsmNode::apply(const InputTrace& itrc, bool markAsVisited) contains the expected number of OutputTraces");
+
+		const OutputTrace expectedTrc0(vector<int>{0}, pl);
+		const OutputTrace expectedTrc1(vector<int>{1,2,4}, pl);
+		
+		fsmlib_assert("TC-FsmNode-NNNN",
+			find(outTrcs.cbegin(), outTrcs.cend(), expectedTrc0) != outTrcs.cend()
+			&& find(outTrcs.cbegin(), outTrcs.cend(), expectedTrc1) != outTrcs.cend(),
+			"Result of FsmNode::apply(const InputTrace& itrc, bool markAsVisited) contains each expected OutputTrace");
+	}
 }
 
 // tests FsmNode::after(const InputTrace& itrc) and FsmNode::after(const vector<int>& itrc)
@@ -9442,6 +9483,30 @@ void testFsmNodeAfter1() {
 		// n0 --0/0--> n0
 		n0->addTransition(make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl)));
 		InputTrace inTrc(vector<int>{1, 1}, pl);
+		unordered_set<shared_ptr<FsmNode>> reached = n0->after(inTrc);
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached.empty(),
+			"Result of FsmNode::after(const InputTrace& itrc) is empty if itrc can't be completely applied to n0.");
+
+		fsmlib_assert("TC-FsmNode-NNNN",
+			reached == n0->after(inTrc.get()),
+			"FsmNode::after(const InputTrace& itrc) == FsmNode::after(const vector<int>& itrc)");
+	}
+
+	// n0 --0/1--> n1, n1 --1/2--> n2 
+	// inTrc = [0,0,1]
+	// => prefix and suffix of inTrc can be applied, but inTrc can't be completely applied.
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+		// n0 --0/1--> n1
+		n0->addTransition(make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(0, 1, pl)));
+		// n1 --1/2--> n2
+		n1->addTransition(make_shared<FsmTransition>(n1, n2, make_shared<FsmLabel>(1, 2, pl)));
+		InputTrace inTrc(vector<int>{0, 0, 1}, pl);
 		unordered_set<shared_ptr<FsmNode>> reached = n0->after(inTrc);
 
 		fsmlib_assert("TC-FsmNode-NNNN",
@@ -10030,8 +10095,6 @@ void testFsmNodeDistinguishedNegative() {
 			"FsmNode::distinguished(const shared_ptr<FsmNode> otherNode, shared_ptr<Tree> w) returns nullptr "
 			"if both FsmNodes can't be distinguished by w.");
 	}
-
-	IOListContainer iolc(5, 10, 10, make_shared<FsmPresentationLayer>());
 }
 
 // Calculates the distinguishing trace for each pair of FsmNodes in nodes with 
@@ -11909,6 +11972,8 @@ bool checkEachTransitionOfIntersection(Fsm &intersection, Fsm &fsm1, Fsm &fsm2) 
 		const auto sourcePair = tr->getSource()->getPair();
 		const auto targetPair = tr->getTarget()->getPair();
 		shared_ptr<FsmLabel> lbl = tr->getLabel();
+		cout << "Fsm1: " << sourcePair->first->getId() << "," << lbl->getInput() << "," << lbl->getOutput() << "," << targetPair->first->getId() << endl;
+		cout << "Fsm2: " << sourcePair->second->getId() << "," << lbl->getInput() << "," << lbl->getOutput() << "," << targetPair->second->getId() << endl;
 		if (not hasTransition(sourcePair->first->getId(), lbl->getInput(), lbl->getOutput(), targetPair->first->getId(), fsm1)) {
 			return false;
 		}
@@ -11934,8 +11999,10 @@ shared_ptr<FsmNode> getNodeWithPair(Fsm &intersection, shared_ptr<FsmNode> n1, s
 // and if the target of this transition is derived from tr1.target and tr2.target.
 bool hasMatchingTransition(shared_ptr<FsmNode> nodeDerivedFromPair, shared_ptr<FsmTransition> tr1, shared_ptr<FsmTransition> tr2) {
 	for (const auto tr : nodeDerivedFromPair->getTransitions()) {
+		//cout << "tr from derivedNode: " << *tr << endl;
 		if (not (*tr->getLabel() == *tr1->getLabel())) continue;
 		if (tr->getTarget()->getPair()->first == tr1->getTarget() && tr->getTarget()->getPair()->second == tr2->getTarget()) {
+			//cout << "matching targets: " << tr1->getTarget()->getId() << ", " << tr2->getTarget()->getId() << endl;
 			return true;
 		}
 	}
@@ -11948,6 +12015,7 @@ bool checkEachTransitionOfPair(shared_ptr<FsmNode> nodeDerivedFromPair, shared_p
 		for (const auto tr2 : n2->getTransitions()) {
 			if (not (*tr1->getLabel() == *tr2->getLabel())) continue;
 			// same label => nodeDerivedFromPair must have a transition with same label
+			//cout << *tr1 << " and " << *tr2 << endl;
 			if (not hasMatchingTransition(nodeDerivedFromPair, tr1, tr2)) {
 				return false;
 			}
@@ -11972,50 +12040,156 @@ bool checkEachTransitionPair(Fsm &fsm1, Fsm &fsm2, Fsm &intersection) {
 	return true;
 }
 
+
 // tests Fsm::intersect(const Fsm & f)
-void testFsmIntersect() {
+//void testFsmIntersect() {
+//	// fsm1 = fsm2 = TC-Fsm-Intersect1.fsm 
+//	{
+//		Fsm fsm1("../../../resources/TC-Fsm-Intersect1.fsm", make_shared<FsmPresentationLayer>(), "M");
+//		Fsm fsm2("../../../resources/TC-Fsm-Intersect1.fsm", make_shared<FsmPresentationLayer>(), "M");
+//
+//		cout << fsm1.getNodes().size() << endl;
+//
+//		Fsm intersection = fsm1.intersect(fsm2);
+//		cout << intersection.getNodes().size() << endl;
+//		IOListContainer iolc(4, intersection.getNodes().size(), intersection.getNodes().size(), make_shared<FsmPresentationLayer>());
+//		//for (const auto & v : *iolc.getIOLists()) {
+//			//cout << "------------------------------" << endl;
+//			//InputTrace itrc{ v, make_shared<FsmPresentationLayer>() };
+//			//OutputTree ot1 = intersection.apply(itrc);
+//			//cout << ot1 << endl;
+//			//OutputTree ot2 = fsm1.apply(itrc);
+//			//cout << ot2 << endl;
+//			//cout << "------------------------------" << endl;
+//		//}
+//
+//		fsmlib_assert("TC-Fsm-NNNN",
+//			intersection.getInitialState()->getPair()->first == fsm1.getInitialState()
+//			&& intersection.getInitialState()->getPair()->second == fsm2.getInitialState(),
+//			"The initial state (q,s) of the intersection is derived from the initial states q and s.");
+//
+//		fsmlib_assert("TC-Fsm-NNNN",
+//			checkEachTransitionOfIntersection(intersection,fsm1,fsm2),
+//			"((q,s),x,y,(q',s')) in intersection => (q,x,y,q') in fsm1 and (s,x,y,s') in fsm2.");
+//
+//		fsmlib_assert("TC-Fsm-NNNN",
+//			checkEachTransitionPair(fsm1, fsm2, intersection),
+//			"(q,x,y,q') in fsm1 and (s,x,y,s') in fsm2 => ((q,s),x,y,(q',s')) in intersection.");
+//
+//		//cout << fsm1 << endl;
+//
+//		//for (auto tr : getAllTransitionsFromFsm(intersection)) {
+//		//	cout << *tr << endl;
+//		//	cout << tr->getSource()->getPair()->first->getId() << " ";
+//		//	cout << tr->getTarget()->getPair()->first->getId() << endl;
+//		//}
+//	}
+//
+//	// fsm1 = TC-Fsm-Intersect2.fsm , TC-Fsm-Intersect3.fsm (example from the lecture)
+//	{
+//		Fsm fsm1("../../../resources/TC-Fsm-Intersect2.fsm", make_shared<FsmPresentationLayer>(), "M1");
+//		Fsm fsm2("../../../resources/TC-Fsm-Intersect3.fsm", make_shared<FsmPresentationLayer>(), "M2");
+//
+//		cout << fsm1.getNodes().size() << endl;
+//
+//		Fsm intersection = fsm1.intersect(fsm2);
+//		cout << "intersection size: " << intersection.getNodes().size() << endl;
+//
+//		for (const auto n : intersection.getNodes()) {
+//			cout << n->getPair()->first->getId() << "," << n->getPair()->second->getId() << endl;
+//		}
+//		IOListContainer iolc(1, intersection.getNodes().size(), intersection.getNodes().size(), make_shared<FsmPresentationLayer>());
+//		for (const auto & v : *iolc.getIOLists()) {
+//			cout << "------------------------------" << endl;
+//			InputTrace itrc{ v, make_shared<FsmPresentationLayer>() };
+//			OutputTree ot1 = intersection.apply(itrc); 
+//			for (auto trc : ot1.getOutputTraces()) cout << trc << endl;
+//			//cout << ot1 << endl;
+//			cout << "===========" << endl;
+//			OutputTree ot2 = fsm1.apply(itrc);
+//			for (auto trc : ot2.getOutputTraces()) cout << trc << endl;
+//			//cout << ot2 << endl;
+//			cout << "------------------------------" << endl;
+//		}
+//
+//		cout << "deterministic: " << intersection.isDeterministic() << endl;
+//
+//		fsmlib_assert("TC-Fsm-NNNN",
+//			intersection.getInitialState()->getPair()->first == fsm1.getInitialState()
+//			&& intersection.getInitialState()->getPair()->second == fsm2.getInitialState(),
+//			"The initial state (q,s) of the intersection is derived from the initial states q and s.");
+//
+//		fsmlib_assert("TC-Fsm-NNNN",
+//			checkEachTransitionOfIntersection(intersection, fsm1, fsm2),
+//			"((q,s),x,y,(q',s')) in intersection => (q,x,y,q') in fsm1 and (s,x,y,s') in fsm2.");
+//
+//		fsmlib_assert("TC-Fsm-NNNN",
+//			checkEachTransitionPair(fsm1, fsm2, intersection),
+//			"(q,x,y,q') in fsm1 and (s,x,y,s') in fsm2 => ((q,s),x,y,(q',s')) in intersection.");
+//
+//		//cout << fsm1 << endl;
+//
+//		//for (auto tr : getAllTransitionsFromFsm(intersection)) {
+//		//	cout << *tr << endl;
+//		//	cout << tr->getSource()->getPair()->first->getId() << " ";
+//		//	cout << tr->getTarget()->getPair()->first->getId() << endl;
+//		//}
+//	}
+//}
+
+// Nearly an exact copy of Fsm::apply() but here no element of the inputtrace can be ignored while constructing the outputtraces
+// => only outputtraces generated for the whole inputtrace or a prefix of it is added to the returned outputtree.
+OutputTree applyCompleteTraceWithPrefixes(shared_ptr<FsmNode> fsm_root, shared_ptr<FsmPresentationLayer> presentationLayer, const InputTrace& itrc, bool markAsVisited)
+{
+	deque<shared_ptr<TreeNode>> tnl;
+	unordered_map<shared_ptr<TreeNode>, shared_ptr<FsmNode>> t2f;
+
+	shared_ptr<TreeNode> root = make_shared<TreeNode>();
+	OutputTree ot = OutputTree(root, itrc, presentationLayer);
+
+	if (itrc.get().size() == 0)
 	{
-		Fsm fsm1("../../../resources/TC-Fsm-Intersect1.fsm", make_shared<FsmPresentationLayer>(), "M");
-		Fsm fsm2("../../../resources/TC-Fsm-Intersect1.fsm", make_shared<FsmPresentationLayer>(), "M");
-
-		cout << fsm1.getNodes().size() << endl;
-
-		Fsm intersection = fsm1.intersect(fsm2);
-		cout << intersection.getNodes().size() << endl;
-		IOListContainer iolc(4, intersection.getNodes().size(), intersection.getNodes().size(), make_shared<FsmPresentationLayer>());
-		//for (const auto & v : *iolc.getIOLists()) {
-			//cout << "------------------------------" << endl;
-			//InputTrace itrc{ v, make_shared<FsmPresentationLayer>() };
-			//OutputTree ot1 = intersection.apply(itrc);
-			//cout << ot1 << endl;
-			//OutputTree ot2 = fsm1.apply(itrc);
-			//cout << ot2 << endl;
-			//cout << "------------------------------" << endl;
-		//}
-
-		shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>> initialState = intersection.getInitialState()->getPair();
-
-		fsmlib_assert("TC-Fsm-NNNN",
-			intersection.getInitialState()->getPair()->first == fsm1.getInitialState()
-			&& intersection.getInitialState()->getPair()->second == fsm2.getInitialState(),
-			"The initial state (q,s) of the intersection is derived from the initial states q and s.");
-
-		fsmlib_assert("TC-Fsm-NNNN",
-			checkEachTransitionOfIntersection(intersection,fsm1,fsm2),
-			"((q,s),x,y,(q',s')) in intersection => (q,x,y,q') in fsm1 and (s,x,y,s') in fsm2.");
-
-		fsmlib_assert("TC-Fsm-NNNN",
-			checkEachTransitionPair(fsm1, fsm2, intersection),
-			"(q,x,y,q') in fsm1 and (s,x,y,s') in fsm2 => ((q,s),x,y,(q',s')) in intersection.");
-
-		//cout << fsm1 << endl;
-
-		//for (auto tr : getAllTransitionsFromFsm(intersection)) {
-		//	cout << *tr << endl;
-		//	cout << tr->getSource()->getPair()->first->getId() << " ";
-		//	cout << tr->getTarget()->getPair()->first->getId() << endl;
-		//}
+		return ot;
 	}
+
+	t2f[root] = fsm_root;
+
+	for (auto it = itrc.cbegin(); it != itrc.cend(); ++it)
+	{
+		int x = *it;
+
+		vector< shared_ptr<TreeNode> > vaux = ot.getLeaves();
+		//cout << "it - itrc.cbegin()" << it - itrc.cbegin() << endl;
+		for (auto n : vaux) {
+			//cout << "n->getPath().size()" << n->getPath().size() << endl;
+			if (n->getPath().size() < it - itrc.cbegin()) continue;
+			tnl.push_back(n);
+		}
+
+		while (!tnl.empty())
+		{
+			shared_ptr<TreeNode> thisTreeNode = tnl.front();
+			tnl.pop_front();
+
+			shared_ptr<FsmNode> thisState = t2f.at(thisTreeNode);
+			if (markAsVisited) thisState->setVisited();
+
+			for (shared_ptr<FsmTransition> tr : thisState->getTransitions())
+			{
+				if (tr->getLabel()->getInput() == x)
+				{
+					int y = tr->getLabel()->getOutput();
+					shared_ptr<FsmNode> tgtState = tr->getTarget();
+					shared_ptr<TreeNode> tgtNode = make_shared<TreeNode>();
+					shared_ptr<TreeEdge> te = make_shared<TreeEdge>(y, tgtNode);
+					thisTreeNode->add(te);
+					t2f[tgtNode] = tgtState;
+					if (markAsVisited) tgtState->setVisited();
+				}
+			}
+		}
+	}
+	return ot;
 }
 
 int main(int argc, char** argv)
@@ -12195,7 +12369,7 @@ int main(int argc, char** argv)
 	//testFsmCreateRandomFsm();
 	//testFsmCreateMutant();
 	//testFsmDumpFsm();
-	testFsmIntersect();
+	//testFsmIntersect();
 
 
 	/*testMinimise();
