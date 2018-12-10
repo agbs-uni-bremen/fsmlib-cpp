@@ -991,23 +991,36 @@ unordered_set<FsmLabel> calcLblSet(std::unordered_set < shared_ptr<FsmNode>> &no
 /*
 	Checks if processed contains front.
 */
-bool containsPair(std::vector<std::pair<std::unordered_set<std::shared_ptr<FsmNode>>, std::unordered_set<std::shared_ptr<FsmNode>>>> &processed,
-	std::pair<std::unordered_set<std::shared_ptr<FsmNode>>, std::unordered_set<std::shared_ptr<FsmNode>>> &front) {
-	for (auto p : processed) {
-		if (p.first == front.first && p.second == front.second) {
-			return true;
-		}
-	}
-	return false;
-}
+//bool containsPair(std::vector<std::pair<std::unordered_set<std::shared_ptr<FsmNode>>, std::unordered_set<std::shared_ptr<FsmNode>>>> &processed,
+//	std::pair<std::unordered_set<std::shared_ptr<FsmNode>>, std::unordered_set<std::shared_ptr<FsmNode>>> &front) {
+//	for (auto p : processed) {
+//		if (p.first == front.first && p.second == front.second) {
+//			return true;
+//		}
+//	}
+//	return false;
+//}
 
 /*
 	Checks if wl contains pair.
 */
-bool containsPair(std::deque<std::pair<std::unordered_set<std::shared_ptr<FsmNode>>, std::unordered_set<std::shared_ptr<FsmNode>>>> &wl,
-	std::pair<std::unordered_set<std::shared_ptr<FsmNode>>, std::unordered_set<std::shared_ptr<FsmNode>>> &pair) {
-	for (auto p : wl) {
-		if (p.first == pair.first && p.second == pair.second) {
+//bool containsPair(std::deque<std::pair<std::unordered_set<std::shared_ptr<FsmNode>>, std::unordered_set<std::shared_ptr<FsmNode>>>> &wl,
+//	std::pair<std::unordered_set<std::shared_ptr<FsmNode>>, std::unordered_set<std::shared_ptr<FsmNode>>> &pair) {
+//	for (auto p : wl) {
+//		if (p.first == pair.first && p.second == pair.second) {
+//			return true;
+//		}
+//	}
+//	return false;
+//}
+
+template<typename T>
+bool containsPair(T &lst, std::pair<std::unordered_set<std::shared_ptr<FsmNode>>, std::unordered_set<std::shared_ptr<FsmNode>>> &pair)
+{
+	typename T::const_iterator it;
+	for (it = lst.begin(); it != lst.end(); ++it)
+	{                                      
+		if (it->first == pair.first && it->second == pair.second) {
 			return true;
 		}
 	}
@@ -1183,6 +1196,9 @@ void testIOEquivalenceCheck() {
 
 }
 
+/*
+	This function is used to test the checkForEqualStructure function
+*/
 void testCheckForEqualStructure() {
 	auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
 
@@ -1207,8 +1223,8 @@ void testCheckForEqualStructure() {
 int main(int argc, char** argv)
 {
 	std::cout << "test start" << std::endl;
-	//testIOEquivalenceCheck();
-	testCheckForEqualStructure();
+	testIOEquivalenceCheck();
+	//testCheckForEqualStructure();
     
 #if 0
     test1();
