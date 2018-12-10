@@ -1120,6 +1120,25 @@ bool checkForEqualStructure(const Fsm &fsm1, const Fsm &fsm2) {
 	return true;
 }
 
+/*
+	Returns a set of all the states of the given Fsm that are reachable from the initial state of that Fsm.
+*/
+unordered_set<shared_ptr<FsmNode>> getReachableStates(const Fsm &fsm) {
+	unordered_set<shared_ptr<FsmNode>> reached{fsm.getInitialState()};
+	deque<shared_ptr<FsmNode>> wl{ fsm.getInitialState() };
+	while (not wl.empty()) {
+		shared_ptr<FsmNode> q = wl.front();
+		wl.pop_front();
+		for (auto tr : q->getTransitions()) {
+			// add reached target to wl if this target wasn't reached before
+			if (reached.insert(tr->getTarget()).second) {
+				wl.push_back(tr->getTarget());
+			}
+		}
+	}
+	return reached;
+}
+
 
 void testIOEquivalenceCheck() {
 	{
@@ -1218,13 +1237,30 @@ void testCheckForEqualStructure() {
 	cout << checkForEqualStructure(copy2, ofsm) << endl;
 }
 
+void testGetReachableStates() {
+	auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+
+
+	unordered_set<shared_ptr<FsmNode>> reachable = getReachableStates(*fsm);
+	cout << reachable.size() << endl;
+
+	vector<shared_ptr<FsmNode>> nodes = fsm->getNodes();
+	unordered_set<shared_ptr<FsmNode>> nodeSet(nodes.begin(), nodes.end());
+
+	
+	//nodes.insert(fsm->getNodes().begin(), fsm->getNodes().end());
+	fsmlib_assert("TC", reachable == nodeSet, "getReachableStates returns set containing each reachable state");
+	
+}
+
 
 
 int main(int argc, char** argv)
 {
 	std::cout << "test start" << std::endl;
-	testIOEquivalenceCheck();
+	//testIOEquivalenceCheck();
 	//testCheckForEqualStructure();
+	testGetReachableStates();
     
 #if 0
     test1();
