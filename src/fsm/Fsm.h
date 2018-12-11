@@ -240,6 +240,8 @@ public:
     int getInitStateIdx() const;
     void resetColor();
     void toDot(const std::string & fname);
+
+	int getMaxState() const;
     
     /**
      Create a new FSM that represents the intersection of this and the other FSM

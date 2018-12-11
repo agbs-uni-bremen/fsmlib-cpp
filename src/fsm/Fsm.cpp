@@ -434,6 +434,10 @@ void Fsm::toDot(const string & fname)
     out.close();
 }
 
+int Fsm::getMaxState() const {
+	return maxState;
+}
+
 Fsm Fsm::intersect(const Fsm & f)
 {
     // A list of node pairs which is used to

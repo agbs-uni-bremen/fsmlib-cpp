@@ -1098,7 +1098,8 @@ bool hasEquivalentStates(Fsm &fsm) {
 /*
 	Check if fsm1 and fsm2 have the same structure (same labeled transitions between nodes with the same indices).
 	This method can be used to check if some Fsms structure was changed by some method call.
-	Its faster than checking for isomorphism, because of restrictiveness
+	Its faster than checking for isomorphism, because of restrictiveness.
+	In other words this function tests if fsm1 and fsm2 have identical nodes lists.
 */
 bool checkForEqualStructure(const Fsm &fsm1, const Fsm &fsm2) {
 	// fsm1 and fsm2 need to be the same size
@@ -1137,6 +1138,58 @@ unordered_set<shared_ptr<FsmNode>> getReachableStates(const Fsm &fsm) {
 		}
 	}
 	return reached;
+}
+
+/*
+	Returns true iff nodes[i].id == i for all 0 <= i < fsm.getNodes().size()
+*/
+bool checkNodeIds(Fsm &fsm) {
+	for (size_t i = 0; i < fsm.getNodes().size(); ++i) {
+		if (fsm.getNodes().at(i)->getId() != i) return false;
+	}
+	return true;
+}
+
+/*
+	Returns true iff fsm.getNodes() contains given node pointer.
+*/
+bool contains(Fsm &fsm, shared_ptr<FsmNode> node) {
+	for (auto n : fsm.getNodes()) {
+		if (n == node) return true;
+	}
+	return false;
+}
+
+
+/*
+	Checks the transitions and return false iff any transitions hurts the invariant of Fsm.
+*/
+bool checkAllTransitions(Fsm &fsm) {
+	for (auto n : fsm.getNodes()) {
+		for (auto tr : n->getTransitions()) {
+			if (tr == nullptr || tr->getLabel() == nullptr || tr->getLabel()->getInput() > fsm.getMaxInput()
+				|| tr->getLabel()->getOutput() > fsm.getMaxOutput() || tr->getSource() != n
+				|| not contains(fsm, tr->getTarget())) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+/*
+	This function checks the Fsm class invariant for the given Fsm object.
+*/
+bool checkFsmClassInvariant(Fsm &fsm) {
+	if (fsm.getMaxInput() < 0) return false;
+	if (fsm.getMaxOutput() < 0) return false;
+	if (fsm.getNodes().size() < 1) return false;
+	if (not checkNodeIds(fsm)) return false;
+	if (contains(fsm, nullptr)) return false;
+	if (not checkAllTransitions(fsm)) return false;
+	if (fsm.getMaxState() != fsm.getNodes().size() - 1) return false;
+	if (not(0 <= fsm.getInitStateIdx() and fsm.getInitStateIdx() <= fsm.getMaxState())) return false;
+	return true;
 }
 
 
@@ -1213,44 +1266,132 @@ void testIOEquivalenceCheck() {
 		cout << ioEquivalenceCheck(q0, u0) << endl;
 	}
 
+	cout << "-------------------------------" << endl;
+
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> q2 = make_shared<FsmNode>(2, pl);
+		shared_ptr<FsmNode> q3 = make_shared<FsmNode>(3, pl);
+
+		shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(1, 1, pl));
+		q0->addTransition(tr0);
+		shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q0, q2, make_shared<FsmLabel>(1, 1, pl));
+		q0->addTransition(tr1);
+		shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(q2, q1, make_shared<FsmLabel>(2, 2, pl));
+		q2->addTransition(tr2);
+		shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(q1, q3, make_shared<FsmLabel>(0, 1, pl));
+		q1->addTransition(tr3);
+		shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(q3, q0, make_shared<FsmLabel>(0, 0, pl));
+		q3->addTransition(tr4);
+
+		shared_ptr<FsmNode> u0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> u1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> u2 = make_shared<FsmNode>(2, pl);
+		shared_ptr<FsmNode> u3 = make_shared<FsmNode>(3, pl);
+
+		shared_ptr<FsmTransition> tr5 = make_shared<FsmTransition>(u0, u1, make_shared<FsmLabel>(1, 1, pl));
+		u0->addTransition(tr5);
+		shared_ptr<FsmTransition> tr6 = make_shared<FsmTransition>(u1, u2, make_shared<FsmLabel>(2, 2, pl));
+		u1->addTransition(tr6);
+		shared_ptr<FsmTransition> tr7 = make_shared<FsmTransition>(u1, u3, make_shared<FsmLabel>(0, 1, pl));
+		u1->addTransition(tr7);
+		shared_ptr<FsmTransition> tr8 = make_shared<FsmTransition>(u2, u3, make_shared<FsmLabel>(0, 1, pl));
+		u2->addTransition(tr8);
+		shared_ptr<FsmTransition> tr9 = make_shared<FsmTransition>(u3, u0, make_shared<FsmLabel>(0, 0, pl));
+		u3->addTransition(tr9);
+		shared_ptr<FsmTransition> tr10 = make_shared<FsmTransition>(u2, u1, make_shared<FsmLabel>(0, 1, pl));
+		u2->addTransition(tr10);
+		
+
+		cout << ioEquivalenceCheck(q0, u0) << endl;
+	}
+
 }
 
 /*
 	This function is used to test the checkForEqualStructure function
 */
 void testCheckForEqualStructure() {
+	cout << "testCheckForEqualStructure" << endl;
+
+	cout << "positive cases:" << endl;
+	for (int i = 0; i < 10; ++i) {
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+
+		cout << checkForEqualStructure(*fsm, *fsm) << endl;
+
+		Fsm copy = Fsm(*fsm);
+		cout << checkForEqualStructure(*fsm, copy) << endl;
+		Fsm ofsm = fsm->transformToObservableFSM();
+
+		cout << checkForEqualStructure(*fsm, copy) << endl;
+
+		Fsm copy2 = Fsm(ofsm);
+		Fsm minOfsm = ofsm.minimiseObservableFSM();
+		cout << checkForEqualStructure(copy2, ofsm) << endl;
+
+		cout << "-----------------------------------" << endl;
+	}
+
+	cout << "negative cases:" << endl;
+
+	for (int i = 0; i < 10; ++i) {
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+
+		auto mutant = fsm->createMutant("mutant", 1, 1);
+		
+		cout << checkForEqualStructure(*fsm, *mutant) << endl;
+
+		cout << "-----------------------------------" << endl;
+	}
+
 	auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
 
-	cout << checkForEqualStructure(*fsm, *fsm) << endl;
-
-	Fsm copy = Fsm(*fsm);
-	cout << checkForEqualStructure(*fsm, copy) << endl;
-	Fsm ofsm = fsm->transformToObservableFSM();
-	cout << fsm->size() << endl;
-	cout << copy.size() << endl;
-	cout << ofsm.size() << endl;
-
-	cout << checkForEqualStructure(*fsm, copy) << endl;
-
-	Fsm copy2 = Fsm(ofsm);
-	Fsm minOfsm = ofsm.minimiseObservableFSM();
-	cout << checkForEqualStructure(copy2, ofsm) << endl;
 }
 
+/*
+	This function is used to test the getReachableStates function
+*/
 void testGetReachableStates() {
-	auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+	for (int i = 0; i < 10; ++i) {
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
 
+		unordered_set<shared_ptr<FsmNode>> reachable = getReachableStates(*fsm);
 
-	unordered_set<shared_ptr<FsmNode>> reachable = getReachableStates(*fsm);
-	cout << reachable.size() << endl;
+		vector<shared_ptr<FsmNode>> nodes = fsm->getNodes();
+		unordered_set<shared_ptr<FsmNode>> nodeSet(nodes.begin(), nodes.end());
 
-	vector<shared_ptr<FsmNode>> nodes = fsm->getNodes();
-	unordered_set<shared_ptr<FsmNode>> nodeSet(nodes.begin(), nodes.end());
-
+		fsmlib_assert("TC", reachable == nodeSet, "getReachableStates returns set containing each reachable state");
+	}
 	
-	//nodes.insert(fsm->getNodes().begin(), fsm->getNodes().end());
-	fsmlib_assert("TC", reachable == nodeSet, "getReachableStates returns set containing each reachable state");
-	
+	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
+		shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
+		shared_ptr<FsmNode> q2 = make_shared<FsmNode>(2, pl);
+		shared_ptr<FsmNode> q3 = make_shared<FsmNode>(3, pl);
+
+		shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(1, 1, pl));
+		q0->addTransition(tr0);
+		shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q0, q2, make_shared<FsmLabel>(1, 1, pl));
+		q0->addTransition(tr1);
+		shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(q2, q1, make_shared<FsmLabel>(2, 2, pl));
+		q2->addTransition(tr2);
+		//shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(q1, q3, make_shared<FsmLabel>(0, 1, pl));
+		//q1->addTransition(tr3);
+		/*shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(q3, q0, make_shared<FsmLabel>(0, 0, pl));
+		q3->addTransition(tr4);*/
+
+		Fsm fsm("M",2,2,{q0,q1,q2,q3},pl);
+		unordered_set<shared_ptr<FsmNode>> reachable = getReachableStates(fsm);
+
+		vector<shared_ptr<FsmNode>> nodes = fsm.getNodes();
+		unordered_set<shared_ptr<FsmNode>> nodeSet(nodes.begin(), nodes.end());
+
+		fsmlib_assert("TC", reachable != nodeSet, "getReachableStates returns set containing only reachable state");
+	}
 }
 
 
