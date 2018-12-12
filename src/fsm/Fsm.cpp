@@ -438,6 +438,10 @@ int Fsm::getMaxState() const {
 	return maxState;
 }
 
+void Fsm::setMaxState(int maxState) {
+	this->maxState = maxState;
+}
+
 Fsm Fsm::intersect(const Fsm & f)
 {
     // A list of node pairs which is used to
