@@ -1196,7 +1196,7 @@ bool checkFsmClassInvariant(Fsm &fsm) {
 	if (fsm.getNodes().size() < 1) return false;	
 	if (not checkNodeIds(fsm)) return false;
 	if (contains(fsm, nullptr)) return false;	
-	if (not checkAllTransitions(fsm)) return false;	
+	if (not checkAllTransitions(fsm)) return false;
 	if (fsm.getMaxState() != fsm.getNodes().size() - 1) return false;
 	if (not(0 <= fsm.getInitStateIdx() and fsm.getInitStateIdx() <= fsm.getMaxState())) return false;
 	return true;
@@ -1209,7 +1209,7 @@ bool checkDfsmClassInvariant(Dfsm &dfsm) {
 /*
 	Checks if the given fsm is initial connected.
 */
-bool isInitialConnected(Fsm &fsm) {
+bool isInitialConnected(const Fsm &fsm) {
 	auto reachable = getReachableStates(fsm);
 	auto nodes = fsm.getNodes();
 	unordered_set < shared_ptr<FsmNode> >nodeSet(nodes.cbegin(), nodes.cend());
@@ -1618,6 +1618,28 @@ void testTransformToOfsm(Fsm &m1) {
 	fsmlib_assert("TC", checkForEqualStructure(m1, copyOfM1), "M1 was not changed by algorithm");
 }
 
+void testTransformDfsmToPrimeMachine(Dfsm &m1) {
+	// get copy of m1
+	Dfsm copyOfM1 = Dfsm(m1);
+
+	// use algorithm to transform m1
+	Dfsm m2 = m1.minimise();
+
+	// check properties of m2
+	fsmlib_assert("TC", m2.isDeterministic(), "M2 is deterministic after minimise()");
+	fsmlib_assert("TC", isInitialConnected(m2), "M2 is initial connected after minimise()");
+	fsmlib_assert("TC", not hasEquivalentStates(m2), "M2 has no equivalent states after minimise()");
+
+	// check if L(m1) = L(m2)
+	fsmlib_assert("TC", ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), "minimise() does not change the language");
+
+	// check unexpected side effects
+	fsmlib_assert("TC", checkDfsmClassInvariant(m1), "M1 still fullfills class invariants after transformation");
+	fsmlib_assert("TC", checkDfsmClassInvariant(m2), "M2 still fullfills class invariants after transformation");
+	fsmlib_assert("TC", isInitialConnected(m1), "M1 is initial connected after minimise()");
+	fsmlib_assert("TC", ioEquivalenceCheck(copyOfM1.getInitialState(), m1.getInitialState()), "Language of M1 was not changed by algorithm");
+}
+
 void testDriverTranformToInitialConnected() {
 	for (int i = 0; i < 100; ++i) {
 		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
@@ -1652,13 +1674,33 @@ void testDriverTranformToInitialConnected() {
 		testTransformToInitialConnected(dfsm, unreachableNodes);
 
 	}
+
+
+}
+
+void testDriverTransformToOfsm() {
+	for (int i = 0; i < 100; ++i) {
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+		testTransformToOfsm(*fsm);
+	}
+}
+
+void testDriverTransformDfsmToPrimeMachine() {
+	for (int i = 0; i < 100; ++i) {
+		auto dfsm = createRandomDfsm("M", 10, 4, 4, make_shared<FsmPresentationLayer>());
+		cout << "isInitCon: " << isInitialConnected(dfsm) << endl;
+		testTransformDfsmToPrimeMachine(dfsm);
+	}
 }
 // ====================================================================================================
 
 int main(int argc, char** argv)
 {
 	std::cout << "test start" << std::endl;
-	testDriverTranformToInitialConnected();
+	//testDriverTranformToInitialConnected();
+	//testDriverTransformToOfsm();
+	testDriverTransformDfsmToPrimeMachine();
+
 	//testIOEquivalenceCheck();
 	//testCheckForEqualStructure();
 	//testGetReachableStates();
