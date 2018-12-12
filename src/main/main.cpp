@@ -1160,6 +1160,16 @@ bool contains(Fsm &fsm, shared_ptr<FsmNode> node) {
 	return false;
 }
 
+/*
+	Returns true iff fsm.getNodes() contains any of the given node pointers in nodes.
+*/
+bool contains(Fsm &fsm, unordered_set<shared_ptr<FsmNode>> nodes) {
+	for (auto n : nodes) {
+		if (contains(fsm, n)) return true;
+	}
+	return false;
+}
+
 
 /*
 	Checks the transitions and return false iff any transitions hurts the invariant of Fsm.
@@ -1182,191 +1192,440 @@ bool checkAllTransitions(Fsm &fsm) {
 */
 bool checkFsmClassInvariant(Fsm &fsm) {
 	if (fsm.getMaxInput() < 0) return false;
-	if (fsm.getMaxOutput() < 0) return false;
-	if (fsm.getNodes().size() < 1) return false;
+	if (fsm.getMaxOutput() < 0) return false;	
+	if (fsm.getNodes().size() < 1) return false;	
 	if (not checkNodeIds(fsm)) return false;
-	if (contains(fsm, nullptr)) return false;
-	if (not checkAllTransitions(fsm)) return false;
+	if (contains(fsm, nullptr)) return false;	
+	if (not checkAllTransitions(fsm)) return false;	
 	if (fsm.getMaxState() != fsm.getNodes().size() - 1) return false;
 	if (not(0 <= fsm.getInitStateIdx() and fsm.getInitStateIdx() <= fsm.getMaxState())) return false;
 	return true;
 }
 
-
-void testIOEquivalenceCheck() {
-	{
-	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
-	shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
-
-	shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(0, 1, pl));
-	q0->addTransition(tr0);
-	shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q1, q1, make_shared<FsmLabel>(1, 1, pl));
-	q1->addTransition(tr1);
-
-	shared_ptr<FsmNode> u0 = make_shared<FsmNode>(0, pl);
-	shared_ptr<FsmNode> u1 = make_shared<FsmNode>(1, pl);
-	shared_ptr<FsmNode> u2 = make_shared<FsmNode>(2, pl);
-
-	shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(u0, u1, make_shared<FsmLabel>(0, 1, pl));
-	u0->addTransition(tr2);
-	shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(u1, u1, make_shared<FsmLabel>(1, 1, pl));
-	u1->addTransition(tr3);
-	shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(u0, u2, make_shared<FsmLabel>(1, 1, pl));
-	u0->addTransition(tr4);
-
-	cout << ioEquivalenceCheck(q0, u0) << endl;
-	}
-
-	for (int i = 0; i < 30; i++) {
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-		cout << "fsm.size: " << fsm->size() << endl;
-		auto fsm2 = fsm->minimise();
-		cout << "fsm2.size: " << fsm2.size() << endl;
-		cout << ioEquivalenceCheck(fsm->getInitialState(), fsm2.getInitialState()) << endl;
-	}
-
-	cout << "-------------------------------" << endl;
-
-	for (int i = 0; i < 5; i++) {
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-		cout << "fsm.size: " << fsm->size() << endl;
-		auto fsm2 = fsm->minimise();
-		cout << "fsm2.size: " << fsm2.size() << endl;
-		if (hasEquivalentStates(fsm2)) {
-			cout << "FAULT" << endl;
-		}
-	}
-
-	cout << "-------------------------------" << endl;
-
-	{
-		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
-		shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
-
-		shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(0, 1, pl));
-		q0->addTransition(tr0);
-		shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q1, q1, make_shared<FsmLabel>(1, 1, pl));
-		q1->addTransition(tr1);
-		shared_ptr<FsmTransition> tr5 = make_shared<FsmTransition>(q0, q0, make_shared<FsmLabel>(1, 1, pl));
-		q0->addTransition(tr5);
-
-		shared_ptr<FsmNode> u0 = make_shared<FsmNode>(0, pl);
-		shared_ptr<FsmNode> u1 = make_shared<FsmNode>(1, pl);
-		shared_ptr<FsmNode> u2 = make_shared<FsmNode>(2, pl);
-
-		shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(u0, u1, make_shared<FsmLabel>(0, 1, pl));
-		u0->addTransition(tr2);
-		shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(u1, u1, make_shared<FsmLabel>(1, 1, pl));
-		u1->addTransition(tr3);
-		shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(u0, u2, make_shared<FsmLabel>(1, 1, pl));
-		u0->addTransition(tr4);
-
-		cout << ioEquivalenceCheck(q0, u0) << endl;
-	}
-
-	cout << "-------------------------------" << endl;
-
-	{
-		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
-		shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
-		shared_ptr<FsmNode> q2 = make_shared<FsmNode>(2, pl);
-		shared_ptr<FsmNode> q3 = make_shared<FsmNode>(3, pl);
-
-		shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(1, 1, pl));
-		q0->addTransition(tr0);
-		shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q0, q2, make_shared<FsmLabel>(1, 1, pl));
-		q0->addTransition(tr1);
-		shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(q2, q1, make_shared<FsmLabel>(2, 2, pl));
-		q2->addTransition(tr2);
-		shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(q1, q3, make_shared<FsmLabel>(0, 1, pl));
-		q1->addTransition(tr3);
-		shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(q3, q0, make_shared<FsmLabel>(0, 0, pl));
-		q3->addTransition(tr4);
-
-		shared_ptr<FsmNode> u0 = make_shared<FsmNode>(0, pl);
-		shared_ptr<FsmNode> u1 = make_shared<FsmNode>(1, pl);
-		shared_ptr<FsmNode> u2 = make_shared<FsmNode>(2, pl);
-		shared_ptr<FsmNode> u3 = make_shared<FsmNode>(3, pl);
-
-		shared_ptr<FsmTransition> tr5 = make_shared<FsmTransition>(u0, u1, make_shared<FsmLabel>(1, 1, pl));
-		u0->addTransition(tr5);
-		shared_ptr<FsmTransition> tr6 = make_shared<FsmTransition>(u1, u2, make_shared<FsmLabel>(2, 2, pl));
-		u1->addTransition(tr6);
-		shared_ptr<FsmTransition> tr7 = make_shared<FsmTransition>(u1, u3, make_shared<FsmLabel>(0, 1, pl));
-		u1->addTransition(tr7);
-		shared_ptr<FsmTransition> tr8 = make_shared<FsmTransition>(u2, u3, make_shared<FsmLabel>(0, 1, pl));
-		u2->addTransition(tr8);
-		shared_ptr<FsmTransition> tr9 = make_shared<FsmTransition>(u3, u0, make_shared<FsmLabel>(0, 0, pl));
-		u3->addTransition(tr9);
-		shared_ptr<FsmTransition> tr10 = make_shared<FsmTransition>(u2, u1, make_shared<FsmLabel>(0, 1, pl));
-		u2->addTransition(tr10);
-		
-
-		cout << ioEquivalenceCheck(q0, u0) << endl;
-	}
-
+bool checkDfsmClassInvariant(Dfsm &dfsm) {
+	return checkFsmClassInvariant(dfsm) and dfsm.isDeterministic();
 }
+
+/*
+	Checks if the given fsm is initial connected.
+*/
+bool isInitialConnected(Fsm &fsm) {
+	auto reachable = getReachableStates(fsm);
+	auto nodes = fsm.getNodes();
+	unordered_set < shared_ptr<FsmNode> >nodeSet(nodes.cbegin(), nodes.cend());
+	return reachable == nodeSet;
+}
+
+/*
+	Checks if unreachableNodesAfter contains all elements from unreachableNodesBefore and unreachable but no other element.
+*/
+bool checkUnreachableNodesList(const vector<shared_ptr<FsmNode>> &unreachableNodesBefore, const vector<shared_ptr<FsmNode>> &unreachableNodesAfter,
+	unordered_set<shared_ptr<FsmNode>> &unreachable) {
+	// check the size
+	if (unreachableNodesAfter.size() != unreachableNodesBefore.size() + unreachable.size()) return false;
+
+	// check if each node in unreachableNodesBefore is in unreachableNodesAfter	
+	for (auto n : unreachableNodesBefore) {
+		bool found = false;
+		for (auto n2 : unreachableNodesAfter) {
+			if (n == n2) {
+				found = true;
+				break;
+			}
+		}
+		if (not found) return false;
+	}
+
+	// check if each node in unreachable is in unreachableNodesAfter
+	for (auto n : unreachable) {
+		bool found = false;
+		for (auto n2 : unreachableNodesAfter) {
+			if (n == n2) {
+				found = true;
+				break;
+			}
+		}
+		if (not found) return false;
+	}
+
+	// check if each node of unreachableNodesAfter is in unreachableNodesBefore or unreachable
+	for (auto n : unreachableNodesAfter) {
+		bool found = false;
+		for (auto n2 : unreachableNodesBefore) {
+			if (n == n2) {
+				found = true;
+				break;
+			}
+		}
+		if (not found) {
+			for (auto n2 : unreachable) {
+				if (n == n2) {
+					found = true;
+					break;
+				}
+			}
+		}
+		if (not found) return false;
+	}
+	return true;
+}
+
+/*
+	This function creates and returns a randomly created Dfsm object. It is needed because the Dfsm Constructor that create randomized Dfsms does not set
+	the maxState member correctly, so no Dfsm Object created would fullfill the invariant.
+*/
+Dfsm createRandomDfsm(const string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer) {
+	Dfsm dfsm(fsmName, maxNodes, maxInput, maxOutput, presentationLayer);
+	dfsm.setMaxState(dfsm.getNodes().size() - 1);
+	return dfsm;
+}
+
+
+//void testFsmClassInvariant() {
+//	for (int i = 0; i < 30; i++) {
+//		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+//		//auto fsm2 = fsm->minimise();
+//		fsmlib_assert("TC", checkFsmClassInvariant(*fsm), "Random FSM fullfills invariant");
+//		//fsmlib_assert("TC", checkFsmClassInvariant(fsm2), "Minimised Random FSM fullfills invariant");
+//	}
+//
+//	{
+//		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+//		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
+//		shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
+//		shared_ptr<FsmNode> q2 = make_shared<FsmNode>(2, pl);
+//		shared_ptr<FsmNode> q3 = make_shared<FsmNode>(3, pl);
+//
+//		shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(1, 1, pl));
+//		q0->addTransition(tr0);
+//		shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q0, q2, make_shared<FsmLabel>(1, 1, pl));
+//		q0->addTransition(tr1);
+//		shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(q2, q1, make_shared<FsmLabel>(2, 2, pl));
+//		q2->addTransition(tr2);
+//		Fsm fsm("M", 2, 2, { q0,q1,q2,q3 }, pl);
+//		fsmlib_assert("TC", checkFsmClassInvariant(fsm), "FSM fullfills invariant");
+//	}
+//
+//	{
+//		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+//		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
+//		Fsm fsm("M", 0, 0, { q0 }, pl);
+//		fsmlib_assert("TC", checkFsmClassInvariant(fsm), "FSM fullfills invariant");
+//	}
+//
+//	{
+//		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+//		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
+//		shared_ptr<FsmNode> q1 = make_shared<FsmNode>(0, pl);
+//		shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(1, 0, pl));
+//		q0->addTransition(tr0);
+//		Fsm fsm("M", 0, 0, { q0, q1 }, pl);
+//		fsmlib_assert("TC", not checkFsmClassInvariant(fsm), "FSM does not fullfill invariant if some input is greater than maxInput");
+//	}
+//
+//
+//}
+
+//void testCheckDfsmClassInvariant() {
+//	for (int i = 0; i < 10; ++i) {
+//		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+//		Dfsm dfsm = createRandomDfsm("M", 10, 3, 4, pl);
+//		fsmlib_assert("TC", checkDfsmClassInvariant(dfsm), "Random DFSM fullfills invariant.");
+//	}
+//}
+
+
+//void testIOEquivalenceCheck() {
+//	{
+//	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+//	shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
+//	shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
+//
+//	shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(0, 1, pl));
+//	q0->addTransition(tr0);
+//	shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q1, q1, make_shared<FsmLabel>(1, 1, pl));
+//	q1->addTransition(tr1);
+//
+//	shared_ptr<FsmNode> u0 = make_shared<FsmNode>(0, pl);
+//	shared_ptr<FsmNode> u1 = make_shared<FsmNode>(1, pl);
+//	shared_ptr<FsmNode> u2 = make_shared<FsmNode>(2, pl);
+//
+//	shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(u0, u1, make_shared<FsmLabel>(0, 1, pl));
+//	u0->addTransition(tr2);
+//	shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(u1, u1, make_shared<FsmLabel>(1, 1, pl));
+//	u1->addTransition(tr3);
+//	shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(u0, u2, make_shared<FsmLabel>(1, 1, pl));
+//	u0->addTransition(tr4);
+//
+//	cout << ioEquivalenceCheck(q0, u0) << endl;
+//	}
+//
+//	for (int i = 0; i < 30; i++) {
+//		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+//		cout << "fsm.size: " << fsm->size() << endl;
+//		auto fsm2 = fsm->minimise();
+//		cout << "fsm2.size: " << fsm2.size() << endl;
+//		cout << ioEquivalenceCheck(fsm->getInitialState(), fsm2.getInitialState()) << endl;
+//	}
+//
+//	cout << "-------------------------------" << endl;
+//
+//	for (int i = 0; i < 5; i++) {
+//		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+//		cout << "fsm.size: " << fsm->size() << endl;
+//		auto fsm2 = fsm->minimise();
+//		cout << "fsm2.size: " << fsm2.size() << endl;
+//		if (hasEquivalentStates(fsm2)) {
+//			cout << "FAULT" << endl;
+//		}
+//	}
+//
+//	cout << "-------------------------------" << endl;
+//
+//	{
+//		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+//		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
+//		shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
+//
+//		shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(0, 1, pl));
+//		q0->addTransition(tr0);
+//		shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q1, q1, make_shared<FsmLabel>(1, 1, pl));
+//		q1->addTransition(tr1);
+//		shared_ptr<FsmTransition> tr5 = make_shared<FsmTransition>(q0, q0, make_shared<FsmLabel>(1, 1, pl));
+//		q0->addTransition(tr5);
+//
+//		shared_ptr<FsmNode> u0 = make_shared<FsmNode>(0, pl);
+//		shared_ptr<FsmNode> u1 = make_shared<FsmNode>(1, pl);
+//		shared_ptr<FsmNode> u2 = make_shared<FsmNode>(2, pl);
+//
+//		shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(u0, u1, make_shared<FsmLabel>(0, 1, pl));
+//		u0->addTransition(tr2);
+//		shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(u1, u1, make_shared<FsmLabel>(1, 1, pl));
+//		u1->addTransition(tr3);
+//		shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(u0, u2, make_shared<FsmLabel>(1, 1, pl));
+//		u0->addTransition(tr4);
+//
+//		cout << ioEquivalenceCheck(q0, u0) << endl;
+//	}
+//
+//	cout << "-------------------------------" << endl;
+//
+//	{
+//		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+//		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
+//		shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
+//		shared_ptr<FsmNode> q2 = make_shared<FsmNode>(2, pl);
+//		shared_ptr<FsmNode> q3 = make_shared<FsmNode>(3, pl);
+//
+//		shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(1, 1, pl));
+//		q0->addTransition(tr0);
+//		shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q0, q2, make_shared<FsmLabel>(1, 1, pl));
+//		q0->addTransition(tr1);
+//		shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(q2, q1, make_shared<FsmLabel>(2, 2, pl));
+//		q2->addTransition(tr2);
+//		shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(q1, q3, make_shared<FsmLabel>(0, 1, pl));
+//		q1->addTransition(tr3);
+//		shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(q3, q0, make_shared<FsmLabel>(0, 0, pl));
+//		q3->addTransition(tr4);
+//
+//		shared_ptr<FsmNode> u0 = make_shared<FsmNode>(0, pl);
+//		shared_ptr<FsmNode> u1 = make_shared<FsmNode>(1, pl);
+//		shared_ptr<FsmNode> u2 = make_shared<FsmNode>(2, pl);
+//		shared_ptr<FsmNode> u3 = make_shared<FsmNode>(3, pl);
+//
+//		shared_ptr<FsmTransition> tr5 = make_shared<FsmTransition>(u0, u1, make_shared<FsmLabel>(1, 1, pl));
+//		u0->addTransition(tr5);
+//		shared_ptr<FsmTransition> tr6 = make_shared<FsmTransition>(u1, u2, make_shared<FsmLabel>(2, 2, pl));
+//		u1->addTransition(tr6);
+//		shared_ptr<FsmTransition> tr7 = make_shared<FsmTransition>(u1, u3, make_shared<FsmLabel>(0, 1, pl));
+//		u1->addTransition(tr7);
+//		shared_ptr<FsmTransition> tr8 = make_shared<FsmTransition>(u2, u3, make_shared<FsmLabel>(0, 1, pl));
+//		u2->addTransition(tr8);
+//		shared_ptr<FsmTransition> tr9 = make_shared<FsmTransition>(u3, u0, make_shared<FsmLabel>(0, 0, pl));
+//		u3->addTransition(tr9);
+//		shared_ptr<FsmTransition> tr10 = make_shared<FsmTransition>(u2, u1, make_shared<FsmLabel>(0, 1, pl));
+//		u2->addTransition(tr10);
+//		
+//
+//		cout << ioEquivalenceCheck(q0, u0) << endl;
+//	}
+//
+//}
 
 /*
 	This function is used to test the checkForEqualStructure function
 */
-void testCheckForEqualStructure() {
-	cout << "testCheckForEqualStructure" << endl;
-
-	cout << "positive cases:" << endl;
-	for (int i = 0; i < 10; ++i) {
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-
-		cout << checkForEqualStructure(*fsm, *fsm) << endl;
-
-		Fsm copy = Fsm(*fsm);
-		cout << checkForEqualStructure(*fsm, copy) << endl;
-		Fsm ofsm = fsm->transformToObservableFSM();
-
-		cout << checkForEqualStructure(*fsm, copy) << endl;
-
-		Fsm copy2 = Fsm(ofsm);
-		Fsm minOfsm = ofsm.minimiseObservableFSM();
-		cout << checkForEqualStructure(copy2, ofsm) << endl;
-
-		cout << "-----------------------------------" << endl;
-	}
-
-	cout << "negative cases:" << endl;
-
-	for (int i = 0; i < 10; ++i) {
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-
-		auto mutant = fsm->createMutant("mutant", 1, 1);
-		
-		cout << checkForEqualStructure(*fsm, *mutant) << endl;
-
-		cout << "-----------------------------------" << endl;
-	}
-
-	auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-
-}
+//void testCheckForEqualStructure() {
+//	cout << "testCheckForEqualStructure" << endl;
+//
+//	cout << "positive cases:" << endl;
+//	for (int i = 0; i < 10; ++i) {
+//		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+//
+//		cout << checkForEqualStructure(*fsm, *fsm) << endl;
+//
+//		Fsm copy = Fsm(*fsm);
+//		cout << checkForEqualStructure(*fsm, copy) << endl;
+//		Fsm ofsm = fsm->transformToObservableFSM();
+//
+//		cout << checkForEqualStructure(*fsm, copy) << endl;
+//
+//		Fsm copy2 = Fsm(ofsm);
+//		Fsm minOfsm = ofsm.minimiseObservableFSM();
+//		cout << checkForEqualStructure(copy2, ofsm) << endl;
+//
+//		cout << "-----------------------------------" << endl;
+//	}
+//
+//	cout << "negative cases:" << endl;
+//
+//	for (int i = 0; i < 10; ++i) {
+//		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+//
+//		auto mutant = fsm->createMutant("mutant", 1, 1);
+//		
+//		cout << checkForEqualStructure(*fsm, *mutant) << endl;
+//
+//		cout << "-----------------------------------" << endl;
+//	}
+//
+//}
 
 /*
 	This function is used to test the getReachableStates function
 */
-void testGetReachableStates() {
-	for (int i = 0; i < 10; ++i) {
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+//void testGetReachableStates() {
+//	for (int i = 0; i < 10; ++i) {
+//		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+//
+//		unordered_set<shared_ptr<FsmNode>> reachable = getReachableStates(*fsm);
+//
+//		vector<shared_ptr<FsmNode>> nodes = fsm->getNodes();
+//		unordered_set<shared_ptr<FsmNode>> nodeSet(nodes.begin(), nodes.end());
+//
+//		fsmlib_assert("TC", reachable == nodeSet, "getReachableStates returns set containing each reachable state");
+//	}
+//	
+//	{
+//		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+//		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
+//		shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
+//		shared_ptr<FsmNode> q2 = make_shared<FsmNode>(2, pl);
+//		shared_ptr<FsmNode> q3 = make_shared<FsmNode>(3, pl);
+//
+//		shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(1, 1, pl));
+//		q0->addTransition(tr0);
+//		shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q0, q2, make_shared<FsmLabel>(1, 1, pl));
+//		q0->addTransition(tr1);
+//		shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(q2, q1, make_shared<FsmLabel>(2, 2, pl));
+//		q2->addTransition(tr2);
+//		//shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(q1, q3, make_shared<FsmLabel>(0, 1, pl));
+//		//q1->addTransition(tr3);
+//		/*shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(q3, q0, make_shared<FsmLabel>(0, 0, pl));
+//		q3->addTransition(tr4);*/
+//
+//		Fsm fsm("M",2,2,{q0,q1,q2,q3},pl);
+//		unordered_set<shared_ptr<FsmNode>> reachable = getReachableStates(fsm);
+//
+//		vector<shared_ptr<FsmNode>> nodes = fsm.getNodes();
+//		unordered_set<shared_ptr<FsmNode>> nodeSet(nodes.begin(), nodes.end());
+//
+//		fsmlib_assert("TC", reachable != nodeSet, "getReachableStates returns set containing only reachable state");
+//	}
+//}
 
-		unordered_set<shared_ptr<FsmNode>> reachable = getReachableStates(*fsm);
+// ====================================================================================================
+// Prüfverfahren "Spracherhaltende FSM-Transformationen"
 
-		vector<shared_ptr<FsmNode>> nodes = fsm->getNodes();
-		unordered_set<shared_ptr<FsmNode>> nodeSet(nodes.begin(), nodes.end());
 
-		fsmlib_assert("TC", reachable == nodeSet, "getReachableStates returns set containing each reachable state");
+
+void testTransformToInitialConnected(Fsm &m1, vector<shared_ptr<FsmNode>> &unreachableNodes) {
+	// determine set of unreachable nodes in m1
+	auto reachable = getReachableStates(m1);
+	unordered_set<shared_ptr<FsmNode>> unreachable;
+	for (auto n : m1.getNodes()) {
+		if (reachable.count(n) == 0) unreachable.insert(n);
 	}
-	
-	{
+
+	// get copy of m1 and unreachableNodes
+	Fsm copyOfM1 = Fsm(m1);
+	vector<shared_ptr<FsmNode>> copyOfUnreachableNodes(unreachableNodes.begin(), unreachableNodes.end());
+
+	// use algorithm to transform m1
+	bool b = m1.removeUnreachableNodes(unreachableNodes);
+
+	// check properties of m1
+	fsmlib_assert("TC", not contains(m1,unreachable), "Resulting FSM of removeUnreachableNodes() contains none of the nodes that were unreachable before.");
+	fsmlib_assert("TC", isInitialConnected(m1), "Result of removeUnreachableNodes() is initial connected");
+
+	// check if L(m1) = L(copyOfM1)
+	fsmlib_assert("TC", ioEquivalenceCheck(m1.getInitialState(), copyOfM1.getInitialState()), "removeUnreachableNodes() does not change language of the FSM");
+
+	// check b and unreachableNodes
+	fsmlib_assert("TC", (b and (not unreachable.empty())) || (not b and unreachable.empty()), "removeUnreachableNodes() returns true iff FSM contains some unreachable node");
+	fsmlib_assert("TC", checkUnreachableNodesList(copyOfUnreachableNodes, unreachableNodes, unreachable), "unreachableNodes contains all unreachable nodes that were removed and all nodes from before");
+
+	// check unexpected side effects
+	fsmlib_assert("TC", checkFsmClassInvariant(m1), "FSM still fullfills class invariants after transformation");
+}
+
+void testTransformToInitialConnected(Dfsm &m1, vector<shared_ptr<FsmNode>> &unreachableNodes) {
+	// determine set of unreachable nodes in m1
+	auto reachable = getReachableStates(m1);
+	unordered_set<shared_ptr<FsmNode>> unreachable;
+	for (auto n : m1.getNodes()) {
+		if (reachable.count(n) == 0) unreachable.insert(n);
+	}
+
+	// get copy of m1 and unreachableNodes
+	Dfsm copyOfM1 = m1;	
+	vector<shared_ptr<FsmNode>> copyOfUnreachableNodes(unreachableNodes.begin(), unreachableNodes.end());
+
+	// use algorithm to transform m1
+	bool b = m1.removeUnreachableNodes(unreachableNodes);
+
+	// check properties of m1
+	fsmlib_assert("TC", not contains(m1, unreachable), "Resulting FSM of removeUnreachableNodes() contains none of the nodes that were unreachable before.");
+	fsmlib_assert("TC", isInitialConnected(m1), "Result of removeUnreachableNodes() is initial connected");
+
+	// check if L(m1) = L(copyOfM1)
+	fsmlib_assert("TC", ioEquivalenceCheck(m1.getInitialState(), copyOfM1.getInitialState()), "removeUnreachableNodes() does not change language of the FSM");
+
+	// check b and unreachableNodes
+	fsmlib_assert("TC", (b and (not unreachable.empty())) || (not b and unreachable.empty()), "removeUnreachableNodes() returns true iff FSM contains some unreachable node");
+	fsmlib_assert("TC", checkUnreachableNodesList(copyOfUnreachableNodes, unreachableNodes, unreachable), "unreachableNodes contains all unreachable nodes that were removed and all nodes from before");
+
+	// check unexpected side effects
+	fsmlib_assert("TC", checkDfsmClassInvariant(m1), "DFSM still fullfills class invariants after transformation");
+}
+
+void testTransformToOfsm(Fsm &m1) {
+	// get copy of m1
+	Fsm copyOfM1 = Fsm(m1);
+
+	// use algorithm to transform m1
+	Fsm m2 = m1.transformToObservableFSM();
+
+	// check properties of m2
+	fsmlib_assert("TC", m2.isObservable(), "M2 is observable after transformToObservable()");
+
+	// check if L(m1) = L(m2)
+	fsmlib_assert("TC", ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), "transformToObservable() does not change the language");
+
+	// check unexpected side effects
+	fsmlib_assert("TC", checkFsmClassInvariant(m1), "M1 still fullfills class invariants after transformation");
+	fsmlib_assert("TC", checkFsmClassInvariant(m2), "M2 still fullfills class invariants after transformation");
+	fsmlib_assert("TC", checkForEqualStructure(m1, copyOfM1), "M1 was not changed by algorithm");
+}
+
+void testDriverTranformToInitialConnected() {
+	for (int i = 0; i < 100; ++i) {
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+		vector<shared_ptr<FsmNode>> unreachableNodes;
+		testTransformToInitialConnected(*fsm, unreachableNodes);
+	}
+
+		{
 		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
 		shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
@@ -1384,24 +1643,27 @@ void testGetReachableStates() {
 		/*shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(q3, q0, make_shared<FsmLabel>(0, 0, pl));
 		q3->addTransition(tr4);*/
 
-		Fsm fsm("M",2,2,{q0,q1,q2,q3},pl);
-		unordered_set<shared_ptr<FsmNode>> reachable = getReachableStates(fsm);
+		Dfsm m ("M",2,2,{q0,q1,q2,q3},pl);
+		vector<shared_ptr<FsmNode>> unreachableNodes{q0};
+		testTransformToInitialConnected(m, unreachableNodes);
 
-		vector<shared_ptr<FsmNode>> nodes = fsm.getNodes();
-		unordered_set<shared_ptr<FsmNode>> nodeSet(nodes.begin(), nodes.end());
+		Dfsm dfsm = createRandomDfsm("M", 2, 2, 2, pl);
+		unreachableNodes = vector<shared_ptr<FsmNode>>();
+		testTransformToInitialConnected(dfsm, unreachableNodes);
 
-		fsmlib_assert("TC", reachable != nodeSet, "getReachableStates returns set containing only reachable state");
 	}
 }
-
-
+// ====================================================================================================
 
 int main(int argc, char** argv)
 {
 	std::cout << "test start" << std::endl;
+	testDriverTranformToInitialConnected();
 	//testIOEquivalenceCheck();
 	//testCheckForEqualStructure();
-	testGetReachableStates();
+	//testGetReachableStates();
+	//testFsmClassInvariant();
+	//testCheckDfsmClassInvariant();
     
 #if 0
     test1();
