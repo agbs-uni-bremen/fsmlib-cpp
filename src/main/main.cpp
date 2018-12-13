@@ -1280,6 +1280,9 @@ Dfsm createRandomDfsm(const string & fsmName, const int maxNodes, const int maxI
 	return dfsm;
 }
 
+//TODO Other random creation wrapper (createRandomMinimisedFsm) if needed (some may be needed because constructor or some transformation method
+// does not set maxState correctly, which matters if Fsm::createMutant() will be used on the created fsm)
+
 
 //void testFsmClassInvariant() {
 //	for (int i = 0; i < 30; i++) {
@@ -1620,7 +1623,7 @@ void testTransformToOfsm(Fsm &m1) {
 
 void testTransformDfsmToPrimeMachine(Dfsm &m1) {
 	// get copy of m1
-	Dfsm copyOfM1 = Dfsm(m1);
+	Dfsm copyOfM1 = m1;//Dfsm(m1);
 
 	// use algorithm to transform m1
 	Dfsm m2 = m1.minimise();
@@ -1636,6 +1639,48 @@ void testTransformDfsmToPrimeMachine(Dfsm &m1) {
 	// check unexpected side effects
 	fsmlib_assert("TC", checkDfsmClassInvariant(m1), "M1 still fullfills class invariants after transformation");
 	fsmlib_assert("TC", checkDfsmClassInvariant(m2), "M2 still fullfills class invariants after transformation");
+	fsmlib_assert("TC", isInitialConnected(m1), "M1 is initial connected after minimise()");
+	fsmlib_assert("TC", ioEquivalenceCheck(copyOfM1.getInitialState(), m1.getInitialState()), "Language of M1 was not changed by algorithm");
+}
+
+void testMinimiseOfsm(Fsm &m1) {
+	// get copy of m1
+	Fsm copyOfM1 = Fsm(m1);
+
+	// use algorithm to transform m1
+	Fsm m2 = m1.minimiseObservableFSM();
+
+	// check properties of m2
+	fsmlib_assert("TC", m2.isObservable(), "M2 is observable after minimiseObservable()");
+	fsmlib_assert("TC", not hasEquivalentStates(m2), "M2 has no equivalent states after minimise()");
+
+	// check if L(m1) = L(m2)
+	fsmlib_assert("TC", ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), "minimise() does not change the language");
+
+	// check unexpected side effects
+	fsmlib_assert("TC", checkFsmClassInvariant(m1), "M1 still fullfills class invariants after transformation");
+	fsmlib_assert("TC", checkFsmClassInvariant(m2), "M2 still fullfills class invariants after transformation");
+	fsmlib_assert("TC", checkForEqualStructure(m1, copyOfM1), "M1 was not changed by algorithm");
+}
+
+void testTransformFsmToPrimeMachine(Fsm &m1) {
+	// get copy of m1
+	Fsm copyOfM1 = Fsm(m1);
+
+	// use algorithm to transform m1
+	Fsm m2 = m1.minimise();
+
+	// check properties of m2
+	fsmlib_assert("TC", m2.isObservable(), "M2 is observable after minimise()");
+	fsmlib_assert("TC", not hasEquivalentStates(m2), "M2 has no equivalent states after minimise()");
+	fsmlib_assert("TC", isInitialConnected(m2), "M2 is initial connected after minimise()");
+
+	// check if L(m1) = L(m2)
+	fsmlib_assert("TC", ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), "minimise() does not change the language");
+
+	// check unexpected side effects
+	fsmlib_assert("TC", checkFsmClassInvariant(m1), "M1 still fullfills class invariants after transformation");
+	fsmlib_assert("TC", checkFsmClassInvariant(m2), "M2 still fullfills class invariants after transformation");
 	fsmlib_assert("TC", isInitialConnected(m1), "M1 is initial connected after minimise()");
 	fsmlib_assert("TC", ioEquivalenceCheck(copyOfM1.getInitialState(), m1.getInitialState()), "Language of M1 was not changed by algorithm");
 }
@@ -1688,8 +1733,23 @@ void testDriverTransformToOfsm() {
 void testDriverTransformDfsmToPrimeMachine() {
 	for (int i = 0; i < 100; ++i) {
 		auto dfsm = createRandomDfsm("M", 10, 4, 4, make_shared<FsmPresentationLayer>());
-		cout << "isInitCon: " << isInitialConnected(dfsm) << endl;
+		//cout << "isInitCon: " << isInitialConnected(dfsm) << endl;
 		testTransformDfsmToPrimeMachine(dfsm);
+	}
+}
+
+void testDriverMinimiseOfsm() {
+	for (int i = 0; i < 100; ++i) {
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+		Fsm ofsm = fsm->transformToObservableFSM();
+		testMinimiseOfsm(ofsm);
+	}
+}
+
+void testDriverTransformFsmToPrimeMachine() {
+	for (int i = 0; i < 100; ++i) {
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+		testTransformFsmToPrimeMachine(*fsm);
 	}
 }
 // ====================================================================================================
@@ -1699,7 +1759,8 @@ int main(int argc, char** argv)
 	std::cout << "test start" << std::endl;
 	//testDriverTranformToInitialConnected();
 	//testDriverTransformToOfsm();
-	testDriverTransformDfsmToPrimeMachine();
+	//testDriverTransformDfsmToPrimeMachine();
+	testDriverMinimiseOfsm();
 
 	//testIOEquivalenceCheck();
 	//testCheckForEqualStructure();
