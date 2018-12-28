@@ -1174,11 +1174,12 @@ bool contains(Fsm &fsm, unordered_set<shared_ptr<FsmNode>> nodes) {
 /*
 	Checks the transitions and return false iff any transitions hurts the invariant of Fsm.
 */
-bool checkAllTransitions(Fsm &fsm) {
+bool checkAllTransitions(Fsm &fsm) { 
 	for (auto n : fsm.getNodes()) {
 		for (auto tr : n->getTransitions()) {
 			if (tr == nullptr || tr->getLabel() == nullptr || tr->getLabel()->getInput() > fsm.getMaxInput()
-				|| tr->getLabel()->getOutput() > fsm.getMaxOutput() || tr->getSource() != n
+				|| tr->getLabel()->getOutput() > fsm.getMaxOutput()  || tr->getLabel()->getInput() < 0 || tr->getLabel()->getOutput() < 0
+				|| tr->getSource() != n
 				|| not contains(fsm, tr->getTarget())) {
 				return false;
 			}
@@ -1747,20 +1748,64 @@ void testDriverMinimiseOfsm() {
 }
 
 void testDriverTransformFsmToPrimeMachine() {
-	for (int i = 0; i < 100; ++i) {
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-		testTransformFsmToPrimeMachine(*fsm);
-	}
+	shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../../resources/TC-Fsm-Constructor3.fsm", make_shared<FsmPresentationLayer>(), "GDC");
+	cout << gdc->getInitStateIdx() << endl;
+	cout << checkDfsmClassInvariant(*gdc) << endl;
+	cout << gdc->getNodes().size() << endl;
+	cout << gdc->getInitialState()->isInitial() << endl;
+	//for (int i = 0; i < 100; ++i) {
+	//	//auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+	//	//testTransformFsmToPrimeMachine(*fsm);
+	//	auto dfsm = createRandomDfsm("M", 10, 4, 4, make_shared<FsmPresentationLayer>());
+	//	testTransformFsmToPrimeMachine(dfsm);
+	//}
 }
 // ====================================================================================================
+
+class A {
+public:
+	void foo() { bar(); };
+	virtual void bar() {
+		cout << "super class bar()" << endl;
+	}
+
+};
+
+class B : public A{
+public:
+	
+	virtual void bar() {
+		cout << "sub class bar()" << endl;
+	}
+
+};
+
+
+//TODO FSM002 erstellen
+void loadFsm() {
+	shared_ptr<Fsm> fsm = make_shared<Fsm>("../../../resources/TestSuites/FSM034.fsm", make_shared<FsmPresentationLayer>(), "M");
+	cout << "initIdx: " << fsm->getInitStateIdx() << endl;
+	cout << "mI: " << fsm->getMaxInput() << endl;
+	cout << "mO:" << fsm->getMaxOutput() << endl;
+	cout << "size: " << fsm->getNodes().size() << endl;
+	cout << "comp. spec: " << fsm->isCompletelyDefined() << endl;
+	cout << "det: " << fsm->isDeterministic() << endl;
+	cout << "obs: " << fsm->isObservable() << endl;
+	cout << checkFsmClassInvariant(*fsm) << endl;
+	
+}
 
 int main(int argc, char** argv)
 {
 	std::cout << "test start" << std::endl;
+	loadFsm();
 	//testDriverTranformToInitialConnected();
 	//testDriverTransformToOfsm();
 	//testDriverTransformDfsmToPrimeMachine();
-	testDriverMinimiseOfsm();
+	//testDriverMinimiseOfsm();
+	//testDriverTransformFsmToPrimeMachine();
+	//B b;
+	//b.foo();
 
 	//testIOEquivalenceCheck();
 	//testCheckForEqualStructure();
