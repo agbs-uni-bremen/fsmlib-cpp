@@ -1783,7 +1783,7 @@ public:
 
 //TODO FSM002 erstellen
 void loadFsm() {
-	shared_ptr<Fsm> fsm = make_shared<Fsm>("../../../resources/TestSuites/FSM034.fsm", make_shared<FsmPresentationLayer>(), "M");
+	shared_ptr<Fsm> fsm = make_shared<Fsm>("../../../resources/TestSuites/FSM053.fsm", make_shared<FsmPresentationLayer>(), "M");
 	cout << "initIdx: " << fsm->getInitStateIdx() << endl;
 	cout << "mI: " << fsm->getMaxInput() << endl;
 	cout << "mO:" << fsm->getMaxOutput() << endl;
