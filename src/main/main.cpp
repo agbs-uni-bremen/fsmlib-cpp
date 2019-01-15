@@ -34,6 +34,8 @@
 #include "fsm/FsmTransition.h"
 #include "fsm/FsmLabel.h"
 
+#include <tuple>
+
 
 using namespace std;
 using namespace Json;
@@ -1027,6 +1029,8 @@ bool containsPair(T &lst, std::pair<std::unordered_set<std::shared_ptr<FsmNode>>
 	return false;
 }
 
+
+
 /*
 	Calculates and returns the set of target nodes reached from states contained in given node list with transitions labeled with given lbl.
 */
@@ -1074,6 +1078,73 @@ bool ioEquivalenceCheck(std::shared_ptr<FsmNode> q, std::shared_ptr<FsmNode> u) 
 			pair<unordered_set<shared_ptr<FsmNode>>, unordered_set<shared_ptr<FsmNode>>> pair{tgtNds_l, tgtNds_r};
 			if (not containsPair(wl, pair) and not containsPair(processed, pair)) {
 				wl.push_back(pair);
+			}
+		}
+	}
+	return true;
+}
+
+typedef std::unordered_set<std::shared_ptr<FsmNode>> reachedStates_t;
+typedef std::tuple<reachedStates_t, reachedStates_t, reachedStates_t> reachedStatesTuple_t;
+
+template<typename T>
+bool containsTuple(T &lst, reachedStatesTuple_t &tuple)
+{
+	typename T::const_iterator it;
+	for (it = lst.begin(); it != lst.end(); ++it)
+	{
+		if(std::get<0>(*it) == std::get<0>(tuple) && std::get<1>(*it) == std::get<1>(tuple) && std::get<2>(*it) == std::get<2>(tuple)){
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+	This function returns true iff L(intersection) = L(m1) ∩ L(m2). Otherwise the function returns false.
+*/
+bool languageIntersectionCheck(const Fsm &m1, const Fsm &m2, const Fsm &intersection) {
+	// init wl with ({m1.q_0},{m2.q_0},{intersection.q_0})	
+	deque<reachedStatesTuple_t> wl;
+	reachedStates_t a = reachedStates_t{ m1.getInitialState() };
+	reachedStates_t b = reachedStates_t{ m2.getInitialState() };
+	reachedStates_t c = reachedStates_t{ intersection.getInitialState() };
+	
+	wl.push_back({ a,b,c });
+	std::vector<reachedStatesTuple_t> processed;
+
+	while (not wl.empty()) {
+		auto front = wl.front();
+		wl.pop_front();
+		//calculate lblSet_a
+		unordered_set<FsmLabel> lblSet_a = calcLblSet(std::get<0>(front));
+		//calculate lblSet_b
+		unordered_set<FsmLabel> lblSet_b = calcLblSet(std::get<1>(front));
+		//calculate lblSet_c
+		unordered_set<FsmLabel> lblSet_c = calcLblSet(std::get<2>(front));
+
+		// calculate intersection of lblSet_a and lblSet_b
+		unordered_set<FsmLabel> lblSet_i;
+		for (auto &lbl : lblSet_a) {
+			if (lblSet_b.count(lbl) > 0) lblSet_i.insert(lbl);
+		}
+		if (lblSet_c != lblSet_i) return false;
+
+		// insert front to processed if processed does not contain front already
+		if (not containsTuple(processed, front)) {
+			processed.push_back(front);
+		}
+
+		for (auto lbl : lblSet_c) {
+			// calc tgtNds_a
+			reachedStates_t tgtNds_a = calcTargetNodes(std::get<0>(front), lbl);
+			// calc tgtNds_b
+			reachedStates_t tgtNds_b = calcTargetNodes(std::get<1>(front), lbl);
+			// calc tgtNds_c
+			reachedStates_t tgtNds_c = calcTargetNodes(std::get<2>(front), lbl);
+			reachedStatesTuple_t tuple{ tgtNds_a, tgtNds_b, tgtNds_c };
+			if (not containsTuple(wl, tuple) and not containsTuple(processed, tuple)) {
+				wl.push_back(tuple);
 			}
 		}
 	}
@@ -1541,6 +1612,34 @@ Dfsm createRandomDfsm(const string & fsmName, const int maxNodes, const int maxI
 // ====================================================================================================
 // Prüfverfahren "Spracherhaltende FSM-Transformationen"
 
+void testLanguageInterSectionCheck() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	for (int i = 0; i < 10; ++i) {
+		shared_ptr<Fsm> m1 = Fsm::createRandomFsm("M1",
+			5,
+			5,
+			10,
+			pl);
+
+		shared_ptr<Fsm> m2 = m1->createMutant("M2", 0, 1);
+		//shared_ptr<Fsm> m2 = Fsm::createRandomFsm("M2",
+		//	5,
+		//	5,
+		//	10,
+		//	pl);
+
+		Fsm intersection = m1->intersect(*m2);
+
+		if (not languageIntersectionCheck(*m1, *m2, intersection)) {
+			cout << "Error found in iteration " << i << endl;
+			return;
+		}
+		
+	}
+
+
+}
+
 
 
 void testTransformToInitialConnected(Fsm &m1, vector<shared_ptr<FsmNode>> &unreachableNodes) {
@@ -1670,8 +1769,9 @@ void testTransformFsmToPrimeMachine(Fsm &m1) {
 
 	// use algorithm to transform m1
 	Fsm m2 = m1.minimise();
+	//cout << m2.getInitStateIdx() << endl;
 
-	// check properties of m2
+	// check properties of m2	
 	fsmlib_assert("TC", m2.isObservable(), "M2 is observable after minimise()");
 	fsmlib_assert("TC", not hasEquivalentStates(m2), "M2 has no equivalent states after minimise()");
 	fsmlib_assert("TC", isInitialConnected(m2), "M2 is initial connected after minimise()");
@@ -1679,11 +1779,18 @@ void testTransformFsmToPrimeMachine(Fsm &m1) {
 	// check if L(m1) = L(m2)
 	fsmlib_assert("TC", ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), "minimise() does not change the language");
 
+	//cout << copyOfM1 << endl;
+	//cout << m2 << endl;
+
 	// check unexpected side effects
 	fsmlib_assert("TC", checkFsmClassInvariant(m1), "M1 still fullfills class invariants after transformation");
 	fsmlib_assert("TC", checkFsmClassInvariant(m2), "M2 still fullfills class invariants after transformation");
-	fsmlib_assert("TC", isInitialConnected(m1), "M1 is initial connected after minimise()");
-	fsmlib_assert("TC", ioEquivalenceCheck(copyOfM1.getInitialState(), m1.getInitialState()), "Language of M1 was not changed by algorithm");
+	if (checkFsmClassInvariant(m1)) {
+		fsmlib_assert("TC", isInitialConnected(m1), "M1 is initial connected after minimise()");
+		fsmlib_assert("TC", ioEquivalenceCheck(copyOfM1.getInitialState(), m1.getInitialState()), "Language of M1 was not changed by algorithm");
+	}
+	
+	
 }
 
 void testDriverTranformToInitialConnected() {
@@ -1748,17 +1855,50 @@ void testDriverMinimiseOfsm() {
 }
 
 void testDriverTransformFsmToPrimeMachine() {
-	shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../../resources/TC-Fsm-Constructor3.fsm", make_shared<FsmPresentationLayer>(), "GDC");
-	cout << gdc->getInitStateIdx() << endl;
-	cout << checkDfsmClassInvariant(*gdc) << endl;
-	cout << gdc->getNodes().size() << endl;
-	cout << gdc->getInitialState()->isInitial() << endl;
+	//shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../../resources/TC-Fsm-Constructor3.fsm", make_shared<FsmPresentationLayer>(), "GDC");
+	//cout << gdc->getInitStateIdx() << endl;
+	//cout << checkDfsmClassInvariant(*gdc) << endl;
+	//cout << gdc->getNodes().size() << endl;
+	//cout << gdc->getInitialState()->isInitial() << endl;
 	//for (int i = 0; i < 100; ++i) {
 	//	//auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
 	//	//testTransformFsmToPrimeMachine(*fsm);
 	//	auto dfsm = createRandomDfsm("M", 10, 4, 4, make_shared<FsmPresentationLayer>());
 	//	testTransformFsmToPrimeMachine(dfsm);
 	//}
+	ifstream inputFile("../../../resources/TestSuites/fsm_transf_ts.txt");
+	if (inputFile.is_open())
+	{
+		string line;
+		while (getline(inputFile, line))
+		{
+			cout << "===========" << line << endl;
+			if (line == "../../../resources/TestSuites/FSM002.fsm") {
+				shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+				shared_ptr<FsmNode> n = make_shared<FsmNode>(0, pl);
+				vector<shared_ptr<FsmNode>> lst{ n };
+				Fsm m("M", 0, 0, lst, pl);
+				testTransformFsmToPrimeMachine(m);
+			}
+			// these make the program crash
+			else if (line == "../../../resources/TestSuites/FSM029.fsm"
+				|| line == "../../../resources/TestSuites/FSM053.fsm") {
+				cout << "FAIL";
+			}
+			else {
+				Fsm m(line, make_shared<FsmPresentationLayer>(), "M");
+				testTransformFsmToPrimeMachine(m);
+			}
+
+		}
+		inputFile.close();
+
+	}
+	else
+	{
+		cout << "Unable to open input file" << endl;
+		exit(EXIT_FAILURE);
+	}
 }
 // ====================================================================================================
 
@@ -1795,10 +1935,21 @@ void loadFsm() {
 	
 }
 
+void testWMethod() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
+	shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
+	q0->addTransition(make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(0, 0, pl)));
+	vector<shared_ptr<FsmNode>> lst{ q0, q1 };
+	Dfsm m("M", 1, 0, lst, pl);
+	cout << m.wMethodOnMinimisedFsm(0) << endl;
+	cout << m.Fsm::getCharacterisationSet();
+}
+
 int main(int argc, char** argv)
 {
 	std::cout << "test start" << std::endl;
-	loadFsm();
+	//loadFsm();
 	//testDriverTranformToInitialConnected();
 	//testDriverTransformToOfsm();
 	//testDriverTransformDfsmToPrimeMachine();
@@ -1806,6 +1957,8 @@ int main(int argc, char** argv)
 	//testDriverTransformFsmToPrimeMachine();
 	//B b;
 	//b.foo();
+	//testWMethod();
+	testLanguageInterSectionCheck();
 
 	//testIOEquivalenceCheck();
 	//testCheckForEqualStructure();
