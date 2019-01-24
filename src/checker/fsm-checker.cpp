@@ -62,7 +62,7 @@ static bool isDeterministic = true;
  */
 static void printUsage(char* name) {
     cerr << "usage: " << name
-    << "sutmodelfile testsuite"
+    << " sutmodelfile testsuite"
     << endl;
 }
 
