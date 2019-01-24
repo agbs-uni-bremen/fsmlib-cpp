@@ -222,7 +222,10 @@ static void executeTestCase(const char* tcId, char* line) {
         printf(" PASS\n");
     }
     else {
-        printf(" FAIL\n");
+        cout << " FAIL - observed ";
+        IOTrace iot = dfsmSut->applyDet(inTrace);
+        cout << iot.getOutputTrace() << endl;
+        
     }
     
 }
