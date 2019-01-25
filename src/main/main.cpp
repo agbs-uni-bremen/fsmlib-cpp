@@ -1627,7 +1627,7 @@ void testLanguageInterSectionCheck() {
 		//	5,
 		//	10,
 		//	pl);
-
+		
 		Fsm intersection = m1->intersect(*m2);
 
 		if (not languageIntersectionCheck(*m1, *m2, intersection)) {
@@ -1923,16 +1923,27 @@ public:
 
 //TODO FSM002 erstellen
 void loadFsm() {
-	shared_ptr<Fsm> fsm = make_shared<Fsm>("../../../resources/TestSuites/FSM053.fsm", make_shared<FsmPresentationLayer>(), "M");
-	cout << "initIdx: " << fsm->getInitStateIdx() << endl;
-	cout << "mI: " << fsm->getMaxInput() << endl;
-	cout << "mO:" << fsm->getMaxOutput() << endl;
-	cout << "size: " << fsm->getNodes().size() << endl;
-	cout << "comp. spec: " << fsm->isCompletelyDefined() << endl;
-	cout << "det: " << fsm->isDeterministic() << endl;
-	cout << "obs: " << fsm->isObservable() << endl;
-	cout << checkFsmClassInvariant(*fsm) << endl;
-	
+	//shared_ptr<Fsm> fsm = make_shared<Fsm>("../../../resources/TestSuites/FSM053.fsm", make_shared<FsmPresentationLayer>(), "M");
+	//cout << "initIdx: " << fsm->getInitStateIdx() << endl;
+	//cout << "mI: " << fsm->getMaxInput() << endl;
+	//cout << "mO:" << fsm->getMaxOutput() << endl;
+	//cout << "size: " << fsm->getNodes().size() << endl;
+	//cout << "comp. spec: " << fsm->isCompletelyDefined() << endl;
+	//cout << "det: " << fsm->isDeterministic() << endl;
+	//cout << "obs: " << fsm->isObservable() << endl;
+	//cout << checkFsmClassInvariant(*fsm) << endl;
+
+	//shared_ptr<Dfsm> gdc = //C:\Users\alexa\Documents\fsmlib-cpp\resources\TestSuites\examples
+	//	make_shared<Dfsm>("../../../resources/TestSuites/examples/gdc.csv", "GDC");
+	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", make_shared<FsmPresentationLayer>(), "GDC");
+	cout << gdc->size() << endl;
+	cout << checkFsmClassInvariant(*gdc) << endl;
+	cout << gdc->isCompletelyDefined() << endl;
+	cout << gdc->getMaxOutput() << endl;
+	cout << gdc->getMaxInput() << endl;
+	//ofstream outFile("../../../resources/TestSuites/examples/gdc.fsm");
+	//shared_ptr<Fsm> fsm = gdc;
+	gdc->toDot(gdc->getName());
 }
 
 void testWMethod() {
@@ -1949,7 +1960,7 @@ void testWMethod() {
 int main(int argc, char** argv)
 {
 	std::cout << "test start" << std::endl;
-	//loadFsm();
+	loadFsm();
 	//testDriverTranformToInitialConnected();
 	//testDriverTransformToOfsm();
 	//testDriverTransformDfsmToPrimeMachine();
@@ -1958,7 +1969,7 @@ int main(int argc, char** argv)
 	//B b;
 	//b.foo();
 	//testWMethod();
-	testLanguageInterSectionCheck();
+	//testLanguageInterSectionCheck();
 
 	//testIOEquivalenceCheck();
 	//testCheckForEqualStructure();

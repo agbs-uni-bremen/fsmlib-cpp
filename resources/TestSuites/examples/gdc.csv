@@ -1,0 +1,7 @@
+;e1;e2;e3;e4
+Door_Up;Door_closing/a1;Door_Up/a3;Door_Up/a3;Door_Up/a3
+Door_Down;Door_opening/a2;Door_Down/a3;Door_Down/a3;Door_Down/a3
+Door_stopped_going_down;Door_closing/a1;Door_stopped_going_down/a3;Door_stopped_going_down/a3;Door_stopped_going_down/a3
+Door_stopped_going_up;Door_opening/a2;Door_stopped_going_up/a3;Door_stopped_going_up/a3;Door_stopped_going_up/a3
+Door_closing;Door_stopped_going_down/a3;Door_Down/a3;Door_closing/a1;Door_opening/a4
+Door_opening;Door_stopped_going_up/a3;Door_opening/a2;Door_Up/a3;Door_opening/a2
