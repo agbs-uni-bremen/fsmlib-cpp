@@ -486,6 +486,8 @@ public:
 
 	//--------------------------------------------
 	const std::vector<std::shared_ptr<OFSMTable>>& calcAndGetOfsmTbls();
+
+	const std::vector<std::shared_ptr<Tree>>& getStateIdentificationSets();
 	//--------------------------------------------
 
 };

@@ -1755,6 +1755,10 @@ const std::vector<std::shared_ptr<OFSMTable>>& Fsm::calcAndGetOfsmTbls() {
 	return ofsmTableLst;
 }
 
+const vector<shared_ptr<Tree>>& Fsm::getStateIdentificationSets() {
+	return stateIdentificationSets;
+}
+
 //--------------------------------------------
 
 

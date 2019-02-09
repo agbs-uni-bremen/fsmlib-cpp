@@ -2098,13 +2098,6 @@ void testIsCharaterisationSet() {
 }
 
 /*
-	INPUT: Minimal and observable Fsm m
-*/
-void testGetCharacterisationSetFsm(Fsm &m) {
-	auto charSet = m.getCharacterisationSet();
-}
-
-/*
 	Checks if trc is a non empty prefix of some element contained in w.
 */
 bool isPrefixOfElement(const vector<int> &trc, const std::shared_ptr<Tree> w) {
@@ -2132,7 +2125,105 @@ bool isStateIdentificationSet(const Fsm &m, const shared_ptr<FsmNode> qi, const 
 	for (auto trc : *wi->getIOLists().getIOLists()) {
 		if (not isPrefixOfElement(trc, w)) return false;
 	}
-	return false;
+
+	for (auto q : m.getNodes()) {
+		if (q == qi) continue;
+
+		if (not containsDistTrcForPair(q, qi, wi->getIOLists())) return false;
+	}
+
+	return true;
+}
+
+/*
+	m has to be minimal and observable. qi ist expected to be a state of m.
+	wi is expected to be a State Identification Set of qi in m. w is expected to be a characterisation set of m.
+
+	Returns true iff there is no subset of wi that is a State Identification Set of qi in m.
+*/
+bool isMinimalStateIdentificationSet(const Fsm &m, const shared_ptr<FsmNode> qi, const std::shared_ptr<Tree> wi, const std::shared_ptr<Tree> w) {
+	auto pl = make_shared<FsmPresentationLayer>();
+	cout << "original size of wi: " << wi->getIOLists().size() << endl;
+	for (int i = 0; i < wi->getIOLists().getIOLists()->size(); ++i) {
+		IOListContainer iolc(pl);
+		for (int j = 0; j < wi->getIOLists().getIOLists()->size(); ++j) {
+			if (i == j) continue;
+			iolc.add({ wi->getIOLists().getIOLists()->at(j), pl });
+		}
+		shared_ptr<Tree> alternativeWi = make_shared<Tree>(make_shared<TreeNode>(), pl);
+		alternativeWi->addToRoot(iolc);
+		cout << "size of alternativeWi: " << alternativeWi->getIOLists().size() << endl;
+		if (isStateIdentificationSet(m, qi, alternativeWi, w)) return false;
+	}
+	return true;
+}
+
+void testIsStateIdentificationSet() {
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+		auto minFsm = fsm->minimise();
+		cout << "minFsm_size" << minFsm.size() << endl;
+		shared_ptr<Tree> w = make_shared<Tree>(make_shared<TreeNode>(), make_shared<FsmPresentationLayer>());
+		w->addToRoot(minFsm.getCharacterisationSet());
+		minFsm.calcStateIdentificationSetsFast();
+		//minFsm.calcStateIdentificationSets();
+		auto stateIdentificationSets = minFsm.getStateIdentificationSets();
+		for (int j = 0; j < minFsm.size(); ++j) {
+			if(not isStateIdentificationSet(minFsm,minFsm.getNodes().at(j),stateIdentificationSets.at(j),w)) cout << "FAIL" << endl;
+		}		
+	}
+
+	//shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	//shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
+	//shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
+	//shared_ptr<FsmNode> q2 = make_shared<FsmNode>(2, pl);
+	//shared_ptr<FsmNode> q3 = make_shared<FsmNode>(3, pl);
+	//q0->addTransition(make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(0, 0, pl)));
+	//q1->addTransition(make_shared<FsmTransition>(q1, q2, make_shared<FsmLabel>(1, 2, pl)));
+	//q1->addTransition(make_shared<FsmTransition>(q1, q0, make_shared<FsmLabel>(1, 1, pl)));
+	//q2->addTransition(make_shared<FsmTransition>(q2, q3, make_shared<FsmLabel>(2, 2, pl)));
+	//vector<shared_ptr<FsmNode>> lst{ q0, q1,q2,q3 };
+	//Fsm m("M", 2, 2, lst, pl);
+
+	//auto min = m.minimise();
+	//auto w = min.getCharacterisationSet();
+	//cout << w << endl;
+	//if (not isCharaterisationSet(min, w)) cout << "FAIL" << endl;
+}
+
+void testIsMinimalStateIdentificationSet() {
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, make_shared<FsmPresentationLayer>());
+		auto minFsm = fsm->minimise();
+		cout << "minFsm_size" << minFsm.size() << endl;
+		shared_ptr<Tree> w = make_shared<Tree>(make_shared<TreeNode>(), make_shared<FsmPresentationLayer>());
+		w->addToRoot(minFsm.getCharacterisationSet());
+		minFsm.calcStateIdentificationSets();
+		auto stateIdentificationSets = minFsm.getStateIdentificationSets();
+		for (int j = 0; j < minFsm.size(); ++j) {
+			if (not isStateIdentificationSet(minFsm, minFsm.getNodes().at(j), stateIdentificationSets.at(j), w)) cout << "FAIL" << endl;
+			if (not isMinimalStateIdentificationSet(minFsm, minFsm.getNodes().at(j), stateIdentificationSets.at(j), w)) cout << "FAIL(minimality)" << endl;
+		}
+	}
+
+	//shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	//shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
+	//shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
+	//shared_ptr<FsmNode> q2 = make_shared<FsmNode>(2, pl);
+	//shared_ptr<FsmNode> q3 = make_shared<FsmNode>(3, pl);
+	//q0->addTransition(make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(0, 0, pl)));
+	//q1->addTransition(make_shared<FsmTransition>(q1, q2, make_shared<FsmLabel>(1, 2, pl)));
+	//q1->addTransition(make_shared<FsmTransition>(q1, q0, make_shared<FsmLabel>(1, 1, pl)));
+	//q2->addTransition(make_shared<FsmTransition>(q2, q3, make_shared<FsmLabel>(2, 2, pl)));
+	//vector<shared_ptr<FsmNode>> lst{ q0, q1,q2,q3 };
+	//Fsm m("M", 2, 2, lst, pl);
+
+	//auto min = m.minimise();
+	//auto w = min.getCharacterisationSet();
+	//cout << w << endl;
+	//if (not isCharaterisationSet(min, w)) cout << "FAIL" << endl;
 }
 
 
@@ -2156,7 +2247,7 @@ int main(int argc, char** argv)
 	//testLanguageInterSectionCheck();
 
 	// Calculation of Distinguishing Traces Test
-	testIsCharaterisationSet();
+	testIsMinimalStateIdentificationSet();
 
 
 
