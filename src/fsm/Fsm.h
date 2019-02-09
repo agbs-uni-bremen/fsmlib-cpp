@@ -483,5 +483,10 @@ public:
      */
     virtual bool distinguishable(const FsmNode& s1, const FsmNode& s2);
 
+
+	//--------------------------------------------
+	const std::vector<std::shared_ptr<OFSMTable>>& calcAndGetOfsmTbls();
+	//--------------------------------------------
+
 };
 #endif //FSM_FSM_FSM_H_

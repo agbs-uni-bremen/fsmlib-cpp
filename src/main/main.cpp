@@ -1957,10 +1957,194 @@ void testWMethod() {
 	cout << m.Fsm::getCharacterisationSet();
 }
 
+// ====================================================================================================
+// Prüfverfahren "Berechnung von Distinguishing Traces"
+
+set<vector<int>> calcCompleteOutputTraces(const shared_ptr<FsmNode> startNode, const vector<int> inputTrc) {	
+	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl{ {startNode, vector<int>()} };
+	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl_next;
+
+	for (int x : inputTrc) {
+		for (auto reachedNode : wl) {
+			for (auto transition : std::get<0>(reachedNode)->getTransitions()) {
+				if (transition->getLabel()->getInput() != x) continue; 
+				vector<int> outputTrc = get<1>(reachedNode);
+				outputTrc.push_back(transition->getLabel()->getOutput());
+				wl_next.insert({ transition->getTarget(), outputTrc });
+			}
+		}
+		wl = wl_next;
+		wl_next = set<std::tuple<shared_ptr<FsmNode>, vector<int>>>();
+	}
+
+	set<vector<int>> outputTrcs;
+	for (auto reachedNode : wl) {
+		outputTrcs.insert(std::get<1>(reachedNode));
+	}
+
+	return outputTrcs;
+}
+
+void testCalcCompleteOutputTraces() {
+	auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+	cout << fsm->isCompletelyDefined() << endl;
+	for (auto outputTrc : calcCompleteOutputTraces(fsm->getInitialState(), vector<int>{0, 1, 1, 0, 2, 3, 0, 1, 4})) {
+		cout << "[";
+		for (int y : outputTrc) cout << y << ",";
+		cout << "]\n";
+	}
+
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
+	shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
+	shared_ptr<FsmNode> q2 = make_shared<FsmNode>(2, pl);
+	shared_ptr<FsmNode> q3 = make_shared<FsmNode>(3, pl);
+	q0->addTransition(make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(0, 0, pl)));
+	q1->addTransition(make_shared<FsmTransition>(q1, q2, make_shared<FsmLabel>(1, 2, pl)));
+	q1->addTransition(make_shared<FsmTransition>(q1, q0, make_shared<FsmLabel>(1, 1, pl)));
+	q2->addTransition(make_shared<FsmTransition>(q2, q3, make_shared<FsmLabel>(2, 2, pl)));
+	vector<shared_ptr<FsmNode>> lst{ q0, q1,q2,q3 };
+	Fsm m("M", 2, 2, lst, pl);
+
+	for (auto outputTrc : calcCompleteOutputTraces(m.getInitialState(), vector<int>{0, 1, 0})) {
+		cout << "[";
+		for (int y : outputTrc) cout << y << ",";
+		cout << "]\n";
+	}
+}
+
+/*
+	Checks if given inTrc is a Distinguishing Trace for q1 and q2. 
+	Returns true iff inTrc produces some outTrc of the same length
+	which is only contained in the language of one of these FsmNodes.
+*/
+bool isDistTrc(const shared_ptr<FsmNode> q1, const shared_ptr<FsmNode> q2, const vector<int> &inTrc) {
+	return calcCompleteOutputTraces(q1, inTrc) != calcCompleteOutputTraces(q2, inTrc);
+}
+
+void testIsDistTrc() {
+	int maxSize = 0;
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+		auto minFsm = fsm->minimise();
+		cout << "minFsm size: " << minFsm.size() << endl;
+		auto tables = minFsm.calcAndGetOfsmTbls();
+		for (int q1Idx = 0; q1Idx < minFsm.size(); ++q1Idx) {
+			for (int q2Idx = q1Idx + 1; q2Idx < minFsm.size(); ++ q2Idx) {
+				if (q1Idx == q2Idx) continue;
+
+				auto q1 = minFsm.getNodes().at(q1Idx);
+				auto q2 = minFsm.getNodes().at(q2Idx);
+				InputTrace inTrc = q1->calcDistinguishingTrace(q2, tables, minFsm.getMaxInput(), minFsm.getMaxOutput());
+				if (inTrc.size() > maxSize) maxSize = inTrc.size();
+				if (not isDistTrc(q1, q2, inTrc.get())) cout << "FAIL\n";
+			}
+		}
+	}
+	cout << "maxSize: " << maxSize << endl;
+}
+
+/*
+	Returns true iff w contains a Distinguishing Trace for q1 and q2.
+*/
+bool containsDistTrcForPair(const shared_ptr<FsmNode> q1, const shared_ptr<FsmNode> q2, const IOListContainer &w) {
+	for (auto inTrc : *w.getIOLists()) {
+		if (isDistTrc(q1, q2, inTrc)) return true;
+	}
+	return false;
+}
+
+/*
+	m has to be minimal and observable.
+	Returns true iff w is a Characterisation Set of m.
+*/
+bool isCharaterisationSet(Fsm &m, IOListContainer w) {
+	for (int q1Idx = 0; q1Idx < m.size(); ++q1Idx) {
+		for (int q2Idx = q1Idx + 1; q2Idx < m.size(); ++q2Idx) {
+			if (not containsDistTrcForPair(m.getNodes().at(q1Idx), m.getNodes().at(q2Idx), w)) return false;
+		}
+	}
+	return true;
+}
+
+void testIsCharaterisationSet() {
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+	//	auto minFsm = fsm->minimise();
+	//	cout << "minFsm_size" << minFsm.size() << endl;
+	//	auto w = minFsm.getCharacterisationSet();
+	//	cout << "w_size" << w.size() << endl;
+	//	if (not isCharaterisationSet(minFsm, w)) cout << "FAIL" << endl;
+	//}
+
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
+	shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
+	shared_ptr<FsmNode> q2 = make_shared<FsmNode>(2, pl);
+	shared_ptr<FsmNode> q3 = make_shared<FsmNode>(3, pl);
+	q0->addTransition(make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(0, 0, pl)));
+	q1->addTransition(make_shared<FsmTransition>(q1, q2, make_shared<FsmLabel>(1, 2, pl)));
+	q1->addTransition(make_shared<FsmTransition>(q1, q0, make_shared<FsmLabel>(1, 1, pl)));
+	q2->addTransition(make_shared<FsmTransition>(q2, q3, make_shared<FsmLabel>(2, 2, pl)));
+	vector<shared_ptr<FsmNode>> lst{ q0, q1,q2,q3 };
+	Fsm m("M", 2, 2, lst, pl);
+
+	auto min = m.minimise();
+	auto w = min.getCharacterisationSet();
+	cout << w << endl;
+	if (not isCharaterisationSet(min, w)) cout << "FAIL" << endl;
+}
+
+/*
+	INPUT: Minimal and observable Fsm m
+*/
+void testGetCharacterisationSetFsm(Fsm &m) {
+	auto charSet = m.getCharacterisationSet();
+}
+
+/*
+	Checks if trc is a non empty prefix of some element contained in w.
+*/
+bool isPrefixOfElement(const vector<int> &trc, const std::shared_ptr<Tree> w) {
+	//w->addToRoot() may be faster
+	if (trc.size() == 0) return false;
+
+	for (auto elem : *w->getIOLists().getIOLists()) {
+		if (elem.size() < trc.size()) continue;
+
+		for (int i = 0; i < trc.size(); ++i) {
+			if (trc.at(i) != elem.at(i)) continue;
+		}
+		return true;
+	}
+	return false;
+}
+
+/*
+	m has to be minimal and observable. qi ist expected to be a state of m.
+	wi is expected to contain traces over the input alphabet of m. w is expected to be a characterisation set of m.
+
+	Returns true iff wi is a State Identification Set for qi in m with Characterisation Set w.
+*/
+bool isStateIdentificationSet(const Fsm &m, const shared_ptr<FsmNode> qi, const std::shared_ptr<Tree> wi, const std::shared_ptr<Tree> w) {
+	for (auto trc : *wi->getIOLists().getIOLists()) {
+		if (not isPrefixOfElement(trc, w)) return false;
+	}
+	return false;
+}
+
+
+
+// ====================================================================================================
+
 int main(int argc, char** argv)
 {
 	std::cout << "test start" << std::endl;
-	loadFsm();
+	// FSM Transformation Tests:
+
+	//loadFsm();
 	//testDriverTranformToInitialConnected();
 	//testDriverTransformToOfsm();
 	//testDriverTransformDfsmToPrimeMachine();
@@ -1970,6 +2154,11 @@ int main(int argc, char** argv)
 	//b.foo();
 	//testWMethod();
 	//testLanguageInterSectionCheck();
+
+	// Calculation of Distinguishing Traces Test
+	testIsCharaterisationSet();
+
+
 
 	//testIOEquivalenceCheck();
 	//testCheckForEqualStructure();
