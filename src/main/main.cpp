@@ -2144,7 +2144,7 @@ void testIsCharaterisationSet() {
 /*
 	Checks if trc is a non empty prefix of some element contained in w.
 */
-bool isPrefixOfElement(const vector<int> &trc, const std::shared_ptr<Tree> w) {
+bool isPrefixOfElement(const vector<int> &trc, const std::shared_ptr<const Tree> w) {
 	//w->addToRoot() may be faster
 	if (trc.size() == 0) return false;
 
@@ -2187,8 +2187,6 @@ bool isStateIdentificationSet(const Fsm &m, const shared_ptr<FsmNode> qi, const 
 */
 bool isMinimalStateIdentificationSet(const Fsm &m, const shared_ptr<FsmNode> qi, const std::shared_ptr<Tree> wi, const std::shared_ptr<Tree> w) {
 	auto pl = make_shared<FsmPresentationLayer>();
-	cout << "original size of wi: " << wi->getIOLists().size() << endl;
-	cout << "original wi: " << wi->getIOLists() << endl;
 	for (int i = 0; i < wi->getIOLists().getIOLists()->size(); ++i) {
 		IOListContainer iolc(pl);
 		for (int j = 0; j < wi->getIOLists().getIOLists()->size(); ++j) {
@@ -2197,8 +2195,6 @@ bool isMinimalStateIdentificationSet(const Fsm &m, const shared_ptr<FsmNode> qi,
 		}
 		shared_ptr<Tree> alternativeWi = make_shared<Tree>(make_shared<TreeNode>(), pl);
 		alternativeWi->addToRoot(iolc);
-		cout << "size of alternativeWi: " << alternativeWi->getIOLists().size() << endl;
-		cout << "alternativeWi: " << alternativeWi->getIOLists() << endl;
 		if (isStateIdentificationSet(m, qi, alternativeWi, w)) return false;
 	}
 	return true;
@@ -2278,6 +2274,32 @@ void testIsMinimalStateIdentificationSet() {
 }
 
 /**
+ * Test function for Dfsm::getCharacterisationSet().
+ * Parameter m is expected to be a minimal and complete Dfsm.
+ */
+void testGetCharacterisationSet_Dfsm(Dfsm &m) {
+	// get copy of m
+	const Dfsm copyOfM = Dfsm(m);
+
+	// use Algorithm to calculate result
+	const auto w = m.getCharacterisationSet();
+
+	// first check invariant of m
+	bool invariantViolation = not checkDfsmClassInvariant(m);
+	fsmlib_assert("TC", not invariantViolation, "Dfsm class invariant still holds for M after calculation.");
+	// stop test execution at this point if invariant of m does not hold anymore
+	if (invariantViolation) return;
+
+	// check definition of 'Characterisation Set' for w
+	fsmlib_assert("TC", isCharaterisationSet(m, w), "Result is a Characterisation Set for M.");
+
+	fsmlib_assert("TC", *m.characterisationSet->getIOLists().getIOLists() == *w.getIOLists(), "Result is stored in attribute.");
+
+	// check if structure of m has changed
+	fsmlib_assert("TC", checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
+}
+
+/**
  * Test function for Fsm::getCharacterisationSet().
  * Parameter m is expected to be a minimal and observable Fsm.
  */
@@ -2290,7 +2312,7 @@ void testGetCharacterisationSet_Fsm(Fsm &m) {
 
 	// first check invariant of m
 	bool invariantViolation = not checkFsmClassInvariant(m);
-	fsmlib_assert("TC", not invariantViolation, "M still fullfills class invariants after calculation.");
+	fsmlib_assert("TC", not invariantViolation, "Fsm class invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
 
@@ -2329,7 +2351,7 @@ void testCalcDistinguishingTrace1(Dfsm &m) {
 
 			// first check invariant of m
 			bool invariantViolation = not checkDfsmClassInvariant(m);
-			fsmlib_assert("TC", not invariantViolation, "M still fullfills class invariants after calculation.");
+			fsmlib_assert("TC", not invariantViolation, "Dfsm class invariant still holds for M after calculation.");
 			// stop test execution at this point if invariant of m does not hold anymore
 			if (invariantViolation) return;
 
@@ -2369,7 +2391,7 @@ void testCalcDistinguishingTrace2(Fsm &m) {
 
 			// first check invariant of m
 			bool invariantViolation = not checkFsmClassInvariant(m);
-			fsmlib_assert("TC", not invariantViolation, "M still fullfills class invariants after calculation.");
+			fsmlib_assert("TC", not invariantViolation, "Fsm class invariant still holds for M after calculation.");
 			// stop test execution at this point if invariant of m does not hold anymore
 			if (invariantViolation) return;
 
@@ -2379,6 +2401,56 @@ void testCalcDistinguishingTrace2(Fsm &m) {
 			// check if structure of m has changed
 			fsmlib_assert("TC", checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
 		}
+	}
+}
+
+/**
+ * Test function for Fsm::calcStateIdentificationSets().
+ * Needs access to stateIdentificationSets of this class.
+ */
+void testCalcStateIdentificationSets(Fsm &m) {
+	// get copy of m
+	const Fsm copyOfM = Fsm(m);
+
+	// calculate the needed parameters from m
+	m.getCharacterisationSet();
+	const auto w = m.characterisationSet;
+
+	// use Algorithm to calculate result
+	m.calcStateIdentificationSets();
+	const auto stateIdSets = m.stateIdentificationSets;
+
+	// first check invariant of m
+	bool invariantViolation = not checkFsmClassInvariant(m);
+	fsmlib_assert("TC", not invariantViolation, "Fsm class invariant still holds for M after calculation.");
+	// stop test execution at this point if invariant of m does not hold anymore
+	if (invariantViolation) return;
+
+	// Check Definition of minimal State Identification Set for each element in stateIdSets
+	fsmlib_assert("TC", stateIdSets.size() == m.getNodes().size(), "Number of calculated State Identification Sets matches the number of states of M.");
+	for (int i = 0; i < stateIdSets.size(); ++i) {
+		fsmlib_assert("TC", isStateIdentificationSet(m,m.getNodes().at(i),stateIdSets.at(i),w), "M.stateIdentificationSets[i] is a State Identification Set for M.nodes[i].");
+		fsmlib_assert("TC", isMinimalStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), w), "M.stateIdentificationSets[i] is a minimal State Identification Set for M.nodes[i].");
+	}
+
+	// check if structure of m has changed
+	fsmlib_assert("TC", checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
+
+	// check if m.characterisationSet has changed
+	fsmlib_assert("TC", w->getIOLists().getIOLists() == m.characterisationSet->getIOLists().getIOLists(), "characterisation set of M has not changed");
+}
+
+/*
+ *	Random Test Suite for test of Fsm::getCharacterisationSet().
+*/
+void getCharacterisationSet_Dfsm_TS_Random() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		auto m = Dfsm("M", 15, 4, 4, pl);
+		auto minM = m.minimise();
+		cout << "minFsm size: " << minM.size() << endl;
+		testGetCharacterisationSet_Dfsm(minM);
 	}
 }
 
@@ -2427,6 +2499,19 @@ void calcDistinguishingTrace2_TS_Random() {
 	}
 }
 
+/*
+ *	Random Test Suite for test of Fsm::calcStateIdentificationSets().
+*/
+void calcStateIdentificationSets_TS_Random() {
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, make_shared<FsmPresentationLayer>());
+		auto minFsm = fsm->minimise();
+		cout << "minFsm size: " << minFsm.size() << endl;
+		testCalcStateIdentificationSets(minFsm);
+	}
+}
+
 
 
 // ====================================================================================================
@@ -2448,9 +2533,11 @@ int main(int argc, char** argv)
 	//testLanguageInterSectionCheck();
 
 	// Calculation of Distinguishing Traces Test
-	getCharacterisationSet_Fsm_TS_Random();
+	//getCharacterisationSet_Dfsm_TS_Random();
+	//getCharacterisationSet_Fsm_TS_Random();
 	//calcDistinguishingTrace1_TS_Random();
 	//calcDistinguishingTrace2_TS_Random();
+	calcStateIdentificationSets_TS_Random();
 	
 
 

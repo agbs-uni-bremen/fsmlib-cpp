@@ -504,6 +504,12 @@ public:
 	   Needs access to ofsmTables of this class.
 	*/
 	friend void testCalcDistinguishingTrace2(Fsm &m);
+
+	/**
+	 * Test function for Fsm::calcStateIdentificationSets().
+	 * Needs access to stateIdentificationSets of this class.
+	 */
+	friend void testCalcStateIdentificationSets(Fsm &m);
 	//--------------------------------------------
 
 };

@@ -442,6 +442,13 @@ public:
 
 	//---------------------------------------------------------------------------------------
 	/**
+	 * Test function for Dfsm::getCharacterisationSet().
+	 * Parameter m is expected to be a minimal and complete Dfsm.
+	 * Needs access to characterisationSet of this class.
+	 */
+	friend void testGetCharacterisationSet_Dfsm(Dfsm &m);
+
+	/**
      * Test function for FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
      *                                           const vector<shared_ptr<PkTable>>& pktblLst,
      *                                           const int maxInput)
