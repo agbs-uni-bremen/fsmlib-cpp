@@ -490,7 +490,14 @@ public:
 	const std::vector<std::shared_ptr<Tree>>& getStateIdentificationSets();
 
 	/**
-	 * Test function for InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
+     * Test function for Fsm::getCharacterisationSet().
+     * Parameter m is expected to be a minimal and observable Fsm.
+	 * Needs access to characterisationSet of this class.
+     */
+	friend void testGetCharacterisationSet_Fsm(Fsm &m);
+
+	/**
+	 * Test function for FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
                                              const vector<shared_ptr<OFSMTable>>& ofsmTblLst,
                                              const int maxInput,
                                              const int maxOutput).

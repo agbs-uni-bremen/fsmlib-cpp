@@ -438,6 +438,18 @@ public:
      */
     std::vector< std::shared_ptr< std::vector<int> > > getDistTraces(FsmNode& s1,
                                                                      FsmNode& s2);
+
+
+	//---------------------------------------------------------------------------------------
+	/**
+     * Test function for FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
+     *                                           const vector<shared_ptr<PkTable>>& pktblLst,
+     *                                           const int maxInput)
+     * Needs access to pktblLst of this class.
+     */
+	friend void testCalcDistinguishingTrace1(Dfsm &m);
+
+	//---------------------------------------------------------------------------------------
     
 };
 #endif //FSM_FSM_DFSM_H_

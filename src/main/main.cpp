@@ -56,6 +56,7 @@ void fsmlib_assert(string tc, bool verdict, string comment = "") {
     
 }
 
+
 void test1() {
     
     cout << "TC-DFSM-0001 Show that Dfsm.applyDet() deals correctly with incomplete DFSMs "
@@ -2102,7 +2103,7 @@ bool containsDistTrcForPair(const shared_ptr<FsmNode> q1, const shared_ptr<FsmNo
 	m has to be minimal and observable.
 	Returns true iff w is a Characterisation Set of m.
 */
-bool isCharaterisationSet(Fsm &m, IOListContainer w) {
+bool isCharaterisationSet(const Fsm &m, const IOListContainer w) {
 	for (int q1Idx = 0; q1Idx < m.size(); ++q1Idx) {
 		for (int q2Idx = q1Idx + 1; q2Idx < m.size(); ++q2Idx) {
 			if (not containsDistTrcForPair(m.getNodes().at(q1Idx), m.getNodes().at(q2Idx), w, m.getMaxOutput())) return false;
@@ -2276,12 +2277,77 @@ void testIsMinimalStateIdentificationSet() {
 	//if (not isCharaterisationSet(min, w)) cout << "FAIL" << endl;
 }
 
+/**
+ * Test function for Fsm::getCharacterisationSet().
+ * Parameter m is expected to be a minimal and observable Fsm.
+ */
+void testGetCharacterisationSet_Fsm(Fsm &m) {
+	// get copy of m
+	const Fsm copyOfM = Fsm(m);
+
+	// use Algorithm to calculate result
+	const auto w = m.getCharacterisationSet();
+
+	// first check invariant of m
+	bool invariantViolation = not checkFsmClassInvariant(m);
+	fsmlib_assert("TC", not invariantViolation, "M still fullfills class invariants after calculation.");
+	// stop test execution at this point if invariant of m does not hold anymore
+	if (invariantViolation) return;
+
+	// check definition of 'Characterisation Set' for w
+	fsmlib_assert("TC", isCharaterisationSet(m, w), "Result is a Characterisation Set for M.");
+
+	fsmlib_assert("TC", *m.characterisationSet->getIOLists().getIOLists() == *w.getIOLists(), "Result is stored in attribute.");
+
+	// check if structure of m has changed
+	fsmlib_assert("TC", checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
+}
+
+/**
+ * Test function for FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
+ *                                           const vector<shared_ptr<PkTable>>& pktblLst,
+ *                                           const int maxInput)
+ * Parameter m is expected to be a minimal and complete Dfsm.
+ */
+void testCalcDistinguishingTrace1(Dfsm &m) {
+	// get copy of m
+	const Dfsm copyOfM = Dfsm(m);
+
+	// calculate the needed parameters from m
+	m.calcPkTables();
+	const auto tables = m.pktblLst;
+
+	// test each pair of different nodes
+	for (int q1Idx = 0; q1Idx < m.size(); ++q1Idx) {
+		for (int q2Idx = q1Idx + 1; q2Idx < m.size(); ++q2Idx) {
+			if (q1Idx == q2Idx) continue;
+			const auto q1 = m.getNodes().at(q1Idx);
+			const auto q2 = m.getNodes().at(q2Idx);
+
+			// use Algorithm to calculate result
+			InputTrace inTrc = q1->calcDistinguishingTrace(q2, tables, m.getMaxInput());
+
+			// first check invariant of m
+			bool invariantViolation = not checkDfsmClassInvariant(m);
+			fsmlib_assert("TC", not invariantViolation, "M still fullfills class invariants after calculation.");
+			// stop test execution at this point if invariant of m does not hold anymore
+			if (invariantViolation) return;
+
+			// check definition of 'Distinguishing Trace' for inTrc
+			fsmlib_assert("TC", isDistTrc(q1, q2, inTrc.get(), m.getMaxOutput()), "Calculated Trace is a Distinguishing Trace for q1 and q2.");
+
+			// check if structure of m has changed
+			fsmlib_assert("TC", checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
+		}
+	}
+}
 
 /**
  * Test function for FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
  *                                           const vector<shared_ptr<OFSMTable>>& ofsmTblLst,
  *                                           const int maxInput,
  *                                           const int maxOutput)
+ * Parameter m is expected to be a minimal and observable Fsm.
  */
 void testCalcDistinguishingTrace2(Fsm &m) {
 	// get copy of m
@@ -2303,7 +2369,7 @@ void testCalcDistinguishingTrace2(Fsm &m) {
 
 			// first check invariant of m
 			bool invariantViolation = not checkFsmClassInvariant(m);
-			fsmlib_assert("TC", not invariantViolation, "M still fullfills class invariants after transformation");
+			fsmlib_assert("TC", not invariantViolation, "M still fullfills class invariants after calculation.");
 			// stop test execution at this point if invariant of m does not hold anymore
 			if (invariantViolation) return;
 
@@ -2313,6 +2379,51 @@ void testCalcDistinguishingTrace2(Fsm &m) {
 			// check if structure of m has changed
 			fsmlib_assert("TC", checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
 		}
+	}
+}
+
+/*
+ *	Random Test Suite for test of Fsm::getCharacterisationSet().
+*/
+void getCharacterisationSet_Fsm_TS_Random() {
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, make_shared<FsmPresentationLayer>());
+		auto minFsm = fsm->minimise();
+		cout << "minFsm size: " << minFsm.size() << endl;
+		testGetCharacterisationSet_Fsm(minFsm);
+	}
+}
+
+/*
+ *	Random Test Suite for test of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
+ *                                           const vector<shared_ptr<PkTable>>& pktblLst,
+ *                                           const int maxInput)
+*/
+void calcDistinguishingTrace1_TS_Random() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		auto m = Dfsm("M", 15, 4, 2, pl);		
+		auto minM = m.minimise();
+		cout << "minFsm size: " << minM.size() << endl;
+		testCalcDistinguishingTrace1(minM);
+	}
+}
+
+/*
+ *	Random Test Suite for test of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
+ *                                           const vector<shared_ptr<OFSMTable>>& ofsmTblLst,
+ *                                           const int maxInput,
+ *                                           const int maxOutput)
+*/
+void calcDistinguishingTrace2_TS_Random() {
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, make_shared<FsmPresentationLayer>());
+		auto minFsm = fsm->minimise();
+		cout << "minFsm size: " << minFsm.size() << endl;
+		testCalcDistinguishingTrace2(minFsm);
 	}
 }
 
@@ -2337,9 +2448,10 @@ int main(int argc, char** argv)
 	//testLanguageInterSectionCheck();
 
 	// Calculation of Distinguishing Traces Test
-	//testIsMinimalStateIdentificationSet();
-	//testIsCharaterisationSet();
-	testIsStateIdentificationSet();
+	getCharacterisationSet_Fsm_TS_Random();
+	//calcDistinguishingTrace1_TS_Random();
+	//calcDistinguishingTrace2_TS_Random();
+	
 
 
 
