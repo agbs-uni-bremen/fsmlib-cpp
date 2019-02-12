@@ -2406,7 +2406,7 @@ void testCalcDistinguishingTrace2(Fsm &m) {
 
 /**
  * Test function for Fsm::calcStateIdentificationSets().
- * Needs access to stateIdentificationSets of this class.
+ * m is expected to be a minimal and observable Fsm.
  */
 void testCalcStateIdentificationSets(Fsm &m) {
 	// get copy of m
@@ -2414,7 +2414,8 @@ void testCalcStateIdentificationSets(Fsm &m) {
 
 	// calculate the needed parameters from m
 	m.getCharacterisationSet();
-	const auto w = m.characterisationSet;
+	const IOListContainer tracesOfW = m.characterisationSet->getIOLists();
+	
 
 	// use Algorithm to calculate result
 	m.calcStateIdentificationSets();
@@ -2429,15 +2430,88 @@ void testCalcStateIdentificationSets(Fsm &m) {
 	// Check Definition of minimal State Identification Set for each element in stateIdSets
 	fsmlib_assert("TC", stateIdSets.size() == m.getNodes().size(), "Number of calculated State Identification Sets matches the number of states of M.");
 	for (int i = 0; i < stateIdSets.size(); ++i) {
-		fsmlib_assert("TC", isStateIdentificationSet(m,m.getNodes().at(i),stateIdSets.at(i),w), "M.stateIdentificationSets[i] is a State Identification Set for M.nodes[i].");
-		fsmlib_assert("TC", isMinimalStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), w), "M.stateIdentificationSets[i] is a minimal State Identification Set for M.nodes[i].");
+		fsmlib_assert("TC", isStateIdentificationSet(m,m.getNodes().at(i),stateIdSets.at(i),m.characterisationSet), "M.stateIdentificationSets[i] is a State Identification Set for M.nodes[i].");
+		fsmlib_assert("TC", isMinimalStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), "M.stateIdentificationSets[i] is a minimal State Identification Set for M.nodes[i].");
 	}
 
 	// check if structure of m has changed
 	fsmlib_assert("TC", checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
 
 	// check if m.characterisationSet has changed
-	fsmlib_assert("TC", w->getIOLists().getIOLists() == m.characterisationSet->getIOLists().getIOLists(), "characterisation set of M has not changed");
+	fsmlib_assert("TC", *tracesOfW.getIOLists() == *m.characterisationSet->getIOLists().getIOLists(), "characterisation set of M has not changed");
+}
+
+/**
+ * Test function for Fsm::calcStateIdentificationSets(). Test in context of Dfsm.
+ * m is expected to be a minimal Dfsm.
+ */
+void testCalcStateIdentificationSets(Dfsm &m) {
+	// get copy of m
+	const Dfsm copyOfM = Dfsm(m);
+
+	// calculate the needed parameters from m
+	m.Fsm::getCharacterisationSet();
+	const IOListContainer tracesOfW = m.characterisationSet->getIOLists();
+
+
+	// use Algorithm to calculate result
+	m.calcStateIdentificationSets();
+	const auto stateIdSets = m.stateIdentificationSets;
+
+	// first check invariant of m
+	bool invariantViolation = not checkDfsmClassInvariant(m);
+	fsmlib_assert("TC", not invariantViolation, "Dfsm class invariant still holds for M after calculation.");
+	// stop test execution at this point if invariant of m does not hold anymore
+	if (invariantViolation) return;
+
+	// Check Definition of minimal State Identification Set for each element in stateIdSets
+	fsmlib_assert("TC", stateIdSets.size() == m.getNodes().size(), "Number of calculated State Identification Sets matches the number of states of M.");
+	for (int i = 0; i < stateIdSets.size(); ++i) {
+		fsmlib_assert("TC", isStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), "M.stateIdentificationSets[i] is a State Identification Set for M.nodes[i].");
+		fsmlib_assert("TC", isMinimalStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), "M.stateIdentificationSets[i] is a minimal State Identification Set for M.nodes[i].");
+	}
+
+	// check if structure of m has changed
+	fsmlib_assert("TC", checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
+
+	// check if m.characterisationSet has changed
+	fsmlib_assert("TC", *tracesOfW.getIOLists() == *m.characterisationSet->getIOLists().getIOLists(), "characterisation set of M has not changed");
+}
+
+/**
+ * Test function for Fsm::calcStateIdentificationSetsFast().
+ * m is expected to be a minimal and observable Fsm.
+ */
+void testCalcStateIdentificationSetsFast(Fsm &m) {
+	// get copy of m
+	const Fsm copyOfM = Fsm(m);
+
+	// calculate the needed parameters from m
+	m.getCharacterisationSet();
+	const IOListContainer tracesOfW = m.characterisationSet->getIOLists();
+
+
+	// use Algorithm to calculate result
+	m.calcStateIdentificationSetsFast();
+	const auto stateIdSets = m.stateIdentificationSets;
+
+	// first check invariant of m
+	bool invariantViolation = not checkFsmClassInvariant(m);
+	fsmlib_assert("TC", not invariantViolation, "Fsm class invariant still holds for M after calculation.");
+	// stop test execution at this point if invariant of m does not hold anymore
+	if (invariantViolation) return;
+
+	// Check Definition of State Identification Set for each element in stateIdSets
+	fsmlib_assert("TC", stateIdSets.size() == m.getNodes().size(), "Number of calculated State Identification Sets matches the number of states of M.");
+	for (int i = 0; i < stateIdSets.size(); ++i) {
+		fsmlib_assert("TC", isStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), "M.stateIdentificationSets[i] is a State Identification Set for M.nodes[i].");
+	}
+
+	// check if structure of m has changed
+	fsmlib_assert("TC", checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
+
+	// check if m.characterisationSet has changed
+	fsmlib_assert("TC", *tracesOfW.getIOLists() == *m.characterisationSet->getIOLists().getIOLists(), "characterisation set of M has not changed");
 }
 
 /*
@@ -2510,6 +2584,37 @@ void calcStateIdentificationSets_TS_Random() {
 		cout << "minFsm size: " << minFsm.size() << endl;
 		testCalcStateIdentificationSets(minFsm);
 	}
+
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		auto m = Dfsm("M", 15, 4, 4, pl);
+		auto minM = m.minimise();
+		cout << "minFsm size: " << minM.size() << endl;
+		testCalcStateIdentificationSets(minM);
+	}
+}
+
+/*
+ *	Random Test Suite for test of Fsm::calcStateIdentificationSetsFast().
+*/
+void calcStateIdentificationSetsFast_TS_Random() {
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, make_shared<FsmPresentationLayer>());
+		auto minFsm = fsm->minimise();
+		cout << "minFsm size: " << minFsm.size() << endl;
+		testCalcStateIdentificationSetsFast(minFsm);
+	}
+
+	//shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	auto m = Dfsm("M", 15, 4, 4, pl);
+	//	auto minM = m.minimise();
+	//	cout << "minFsm size: " << minM.size() << endl;
+	//	testCalcStateIdentificationSets(minM);
+	//}
 }
 
 
@@ -2537,7 +2642,8 @@ int main(int argc, char** argv)
 	//getCharacterisationSet_Fsm_TS_Random();
 	//calcDistinguishingTrace1_TS_Random();
 	//calcDistinguishingTrace2_TS_Random();
-	calcStateIdentificationSets_TS_Random();
+	//calcStateIdentificationSets_TS_Random();
+	calcStateIdentificationSetsFast_TS_Random();
 	
 
 

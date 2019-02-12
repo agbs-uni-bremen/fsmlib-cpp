@@ -456,6 +456,12 @@ public:
      */
 	friend void testCalcDistinguishingTrace1(Dfsm &m);
 
+	/**
+	 * Test function for Fsm::calcStateIdentificationSets().
+	 * Needs access to stateIdentificationSets of this class.
+	 */
+	friend void testCalcStateIdentificationSets(Dfsm &m);
+
 	//---------------------------------------------------------------------------------------
     
 };

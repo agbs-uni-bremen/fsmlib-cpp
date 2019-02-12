@@ -510,6 +510,12 @@ public:
 	 * Needs access to stateIdentificationSets of this class.
 	 */
 	friend void testCalcStateIdentificationSets(Fsm &m);
+
+	/**
+     * Test function for Fsm::calcStateIdentificationSetsFast().
+     * Needs access to stateIdentificationSets of this class.
+     */
+	friend void testCalcStateIdentificationSetsFast(Fsm &m);
 	//--------------------------------------------
 
 };
