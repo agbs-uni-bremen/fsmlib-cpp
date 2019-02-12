@@ -488,6 +488,15 @@ public:
 	const std::vector<std::shared_ptr<OFSMTable>>& calcAndGetOfsmTbls();
 
 	const std::vector<std::shared_ptr<Tree>>& getStateIdentificationSets();
+
+	/**
+	 * Test function for InputTrace FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
+                                             const vector<shared_ptr<OFSMTable>>& ofsmTblLst,
+                                             const int maxInput,
+                                             const int maxOutput).
+	   Needs access to ofsmTables of this class.
+	*/
+	friend void testCalcDistinguishingTrace2(Fsm &m);
 	//--------------------------------------------
 
 };
