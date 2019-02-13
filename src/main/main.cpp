@@ -1918,26 +1918,9 @@ bool languageIntersectionCheck(const Fsm &m1, const Fsm &m2, const Fsm &intersec
 	return true;
 }
 
-//// get copy of m
-//const Fsm copyOfM = Fsm(m);
-//
-//// use Algorithm to calculate result
-//const auto w = m.getCharacterisationSet();
-//
-//// first check invariant of m
-//bool invariantViolation = not checkFsmClassInvariant(m);
-//fsmlib_assert("TC", not invariantViolation, "Fsm class invariant still holds for M after calculation.");
-//// stop test execution at this point if invariant of m does not hold anymore
-//if (invariantViolation) return;
-//
-//// check definition of 'Characterisation Set' for w
-//fsmlib_assert("TC", isCharaterisationSet(m, w), "Result is a Characterisation Set for M.");
-//
-//fsmlib_assert("TC", *m.characterisationSet->getIOLists().getIOLists() == *w.getIOLists(), "Result is stored in attribute.");
-//
-//// check if structure of m has changed
-//fsmlib_assert("TC", checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
-
+/**
+ * Test function for Fsm::intersect(const Fsm & f).
+ */
 void testIntersection(Fsm &m1, const Fsm &m2) {
 	// get copy of m1 and m2
     const Fsm copyOfM1 = Fsm(m1);
@@ -1960,6 +1943,31 @@ void testIntersection(Fsm &m1, const Fsm &m2) {
 	fsmlib_assert("TC", checkForEqualStructure(m1, copyOfM1), "M1 was not changed by algorithm");
 }
 
+/**
+ * Test function for Fsm::intersect(const Fsm & f). (Dfsm Context)
+ */
+void testIntersection(Dfsm &m1, const Fsm &m2) {
+	// get copy of m1 and m2
+	const Dfsm copyOfM1 = Dfsm(m1);
+
+	// use Algorithm to calculate result
+	const Fsm intersection = m1.intersect(m2);
+
+	// first check invariant for m1 and intersection   (we don't need to check invariant for m2 because it's const)
+	bool invariantViolationOfM1 = not checkDfsmClassInvariant(m1);
+	fsmlib_assert("TC", not invariantViolationOfM1, "Dfsm class invariant still holds for M1 after calculation.");
+	bool invariantViolationOfIntersection = not checkFsmClassInvariant(intersection);
+	fsmlib_assert("TC", not invariantViolationOfIntersection, "Fsm class invariant holds for intersection after calculation.");
+	// stop test execution at this point if invariant of m or intersection does not hold anymore
+	if (invariantViolationOfM1 || invariantViolationOfIntersection) return;
+
+	// check language intersection
+	fsmlib_assert("TC", languageIntersectionCheck(m1, m2, intersection), "Language of the result is intersection of L(M1) and L(M2)");
+
+	// check for forbidden side effects
+	fsmlib_assert("TC", checkForEqualStructure(m1, copyOfM1), "M1 was not changed by algorithm");
+}
+
 /*
  *	Random Test Suite for test of Fsm::getCharacterisationSet().
 */
@@ -1967,38 +1975,34 @@ void intersection_TS_Random() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	for (int i = 0; i < 100; ++i) {
 		cout << "i:" << i << endl;
-		auto m1 = Fsm::createRandomFsm("M1", 4, 4, 5, make_shared<FsmPresentationLayer>());
-		const auto m2 = m1->createMutant("M", 2, 2);
+		auto m1 = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+		const auto m2 = m1->createMutant("M2", 2, 2);
 		testIntersection(*m1, *m2);
 	}
-}
 
-void testLanguageInterSectionCheck() {
-	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	for (int i = 0; i < 10; ++i) {
-		shared_ptr<Fsm> m1 = Fsm::createRandomFsm("M1",
-			5,
-			5,
-			10,
-			pl);
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		auto m1 = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+		const auto m2 = Fsm::createRandomFsm("M2", 4, 4, 10, make_shared<FsmPresentationLayer>());
+		testIntersection(*m1, *m2);
+	}
 
-		shared_ptr<Fsm> m2 = m1->createMutant("M2", 0, 1);
-		//shared_ptr<Fsm> m2 = Fsm::createRandomFsm("M2",
-		//	5,
-		//	5,
-		//	10,
-		//	pl);
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		auto m1 = Dfsm("M", 15, 4, 4, pl);
+		//auto m1 = createRandomDfsm("M1", 15, 4, 4, pl);
+		const auto m2 = m1.createMutant("M2", 2, 2);
+		testIntersection(m1, *m2);
+	}
 
-		Fsm intersection = m1->intersect(*m2);
-
-		if (not languageIntersectionCheck(*m1, *m2, intersection)) {
-			cout << "Error found in iteration " << i << endl;
-			return;
-		}
-
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		//auto m = Dfsm("M", 15, 4, 4, pl);
+		auto m1 = createRandomDfsm("M1", 15, 4, 4, pl);
+		const auto m2 = createRandomDfsm("M1", 15, 4, 4, pl);
+		testIntersection(m1, m2);
 	}
 }
-
 
 
 // ====================================================================================================
