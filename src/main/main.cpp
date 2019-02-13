@@ -1085,72 +1085,7 @@ bool ioEquivalenceCheck(std::shared_ptr<FsmNode> q, std::shared_ptr<FsmNode> u) 
 	return true;
 }
 
-typedef std::unordered_set<std::shared_ptr<FsmNode>> reachedStates_t;
-typedef std::tuple<reachedStates_t, reachedStates_t, reachedStates_t> reachedStatesTuple_t;
 
-template<typename T>
-bool containsTuple(T &lst, reachedStatesTuple_t &tuple)
-{
-	typename T::const_iterator it;
-	for (it = lst.begin(); it != lst.end(); ++it)
-	{
-		if(std::get<0>(*it) == std::get<0>(tuple) && std::get<1>(*it) == std::get<1>(tuple) && std::get<2>(*it) == std::get<2>(tuple)){
-			return true;
-		}
-	}
-	return false;
-}
-
-/**
-	This function returns true iff L(intersection) = L(m1) ∩ L(m2). Otherwise the function returns false.
-*/
-bool languageIntersectionCheck(const Fsm &m1, const Fsm &m2, const Fsm &intersection) {
-	// init wl with ({m1.q_0},{m2.q_0},{intersection.q_0})	
-	deque<reachedStatesTuple_t> wl;
-	reachedStates_t a = reachedStates_t{ m1.getInitialState() };
-	reachedStates_t b = reachedStates_t{ m2.getInitialState() };
-	reachedStates_t c = reachedStates_t{ intersection.getInitialState() };
-	
-	wl.push_back({ a,b,c });
-	std::vector<reachedStatesTuple_t> processed;
-
-	while (not wl.empty()) {
-		auto front = wl.front();
-		wl.pop_front();
-		//calculate lblSet_a
-		unordered_set<FsmLabel> lblSet_a = calcLblSet(std::get<0>(front));
-		//calculate lblSet_b
-		unordered_set<FsmLabel> lblSet_b = calcLblSet(std::get<1>(front));
-		//calculate lblSet_c
-		unordered_set<FsmLabel> lblSet_c = calcLblSet(std::get<2>(front));
-
-		// calculate intersection of lblSet_a and lblSet_b
-		unordered_set<FsmLabel> lblSet_i;
-		for (auto &lbl : lblSet_a) {
-			if (lblSet_b.count(lbl) > 0) lblSet_i.insert(lbl);
-		}
-		if (lblSet_c != lblSet_i) return false;
-
-		// insert front to processed if processed does not contain front already
-		if (not containsTuple(processed, front)) {
-			processed.push_back(front);
-		}
-
-		for (auto lbl : lblSet_c) {
-			// calc tgtNds_a
-			reachedStates_t tgtNds_a = calcTargetNodes(std::get<0>(front), lbl);
-			// calc tgtNds_b
-			reachedStates_t tgtNds_b = calcTargetNodes(std::get<1>(front), lbl);
-			// calc tgtNds_c
-			reachedStates_t tgtNds_c = calcTargetNodes(std::get<2>(front), lbl);
-			reachedStatesTuple_t tuple{ tgtNds_a, tgtNds_b, tgtNds_c };
-			if (not containsTuple(wl, tuple) and not containsTuple(processed, tuple)) {
-				wl.push_back(tuple);
-			}
-		}
-	}
-	return true;
-}
 
 /*
 	Checks if given fsm contains a pair of states with the same language. Returns true iff fsm contains states q, q' with
@@ -1613,35 +1548,6 @@ Dfsm createRandomDfsm(const string & fsmName, const int maxNodes, const int maxI
 // ====================================================================================================
 // Prüfverfahren "Spracherhaltende FSM-Transformationen"
 
-void testLanguageInterSectionCheck() {
-	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	for (int i = 0; i < 10; ++i) {
-		shared_ptr<Fsm> m1 = Fsm::createRandomFsm("M1",
-			5,
-			5,
-			10,
-			pl);
-
-		shared_ptr<Fsm> m2 = m1->createMutant("M2", 0, 1);
-		//shared_ptr<Fsm> m2 = Fsm::createRandomFsm("M2",
-		//	5,
-		//	5,
-		//	10,
-		//	pl);
-		
-		Fsm intersection = m1->intersect(*m2);
-
-		if (not languageIntersectionCheck(*m1, *m2, intersection)) {
-			cout << "Error found in iteration " << i << endl;
-			return;
-		}
-		
-	}
-
-
-}
-
-
 
 void testTransformToInitialConnected(Fsm &m1, vector<shared_ptr<FsmNode>> &unreachableNodes) {
 	// determine set of unreachable nodes in m1
@@ -1939,6 +1845,163 @@ void testWMethod() {
 	cout << m.wMethodOnMinimisedFsm(0) << endl;
 	cout << m.Fsm::getCharacterisationSet();
 }
+
+
+
+// ====================================================================================================
+// Prüfverfahren "Konstruktion des Produkts"
+
+typedef std::unordered_set<std::shared_ptr<FsmNode>> reachedStates_t;
+typedef std::tuple<reachedStates_t, reachedStates_t, reachedStates_t> reachedStatesTuple_t;
+
+template<typename T>
+bool containsTuple(T &lst, reachedStatesTuple_t &tuple)
+{
+	typename T::const_iterator it;
+	for (it = lst.begin(); it != lst.end(); ++it)
+	{
+		if (std::get<0>(*it) == std::get<0>(tuple) && std::get<1>(*it) == std::get<1>(tuple) && std::get<2>(*it) == std::get<2>(tuple)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+	This function returns true iff L(intersection) = L(m1) ∩ L(m2). Otherwise the function returns false.
+*/
+bool languageIntersectionCheck(const Fsm &m1, const Fsm &m2, const Fsm &intersection) {
+	// init wl with ({m1.q_0},{m2.q_0},{intersection.q_0})	
+	deque<reachedStatesTuple_t> wl;
+	reachedStates_t a = reachedStates_t{ m1.getInitialState() };
+	reachedStates_t b = reachedStates_t{ m2.getInitialState() };
+	reachedStates_t c = reachedStates_t{ intersection.getInitialState() };
+
+	wl.push_back({ a,b,c });
+	std::vector<reachedStatesTuple_t> processed;
+
+	while (not wl.empty()) {
+		auto front = wl.front();
+		wl.pop_front();
+		//calculate lblSet_a
+		unordered_set<FsmLabel> lblSet_a = calcLblSet(std::get<0>(front));
+		//calculate lblSet_b
+		unordered_set<FsmLabel> lblSet_b = calcLblSet(std::get<1>(front));
+		//calculate lblSet_c
+		unordered_set<FsmLabel> lblSet_c = calcLblSet(std::get<2>(front));
+
+		// calculate intersection of lblSet_a and lblSet_b
+		unordered_set<FsmLabel> lblSet_i;
+		for (auto &lbl : lblSet_a) {
+			if (lblSet_b.count(lbl) > 0) lblSet_i.insert(lbl);
+		}
+		if (lblSet_c != lblSet_i) return false;
+
+		// insert front to processed if processed does not contain front already
+		if (not containsTuple(processed, front)) {
+			processed.push_back(front);
+		}
+
+		for (auto lbl : lblSet_c) {
+			// calc tgtNds_a
+			reachedStates_t tgtNds_a = calcTargetNodes(std::get<0>(front), lbl);
+			// calc tgtNds_b
+			reachedStates_t tgtNds_b = calcTargetNodes(std::get<1>(front), lbl);
+			// calc tgtNds_c
+			reachedStates_t tgtNds_c = calcTargetNodes(std::get<2>(front), lbl);
+			reachedStatesTuple_t tuple{ tgtNds_a, tgtNds_b, tgtNds_c };
+			if (not containsTuple(wl, tuple) and not containsTuple(processed, tuple)) {
+				wl.push_back(tuple);
+			}
+		}
+	}
+	return true;
+}
+
+//// get copy of m
+//const Fsm copyOfM = Fsm(m);
+//
+//// use Algorithm to calculate result
+//const auto w = m.getCharacterisationSet();
+//
+//// first check invariant of m
+//bool invariantViolation = not checkFsmClassInvariant(m);
+//fsmlib_assert("TC", not invariantViolation, "Fsm class invariant still holds for M after calculation.");
+//// stop test execution at this point if invariant of m does not hold anymore
+//if (invariantViolation) return;
+//
+//// check definition of 'Characterisation Set' for w
+//fsmlib_assert("TC", isCharaterisationSet(m, w), "Result is a Characterisation Set for M.");
+//
+//fsmlib_assert("TC", *m.characterisationSet->getIOLists().getIOLists() == *w.getIOLists(), "Result is stored in attribute.");
+//
+//// check if structure of m has changed
+//fsmlib_assert("TC", checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
+
+void testIntersection(Fsm &m1, const Fsm &m2) {
+	// get copy of m1 and m2
+    const Fsm copyOfM1 = Fsm(m1);
+
+    // use Algorithm to calculate result
+	const Fsm intersection = m1.intersect(m2);
+
+	// first check invariant for m1 and intersection   (we don't need to check invariant for m2 because it's const)
+	bool invariantViolationOfM1 = not checkFsmClassInvariant(m1);
+	fsmlib_assert("TC", not invariantViolationOfM1, "Fsm class invariant still holds for M1 after calculation.");
+	bool invariantViolationOfIntersection = not checkFsmClassInvariant(intersection);
+	fsmlib_assert("TC", not invariantViolationOfIntersection, "Fsm class invariant holds for intersection after calculation.");
+	// stop test execution at this point if invariant of m or intersection does not hold anymore
+	if (invariantViolationOfM1 || invariantViolationOfIntersection) return;
+
+	// check language intersection
+	fsmlib_assert("TC", languageIntersectionCheck(m1,m2,intersection), "Language of the result is intersection of L(M1) and L(M2)");
+
+	// check for forbidden side effects
+	fsmlib_assert("TC", checkForEqualStructure(m1, copyOfM1), "M1 was not changed by algorithm");
+}
+
+/*
+ *	Random Test Suite for test of Fsm::getCharacterisationSet().
+*/
+void intersection_TS_Random() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		auto m1 = Fsm::createRandomFsm("M1", 4, 4, 5, make_shared<FsmPresentationLayer>());
+		const auto m2 = m1->createMutant("M", 2, 2);
+		testIntersection(*m1, *m2);
+	}
+}
+
+void testLanguageInterSectionCheck() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	for (int i = 0; i < 10; ++i) {
+		shared_ptr<Fsm> m1 = Fsm::createRandomFsm("M1",
+			5,
+			5,
+			10,
+			pl);
+
+		shared_ptr<Fsm> m2 = m1->createMutant("M2", 0, 1);
+		//shared_ptr<Fsm> m2 = Fsm::createRandomFsm("M2",
+		//	5,
+		//	5,
+		//	10,
+		//	pl);
+
+		Fsm intersection = m1->intersect(*m2);
+
+		if (not languageIntersectionCheck(*m1, *m2, intersection)) {
+			cout << "Error found in iteration " << i << endl;
+			return;
+		}
+
+	}
+}
+
+
+
+// ====================================================================================================
 
 // ====================================================================================================
 // Prüfverfahren "Berechnung von Distinguishing Traces"
@@ -2415,7 +2478,7 @@ void calcDistinguishingTrace1_TS_Random() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	for (int i = 0; i < 100; ++i) {
 		cout << "i:" << i << endl;
-		auto m = Dfsm("M", 15, 4, 2, pl);		
+		auto m = Dfsm("M", 15, 4, 2, pl);
 		auto minM = m.minimise();
 		cout << "minFsm size: " << minM.size() << endl;
 		testCalcDistinguishingTrace1(minM);
@@ -2497,18 +2560,17 @@ int main(int argc, char** argv)
 	//testDriverTransformDfsmToPrimeMachine();
 	//testDriverMinimiseOfsm();
 	//testDriverTransformFsmToPrimeMachine();
-	//B b;
-	//b.foo();
-	//testWMethod();
-	//testLanguageInterSectionCheck();
 
-	// Calculation of Distinguishing Traces Test
+	// Intersection Test:
+	intersection_TS_Random();
+
+	// Calculation of Distinguishing Traces Test:
 	//getCharacterisationSet_Dfsm_TS_Random();
 	//getCharacterisationSet_Fsm_TS_Random();
 	//calcDistinguishingTrace1_TS_Random();
 	//calcDistinguishingTrace2_TS_Random();
 	//calcStateIdentificationSets_TS_Random();
-	calcStateIdentificationSetsFast_TS_Random();
+	//calcStateIdentificationSetsFast_TS_Random();
 	
 
 
