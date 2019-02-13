@@ -1749,18 +1749,6 @@ bool Fsm::distinguishable(const FsmNode& s1, const FsmNode& s2) {
     
 }
 
-//--------------------------------------------
-const std::vector<std::shared_ptr<OFSMTable>>& Fsm::calcAndGetOfsmTbls() {
-	calcOFSMTables();
-	return ofsmTableLst;
-}
-
-const vector<shared_ptr<Tree>>& Fsm::getStateIdentificationSets() {
-	return stateIdentificationSets;
-}
-
-//--------------------------------------------
-
 
 
 

@@ -462,6 +462,12 @@ public:
 	 */
 	friend void testCalcStateIdentificationSets(Dfsm &m);
 
+	/**
+     * Test function for Fsm::calcStateIdentificationSetsFast().
+     * Needs access to stateIdentificationSets of this class.
+     */
+	friend void testCalcStateIdentificationSetsFast(Dfsm &m);
+
 	//---------------------------------------------------------------------------------------
     
 };
