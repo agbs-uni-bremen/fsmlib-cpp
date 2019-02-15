@@ -107,6 +107,11 @@ public:
      Create a random mutant of this DFSM
      */
     void createAtRandom();
+
+	/**
+	 Create a random mutant of this DFSM. Repeatable variant. (srand() already called)
+	 */
+	void createAtRandomRepeatable();
     
 	/**
 	Random creation of a completely defined deterministic FSM
@@ -117,12 +122,14 @@ public:
 	@param maxOutput Maximal value of (integer) output alphabet - admissible
 	values are 0..maxOutput
 	@param presentationLayer The presentation layer used by the DFSM
+	@param repeatable true if Dfsm generation should be repeatable (srand() already called)
 	*/
 	Dfsm(const std::string & fsmName,
          const int maxNodes,
          const int maxInput,
          const int maxOutput,
-         const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+         const std::shared_ptr<FsmPresentationLayer> presentationLayer,
+         const bool repeatable = false);
 
 	/**
 	Create a DFSM from a list of nodes

@@ -429,31 +429,35 @@ Dfsm::Dfsm(const string & fname,
 void Dfsm::createAtRandom()
 {
     srand(getRandomSeed());
-    
-    for (unsigned int i = 0; i < nodes.size(); ++ i)
-    {
-        nodes [i] = make_shared<FsmNode>(i, presentationLayer);
-    }
-    
-    for (unsigned int i = 0; i < nodes.size(); ++ i)
-    {
-        shared_ptr<FsmNode> source = nodes.at(i);
-        
-        for (int input = 0; input <= maxInput; ++ input)
-        {
-            int nTarget = rand() % nodes.size();
-            shared_ptr<FsmNode> target = nodes.at(nTarget);
-            int output = rand() % (maxOutput + 1);
-            shared_ptr<FsmTransition> transition =
-            make_shared<FsmTransition>(source,
-                                       target,
-                                       make_shared<FsmLabel>(input,
-                                                             output,
-                                                             presentationLayer));
-            source->addTransition(transition);
-        }
-    }
+	Dfsm::createAtRandomRepeatable();
 }
+
+void Dfsm::createAtRandomRepeatable() {
+	for (unsigned int i = 0; i < nodes.size(); ++i)
+	{
+		nodes[i] = make_shared<FsmNode>(i, presentationLayer);
+	}
+
+	for (unsigned int i = 0; i < nodes.size(); ++i)
+	{
+		shared_ptr<FsmNode> source = nodes.at(i);
+
+		for (int input = 0; input <= maxInput; ++input)
+		{
+			int nTarget = rand() % nodes.size();
+			shared_ptr<FsmNode> target = nodes.at(nTarget);
+			int output = rand() % (maxOutput + 1);
+			shared_ptr<FsmTransition> transition =
+				make_shared<FsmTransition>(source,
+					target,
+					make_shared<FsmLabel>(input,
+						output,
+						presentationLayer));
+			source->addTransition(transition);
+		}
+	}
+}
+
 
 vector<shared_ptr<PkTable> > Dfsm::getPktblLst() const
 {
@@ -501,7 +505,7 @@ Dfsm::Dfsm(const string& fname,
     dfsmTable = nullptr;
 }
 
-Dfsm::Dfsm(const string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer)
+Dfsm::Dfsm(const string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer, const bool repeatable)
 : Fsm(presentationLayer)
 {
     dfsmTable = nullptr;
@@ -511,7 +515,12 @@ Dfsm::Dfsm(const string & fsmName, const int maxNodes, const int maxInput, const
     this->maxInput = maxInput;
     this->maxOutput = maxOutput;
     currentParsedNode = nullptr;
-    createAtRandom();
+	if (not repeatable) {
+		createAtRandom();
+	}
+	else {
+		createAtRandomRepeatable();
+	}   
     ofstream out(getName() + ".txt");
     dumpFsm(out);
     out.close();

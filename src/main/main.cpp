@@ -2531,20 +2531,23 @@ void calcStateIdentificationSets_TS_Random() {
  *	Random Test Suite for test of Fsm::calcStateIdentificationSetsFast().
 */
 void calcStateIdentificationSetsFast_TS_Random() {
-	for (int i = 0; i < 100; ++i) {
-		cout << "i:" << i << endl;
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, make_shared<FsmPresentationLayer>());
-		auto minFsm = fsm->minimise();
-		cout << "minFsm size: " << minFsm.size() << endl;
-		testCalcStateIdentificationSetsFast(minFsm);
-	}
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, make_shared<FsmPresentationLayer>());
+	//	auto minFsm = fsm->minimise();
+	//	cout << "minFsm size: " << minFsm.size() << endl;
+	//	testCalcStateIdentificationSetsFast(minFsm);
+	//}
+	const int seed = 1376;
+	srand(seed);
 
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	for (int i = 0; i < 100; ++i) {
 		cout << "i:" << i << endl;
-		auto m = Dfsm("M", 15, 4, 4, pl);
+		auto m = Dfsm("M", 15, 4, 4, pl, true);
 		auto minM = m.minimise();
 		cout << "minFsm size: " << minM.size() << endl;
+		cout << minM << endl;
 		testCalcStateIdentificationSets(minM);
 	}
 }
@@ -2552,6 +2555,19 @@ void calcStateIdentificationSetsFast_TS_Random() {
 
 
 // ====================================================================================================
+void foo() {
+	cout << rand() << endl;
+}
+
+void bar() {
+	foo();
+}
+
+void randomTest() {
+	//for (int i = 0; i < 5; i++)
+	//	printf(" %d ", rand());
+	
+}
 
 int main(int argc, char** argv)
 {
@@ -2566,7 +2582,7 @@ int main(int argc, char** argv)
 	//testDriverTransformFsmToPrimeMachine();
 
 	// Intersection Test:
-	intersection_TS_Random();
+	//intersection_TS_Random();
 
 	// Calculation of Distinguishing Traces Test:
 	//getCharacterisationSet_Dfsm_TS_Random();
@@ -2574,7 +2590,9 @@ int main(int argc, char** argv)
 	//calcDistinguishingTrace1_TS_Random();
 	//calcDistinguishingTrace2_TS_Random();
 	//calcStateIdentificationSets_TS_Random();
-	//calcStateIdentificationSetsFast_TS_Random();
+	calcStateIdentificationSetsFast_TS_Random();
+
+	//randomTest();
 	
 
 
