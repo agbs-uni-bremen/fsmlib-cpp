@@ -2581,8 +2581,39 @@ void bar() {
 }
 
 void randomTest() {
-	//for (int i = 0; i < 5; i++)
-	//	printf(" %d ", rand());
+	const int seed = 1239401;
+	srand(seed);
+
+	for (int i = 0; i < 100; ++i) {
+		int size = rand() % 10 + 1;
+		int mI = rand() % 7;
+		int mO = mI;
+		auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
+		cout << *fsm << endl;
+		cout << fsm->minimise() << endl;
+		cout << "size: " << size << ", mI: " << mI << ", mO: " << mO << endl;
+		for (int j = 0; j < 5; j++) {
+			cout << "mutant " << j << endl;
+			int numOutFaults = rand() % 3;
+			int numTrFaults = rand() % 3;
+			cout << *fsm->createMutantRepeatable("M", numOutFaults, numTrFaults) << endl;			 
+		}
+	}
+
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	for (int i = 0; i < 100; ++i) {
+		int size = rand() % 15 + 1;
+		int mI = rand() % 6;
+		int mO = rand() % 6;
+		auto m = Dfsm("M", size, mI, mO, pl, true);
+		cout << m << endl;
+		//for (int j = 0; j < 5; j++) {
+		//	int numOutFaults = rand() % 3;
+		//	int numTrFaults = rand() % 3;
+		//	cout << *m.createMutantRepeatable("M", numOutFaults, numTrFaults) << endl;
+		//}
+	}
+
 	
 }
 
@@ -2606,10 +2637,10 @@ int main(int argc, char** argv)
 	//getCharacterisationSet_Fsm_TS_Random();
 	//calcDistinguishingTrace1_TS_Random();
 	//calcDistinguishingTrace2_TS_Random();
-	calcStateIdentificationSets_TS_Random();
-	calcStateIdentificationSetsFast_TS_Random();
+	//calcStateIdentificationSets_TS_Random();
+	//calcStateIdentificationSetsFast_TS_Random();
 
-	//randomTest();
+	randomTest();
 	
 
 

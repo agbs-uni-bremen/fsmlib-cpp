@@ -200,7 +200,8 @@ public:
                     const unsigned seed = 0);
 
 	/**
-	 *  Create a completely specified FSM at random. Every state in the FSM
+	 *  Create a completely specified FSM at random in dependance of some
+	 *  seed that was set beforehand with a call to srand(). Every state in the FSM
 	 *  will be reachable, but the FSM may be nondeterministic, non-observable,
 	 *  and not minimal. It is expected that srand() was called beforehand.
 	 *   @param fsmName Name of the FSM to be created
@@ -229,6 +230,18 @@ public:
     std::shared_ptr<Fsm> createMutant(const std::string & fsmName,
                                       const size_t numOutputFaults,
                                       const size_t numTransitionFaults);
+
+	/**
+	 *  Create a mutant of the FSM, producing output faults
+	 *  and/or transition faults only. Mutant is created in dependance of some
+	 *  seed that was set beforehand with a call to srand().
+	 *
+	 *  The number of states remains the same. If FSM is completely
+	 *  specified, the same will hold for the mutant.
+	 */
+	std::shared_ptr<Fsm> createMutantRepeatable(const std::string & fsmName,
+		                                        const size_t numOutputFaults,
+		                                        const size_t numTransitionFaults);
     
     
     /**
