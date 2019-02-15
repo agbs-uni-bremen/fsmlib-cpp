@@ -198,6 +198,25 @@ public:
                     const std::shared_ptr<FsmPresentationLayer>
                     presentationLayer,
                     const unsigned seed = 0);
+
+	/**
+	 *  Create a completely specified FSM at random. Every state in the FSM
+	 *  will be reachable, but the FSM may be nondeterministic, non-observable,
+	 *  and not minimal. It is expected that srand() was called beforehand.
+	 *   @param fsmName Name of the FSM to be created
+	 *   @param maxInput Maximal value of the input alphabet, ranging from
+	 *                   0 to maxInput
+	 *   @param maxOutput Maximal value of the output alphabet in range 0..maxOutput
+	 *   @param maxState  Maximal value of the states in range 0..maxState
+	 *   @return an FSM created at random according to these specifications.
+	 */
+	static std::shared_ptr<Fsm>
+		createRandomFsmRepeatable(const std::string & fsmName,
+			const int maxInput,
+			const int maxOutput,
+			const int maxState,
+			const std::shared_ptr<FsmPresentationLayer>
+			presentationLayer);
     
     
     /**

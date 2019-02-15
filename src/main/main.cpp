@@ -2509,9 +2509,14 @@ void calcDistinguishingTrace2_TS_Random() {
  *	Random Test Suite for test of Fsm::calcStateIdentificationSets().
 */
 void calcStateIdentificationSets_TS_Random() {
+	const int seed = 3447;
+	srand(seed);
 	for (int i = 0; i < 100; ++i) {
 		cout << "i:" << i << endl;
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, make_shared<FsmPresentationLayer>());
+		int size = rand() % 10 + 1;
+		int mI = rand() % 7;
+		int mO = mI;
+		auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
 		auto minFsm = fsm->minimise();
 		cout << "minFsm size: " << minFsm.size() << endl;
 		testCalcStateIdentificationSets(minFsm);
@@ -2520,9 +2525,13 @@ void calcStateIdentificationSets_TS_Random() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	for (int i = 0; i < 100; ++i) {
 		cout << "i:" << i << endl;
-		auto m = Dfsm("M", 15, 4, 4, pl);
+		int size = rand() % 15 + 1;
+		int mI = rand() % 6;
+		int mO = rand() % 6;
+		auto m = Dfsm("M", size, mI, mO, pl, true);
 		auto minM = m.minimise();
 		cout << "minFsm size: " << minM.size() << endl;
+		cout << minM << endl;
 		testCalcStateIdentificationSets(minM);
 	}
 }
@@ -2531,24 +2540,32 @@ void calcStateIdentificationSets_TS_Random() {
  *	Random Test Suite for test of Fsm::calcStateIdentificationSetsFast().
 */
 void calcStateIdentificationSetsFast_TS_Random() {
-	//for (int i = 0; i < 100; ++i) {
-	//	cout << "i:" << i << endl;
-	//	auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, make_shared<FsmPresentationLayer>());
-	//	auto minFsm = fsm->minimise();
-	//	cout << "minFsm size: " << minFsm.size() << endl;
-	//	testCalcStateIdentificationSetsFast(minFsm);
-	//}
 	const int seed = 1376;
 	srand(seed);
+
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		int size = rand() % 10 + 1;
+		int mI = rand() % 7;		
+		int mO = mI;
+		auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
+		auto minFsm = fsm->minimise();
+		cout << "minFsm size: " << minFsm.size() << endl;
+		testCalcStateIdentificationSetsFast(minFsm);
+	}
+
 
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	for (int i = 0; i < 100; ++i) {
 		cout << "i:" << i << endl;
-		auto m = Dfsm("M", 15, 4, 4, pl, true);
+		int size = rand() % 15 + 1;
+		int mI = rand() % 6;
+		int mO = rand() % 6;
+		auto m = Dfsm("M", size, mI, mO, pl, true);
 		auto minM = m.minimise();
 		cout << "minFsm size: " << minM.size() << endl;
 		cout << minM << endl;
-		testCalcStateIdentificationSets(minM);
+		testCalcStateIdentificationSetsFast(minM);
 	}
 }
 
@@ -2589,7 +2606,7 @@ int main(int argc, char** argv)
 	//getCharacterisationSet_Fsm_TS_Random();
 	//calcDistinguishingTrace1_TS_Random();
 	//calcDistinguishingTrace2_TS_Random();
-	//calcStateIdentificationSets_TS_Random();
+	calcStateIdentificationSets_TS_Random();
 	calcStateIdentificationSetsFast_TS_Random();
 
 	//randomTest();
