@@ -2536,6 +2536,30 @@ void calcStateIdentificationSets_TS_Random() {
 	}
 }
 
+shared_ptr<Fsm> createPartialMutant(shared_ptr<Fsm> m) {
+	vector<shared_ptr<FsmNode> > lst;
+	for (int n = 0; n <= m->getMaxState(); n++) {
+		lst.push_back(make_shared<FsmNode>(n, m->getName(), m->getPresentationLayer()));
+	}
+
+	// Now add transitions that correspond exactly to the transitions in
+	// this FSM
+	for (int n = 0; n <= m->getMaxState(); n++) {
+		auto theNewFsmNodeSrc = lst[n];
+		auto theOldFsmNodeSrc = m->getNodes()[n];
+		int ignoreInput = rand() % (m->getMaxInput() + 1);
+		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
+			if (tr->getLabel()->getInput() == ignoreInput) continue;
+			int tgtId = tr->getTarget()->getId();
+			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
+			shared_ptr<FsmTransition> newTr =
+				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
+			theNewFsmNodeSrc->addTransition(newTr);
+		}
+	}
+	return make_shared<Fsm>(m->getName(), m->getMaxInput(), m->getMaxOutput(), lst, m->getPresentationLayer());
+}
+
 /*
  *	Random Test Suite for test of Fsm::calcStateIdentificationSetsFast().
 */
@@ -2546,27 +2570,40 @@ void calcStateIdentificationSetsFast_TS_Random() {
 	for (int i = 0; i < 100; ++i) {
 		cout << "i:" << i << endl;
 		int size = rand() % 10 + 1;
-		int mI = rand() % 7;		
+		int mI = rand() % 7;
 		int mO = mI;
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
-		auto minFsm = fsm->minimise();
+		auto tmp = createPartialMutant(fsm);
+		auto minFsm = tmp->minimise();
 		cout << "minFsm size: " << minFsm.size() << endl;
+		cout << "minFsm cs? " << minFsm.isCompletelyDefined() << endl;
 		testCalcStateIdentificationSetsFast(minFsm);
 	}
 
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	int size = rand() % 10 + 1;
+	//	int mI = rand() % 7;		
+	//	int mO = mI;
+	//	auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
+	//	auto minFsm = fsm->minimise();
+	//	cout << "minFsm size: " << minFsm.size() << endl;
+	//	testCalcStateIdentificationSetsFast(minFsm);
+	//}
 
-	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	for (int i = 0; i < 100; ++i) {
-		cout << "i:" << i << endl;
-		int size = rand() % 15 + 1;
-		int mI = rand() % 6;
-		int mO = rand() % 6;
-		auto m = Dfsm("M", size, mI, mO, pl, true);
-		auto minM = m.minimise();
-		cout << "minFsm size: " << minM.size() << endl;
-		cout << minM << endl;
-		testCalcStateIdentificationSetsFast(minM);
-	}
+
+	//shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	int size = rand() % 15 + 1;
+	//	int mI = rand() % 6;
+	//	int mO = rand() % 6;
+	//	auto m = Dfsm("M", size, mI, mO, pl, true);
+	//	auto minM = m.minimise();
+	//	cout << "minFsm size: " << minM.size() << endl;
+	//	cout << minM << endl;
+	//	testCalcStateIdentificationSetsFast(minM);
+	//}
 }
 
 
@@ -2617,6 +2654,22 @@ void randomTest() {
 	
 }
 
+
+
+//void testCreatePartialMutant() {
+//	const int seed = 1239401;
+//	srand(seed);
+//
+//	for (int i = 0; i < 100; ++i) {
+//		int size = rand() % 10 + 1;
+//		int mI = rand() % 7;
+//		int mO = mI;
+//		auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
+//		cout << fsm->isCompletelyDefined() << endl;
+//		cout << transformToRandomPartial(fsm)->isCompletelyDefined() << endl;
+//	}
+//}
+
 int main(int argc, char** argv)
 {
 	std::cout << "test start" << std::endl;
@@ -2638,10 +2691,9 @@ int main(int argc, char** argv)
 	//calcDistinguishingTrace1_TS_Random();
 	//calcDistinguishingTrace2_TS_Random();
 	//calcStateIdentificationSets_TS_Random();
-	//calcStateIdentificationSetsFast_TS_Random();
+	calcStateIdentificationSetsFast_TS_Random();
 
-	randomTest();
-	
+	//randomTest();
 
 
 
