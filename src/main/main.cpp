@@ -2948,6 +2948,12 @@ void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 	cout << "minComplM.size: " << minComplM.size() << endl;
 	cout << "filteredMutants.size: " << filteredMutants.size() << endl;
 
+	// stop test case is testcases are too long or test suite contains too many test cases
+	if (maxLength > 12 or ts->size() > 2000) {
+		cout << "Test Suite too big or test cases too long. Stop test case." << endl;
+		return;
+	}
+
 	// save outputs of completeM in hash table
 	//unordered_map < int, set<vector<int>>> outputsOfCompleteM;
 	//for (int i = 0; i < ts->getIOLists()->size(); ++i) {
@@ -2968,11 +2974,11 @@ void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 				break;
 			}*/
 		}
-		//fsmlib_assert("TC", ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState()) != diff, "M and mutant are i/o-equivalent iff mutant passed test suite.");
-		if (not diff) {
-			cout << "calcs equivalence" << endl;
-			fsmlib_assert("TC", ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState()), "M and mutant are i/o-equivalent if mutant passed test suite.");
-		}
+		fsmlib_assert("TC", ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState()) != diff, "M and mutant are i/o-equivalent iff mutant passed test suite.");
+		//if (not diff) {
+		//	cout << "calcs equivalence" << endl;
+		//	fsmlib_assert("TC", ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState()), "M and mutant are i/o-equivalent if mutant passed test suite.");
+		//}
 	}
 
 	// check if language of m has changed
@@ -3149,6 +3155,7 @@ void testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 void wMethod_TS_Random2() {
 	const int seed = 12792;
 	srand(seed);
+	shared_ptr<WMethodGenerator> tsGenerator = make_shared<WMethodGenerator>();
 
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	for (int i = 0; i < 50; ++i) {
@@ -3156,9 +3163,9 @@ void wMethod_TS_Random2() {
 		int size = rand() % 6 + 1; // = 6; 
 		int mI = rand() % 4;
 		int mO = (rand() % 6) + 1;
-		//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
-		auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
-		//Dfsm m("M", size, mI, mO, pl, true); m.setMaxState(m.getNodes().size() - 1);
+		auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
+		//auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
+		const size_t nullOutput = m->getMaxOutput() + 1;
 
 		vector<shared_ptr<const Fsm>> mutants;
 		for (int j = 0; j < 20; ++j) {
@@ -3167,11 +3174,9 @@ void wMethod_TS_Random2() {
 			if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
 			auto minMut = m->createMutantRepeatable("Mutant_" + j, numOutFaults, numTrFaults)->minimise();
 			//mutants.push_back(make_shared<Fsm>(minMut));
-			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), m->getMaxOutput() + 1)); // m->getMaxOutput()
+			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput)); // m->getMaxOutput()
 		}
-
-		//testWMethod(*m, mutants, m->getMaxOutput() + 1);
-		testTestTheory(*m, mutants, m->getMaxOutput() + 1, make_shared<WMethodGenerator>());
+		testTestTheory(*m, mutants, nullOutput, tsGenerator);
 	}
 }
 
@@ -3180,6 +3185,8 @@ void wMethod_Dfsm_TS_Random() {
 	const int seed = 412725;
 	srand(seed);
 
+	shared_ptr<WMethodGenerator> tsGenerator = make_shared<WMethodGenerator>();
+
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	for (int i = 0; i < 100; ++i) {
 		cout << "i:" << i << endl;
@@ -3187,6 +3194,8 @@ void wMethod_Dfsm_TS_Random() {
 		int mI = rand() % 6;
 		int mO = (rand() % 6) + 1;
 		Dfsm m("M", size, mI, mO, pl, true); m.setMaxState(m.getNodes().size() - 1);
+		const size_t nullOutput = m.getMaxOutput() + 1;
+		cout << "ic: " << isInitialConnected(m) << endl;
 
 		vector<shared_ptr<const Fsm>> mutants;
 		for (int j = 0; j < 20; ++j) {
@@ -3194,30 +3203,36 @@ void wMethod_Dfsm_TS_Random() {
 			size_t numTrFaults = (rand() % 2);
 			if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
 			auto minMut = m.createMutantRepeatable("Mutant_" + j, numOutFaults, numTrFaults)->minimise();
-			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), m.getMaxOutput()));
+			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput));
 		}
-		testTestTheory(m, mutants, m.getMaxOutput() + 1, make_shared<WMethodGenerator>());
+		testTestTheory(m, mutants, nullOutput, tsGenerator);
 	}
 }
 
 // Test Fsm::wMethodOnMinimisedFsm(...)
 void wMethodOnMinimisedFsm_Fsm_TS_Random() {
-	const int seed = 12792;
+	const int seed = 27161;
 	srand(seed);
 	
 	shared_ptr<WMethodOnMinimisedFsmGenerator> tsGenerator = make_shared<WMethodOnMinimisedFsmGenerator>();
 
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	for (int i = 0; i < 10; ++i) {
+	for (int i = 0; i < 50; ++i) {
 		cout << "i:" << i << endl;
 		int size = rand() % 6 + 1; // = 6; 
 		int mI = rand() % 6;
 		int mO = (rand() % 6) + 1;
-		auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl)->minimise();
-		//auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl))->minimise();
+		//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl)->minimise();
+		auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl))->minimise();
 		//Dfsm m("M", size, mI, mO, pl, true); m.setMaxState(m.getNodes().size() - 1);
 
 		cout << m << endl;
+
+		// filter fsm that have too many states
+		if (m.size() > 30) {
+			cout << "FSM too big. Stop Test Case." << endl;
+			continue;
+		}
 
 		const size_t nullOutput = m.getMaxOutput() + 1;
 
@@ -3229,9 +3244,11 @@ void wMethodOnMinimisedFsm_Fsm_TS_Random() {
 			auto minMut = m.createMutantRepeatable("Mutant_" + j, numOutFaults, numTrFaults)->minimise();
 			//mutants.push_back(make_shared<Fsm>(minMut));
 			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput)); // m->getMaxOutput()
+			cout << "added" << endl;
 		}
 
 		//testWMethod(*m, mutants, m->getMaxOutput() + 1);
+		cout << "invoked" << endl;
 		testTestTheory(m, mutants, nullOutput, tsGenerator);
 	}
 
@@ -3252,7 +3269,7 @@ void wMethodOnMinimisedFsm_Fsm_TS_Random() {
 			size_t numTrFaults = (rand() % 2);
 			if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
 			auto minMut = m.createMutantRepeatable("Mutant_" + j, numOutFaults, numTrFaults)->minimise();
-			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), m.getMaxOutput()));
+			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput));
 		}
 		testTestTheory(m, mutants, nullOutput, tsGenerator);
 	}
@@ -3273,6 +3290,7 @@ void wMethodOnMinimisedDfsm_Dfsm_TS_Random() {
 		int mO = (rand() % 6) + 2;
 		Dfsm m("M", size, mI, mO, pl, true); m.setMaxState(m.getNodes().size() - 1);
 		m = m.minimise();
+		const size_t nullOutput = m.getMaxOutput() + 1;
 
 		vector<shared_ptr<const Fsm>> mutants;
 		for (int j = 0; j < 20; ++j) {
@@ -3280,9 +3298,9 @@ void wMethodOnMinimisedDfsm_Dfsm_TS_Random() {
 			size_t numTrFaults = (rand() % 2);
 			if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
 			auto minMut = m.createMutantRepeatable("Mutant_" + j, numOutFaults, numTrFaults)->minimise();
-			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), m.getMaxOutput()));
+			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput));
 		}
-		testTestTheory(m, mutants, m.getMaxOutput() + 1, tsGenerator);
+		testTestTheory(m, mutants, nullOutput, tsGenerator);
 	}
 }
 
@@ -3290,17 +3308,24 @@ void wMethodOnMinimisedDfsm_Dfsm_TS_Random() {
 void wpMethod_Fsm_TS_Random() {
 	const int seed = 5217;
 	srand(seed);
+	shared_ptr<WpMethodGenerator> tsGenerator = make_shared<WpMethodGenerator>();
 
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	for (int i = 0; i < 10; ++i) {
+	for (int i = 0; i < 50; ++i) {
 		cout << "i:" << i << endl;
 		int size = rand() % 6 + 1; // = 6; 
 		int mI = rand() % 6;
 		int mO = (rand() % 6) + 1;
-		//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
-		auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl))->minimise();
-
+		auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl)->minimise();
+		//auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl))->minimise();
+		const size_t nullOutput = m.getMaxOutput() + 1;
 		cout << m << endl;
+
+		// filter fsm that have too many states
+		if (m.size() > 30) {
+			cout << "FSM too big. Stop Test Case." << endl;
+			continue;
+		}
 
 		vector<shared_ptr<const Fsm>> mutants;
 		for (int j = 0; j < 20; ++j) {
@@ -3316,11 +3341,9 @@ void wpMethod_Fsm_TS_Random() {
 			auto minMut = m.createMutantRepeatable("Mutant_" + j, numOutFaults, numTrFaults)->minimise();
 			cout << "post" << endl;
 			//mutants.push_back(make_shared<Fsm>(minMut));
-			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), m.getMaxOutput() + 1));
+			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput));
 		}
-
-		//testWMethod(*m, mutants, m->getMaxOutput() + 1);
-		testTestTheory(m, mutants, m.getMaxOutput() + 1, make_shared<WpMethodGenerator>());
+		testTestTheory(m, mutants, nullOutput, tsGenerator);
 	}
 }
 
@@ -3328,6 +3351,7 @@ void wpMethod_Fsm_TS_Random() {
 void wpMethod_Dfsm_TS_Random() {
 	const int seed = 712871;
 	srand(seed);
+	shared_ptr<WpMethodGenerator> tsGenerator = make_shared<WpMethodGenerator>();
 
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	for (int i = 0; i < 100; ++i) {
@@ -3337,7 +3361,7 @@ void wpMethod_Dfsm_TS_Random() {
 		int mO = (rand() % 6) + 1;
 		Dfsm m("M", size, mI, mO, pl, true); m.setMaxState(m.getNodes().size() - 1);
 
-		size_t nullOutput = m.getMaxOutput() + 1;
+		const size_t nullOutput = m.getMaxOutput() + 1;
 
 		vector<shared_ptr<const Fsm>> mutants;
 		for (int j = 0; j < 20; ++j) {
@@ -3347,14 +3371,15 @@ void wpMethod_Dfsm_TS_Random() {
 			auto minMut = m.createMutantRepeatable("Mutant_" + j, numOutFaults, numTrFaults)->minimise();
 			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput));
 		}
-		testTestTheory(m, mutants, nullOutput, make_shared<WpMethodGenerator>());
+		testTestTheory(m, mutants, nullOutput, tsGenerator);
 	}
 }
 
 // Test Dfsm::wpMethodOnMinimisedDfsm(...)
 void wpMethodOnMinimisedDfsm_Dfsm_TS_Random() {
-	const int seed = 712871;
+	const int seed = 625166;
 	srand(seed);
+	shared_ptr<WpMethodOnMinimisedDfsmGenerator> tsGenerator = make_shared<WpMethodOnMinimisedDfsmGenerator>();
 
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	for (int i = 0; i < 100; ++i) {
@@ -3365,7 +3390,7 @@ void wpMethodOnMinimisedDfsm_Dfsm_TS_Random() {
 		Dfsm m("M", size, mI, mO, pl, true); m.setMaxState(m.getNodes().size() - 1);
 		m = m.minimise();
 
-		size_t nullOutput = m.getMaxOutput() + 1;
+		const size_t nullOutput = m.getMaxOutput() + 1;
 
 		vector<shared_ptr<const Fsm>> mutants;
 		for (int j = 0; j < 20; ++j) {
@@ -3375,67 +3400,113 @@ void wpMethodOnMinimisedDfsm_Dfsm_TS_Random() {
 			auto minMut = m.createMutantRepeatable("Mutant_" + j, numOutFaults, numTrFaults)->minimise();
 			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput));
 		}
-		testTestTheory(m, mutants, nullOutput, make_shared<WpMethodOnMinimisedDfsmGenerator>());
+		testTestTheory(m, mutants, nullOutput, tsGenerator);
 	}
 }
 
-
-// ====================================================================================================
-
-void randomTest() {
-	const int seed = 1239401;
+// test Fsm::hsiMethod(...)
+void hsiMethod_Fsm_TS_Random() {
+	const int seed = 12;
 	srand(seed);
+	shared_ptr<HsiMethodGenerator> tsGenerator = make_shared<HsiMethodGenerator>();
 
-	for (int i = 0; i < 100; ++i) {
-		int size = rand() % 10 + 1;
-		int mI = rand() % 7;
-		int mO = mI;
-		auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
-		cout << *fsm << endl;
-		cout << fsm->minimise() << endl;
-		cout << "size: " << size << ", mI: " << mI << ", mO: " << mO << endl;
-		for (int j = 0; j < 5; j++) {
-			cout << "mutant " << j << endl;
-			int numOutFaults = rand() % 3;
-			int numTrFaults = rand() % 3;
-			cout << *fsm->createMutantRepeatable("M", numOutFaults, numTrFaults) << endl;			 
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	for (int i = 0; i < 50; ++i) {
+		cout << "i:" << i << endl;
+		int size = rand() % 6 + 1; // = 6; 
+		int mI = rand() % 6;
+		int mO = (rand() % 6) + 1;
+		//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
+		auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl))->minimise();
+		const size_t nullOutput = m.getMaxOutput() + 1;
+
+		// filter fsm that have too many states
+		if (m.size() > 30) {
+			cout << "FSM too big. Stop Test Case." << endl;
+			continue;
 		}
+
+		vector<shared_ptr<const Fsm>> mutants;
+		for (int j = 0; j < 20; ++j) {
+			size_t numOutFaults = (rand() % 2);
+			size_t numTrFaults = (rand() % 2);
+			if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
+			auto minMut = m.createMutantRepeatable("Mutant_" + j, numOutFaults, numTrFaults)->minimise();
+			//mutants.push_back(make_shared<Fsm>(minMut));
+			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput));
+		}
+		testTestTheory(m, mutants, nullOutput, tsGenerator);
 	}
+}
+
+// Test Dfsm::hsiMethod(...)
+void hsiMethod_Dfsm_TS_Random() {
+	const int seed = 907;
+	srand(seed);
+	shared_ptr<HsiMethodGenerator> tsGenerator = make_shared<HsiMethodGenerator>();
 
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
 		int size = rand() % 15 + 1;
 		int mI = rand() % 6;
-		int mO = rand() % 6;
-		auto m = Dfsm("M", size, mI, mO, pl, true);
-		cout << m << endl;
-		//for (int j = 0; j < 5; j++) {
-		//	int numOutFaults = rand() % 3;
-		//	int numTrFaults = rand() % 3;
-		//	cout << *m.createMutantRepeatable("M", numOutFaults, numTrFaults) << endl;
-		//}
-	}
+		int mO = (rand() % 6) + 1;
+		Dfsm m("M", size, mI, mO, pl, true); m.setMaxState(m.getNodes().size() - 1);
 
-	
+		const size_t nullOutput = m.getMaxOutput() + 1;
+
+		vector<shared_ptr<const Fsm>> mutants;
+		for (int j = 0; j < 20; ++j) {
+			size_t numOutFaults = (rand() % 2);
+			size_t numTrFaults = (rand() % 2);
+			if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
+			auto minMut = m.createMutantRepeatable("Mutant_" + j, numOutFaults, numTrFaults)->minimise();
+			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput));
+		}
+		testTestTheory(m, mutants, nullOutput, tsGenerator);
+	}
 }
 
-
-
-void testCreatePartialMutant() {
-	const int seed = 1239401;
+// Test Dfsm::hMethodOnMinimisedDfsm(...)
+void hMethodOnMinimisedDfsm_Dfsm_TS_Random() {
+	const int seed = 3234;
 	srand(seed);
+	shared_ptr<HMethodOnMinimisedDfsmGenerator> tsGenerator = make_shared<HMethodOnMinimisedDfsmGenerator>();
 
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	for (int i = 0; i < 100; ++i) {
-		int size = rand() % 10 + 1;
-		int mI = rand() % 7;
-		int mO = mI;
-		auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
-		cout << "---------" << endl;
-		cout << fsm->isCompletelyDefined() << endl;
-		auto pm = createPartialMutant(fsm);
-		cout << *pm << endl;
-		cout << *transformToComplete(pm) << endl;
+		cout << "i:" << i << endl;
+		int size = rand() % 20 + 2;
+		int mI = rand() % 6;
+		int mO = (rand() % 6) + 1;
+		Dfsm m("M", size, mI, mO, pl, true); m.setMaxState(m.getNodes().size() - 1);
+		m = m.minimise();
+
+		if (m.size() < 2) {
+			cout << "M has less than 2 states. Stop test case." << endl;
+		}
+
+		const size_t nullOutput = m.getMaxOutput() + 1;
+
+		vector<shared_ptr<const Fsm>> mutants;
+		for (int j = 0; j < 20; ++j) {
+			size_t numOutFaults = (rand() % 2);
+			size_t numTrFaults = (rand() % 2);
+			if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
+			auto minMut = m.createMutantRepeatable("Mutant_" + j, numOutFaults, numTrFaults)->minimise();
+			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput));
+		}
+		testTestTheory(m, mutants, nullOutput, tsGenerator);
 	}
+}
+
+// ====================================================================================================
+
+void readTestCase() {
+	string line;
+	stringstream ss(line);
+	vector<string> fsmFiles;
+	for (string fsmFile; getline(ss, fsmFile, ' '); fsmFiles.push_back(fsmFile));
 }
 
 
@@ -3449,7 +3520,7 @@ int main(int argc, char** argv)
 	//testDriverTransformToOfsm();
 	//testDriverTransformDfsmToPrimeMachine();
 	//testDriverMinimiseOfsm();
-	//testDriverTransformFsmToPrimeMachine();
+	testDriverTransformFsmToPrimeMachine();
 
 	// Intersection Test:
 	//intersection_TS_Random();
@@ -3465,12 +3536,18 @@ int main(int argc, char** argv)
 	// Complete Test Theories Test:
 	//tMethod_TS_Random();
 
+	wMethod_TS_Random2();
+	//wMethod_Dfsm_TS_Random();
 	//wMethodOnMinimisedFsm_Fsm_TS_Random();
-	wMethodOnMinimisedDfsm_Dfsm_TS_Random();
+	//wMethodOnMinimisedDfsm_Dfsm_TS_Random();
+	//wpMethod_Fsm_TS_Random();
+	//wpMethod_Dfsm_TS_Random();
+	//wpMethodOnMinimisedDfsm_Dfsm_TS_Random();
+	//hsiMethod_Fsm_TS_Random();
+	//hsiMethod_Dfsm_TS_Random();
+	//hMethodOnMinimisedDfsm_Dfsm_TS_Random();
 
-	//randomTest();
-	
-	//testCreatePartialMutant();
+
 
 	//testIOEquivalenceCheck();
 	//testCheckForEqualStructure();
