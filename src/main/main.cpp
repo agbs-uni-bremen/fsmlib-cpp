@@ -2641,11 +2641,13 @@ shared_ptr<Fsm> transformToComplete(shared_ptr<Fsm> m) {
  * Transform m to a complete Fsm by adding self loops in states for undefined inputs producing some nullouput not contained in the
  * regular output alphabet.
  */
-shared_ptr<Fsm> transformToComplete(shared_ptr<Fsm> m, size_t nullOutput) {
+shared_ptr<Fsm> transformToComplete(const shared_ptr<const Fsm> m, const size_t nullOutput) {
 	vector<shared_ptr<FsmNode> > lst;
 	for (int n = 0; n <= m->getMaxState(); n++) {
 		lst.push_back(make_shared<FsmNode>(n, m->getName(), m->getPresentationLayer()));
 	}
+
+	bool partial = false;
 
 	// Now add transitions that correspond exactly to the transitions in
 	// this FSM
@@ -2664,13 +2666,20 @@ shared_ptr<Fsm> transformToComplete(shared_ptr<Fsm> m, size_t nullOutput) {
 		// add self loops with nullOutputs for undefined inputs
 		for (int input = 0; input <= m->getMaxInput(); ++input) {
 			if (definedInputs.count(input) == 0) {
+				partial = true;
 				shared_ptr<FsmTransition> newTr =
 					make_shared<FsmTransition>(theNewFsmNodeSrc, lst[n], make_shared<FsmLabel>(input, nullOutput, m->getPresentationLayer()));
 				theNewFsmNodeSrc->addTransition(newTr);
 			}
 		}
-	} // m->getMaxOutput() + 1 / nullOutput / maxOutput if already complete
-	return make_shared<Fsm>(m->getName(), m->getMaxInput(), m->getMaxOutput() + 1, lst, m->getPresentationLayer());
+	} 
+	if (partial) {
+		return make_shared<Fsm>(m->getName(), m->getMaxInput(), nullOutput, lst, m->getPresentationLayer());
+	}
+	else {
+		return make_shared<Fsm>(m->getName(), m->getMaxInput(), m->getMaxOutput(), lst, m->getPresentationLayer());
+	}
+	
 }
 
 /*
@@ -2908,24 +2917,26 @@ void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 	const Fsm copyOfM = Fsm(m);
 	// calculate numAddStates 
 	vector<shared_ptr<const Fsm>> filteredMutants;
-	size_t numAddStates = 0;
+	int numAddStates = 0;
 	auto completeM = transformToComplete(make_shared<Fsm>(m), nullOutput);
 	auto minComplM = completeM->minimise();
 	if (minComplM.size() > 30) {
 		cout << "FSM too big. Stop Test Case." << endl;
 		return;
 	}
-	const size_t maxAddStates = 2; //3;
+	const int maxAddStates = 2; //3;	
 
 	// filter out Fsms with too many states
 	for (const auto mutant : mutants) {
-		int sizeDiff = mutant->size() - minComplM.size();
-		if (sizeDiff > maxAddStates) continue;
+		int sizeDiff = mutant->size() - minComplM.size();	
+		cout << "maxAddStates: " <<  maxAddStates << endl;
+		cout << "sizeDiff: " << sizeDiff << endl;
+		if (sizeDiff > maxAddStates) continue;		
 		filteredMutants.push_back(mutant);
 		if (sizeDiff > numAddStates) {
 			numAddStates = sizeDiff;
 		}
-	}
+	}		
 
 	// Calculate complete test suite
 	const auto ts = tsGen->generateTestSuite(m, numAddStates);
@@ -2995,14 +3006,14 @@ void testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 	const Dfsm copyOfM = Dfsm(m);
 	// calculate numAddStates 
 	vector<shared_ptr<const Fsm>> filteredMutants;
-	size_t numAddStates = 0;
+	int numAddStates = 0;
 	auto completeM = transformToComplete(make_shared<Dfsm>(m), nullOutput);
 	auto minComplM = completeM->minimise();
 	if (minComplM.size() > 50) {
 		cout << "FSM too big. Stop Test Case." << endl;
 		return;
 	}
-	const size_t maxAddStates = 3;
+	const int maxAddStates = 3;
 	for (const auto mutant : mutants) {
 		int sizeDiff = mutant->size() - minComplM.size();
 		if (sizeDiff > maxAddStates) continue;
@@ -3151,6 +3162,53 @@ void testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 //	}
 //}
 
+struct TestTheoryTestCase {
+	string id;
+	string rmPath;
+	vector<string> mutantPaths;
+};
+
+shared_ptr<vector<TestTheoryTestCase>> parseTestTheoryTSFile(const string &testSuitePath) {
+	string fname = testSuitePath;
+	vector<TestTheoryTestCase> testSuite;
+	ifstream inputFile(fname);
+	if (inputFile.is_open())
+	{
+		string line;
+
+		while (getline(inputFile, line))
+		{
+			vector<string> lineContent;
+			stringstream ss(line);
+
+			for (string elem; getline(ss, elem, ';'); lineContent.push_back(elem));
+
+			TestTheoryTestCase tc;
+			tc.id = lineContent.at(0);
+			tc.rmPath = lineContent.at(1);
+			//tc.mutantPaths 
+
+
+			for (int i = 2; i < lineContent.size(); ++i) {
+				tc.mutantPaths.push_back(lineContent.at(i));
+				//cout << lineContent.at(i) << endl;
+				//shared_ptr<Fsm> fsm = make_shared<Fsm>(lineContent.at(i), make_shared<FsmPresentationLayer>(), "M");
+				//fsmlib_assert("TC", checkFsmClassInvariant(*fsm), "inv check");
+				//cout << fsm->size() << endl;
+			}
+			testSuite.push_back(tc);
+		}
+		inputFile.close();
+
+		return make_shared<vector<TestTheoryTestCase>>(testSuite);
+	}
+	else
+	{
+		cout << "Unable to open input file" << endl;
+		exit(EXIT_FAILURE);
+	}
+}
+
 // Test Fsm::wMethod(...)
 void wMethod_TS_Random2() {
 	const int seed = 12792;
@@ -3158,25 +3216,41 @@ void wMethod_TS_Random2() {
 	shared_ptr<WMethodGenerator> tsGenerator = make_shared<WMethodGenerator>();
 
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	for (int i = 0; i < 50; ++i) {
-		cout << "i:" << i << endl;
-		int size = rand() % 6 + 1; // = 6; 
-		int mI = rand() % 4;
-		int mO = (rand() % 6) + 1;
-		auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
-		//auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
-		const size_t nullOutput = m->getMaxOutput() + 1;
+	//for (int i = 0; i < 50; ++i) {
+	//	cout << "i:" << i << endl;
+	//	int size = rand() % 6 + 1; // = 6; 
+	//	int mI = rand() % 4;
+	//	int mO = (rand() % 6) + 1;
+	//	auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
+	//	//auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
+	//	const size_t nullOutput = m->getMaxOutput() + 1;
 
-		vector<shared_ptr<const Fsm>> mutants;
-		for (int j = 0; j < 20; ++j) {
-			size_t numOutFaults = (rand() % 2);
-			size_t numTrFaults = (rand() % 2);
-			if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
-			auto minMut = m->createMutantRepeatable("Mutant_" + j, numOutFaults, numTrFaults)->minimise();
-			//mutants.push_back(make_shared<Fsm>(minMut));
-			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput)); // m->getMaxOutput()
+	//	vector<shared_ptr<const Fsm>> mutants;
+	//	for (int j = 0; j < 20; ++j) {
+	//		size_t numOutFaults = (rand() % 2);
+	//		size_t numTrFaults = (rand() % 2);
+	//		if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
+	//		auto minMut = m->createMutantRepeatable("Mutant_" + j, numOutFaults, numTrFaults)->minimise();
+	//		//mutants.push_back(make_shared<Fsm>(minMut));
+	//		mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput)); // m->getMaxOutput()
+	//	}
+	//	testTestTheory(*m, mutants, nullOutput, tsGenerator);
+	//}
+
+	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Fsm_wMethod.testsuite");
+	for (auto tc : *testSuite) {
+		cout << "Start Test Case : " << tc.id << endl;
+		shared_ptr<Fsm> ref = make_shared<Fsm>(tc.rmPath, pl, "M");
+		vector<shared_ptr<const Fsm>> partialMutants;
+		for (int i = 0; i < tc.mutantPaths.size(); ++i) {
+			shared_ptr<const Fsm> mutant = make_shared<Fsm>(tc.mutantPaths.at(i), pl, "Mut_" + i);
+			partialMutants.push_back(mutant);
 		}
-		testTestTheory(*m, mutants, nullOutput, tsGenerator);
+		size_t nullOutput = getMaxOutput(*ref, partialMutants) + 1;
+
+		vector<shared_ptr<const Fsm>> completeMutants;
+		for (auto m : partialMutants) completeMutants.push_back(transformToComplete(m, nullOutput));
+		testTestTheory(*ref, completeMutants, nullOutput, tsGenerator);
 	}
 }
 
@@ -3502,17 +3576,136 @@ void hMethodOnMinimisedDfsm_Dfsm_TS_Random() {
 
 // ====================================================================================================
 
-void readTestCase() {
-	string line;
-	stringstream ss(line);
-	vector<string> fsmFiles;
-	for (string fsmFile; getline(ss, fsmFile, ' '); fsmFiles.push_back(fsmFile));
+
+//void createMutants() {
+//	// set accordingly
+//	const string path = "../../../resources/TestSuites/TestTheories/RM31.fsm";
+//	const string writePathPref = "../../../resources/TestSuites/TestTheories/Mut32_";
+//	const int numAddStates = 1;
+//	const int sizeOfMinRef = 4;
+//
+//	shared_ptr<Fsm> fsm = make_shared<Fsm>(path, make_shared<FsmPresentationLayer>(), "M");
+//    cout << "initIdx: " << fsm->getInitStateIdx() << endl;
+//    cout << "mI: " << fsm->getMaxInput() << endl;
+//	cout << "mO:" << fsm->getMaxOutput() << endl;
+//	cout << "size: " << fsm->getNodes().size() << endl;
+//	cout << "comp. spec: " << fsm->isCompletelyDefined() << endl;
+//	cout << "det: " << fsm->isDeterministic() << endl;
+//	cout << "obs: " << fsm->isObservable() << endl;
+//	cout << checkFsmClassInvariant(*fsm) << endl;
+//
+//
+//	// create Mutants
+//	srand(time(NULL));
+//	cout << rand()<< endl;
+//	int numMutants = 0;
+//	vector<shared_ptr<Fsm>> mutants;
+//	while (numMutants < 5) {
+//		size_t numOutFaults = rand() % 3;
+//		size_t numTrFaults = rand() % 3;
+//		if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;
+//		cout << "numOutFaults: " << numOutFaults << endl;
+//		cout << "numTrFaults: " << numTrFaults << endl;
+//		auto mutant = fsm->createMutant("Mut", numOutFaults, numTrFaults)->minimise();
+//		if (mutant.size() == sizeOfMinRef + numAddStates) {//(mutant.size() <= sizeOfMinRef + numAddStates) {
+//			cout << "created mutant with size " << mutant.size() << endl;
+//			++numMutants;
+//			mutants.push_back(make_shared<Fsm>(mutant));
+//		}
+//		else {
+//			cout << "too big" << endl;
+//		}
+//	}
+//
+//	//vector<shared_ptr<Fsm>> remaining;
+//	//for (auto m : mutants) {
+//	//	bool found = false;
+//	//	for (auto mu : remaining) {
+//	//		if (not checkForEqualStructure(*m, *mu)) {
+//	//			remaining.push_back(m)
+//	//		}
+//	//	}
+//	//}
+//
+//	// write mutants 
+//	for (int i = 0; i < mutants.size(); ++i) {
+//		std::stringstream writePath;
+//		writePath << writePathPref << i << ".fsm";
+//		ofstream outFile(writePath.str());
+//		mutants.at(i)->dumpFsm(outFile);
+//		outFile.close();
+//	}
+//}
+
+void createMutantsForTMethod() {
+	// set accordingly
+	const string path = "../../../resources/TestSuites/TestTheories/RM25.fsm";
+	const string writePathPref = "../../../resources/TestSuites/TestTheories/Mut25_t_";
+	const int numAddStates = 0;
+	const int sizeOfMinRef = 3;
+
+	shared_ptr<Fsm> fsm = make_shared<Fsm>(path, make_shared<FsmPresentationLayer>(), "M");
+    cout << "initIdx: " << fsm->getInitStateIdx() << endl;
+    cout << "mI: " << fsm->getMaxInput() << endl;
+	cout << "mO:" << fsm->getMaxOutput() << endl;
+	cout << "size: " << fsm->getNodes().size() << endl;
+	cout << "comp. spec: " << fsm->isCompletelyDefined() << endl;
+	cout << "det: " << fsm->isDeterministic() << endl;
+	cout << "obs: " << fsm->isObservable() << endl;
+	cout << checkFsmClassInvariant(*fsm) << endl;
+
+
+	// create Mutants
+	srand(time(NULL));
+	cout << rand()<< endl;
+	int numMutants = 0;
+	vector<shared_ptr<Fsm>> mutants;
+	while (numMutants < 5) {
+		size_t numOutFaults = 1;
+		size_t numTrFaults = 0;
+		
+		cout << "numOutFaults: " << numOutFaults << endl;
+		cout << "numTrFaults: " << numTrFaults << endl;
+		auto mutant = fsm->createMutant("Mut", numOutFaults, numTrFaults);
+		
+			
+			++numMutants;
+			mutants.push_back(mutant);
+
+	}
+
+	//vector<shared_ptr<Fsm>> remaining;
+	//for (auto m : mutants) {
+	//	bool found = false;
+	//	for (auto mu : remaining) {
+	//		if (not checkForEqualStructure(*m, *mu)) {
+	//			remaining.push_back(m)
+	//		}
+	//	}
+	//}
+
+	// write mutants 
+	for (int i = 0; i < mutants.size(); ++i) {
+		std::stringstream writePath;
+		writePath << writePathPref << i << ".fsm";
+		ofstream outFile(writePath.str());
+		mutants.at(i)->dumpFsm(outFile);
+		outFile.close();
+	}
 }
+
+
 
 
 int main(int argc, char** argv)
 {
 	std::cout << "test start" << std::endl;
+	
+	//parseTestCase();
+	//createMutants();
+	createMutantsForTMethod();
+
+
 	// FSM Transformation Tests:
 
 	//loadFsm();
@@ -3520,7 +3713,7 @@ int main(int argc, char** argv)
 	//testDriverTransformToOfsm();
 	//testDriverTransformDfsmToPrimeMachine();
 	//testDriverMinimiseOfsm();
-	testDriverTransformFsmToPrimeMachine();
+	//testDriverTransformFsmToPrimeMachine();
 
 	// Intersection Test:
 	//intersection_TS_Random();
@@ -3536,7 +3729,7 @@ int main(int argc, char** argv)
 	// Complete Test Theories Test:
 	//tMethod_TS_Random();
 
-	wMethod_TS_Random2();
+	//wMethod_TS_Random2();
 	//wMethod_Dfsm_TS_Random();
 	//wMethodOnMinimisedFsm_Fsm_TS_Random();
 	//wMethodOnMinimisedDfsm_Dfsm_TS_Random();
