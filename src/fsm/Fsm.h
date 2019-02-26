@@ -546,6 +546,12 @@ public:
      */
 	friend void testCalcStateIdentificationSetsFast(Fsm &m);
 
+	/**
+     * Transform m to a complete Fsm by adding self loops in states for undefined inputs producing some nullouput not contained in the
+     * regular output alphabet.
+     */
+	friend std::shared_ptr<Fsm> transformToComplete(const std::shared_ptr<const Fsm> m, const size_t nullOutput);
+
 	//--------------------------------------------
 
 };
