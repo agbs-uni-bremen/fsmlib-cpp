@@ -2071,7 +2071,6 @@ set<vector<int>> calcCompleteOutputTraces2(const shared_ptr<FsmNode> startNode, 
 		//cout << "\n";
 		outputTrcs.insert(std::get<1>(reachedNode));
 	}
-	cout << "finish" << endl;
 	return outputTrcs;
 }
 
@@ -2207,6 +2206,8 @@ bool isMinimalStateIdentificationSet(const Fsm &m, const shared_ptr<FsmNode> qi,
 	}
 	return true;
 }
+
+
 
 /**
  * Test function for Dfsm::getCharacterisationSet().
@@ -2485,30 +2486,102 @@ void testCalcStateIdentificationSetsFast(Dfsm &m) {
 	fsmlib_assert("TC", *tracesOfW.getIOLists() == *m.characterisationSet->getIOLists().getIOLists(), "characterisation set of M has not changed");
 }
 
-/*
- *	Random Test Suite for test of Fsm::getCharacterisationSet().
-*/
-void getCharacterisationSet_Dfsm_TS_Random() {
-	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	for (int i = 0; i < 100; ++i) {
-		cout << "i:" << i << endl;
-		auto m = Dfsm("M", 15, 4, 4, pl);
-		auto minM = m.minimise();
-		cout << "minFsm size: " << minM.size() << endl;
-		testGetCharacterisationSet_Dfsm(minM);
+struct DistinguishingTraceTestCase {
+	string id;
+	string fsmPath;
+	string csp;
+	string sisp;
+};
+
+shared_ptr<vector<DistinguishingTraceTestCase>> parseDistinguishingTraceTSFile(const string &testSuitePath) {
+	string fname = testSuitePath;
+	vector<DistinguishingTraceTestCase> testSuite;
+	ifstream inputFile(fname);
+	if (inputFile.is_open())
+	{
+		string line;
+
+		while (getline(inputFile, line))
+		{
+			vector<string> lineContent;
+			stringstream ss(line);
+
+			for (string elem; getline(ss, elem, ';'); lineContent.push_back(elem));
+
+			DistinguishingTraceTestCase tc;
+			tc.id = lineContent.at(0);
+			tc.fsmPath = lineContent.at(1);
+			tc.csp = lineContent.at(2);
+			tc.sisp = lineContent.at(3);
+
+			testSuite.push_back(tc);
+		}
+		inputFile.close();
+
+		return make_shared<vector<DistinguishingTraceTestCase>>(testSuite);
+	}
+	else
+	{
+		cout << "Unable to open input file" << endl;
+		exit(EXIT_FAILURE);
 	}
 }
 
 /*
  *	Random Test Suite for test of Fsm::getCharacterisationSet().
 */
+void getCharacterisationSet_Dfsm_TS_Random() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	auto m = Dfsm("M", 15, 4, 4, pl);
+	//	auto minM = m.minimise();
+	//	cout << "minFsm size: " << minM.size() << endl;
+	//	testGetCharacterisationSet_Dfsm(minM);
+	//}
+
+	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Dfsm_getCharacterisationSet.testsuite");
+	for (auto tc : *testSuite) {
+		cout << "Start Test Case : " << tc.id << endl;
+		shared_ptr<Dfsm> m = make_shared<Dfsm>(tc.fsmPath, pl, "M");
+		if (tc.csp == "true") {
+			cout << "csp = true" << endl;
+			m->getCharacterisationSet();
+		}
+		if (tc.sisp == "true") {
+			cout << "sisp = true" << endl;
+			m->calcStateIdentificationSetsFast();
+		}
+		testGetCharacterisationSet_Dfsm(*m);
+	}     
+}
+
+/*
+ *	Random Test Suite for test of Fsm::getCharacterisationSet().
+*/
 void getCharacterisationSet_Fsm_TS_Random() {
-	for (int i = 0; i < 100; ++i) {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	/*for (int i = 0; i < 100; ++i) {
 		cout << "i:" << i << endl;
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, make_shared<FsmPresentationLayer>());
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, pl);
 		auto minFsm = fsm->minimise();
 		cout << "minFsm size: " << minFsm.size() << endl;
 		testGetCharacterisationSet_Fsm(minFsm);
+	}*/
+
+	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_getCharacterisationSet.testsuite");
+	for (auto tc : *testSuite) {
+		cout << "Start Test Case : " << tc.id << endl;
+		shared_ptr<Fsm> m = make_shared<Fsm>(tc.fsmPath, pl, "M");
+		if (tc.csp == "true") {
+			cout << "csp = true" << endl;
+			m->getCharacterisationSet();
+		}
+		if (tc.sisp == "true") {
+			cout << "sisp = true" << endl;
+			m->calcStateIdentificationSetsFast();
+		}
+		testGetCharacterisationSet_Fsm(*m);
 	}
 }
 
@@ -2519,12 +2592,27 @@ void getCharacterisationSet_Fsm_TS_Random() {
 */
 void calcDistinguishingTrace1_TS_Random() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	for (int i = 0; i < 100; ++i) {
-		cout << "i:" << i << endl;
-		auto m = Dfsm("M", 15, 4, 2, pl);
-		auto minM = m.minimise();
-		cout << "minFsm size: " << minM.size() << endl;
-		testCalcDistinguishingTrace1(minM);
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	auto m = Dfsm("M", 15, 4, 2, pl);
+	//	auto minM = m.minimise();
+	//	cout << "minFsm size: " << minM.size() << endl;
+	//	testCalcDistinguishingTrace1(minM);
+	//}
+
+	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/FsmNode_calcDistinguishingTrace_pk.testsuite");
+	for (auto tc : *testSuite) {
+		cout << "Start Test Case : " << tc.id << endl;
+		shared_ptr<Dfsm> m = make_shared<Dfsm>(tc.fsmPath, pl, "M");
+		if (tc.csp == "true") {
+			cout << "csp = true" << endl;
+			m->getCharacterisationSet();
+		}
+		if (tc.sisp == "true") {
+			cout << "sisp = true" << endl;
+			m->calcStateIdentificationSetsFast();
+		}
+		testCalcDistinguishingTrace1(*m);
 	}
 }
 
@@ -2535,12 +2623,28 @@ void calcDistinguishingTrace1_TS_Random() {
  *                                           const int maxOutput)
 */
 void calcDistinguishingTrace2_TS_Random() {
-	for (int i = 0; i < 100; ++i) {
-		cout << "i:" << i << endl;
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, make_shared<FsmPresentationLayer>());
-		auto minFsm = fsm->minimise();
-		cout << "minFsm size: " << minFsm.size() << endl;
-		testCalcDistinguishingTrace2(minFsm);
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, pl);
+	//	auto minFsm = fsm->minimise();
+	//	cout << "minFsm size: " << minFsm.size() << endl;
+	//	testCalcDistinguishingTrace2(minFsm);
+	//}
+
+	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/FsmNode_calcDistinguishingTrace_ofsm.testsuite");
+	for (auto tc : *testSuite) {
+		cout << "Start Test Case : " << tc.id << endl;
+		shared_ptr<Fsm> m = make_shared<Fsm>(tc.fsmPath, pl, "M");
+		if (tc.csp == "true") {
+			cout << "csp = true" << endl;
+			m->getCharacterisationSet();
+		}
+		if (tc.sisp == "true") {
+			cout << "sisp = true" << endl;
+			m->calcStateIdentificationSetsFast();
+		}
+		testCalcDistinguishingTrace2(*m);
 	}
 }
 
@@ -2548,30 +2652,47 @@ void calcDistinguishingTrace2_TS_Random() {
  *	Random Test Suite for test of Fsm::calcStateIdentificationSets().
 */
 void calcStateIdentificationSets_TS_Random() {
-	const int seed = 3447;
-	srand(seed);
-	for (int i = 0; i < 100; ++i) {
-		cout << "i:" << i << endl;
-		int size = rand() % 10 + 1;
-		int mI = rand() % 7;
-		int mO = mI;
-		auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
-		auto minFsm = fsm->minimise();
-		cout << "minFsm size: " << minFsm.size() << endl;
-		testCalcStateIdentificationSets(minFsm);
-	}
-
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	for (int i = 0; i < 100; ++i) {
-		cout << "i:" << i << endl;
-		int size = rand() % 15 + 1;
-		int mI = rand() % 6;
-		int mO = rand() % 6;
-		auto m = Dfsm("M", size, mI, mO, pl, true);
-		auto minM = m.minimise();
-		cout << "minFsm size: " << minM.size() << endl;
-		cout << minM << endl;
-		testCalcStateIdentificationSets(minM);
+	
+	//const int seed = 3447;
+	//srand(seed);
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	int size = rand() % 10 + 1;
+	//	int mI = rand() % 7;
+	//	int mO = mI;
+	//	auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
+	//	auto minFsm = fsm->minimise();
+	//	cout << "minFsm size: " << minFsm.size() << endl;
+	//	testCalcStateIdentificationSets(minFsm);
+	//}
+
+	//shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	int size = rand() % 15 + 1;
+	//	int mI = rand() % 6;
+	//	int mO = rand() % 6;
+	//	auto m = Dfsm("M", size, mI, mO, pl, true);
+	//	auto minM = m.minimise();
+	//	cout << "minFsm size: " << minM.size() << endl;
+	//	cout << minM << endl;
+	//	testCalcStateIdentificationSets(minM);
+	//}
+
+	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_calcStateIdentificationSets.testsuite");
+	for (auto tc : *testSuite) {
+		cout << "Start Test Case : " << tc.id << endl;
+		shared_ptr<Fsm> m = make_shared<Fsm>(tc.fsmPath, pl, "M");
+		if (tc.csp == "true") {
+			cout << "csp = true" << endl;
+			m->getCharacterisationSet();
+		}
+		if (tc.sisp == "true") {
+			cout << "sisp = true" << endl;
+			m->calcStateIdentificationSetsFast();
+		}
+		testCalcStateIdentificationSets(*m);
 	}
 }
 
@@ -2692,45 +2813,60 @@ shared_ptr<Fsm> transformToComplete(shared_ptr<Fsm> m) {
  *	Random Test Suite for test of Fsm::calcStateIdentificationSetsFast().
 */
 void calcStateIdentificationSetsFast_TS_Random() {
-	const int seed = 1376;
-	srand(seed);
+	//const int seed = 1376;
+	//srand(seed);
 
-	for (int i = 0; i < 100; ++i) {
-		cout << "i:" << i << endl;
-		int size = rand() % 10 + 1;
-		int mI = rand() % 7;
-		int mO = mI;
-		auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
-		auto tmp = createPartialMutant(fsm);
-		auto minFsm = tmp->minimise();
-		cout << "minFsm size: " << minFsm.size() << endl;
-		cout << "minFsm cs? " << minFsm.isCompletelyDefined() << endl;
-		testCalcStateIdentificationSetsFast(minFsm);
-	}
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	int size = rand() % 10 + 1;
+	//	int mI = rand() % 7;
+	//	int mO = mI;
+	//	auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
+	//	auto tmp = createPartialMutant(fsm);
+	//	auto minFsm = tmp->minimise();
+	//	cout << "minFsm size: " << minFsm.size() << endl;
+	//	cout << "minFsm cs? " << minFsm.isCompletelyDefined() << endl;
+	//	testCalcStateIdentificationSetsFast(minFsm);
+	//}
 
-	for (int i = 0; i < 100; ++i) {
-		cout << "i:" << i << endl;
-		int size = rand() % 10 + 1;
-		int mI = rand() % 7;		
-		int mO = mI;
-		auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
-		auto minFsm = fsm->minimise();
-		cout << "minFsm size: " << minFsm.size() << endl;
-		testCalcStateIdentificationSetsFast(minFsm);
-	}
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	int size = rand() % 10 + 1;
+	//	int mI = rand() % 7;		
+	//	int mO = mI;
+	//	auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
+	//	auto minFsm = fsm->minimise();
+	//	cout << "minFsm size: " << minFsm.size() << endl;
+	//	testCalcStateIdentificationSetsFast(minFsm);
+	//}
 
 
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	for (int i = 0; i < 100; ++i) {
-		cout << "i:" << i << endl;
-		int size = rand() % 15 + 1;
-		int mI = rand() % 6;
-		int mO = rand() % 6;
-		auto m = Dfsm("M", size, mI, mO, pl, true);
-		auto minM = m.minimise();
-		cout << "minFsm size: " << minM.size() << endl;
-		cout << minM << endl;
-		testCalcStateIdentificationSetsFast(minM);
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	int size = rand() % 15 + 1;
+	//	int mI = rand() % 6;
+	//	int mO = rand() % 6;
+	//	auto m = Dfsm("M", size, mI, mO, pl, true);
+	//	auto minM = m.minimise();
+	//	cout << "minFsm size: " << minM.size() << endl;
+	//	cout << minM << endl;
+	//	testCalcStateIdentificationSetsFast(minM);
+	//}
+
+	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_calcStateIdentificationSetsFast.testsuite");
+	for (auto tc : *testSuite) {
+		cout << "Start Test Case : " << tc.id << endl;
+		shared_ptr<Fsm> m = make_shared<Fsm>(tc.fsmPath, pl, "M");
+		if (tc.csp == "true") {
+			cout << "csp = true" << endl;
+			m->getCharacterisationSet();
+		}
+		if (tc.sisp == "true") {
+			cout << "sisp = true" << endl;
+			m->calcStateIdentificationSetsFast();
+		}
+		testCalcStateIdentificationSetsFast(*m);
 	}
 }
 
@@ -3923,12 +4059,12 @@ int main(int argc, char** argv)
 	//calcDistinguishingTrace1_TS_Random();
 	//calcDistinguishingTrace2_TS_Random();
 	//calcStateIdentificationSets_TS_Random();
-	//calcStateIdentificationSetsFast_TS_Random();
+	calcStateIdentificationSetsFast_TS_Random();
 
 	// Complete Test Theories Test:
 	//tMethod_TS_Random();
 
-	wMethod_TS_Random2();
+	//wMethod_TS_Random2();
 	/*wMethod_Dfsm_TS_Random();
 	wMethodOnMinimisedFsm_Fsm_TS_Random();
 	wMethodOnMinimisedDfsm_Dfsm_TS_Random();

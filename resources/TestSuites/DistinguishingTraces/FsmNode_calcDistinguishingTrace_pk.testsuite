@@ -1,0 +1,9 @@
+TC001;../../../resources/TestSuites/DistinguishingTraces/FSM01.fsm;false;false;
+TC002;../../../resources/TestSuites/DistinguishingTraces/FSM02.fsm;true;false;
+TC003;../../../resources/TestSuites/DistinguishingTraces/FSM03.fsm;true;true;
+TC005;../../../resources/TestSuites/DistinguishingTraces/FSM05.fsm;false;false;
+TC007;../../../resources/TestSuites/DistinguishingTraces/FSM07.fsm;false;false;
+TC010;../../../resources/TestSuites/DistinguishingTraces/FSM10.fsm;false;false;
+TC014;../../../resources/TestSuites/DistinguishingTraces/FSM14.fsm;false;false;
+TC018;../../../resources/TestSuites/DistinguishingTraces/FSM18.fsm;false;false;
+TC022;../../../resources/TestSuites/DistinguishingTraces/FSM22.fsm;false;false;
