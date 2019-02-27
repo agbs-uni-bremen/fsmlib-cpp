@@ -1,0 +1,13 @@
+TC001;../../../resources/TestSuites/Intersection/M1_1.fsm;../../../resources/TestSuites/Intersection/M1_2.fsm;
+TC002;../../../resources/TestSuites/Intersection/M2_1.fsm;../../../resources/TestSuites/Intersection/M2_2.fsm;
+TC003;../../../resources/TestSuites/Intersection/M3_1.fsm;../../../resources/TestSuites/Intersection/M3_2.fsm;
+TC004;../../../resources/TestSuites/Intersection/M4_1.fsm;../../../resources/TestSuites/Intersection/M4_2.fsm;
+TC005;../../../resources/TestSuites/Intersection/M5_1.fsm;../../../resources/TestSuites/Intersection/M5_2.fsm;
+TC006;../../../resources/TestSuites/Intersection/M6_1.fsm;../../../resources/TestSuites/Intersection/M6_2.fsm;
+TC007;../../../resources/TestSuites/Intersection/M7_1.fsm;../../../resources/TestSuites/Intersection/M7_2.fsm;
+TC008;../../../resources/TestSuites/Intersection/M8_1.fsm;../../../resources/TestSuites/Intersection/M8_2.fsm;
+TC009;../../../resources/TestSuites/Intersection/M9_1.fsm;../../../resources/TestSuites/Intersection/M9_2.fsm;
+TC010;../../../resources/TestSuites/Intersection/M10_1.fsm;../../../resources/TestSuites/Intersection/M10_2.fsm;
+TC011;../../../resources/TestSuites/Intersection/M9_1.fsm;../../../resources/TestSuites/Intersection/M9_2_r.fsm;
+TC012;../../../resources/TestSuites/Intersection/M10_1.fsm;../../../resources/TestSuites/Intersection/M10_2_r.fsm;
+TC013;../../../resources/TestSuites/Intersection/M13_1.fsm;../../../resources/TestSuites/Intersection/M13_2_r.fsm;
