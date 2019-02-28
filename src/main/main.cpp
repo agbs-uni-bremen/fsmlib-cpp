@@ -1968,6 +1968,45 @@ void testIntersection(Dfsm &m1, const Fsm &m2) {
 	fsmlib_assert("TC", checkForEqualStructure(m1, copyOfM1), "M1 was not changed by algorithm");
 }
 
+struct IntersectTestCase {
+	string id;
+	string m1Path;
+	string m2Path;
+};
+
+shared_ptr<vector<IntersectTestCase>> parseIntersectTSFile(const string &testSuitePath) {
+	string fname = testSuitePath;
+	vector<IntersectTestCase> testSuite;
+	ifstream inputFile(fname);
+	if (inputFile.is_open())
+	{
+		string line;
+
+		while (getline(inputFile, line))
+		{
+			vector<string> lineContent;
+			stringstream ss(line);
+
+			for (string elem; getline(ss, elem, ';'); lineContent.push_back(elem));
+
+			IntersectTestCase tc;
+			tc.id = lineContent.at(0);
+			tc.m1Path = lineContent.at(1);
+			tc.m2Path = lineContent.at(2);			
+
+			testSuite.push_back(tc);
+		}
+		inputFile.close();
+
+		return make_shared<vector<IntersectTestCase>>(testSuite);
+	}
+	else
+	{
+		cout << "Unable to open input file" << endl;
+		exit(EXIT_FAILURE);
+	}
+}
+
 /*
  *	Random Test Suite for test of Fsm::getCharacterisationSet().
 */
@@ -1987,20 +2026,29 @@ void intersection_TS_Random() {
 		testIntersection(*m1, *m2);
 	}
 
-	for (int i = 0; i < 100; ++i) {
-		cout << "i:" << i << endl;
-		auto m1 = Dfsm("M", 15, 4, 4, pl);
-		//auto m1 = createRandomDfsm("M1", 15, 4, 4, pl);
-		const auto m2 = m1.createMutant("M2", 2, 2);
-		testIntersection(m1, *m2);
-	}
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	auto m1 = Dfsm("M", 15, 4, 4, pl);
+	//	cout << m1.getMaxState() << endl;
+	//	//auto m1 = createRandomDfsm("M1", 15, 4, 4, pl);
+	//	const auto m2 = m1.createMutant("M2", 2, 2);
+	//	testIntersection(m1, *m2);
+	//}
 
 	for (int i = 0; i < 100; ++i) {
 		cout << "i:" << i << endl;
 		//auto m = Dfsm("M", 15, 4, 4, pl);
 		auto m1 = createRandomDfsm("M1", 15, 4, 4, pl);
-		const auto m2 = createRandomDfsm("M1", 15, 4, 4, pl);
+		const auto m2 = createRandomDfsm("M2", 15, 4, 4, pl);
 		testIntersection(m1, m2);
+	}
+
+	auto testSuite = parseIntersectTSFile("../../../resources/TestSuites/Intersection/Fsm_intersect.testsuite");
+	for (auto tc : *testSuite) {
+		cout << "Start Test Case : " << tc.id << endl;
+		shared_ptr<Fsm> m1 = make_shared<Fsm>(tc.m1Path, pl, "M1");
+		shared_ptr<Fsm> m2 = make_shared<Fsm>(tc.m2Path, pl, "M2");
+		testIntersection(*m1, *m2);
 	}
 }
 
@@ -4051,7 +4099,7 @@ int main(int argc, char** argv)
 	//testDriverTransformFsmToPrimeMachine();
 
 	// Intersection Test:
-	//intersection_TS_Random();
+	intersection_TS_Random();
 
 	// Calculation of Distinguishing Traces Test:
 	//getCharacterisationSet_Dfsm_TS_Random();
@@ -4059,7 +4107,7 @@ int main(int argc, char** argv)
 	//calcDistinguishingTrace1_TS_Random();
 	//calcDistinguishingTrace2_TS_Random();
 	//calcStateIdentificationSets_TS_Random();
-	calcStateIdentificationSetsFast_TS_Random();
+	//calcStateIdentificationSetsFast_TS_Random();
 
 	// Complete Test Theories Test:
 	//tMethod_TS_Random();
