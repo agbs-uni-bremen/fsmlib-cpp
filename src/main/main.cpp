@@ -1551,7 +1551,11 @@ Dfsm createRandomDfsm(const string & fsmName, const int maxNodes, const int maxI
 /**
  * Test function: Fsm::removeUnreachableNodes()
  */
-void testRemoveUnreachableNodes(Fsm &m1, vector<shared_ptr<FsmNode>> &unreachableNodes) {
+void testRemoveUnreachableNodes(Fsm &m1) {
+	// get copy of m1
+	Fsm copyOfM1 = Fsm(m1);
+	vector<shared_ptr<FsmNode>> unreachableNodes;
+
 	// determine set of unreachable nodes in m1
 	auto reachable = getReachableStates(m1);
 	unordered_set<shared_ptr<FsmNode>> unreachable;
@@ -1559,9 +1563,7 @@ void testRemoveUnreachableNodes(Fsm &m1, vector<shared_ptr<FsmNode>> &unreachabl
 		if (reachable.count(n) == 0) unreachable.insert(n);
 	}
 
-	// get copy of m1 and unreachableNodes
-	Fsm copyOfM1 = Fsm(m1);
-	vector<shared_ptr<FsmNode>> copyOfUnreachableNodes(unreachableNodes.begin(), unreachableNodes.end());
+	//vector<shared_ptr<FsmNode>> copyOfUnreachableNodes(unreachableNodes.begin(), unreachableNodes.end());
 
 	// use algorithm to transform m1
 	bool b = m1.removeUnreachableNodes(unreachableNodes);
@@ -1572,20 +1574,61 @@ void testRemoveUnreachableNodes(Fsm &m1, vector<shared_ptr<FsmNode>> &unreachabl
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
 
-	// check properties of m1
-	fsmlib_assert("TC", not contains(m1,unreachable), "Resulting FSM of removeUnreachableNodes() contains none of the nodes that were unreachable before.");
+	// check properties of m1	
 	fsmlib_assert("TC", isInitialConnected(m1), "Result of removeUnreachableNodes() is initial connected");
+	fsmlib_assert("TC", not contains(m1, unreachable), "Resulting FSM of removeUnreachableNodes() contains none of the nodes that were unreachable before.");
 
 	// check if L(m1) = L(copyOfM1)
 	fsmlib_assert("TC", ioEquivalenceCheck(m1.getInitialState(), copyOfM1.getInitialState()), "removeUnreachableNodes() does not change language of the FSM");
 
+	unordered_set<shared_ptr<FsmNode>> unreachableNodesSet{unreachableNodes.cbegin(), unreachableNodes.cend()};
 	// check b and unreachableNodes
 	fsmlib_assert("TC", (b and (not unreachable.empty())) || (not b and unreachable.empty()), "removeUnreachableNodes() returns true iff FSM contains some unreachable node");
-	fsmlib_assert("TC", checkUnreachableNodesList(copyOfUnreachableNodes, unreachableNodes, unreachable), "unreachableNodes contains all unreachable nodes that were removed and all nodes from before");
+	fsmlib_assert("TC", (unreachableNodes.size() == unreachable.size()) and (unreachableNodesSet == unreachable), "unreachableNodes contains each unreachable node that was removed");
+	/*fsmlib_assert("TC", checkUnreachableNodesList(copyOfUnreachableNodes, unreachableNodes, unreachable), "unreachableNodes contains all unreachable nodes that were removed and all nodes from before");*/
 
 	//// check unexpected side effects
 	//fsmlib_assert("TC", checkFsmClassInvariant(m1), "FSM still fullfills class invariants after transformation");
 }
+
+///**
+// * Test function: Fsm::removeUnreachableNodes()
+// */
+//void testRemoveUnreachableNodes(Fsm &m1, vector<shared_ptr<FsmNode>> &unreachableNodes) {
+//	// determine set of unreachable nodes in m1
+//	auto reachable = getReachableStates(m1);
+//	unordered_set<shared_ptr<FsmNode>> unreachable;
+//	for (auto n : m1.getNodes()) {
+//		if (reachable.count(n) == 0) unreachable.insert(n);
+//	}
+//
+//	// get copy of m1 and unreachableNodes
+//	Fsm copyOfM1 = Fsm(m1);
+//	vector<shared_ptr<FsmNode>> copyOfUnreachableNodes(unreachableNodes.begin(), unreachableNodes.end());
+//
+//	// use algorithm to transform m1
+//	bool b = m1.removeUnreachableNodes(unreachableNodes);
+//
+//	// first check invariant of m1
+//	bool invariantViolation = not checkFsmClassInvariant(m1);
+//	fsmlib_assert("TC", not invariantViolation, "class invariant holds for M1 after transformation");
+//	// stop test execution at this point if invariant of m does not hold anymore
+//	if (invariantViolation) return;
+//
+//	// check properties of m1
+//	fsmlib_assert("TC", not contains(m1,unreachable), "Resulting FSM of removeUnreachableNodes() contains none of the nodes that were unreachable before.");
+//	fsmlib_assert("TC", isInitialConnected(m1), "Result of removeUnreachableNodes() is initial connected");
+//
+//	// check if L(m1) = L(copyOfM1)
+//	fsmlib_assert("TC", ioEquivalenceCheck(m1.getInitialState(), copyOfM1.getInitialState()), "removeUnreachableNodes() does not change language of the FSM");
+//
+//	// check b and unreachableNodes
+//	fsmlib_assert("TC", (b and (not unreachable.empty())) || (not b and unreachable.empty()), "removeUnreachableNodes() returns true iff FSM contains some unreachable node");
+//	fsmlib_assert("TC", checkUnreachableNodesList(copyOfUnreachableNodes, unreachableNodes, unreachable), "unreachableNodes contains all unreachable nodes that were removed and all nodes from before");
+//
+//	//// check unexpected side effects
+//	//fsmlib_assert("TC", checkFsmClassInvariant(m1), "FSM still fullfills class invariants after transformation");
+//}
 
 /**
  * Test function: Fsm::removeUnreachableNodes()
@@ -1823,18 +1866,28 @@ void parseFsmTransformationTSFile(const string &testSuitePath, vector<FsmTransfo
  * Test Suite: Fsm::removeUnreachableNodes()
  */
 void removeUnreachableNodes_TS() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+	//random tests
 	for (int i = 0; i < 100; ++i) {
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-		vector<shared_ptr<FsmNode>> unreachableNodes;
-		testRemoveUnreachableNodes(*fsm, unreachableNodes);
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, pl);		
+		testRemoveUnreachableNodes(*fsm);
 	}
 
+	// practical examples
+	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
+	testRemoveUnreachableNodes(*csm);
+	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
+	testRemoveUnreachableNodes(*fsb);
+	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
+	testRemoveUnreachableNodes(*gdc);
+
+	// partition test cases
 	vector<FsmTransformationTestCase<Fsm>> testSuite;
 	parseFsmTransformationTSFile<Fsm>("../../../resources/TestSuites/FSM-Transformations/Fsm_removeUnreachableNodes.testsuite", testSuite);
 	for (auto tc : testSuite) {
 		cout << "Start TC " << tc.id << endl;
-		vector<shared_ptr<FsmNode>> unreachableNodes;
-		testRemoveUnreachableNodes(*tc.m, unreachableNodes);
+		testRemoveUnreachableNodes(*tc.m);
 	}
 }
 
@@ -1842,11 +1895,23 @@ void removeUnreachableNodes_TS() {
  * Test Suite: Fsm::transformToObservableFSM()
  */
 void transformToObservableFSM_TS() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+	//random tests
 	for (int i = 0; i < 100; ++i) {
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, pl);
 		testTransformToObservableFSM(*fsm);
 	}
 
+	// practical examples
+	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
+	testTransformToObservableFSM(*csm);
+	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
+	testTransformToObservableFSM(*fsb);
+	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
+	testTransformToObservableFSM(*gdc);
+
+	// partition test cases
 	vector<FsmTransformationTestCase<Fsm>> testSuite;
 	parseFsmTransformationTSFile<Fsm>("../../../resources/TestSuites/FSM-Transformations/Fsm_transformToObservable.testsuite", testSuite);
 	for (auto tc : testSuite) {
@@ -1859,12 +1924,23 @@ void transformToObservableFSM_TS() {
  * Test Suite: Dfsm::minimise()
  */
 void minimise_Dfsm_TS() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+	//random tests
 	for (int i = 0; i < 100; ++i) {
-		auto dfsm = createRandomDfsm("M", 10, 4, 4, make_shared<FsmPresentationLayer>());
-		//cout << "isInitCon: " << isInitialConnected(dfsm) << endl;
+		auto dfsm = createRandomDfsm("M", 10, 4, 4, pl);
 		testMinimise_Dfsm(dfsm);
 	}
 
+	// practical examples
+	shared_ptr<Dfsm> csm = make_shared<Dfsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
+	testMinimise_Dfsm(*csm);
+	shared_ptr<Dfsm> fsb = make_shared<Dfsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
+	testMinimise_Dfsm(*fsb);
+	shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
+	testMinimise_Dfsm(*gdc);
+
+	// partition test cases
 	vector<FsmTransformationTestCase<Dfsm>> testSuite;
 	parseFsmTransformationTSFile<Dfsm>("../../../resources/TestSuites/FSM-Transformations/Dfsm_minimise.testsuite", testSuite);
 	for (auto tc : testSuite) {
@@ -1877,12 +1953,24 @@ void minimise_Dfsm_TS() {
  * Test Suite: Fsm::minimiseObservableFSM()
  */
 void minimiseObservableFSM_TS() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+	//random tests
 	for (int i = 0; i < 100; ++i) {
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, pl);
 		Fsm ofsm = fsm->transformToObservableFSM();
 		testMinimiseObservableFSM(ofsm);
 	}
 
+	// practical examples
+	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
+	testMinimiseObservableFSM(*csm);
+	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
+	testMinimiseObservableFSM(*fsb);
+	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
+	testMinimiseObservableFSM(*gdc);
+
+	// partition test cases
 	vector<FsmTransformationTestCase<Fsm>> testSuite;
 	parseFsmTransformationTSFile<Fsm>("../../../resources/TestSuites/FSM-Transformations/Fsm_minimiseObservable.testsuite", testSuite);
 	for (auto tc : testSuite) {
@@ -1895,16 +1983,27 @@ void minimiseObservableFSM_TS() {
  * Test Suite: Fsm::minimise()
  */
 void minimise_Fsm_TS() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
-	//for (int i = 0; i < 100; ++i) {
-	//	auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-	//	testMinimise_Fsm(*fsm);
-	//}
+	//random tests
+	for (int i = 0; i < 100; ++i) {
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, pl);
+		testMinimise_Fsm(*fsm);
+	}
+
+	// practical examples
+	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
+	testMinimise_Fsm(*csm);
+	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
+	testMinimise_Fsm(*fsb);
+	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
+	testMinimise_Fsm(*gdc);
 
 	//		// these make the program crash
     //"../../../resources/TestSuites/FSM029.fsm"
 	//"../../../resources/TestSuites/FSM053.fsm") {
 
+	// partition test cases
 	vector<FsmTransformationTestCase<Fsm>> testSuite;
 	parseFsmTransformationTSFile<Fsm>("../../../resources/TestSuites/FSM-Transformations/Fsm_minimise.testsuite", testSuite);
 	for (auto tc : testSuite) {
@@ -2079,17 +2178,21 @@ shared_ptr<vector<IntersectTestCase>> parseIntersectTSFile(const string &testSui
 */
 void intersection_TS_Random() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+	const int seed = 8950;
+	srand(seed);
+	// random tests
 	for (int i = 0; i < 100; ++i) {
 		cout << "i:" << i << endl;
-		auto m1 = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-		const auto m2 = m1->createMutant("M2", 2, 2);
+		auto m1 = Fsm::createRandomFsmRepeatable("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+		const auto m2 = m1->createMutantRepeatable("M2", 2, 2);
 		testIntersection(*m1, *m2);
 	}
 
 	for (int i = 0; i < 100; ++i) {
 		cout << "i:" << i << endl;
-		auto m1 = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-		const auto m2 = Fsm::createRandomFsm("M2", 4, 4, 10, make_shared<FsmPresentationLayer>());
+		auto m1 = Fsm::createRandomFsmRepeatable("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+		const auto m2 = Fsm::createRandomFsmRepeatable("M2", 4, 4, 10, make_shared<FsmPresentationLayer>());
 		testIntersection(*m1, *m2);
 	}
 
@@ -2102,14 +2205,32 @@ void intersection_TS_Random() {
 	//	testIntersection(m1, *m2);
 	//}
 
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	auto m1 = Dfsm("M1", 15, 4, 4, pl, true);
+	//	//auto m1 = createRandomDfsm("M1", 15, 4, 4, pl);
+	//	const auto m2 = Dfsm("M1", 15, 4, 4, pl, true);
+	//	testIntersection(m1, m2);
+	//}
+
+	// practical examples
+	cout << "CSM Tests" << endl;
+	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
+	for(int i = 0; i < 100; ++i){
+		testIntersection(*csm, *csm->createMutantRepeatable("Mutant", rand() % 6 + 1, rand() % 6 + 1));
+	}
+	cout << "FSB Tests" << endl;
+	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
 	for (int i = 0; i < 100; ++i) {
-		cout << "i:" << i << endl;
-		//auto m = Dfsm("M", 15, 4, 4, pl);
-		auto m1 = createRandomDfsm("M1", 15, 4, 4, pl);
-		const auto m2 = createRandomDfsm("M2", 15, 4, 4, pl);
-		testIntersection(m1, m2);
+		testIntersection(*fsb, *fsb->createMutantRepeatable("Mutant", rand() % 6 + 1, rand() % 6 + 1));
+	}
+	cout << "GDC Tests" << endl;
+	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC");
+	for (int i = 0; i < 100; ++i) {
+		testIntersection(*gdc, *gdc->createMutantRepeatable("Mutant", rand() % 6 + 1, rand() % 6 + 1));
 	}
 
+	// partition test cases
 	auto testSuite = parseIntersectTSFile("../../../resources/TestSuites/Intersection/Fsm_intersect.testsuite");
 	for (auto tc : *testSuite) {
 		cout << "Start Test Case : " << tc.id << endl;
@@ -2647,6 +2768,7 @@ shared_ptr<vector<DistinguishingTraceTestCase>> parseDistinguishingTraceTSFile(c
 */
 void getCharacterisationSet_Dfsm_TS_Random() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	// random tests
 	//for (int i = 0; i < 100; ++i) {
 	//	cout << "i:" << i << endl;
 	//	auto m = Dfsm("M", 15, 4, 4, pl);
@@ -2655,6 +2777,21 @@ void getCharacterisationSet_Dfsm_TS_Random() {
 	//	testGetCharacterisationSet_Dfsm(minM);
 	//}
 
+	// practical examples
+	cout << "CSM Tests" << endl;
+	Dfsm csm = Dfsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
+	testGetCharacterisationSet_Dfsm(csm);
+
+	cout << "FSB Tests" << endl;
+	Dfsm fsb = Dfsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
+	testGetCharacterisationSet_Dfsm(fsb);
+
+	cout << "GDC Tests" << endl;
+	Dfsm gdc = Dfsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
+	testGetCharacterisationSet_Dfsm(gdc);
+
+
+	// partition test cases
 	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Dfsm_getCharacterisationSet.testsuite");
 	for (auto tc : *testSuite) {
 		cout << "Start Test Case : " << tc.id << endl;
@@ -2676,6 +2813,8 @@ void getCharacterisationSet_Dfsm_TS_Random() {
 */
 void getCharacterisationSet_Fsm_TS_Random() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+	// random tests
 	/*for (int i = 0; i < 100; ++i) {
 		cout << "i:" << i << endl;
 		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, pl);
@@ -2684,6 +2823,20 @@ void getCharacterisationSet_Fsm_TS_Random() {
 		testGetCharacterisationSet_Fsm(minFsm);
 	}*/
 
+	// practical examples
+	cout << "CSM Tests" << endl;
+	Fsm csm = Fsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
+	testGetCharacterisationSet_Fsm(csm);
+
+	cout << "FSB Tests" << endl;
+	Fsm fsb = Fsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
+	testGetCharacterisationSet_Fsm(fsb);
+
+	cout << "GDC Tests" << endl;
+	Fsm gdc = Fsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
+	testGetCharacterisationSet_Fsm(gdc);
+
+	// partition test cases
 	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_getCharacterisationSet.testsuite");
 	for (auto tc : *testSuite) {
 		cout << "Start Test Case : " << tc.id << endl;
@@ -4158,7 +4311,7 @@ int main(int argc, char** argv)
 
 	// FSM Transformation Tests:
 
-	removeUnreachableNodes_TS();
+	//removeUnreachableNodes_TS();
 	//transformToObservableFSM_TS();
 	//minimise_Dfsm_TS();
 	//minimiseObservableFSM_TS();
@@ -4169,7 +4322,7 @@ int main(int argc, char** argv)
 
 	// Calculation of Distinguishing Traces Test:
 	//getCharacterisationSet_Dfsm_TS_Random();
-	//getCharacterisationSet_Fsm_TS_Random();
+	getCharacterisationSet_Fsm_TS_Random();
 	//calcDistinguishingTrace1_TS_Random();
 	//calcDistinguishingTrace2_TS_Random();
 	//calcStateIdentificationSets_TS_Random();
@@ -4179,15 +4332,15 @@ int main(int argc, char** argv)
 	//tMethod_TS_Random();
 
 	//wMethod_TS_Random2();
-	/*wMethod_Dfsm_TS_Random();
-	wMethodOnMinimisedFsm_Fsm_TS_Random();
-	wMethodOnMinimisedDfsm_Dfsm_TS_Random();
-	wpMethod_Fsm_TS_Random();
-	wpMethod_Dfsm_TS_Random();
-	wpMethodOnMinimisedDfsm_Dfsm_TS_Random();
-	hsiMethod_Fsm_TS_Random();
-	hsiMethod_Dfsm_TS_Random();
-	hMethodOnMinimisedDfsm_Dfsm_TS_Random();*/
+	//wMethod_Dfsm_TS_Random();
+	//wMethodOnMinimisedFsm_Fsm_TS_Random();
+	//wMethodOnMinimisedDfsm_Dfsm_TS_Random();
+	//wpMethod_Fsm_TS_Random();
+	//wpMethod_Dfsm_TS_Random();
+	//wpMethodOnMinimisedDfsm_Dfsm_TS_Random();
+	//hsiMethod_Fsm_TS_Random();
+	//hsiMethod_Dfsm_TS_Random();
+	//hMethodOnMinimisedDfsm_Dfsm_TS_Random();
 
 
 
