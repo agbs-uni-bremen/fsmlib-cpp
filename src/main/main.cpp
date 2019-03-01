@@ -1700,42 +1700,142 @@ void testTransformFsmToPrimeMachine(Fsm &m1) {
 	
 }
 
-void testDriverTranformToInitialConnected() {
-	for (int i = 0; i < 100; ++i) {
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-		vector<shared_ptr<FsmNode>> unreachableNodes;
-		testTransformToInitialConnected(*fsm, unreachableNodes);
-	}
+template <typename T>
+struct FsmTransformationTestCase {
+	string id;
+	shared_ptr<T> m;
+};
 
-		{
+template <typename T>
+void parseFsmTransformationTSFile(const string &testSuitePath, vector<FsmTransformationTestCase<T>> &testSuite) {
+	string fname = testSuitePath;
+	//vector<FsmTransformationTestCase> testSuite;
+	ifstream inputFile(fname);
+	if (inputFile.is_open())
+	{
 		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
-		shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
-		shared_ptr<FsmNode> q2 = make_shared<FsmNode>(2, pl);
-		shared_ptr<FsmNode> q3 = make_shared<FsmNode>(3, pl);
+		string line;
+		while (getline(inputFile, line))
+		{
+			vector<string> lineContent;
+			stringstream ss(line);
+			for (string elem; getline(ss, elem, ';'); lineContent.push_back(elem));
+			FsmTransformationTestCase<T> tc;
+			tc.id = lineContent.at(0);
+			string m1Path = lineContent.at(1);
+			if (m1Path == "../../../resources/TestSuites/FSM-Transformations/FSM002.fsm") {
+				shared_ptr<FsmNode> n = make_shared<FsmNode>(0, pl);
+				//vector<shared_ptr<FsmNode>> lst{ n };
+				T m("M", 0, 0, { n }, pl);
+				tc.m = make_shared<T>(m);
+				testSuite.push_back(tc);
+			}
+			else {
+				shared_ptr<T> m = make_shared<T>(m1Path, pl, "M");
+				tc.m = m;
+				testSuite.push_back(tc);
+			}
+		}
+		inputFile.close();
 
-		shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(1, 1, pl));
-		q0->addTransition(tr0);
-		shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q0, q2, make_shared<FsmLabel>(1, 1, pl));
-		q0->addTransition(tr1);
-		shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(q2, q1, make_shared<FsmLabel>(2, 2, pl));
-		q2->addTransition(tr2);
-		//shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(q1, q3, make_shared<FsmLabel>(0, 1, pl));
-		//q1->addTransition(tr3);
-		/*shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(q3, q0, make_shared<FsmLabel>(0, 0, pl));
-		q3->addTransition(tr4);*/
-
-		Dfsm m ("M",2,2,{q0,q1,q2,q3},pl);
-		vector<shared_ptr<FsmNode>> unreachableNodes{q0};
-		testTransformToInitialConnected(m, unreachableNodes);
-
-		Dfsm dfsm = createRandomDfsm("M", 2, 2, 2, pl);
-		unreachableNodes = vector<shared_ptr<FsmNode>>();
-		testTransformToInitialConnected(dfsm, unreachableNodes);
-
+		//return make_shared<vector<FsmTransformationTestCase>>(testSuite);
 	}
+	else
+	{
+		cout << "Unable to open input file" << endl;
+		exit(EXIT_FAILURE);
+	}
+}
 
+//shared_ptr<vector<FsmTransformationTestCase>> parseFsmTransformationTSFile(const string &testSuitePath) {
+//	string fname = testSuitePath;
+//	vector<FsmTransformationTestCase> testSuite;
+//	ifstream inputFile(fname);
+//	if (inputFile.is_open())
+//	{
+//		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+//		string line;
+//		while (getline(inputFile, line))
+//		{
+//			vector<string> lineContent;
+//			stringstream ss(line);
+//			for (string elem; getline(ss, elem, ';'); lineContent.push_back(elem));
+//			FsmTransformationTestCase tc;
+//			tc.id = lineContent.at(0);
+//			string m1Path = lineContent.at(1);
+//			if (m1Path == "../../../resources/TestSuites/FSM-Transformations/FSM002.fsm") {				
+//				shared_ptr<FsmNode> n = make_shared<FsmNode>(0, pl);
+//				//vector<shared_ptr<FsmNode>> lst{ n };
+//				Fsm m("M", 0, 0, { n }, pl);
+//				tc.m = make_shared<Fsm>(m);
+//				testSuite.push_back(tc);
+//			}
+//			else {
+//				shared_ptr<Fsm> m = make_shared<Fsm>(m1Path, pl, "M");
+//				tc.m = m;
+//				testSuite.push_back(tc);
+//			}			
+//			/*auto testSuite = parseIntersectTSFile("../../../resources/TestSuites/Intersection/Fsm_intersect.testsuite");
+//			for (auto tc : *testSuite) {
+//				cout << "Start Test Case : " << tc.id << endl;
+//				
+//				shared_ptr<Fsm> m2 = make_shared<Fsm>(tc.m2Path, pl, "M2");
+//				testIntersection(*m1, *m2);
+//			}*/
+//		}
+//		inputFile.close();
+//
+//		return make_shared<vector<FsmTransformationTestCase>>(testSuite);
+//	}
+//	else
+//	{
+//		cout << "Unable to open input file" << endl;
+//		exit(EXIT_FAILURE);
+//	}
+//}
 
+void testDriverTranformToInitialConnected() {
+	//for (int i = 0; i < 100; ++i) {
+	//	auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
+	//	vector<shared_ptr<FsmNode>> unreachableNodes;
+	//	testTransformToInitialConnected(*fsm, unreachableNodes);
+	//}
+
+	//{
+	//	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	//	shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
+	//	shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
+	//	shared_ptr<FsmNode> q2 = make_shared<FsmNode>(2, pl);
+	//	shared_ptr<FsmNode> q3 = make_shared<FsmNode>(3, pl);
+
+	//	shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(1, 1, pl));
+	//	q0->addTransition(tr0);
+	//	shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q0, q2, make_shared<FsmLabel>(1, 1, pl));
+	//	q0->addTransition(tr1);
+	//	shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(q2, q1, make_shared<FsmLabel>(2, 2, pl));
+	//	q2->addTransition(tr2);
+	//	//shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(q1, q3, make_shared<FsmLabel>(0, 1, pl));
+	//	//q1->addTransition(tr3);
+	//	/*shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(q3, q0, make_shared<FsmLabel>(0, 0, pl));
+	//	q3->addTransition(tr4);*/
+
+	//	Dfsm m("M", 2, 2, { q0,q1,q2,q3 }, pl);
+	//	vector<shared_ptr<FsmNode>> unreachableNodes{ q0 };
+	//	testTransformToInitialConnected(m, unreachableNodes);
+
+	//	Dfsm dfsm = createRandomDfsm("M", 2, 2, 2, pl);
+	//	unreachableNodes = vector<shared_ptr<FsmNode>>();
+	//	testTransformToInitialConnected(dfsm, unreachableNodes);
+
+	//}
+
+	vector<FsmTransformationTestCase<Fsm>> testSuite;
+	parseFsmTransformationTSFile<Fsm>("../../../resources/TestSuites/FSM-Transformations/Fsm_removeUnreachableNodes.testsuite", testSuite);
+	for (auto tc : testSuite) {
+		cout << "Start TC " << tc.id << endl;
+		vector<shared_ptr<FsmNode>> unreachableNodes;
+		testTransformToInitialConnected(*tc.m, unreachableNodes);
+	}
 }
 
 void testDriverTransformToOfsm() {
@@ -1773,38 +1873,46 @@ void testDriverTransformFsmToPrimeMachine() {
 	//	auto dfsm = createRandomDfsm("M", 10, 4, 4, make_shared<FsmPresentationLayer>());
 	//	testTransformFsmToPrimeMachine(dfsm);
 	//}
-	ifstream inputFile("../../../resources/TestSuites/fsm_transf_ts.txt");
-	if (inputFile.is_open())
-	{
-		string line;
-		while (getline(inputFile, line))
-		{
-			cout << "===========" << line << endl;
-			if (line == "../../../resources/TestSuites/FSM002.fsm") {
-				shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-				shared_ptr<FsmNode> n = make_shared<FsmNode>(0, pl);
-				vector<shared_ptr<FsmNode>> lst{ n };
-				Fsm m("M", 0, 0, lst, pl);
-				testTransformFsmToPrimeMachine(m);
-			}
-			// these make the program crash
-			else if (line == "../../../resources/TestSuites/FSM029.fsm"
-				|| line == "../../../resources/TestSuites/FSM053.fsm") {
-				cout << "FAIL";
-			}
-			else {
-				Fsm m(line, make_shared<FsmPresentationLayer>(), "M");
-				testTransformFsmToPrimeMachine(m);
-			}
 
-		}
-		inputFile.close();
+	//ifstream inputFile("../../../resources/TestSuites/fsm_transf_ts.txt");
+	//if (inputFile.is_open())
+	//{
+	//	string line;
+	//	while (getline(inputFile, line))
+	//	{
+	//		cout << "===========" << line << endl;
+	//		if (line == "../../../resources/TestSuites/FSM002.fsm") {
+	//			shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	//			shared_ptr<FsmNode> n = make_shared<FsmNode>(0, pl);
+	//			vector<shared_ptr<FsmNode>> lst{ n };
+	//			Fsm m("M", 0, 0, lst, pl);
+	//			testTransformFsmToPrimeMachine(m);
+	//		}
+	//		// these make the program crash
+	//		else if (line == "../../../resources/TestSuites/FSM029.fsm"
+	//			|| line == "../../../resources/TestSuites/FSM053.fsm") {
+	//			cout << "FAIL";
+	//		}
+	//		else {
+	//			Fsm m(line, make_shared<FsmPresentationLayer>(), "M");
+	//			testTransformFsmToPrimeMachine(m);
+	//		}
 
-	}
-	else
-	{
-		cout << "Unable to open input file" << endl;
-		exit(EXIT_FAILURE);
+	//	}
+	//	inputFile.close();
+
+	//}
+	//else
+	//{
+	//	cout << "Unable to open input file" << endl;
+	//	exit(EXIT_FAILURE);
+	//}
+
+	vector<FsmTransformationTestCase<Fsm>> testSuite;
+	parseFsmTransformationTSFile<Fsm>("../../../resources/TestSuites/FSM-Transformations/Fsm_minimise.testsuite", testSuite);
+	for (auto tc : testSuite) {
+		cout << "Start TC " << tc.id << endl;
+		testTransformFsmToPrimeMachine(*tc.m);
 	}
 }
 // ====================================================================================================
@@ -1834,19 +1942,6 @@ void loadFsm() {
 	//shared_ptr<Fsm> fsm = gdc;
 	gdc->toDot(gdc->getName());
 }
-
-void testWMethod() {
-	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
-	shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
-	q0->addTransition(make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(0, 0, pl)));
-	vector<shared_ptr<FsmNode>> lst{ q0, q1 };
-	Dfsm m("M", 1, 0, lst, pl);
-	cout << m.wMethodOnMinimisedFsm(0) << endl;
-	cout << m.Fsm::getCharacterisationSet();
-}
-
-
 
 // ====================================================================================================
 // Prüfverfahren "Konstruktion des Produkts"
@@ -4092,14 +4187,14 @@ int main(int argc, char** argv)
 	// FSM Transformation Tests:
 
 	//loadFsm();
-	//testDriverTranformToInitialConnected();
+	testDriverTranformToInitialConnected();
 	//testDriverTransformToOfsm();
 	//testDriverTransformDfsmToPrimeMachine();
 	//testDriverMinimiseOfsm();
 	//testDriverTransformFsmToPrimeMachine();
 
 	// Intersection Test:
-	intersection_TS_Random();
+	//intersection_TS_Random();
 
 	// Calculation of Distinguishing Traces Test:
 	//getCharacterisationSet_Dfsm_TS_Random();
