@@ -4747,122 +4747,88 @@ void tMethod_TS_Random() {
 //	}
 //}
 
-//void randomFSMTest() {
-//	const int seed = 876298;
-//	srand(seed);
-//	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-//	vector<shared_ptr<Dfsm>> dfsmList;
-//	//for (int i = 0; i < 100; ++i) {
-//	//	int size = rand() % 15 + 1;
-//	//	int mI = rand() % 6;
-//	//	int mO = (rand() % 6) + 1; // cases with maxOutput = 0 are trivial
-//	//	auto m = Dfsm("M", size, mI, mO, pl, true);
-//	//	m.setMaxState(m.getNodes().size() - 1);
-//	//	cout << m << endl;
-//	//	cout << "mI: " << m.getMaxInput() << endl;
-//	//	cout << "mO: " << m.getMaxOutput() << endl;
-//	//	cout << "size: " << m.getNodes().size() << endl;
-//	//	cout << "=====================================================" << endl;
-//	//}
-//
-//	//vector<shared_ptr<Fsm>> fsmList;
-//	//for (int i = 0; i < 100; ++i) {
-//	//	cout << "i:" << i << endl;
-//	//	int size = rand() % 6 + 1; // = 6; 
-//	//	int mI = rand() % 5 + 1;
-//	//	int mO = (rand() % 6) + 1;
-//	//	//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
-//	//	auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl))->minimise();
-//	//	for (auto fsm : fsmList) {
-//	//		if (ioEquivalenceCheck(fsm->getInitialState(), m.getInitialState())) {
-//	//			cout << "equal language found" << endl;
-//	//		}
-//	//	}
-//	//fsmList.push_back(make_shared<Fsm>(m));
-//	//	const size_t nullOutput = m.getMaxOutput() + 1;
-//	//	cout << m << endl;
-//	//	cout << "mI: " << m.getMaxInput() << endl;
-//	//	cout << "mO: " << m.getMaxOutput() << endl;
-//	//	cout << "size: " << m.getNodes().size() << endl;
-//	//	cout << "=====================================================" << endl;
-//	//}
-//
-//	vector<shared_ptr<Fsm>> fsmList;
-//	for (int i = 0; i < 100; ++i) {
-//		cout << "i:" << i << endl;
-//		int size = rand() % 6 + 1; // = 6; 
-//		int mI = rand() % 5 + 1;
-//		int mO = (rand() % 6) + 1;
-//		auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl)->minimise();
-//
-//		cout << m << endl;
-//		cout << "mI: " << m.getMaxInput() << endl;
-//		cout << "mO: " << m.getMaxOutput() << endl;
-//		cout << "size: " << m.getNodes().size() << endl;
-//
-//		vector<shared_ptr<Fsm>> mutants;
-//		mutants.push_back(make_shared<Fsm>(m));
-//		const size_t nullOutput = m.getMaxOutput() + 1;
-//		for (int i = 0; i < 20; ++i) {
-//					size_t numOutFaults = (rand() % 2);
-//					size_t numTrFaults = (rand() % 2);
-//					if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
-//					auto minMut = m.createMutantRepeatable("Mutant_" + i, numOutFaults, numTrFaults)->minimise();
-//					mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput));
-//		}
-//
-//		//for (int i = 0; i < mutants.size(); ++i) {
-//			for (int j = 0 + 1; j < mutants.size(); ++j) {
-//				if (ioEquivalenceCheck(mutants.at(0)->getInitialState(), mutants.at(j)->getInitialState())) {
-//								cout << "equal language found" << endl;
-//							}
-//			}
-//		//}
-//		
-//
-//		cout << "=====================================================" << endl;
-//	}
-//
-//	
-//	//for (int i = 0; i < 100; ++i) {
-//	//	cout << "i:" << i << endl;
-//	//	int size = rand() % 6 + 1; // = 6; 
-//	//	int mI = rand() % 5 + 1;
-//	//	int mO = (rand() % 6) + 1;
-//	//	//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
-//	//	auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
-//	//	for (auto fsm : fsmList) {
-//	//		if (checkForEqualStructure(*fsm, *m)) {
-//	//			cout << "equal structure found" << endl;
-//	//		}
-//	//	}
-//	//	fsmList.push_back(m);
-//	//	const size_t nullOutput = m->getMaxOutput() + 1;
-//	//	cout << *m << endl;
-//	//	cout << "mI: " << m->getMaxInput() << endl;
-//	//	cout << "mO: " << m->getMaxOutput() << endl;
-//	//	cout << "size: " << m->getNodes().size() << endl;
-//	//	cout << "=====================================================" << endl;
-//	//}
-//}
+
+// Selects two nodes of m randomly and changes the transitions of one of those nodes in a way that makes both equivalent.
+// It is expected that srand() was called before.
+shared_ptr<Fsm> makeStatesEquivalent(const Fsm &m) {
+	vector<shared_ptr<FsmNode> > lst;
+	for (int n = 0; n <= m.getMaxState(); n++) {
+		lst.push_back(make_shared<FsmNode>(n, m.getName(), m.getPresentationLayer()));
+	}
+
+	unsigned int first = rand() % m.getNodes().size();
+	unsigned int second = rand() % m.getNodes().size();
+	if (first == second) second = (second + 1) % m.getNodes().size();
+	cout << "first: " << first << endl;
+	cout << "second: " << second << endl;
+	
+
+	// Now add transitions that correspond exactly to the transitions in m,
+	for (int n = 0; n <= m.getMaxState(); n++) {
+		auto theNewFsmNodeSrc = lst[n];
+		auto theOldFsmNodeSrc = m.getNodes()[n];
+		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
+			int tgtId = tr->getTarget()->getId();
+			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
+			shared_ptr<FsmTransition> newTr =
+				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
+			theNewFsmNodeSrc->addTransition(newTr);
+		}
+	}
+	// replaced transitions of lst[second] by transitions with the same labels and targets as the transitions of 
+    // lst[first]. This results in two equivalent nodes iff first != second.
+	if (first != second) {
+		lst[second]->getTransitions().clear();
+		for (const auto tr : lst[first]->getTransitions()) {
+			lst[second]->getTransitions().push_back(make_shared<FsmTransition>(lst[second], tr->getTarget(), make_shared<FsmLabel>(*(tr->getLabel()))));
+		}
+	}
+	unsigned int mI = 0;
+	unsigned int mO = 0;
+	for (const auto n : lst) {
+		for (const auto tr : n->getTransitions()) {
+			if (tr->getLabel()->getInput() > mI) mI = tr->getLabel()->getInput();
+			if (tr->getLabel()->getOutput() > mO) mO = tr->getLabel()->getOutput();
+		}
+	}
+	cout << "mI: " << mI << endl;
+	cout << "mO: " << mO << endl;
+	return make_shared<Fsm>(m.getName(), mI, mO, lst, m.getPresentationLayer());
+}
 
 void randomFSMTestData() {
-	const int seed = 1234;
+	const int seed = time(NULL);//1234;
 	srand(seed);
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	vector<shared_ptr<Dfsm>> dfsmList;
-	//for (int i = 0; i < 100; ++i) {
-	//	int size = rand() % 15 + 1;
+	//size_t obsC = 0, icC = 0, reducedC = 0, minimalC = 0, normC = 0, complC = 0, obsAndMiZero = 0, size1C = 0;
+	//for (int i = 0; i < 1000; ++i) {
+	//	int size = rand() % 10 + 1;
 	//	int mI = rand() % 6;
 	//	int mO = (rand() % 6) + 1; // cases with maxOutput = 0 are trivial
 	//	auto m = Dfsm("M", size, mI, mO, pl, true);
-	//	m.setMaxState(m.getNodes().size() - 1);
-	//	cout << m << endl;
 	//	cout << "mI: " << m.getMaxInput() << endl;
 	//	cout << "mO: " << m.getMaxOutput() << endl;
 	//	cout << "size: " << m.getNodes().size() << endl;
+	//	if (m.isObservable()) ++obsC;
+	//	if (isInitialConnected(m)) ++icC;
+	//	if (not hasEquivalentStates(m)) ++reducedC;
+	//	if (isInitialConnected(m) && not hasEquivalentStates(m)) ++minimalC;
+	//	if (m.isObservable() && isInitialConnected(m) && not hasEquivalentStates(m)) ++normC;
+	//	if (m.isCompletelyDefined()) ++complC;
+	//	if (m.isObservable() and m.getMaxInput() == 0) ++obsAndMiZero;
+	//	if (m.getNodes().size() == 1) ++size1C;
+
 	//	cout << "=====================================================" << endl;
 	//}
+	//cout << "obsC: " << obsC << endl;
+	//cout << "icC: " << icC << endl;
+	//cout << "reducedC: " << reducedC << endl;
+	//cout << "minimalC: " << minimalC << endl;
+	//cout << "normC: " << normC << endl;
+	//cout << "complC: " << complC << endl;
+	//cout << "obsAndMiZero: " << obsAndMiZero << endl;
+	//cout << "size1C: " << size1C << endl;
+
 
 	//vector<shared_ptr<Fsm>> fsmList;
 	//for (int i = 0; i < 100; ++i) {
@@ -4886,47 +4852,39 @@ void randomFSMTestData() {
 	//	cout << "=====================================================" << endl;
 	//}
 
-	vector<shared_ptr<Fsm>> fsmList;
-	for (int i = 0; i < 100; ++i) {
+	size_t obsC = 0, icC = 0, reducedC = 0, minimalC = 0, normC = 0, complC = 0, obsAndMiZero = 0, size1C = 0;
+	for (int i = 0; i < 1; ++i) {
 		cout << "i:" << i << endl;
-		int size = rand() % 6 + 1; // = 6; 
+		int size = (rand() % 6) + 1; // = 6; 
 		int mI = rand() % 4;
 		int mO = (rand() % 6) + 1;
-		auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
+		auto m = Fsm::createRandomFsmRepeatable("M",mI, mO, size, pl);
+		m = makeStatesEquivalent(*m);
+		cout << "Fsm Inv: " << checkFsmClassInvariant(*m) << endl;
+		cout << *m << endl;
 
-		cout << m << endl;
 		cout << "mI: " << m->getMaxInput() << endl;
 		cout << "mO: " << m->getMaxOutput() << endl;
 		cout << "size: " << m->getNodes().size() << endl;
-		cout << "obs: " << m->isObservable() << endl;
-		cout << "ic: " << isInitialConnected(*m) << endl;
-		cout << "reduced: " << hasEquivalentStates(*m) << endl;
-		cout << "compl: " << m->isCompletelyDefined() << endl;
+		if (m->isObservable()) ++obsC;
+		if (isInitialConnected(*m)) ++icC;
+		if (not hasEquivalentStates(*m)) ++reducedC;
+		if (isInitialConnected(*m) && not hasEquivalentStates(*m)) ++minimalC;
+		if (m->isObservable() && isInitialConnected(*m) && not hasEquivalentStates(*m)) ++normC;
+		if (m->isCompletelyDefined()) ++complC;
+		if (m->isObservable() and m->getMaxInput() == 0) ++obsAndMiZero;
+		if (m->getNodes().size() == 1) ++size1C;
 
 		cout << "=====================================================" << endl;
 	}
-
-	
-	//for (int i = 0; i < 100; ++i) {
-	//	cout << "i:" << i << endl;
-	//	int size = rand() % 6 + 1; // = 6; 
-	//	int mI = rand() % 5 + 1;
-	//	int mO = (rand() % 6) + 1;
-	//	//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
-	//	auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
-	//	for (auto fsm : fsmList) {
-	//		if (checkForEqualStructure(*fsm, *m)) {
-	//			cout << "equal structure found" << endl;
-	//		}
-	//	}
-	//	fsmList.push_back(m);
-	//	const size_t nullOutput = m->getMaxOutput() + 1;
-	//	cout << *m << endl;
-	//	cout << "mI: " << m->getMaxInput() << endl;
-	//	cout << "mO: " << m->getMaxOutput() << endl;
-	//	cout << "size: " << m->getNodes().size() << endl;
-	//	cout << "=====================================================" << endl;
-	//}
+	cout << "obsC: " << obsC << endl;
+	cout << "icC: " << icC << endl;
+	cout << "reducedC: " << reducedC << endl;
+	cout << "minimalC: " << minimalC << endl;
+	cout << "normC: " << normC << endl;
+	cout << "complC: " << complC << endl;
+	cout << "obsAndMiZero: " << obsAndMiZero << endl;
+	cout << "size1C: " << size1C << endl;
 }
 
 
@@ -4936,7 +4894,7 @@ void randomFSMTestData() {
 int main(int argc, char** argv)
 {
 	std::cout << "test start" << std::endl;
-	//randomFSMTest();
+	randomFSMTestData();
 	
 	//parseTestCase();
 	//createMutants();
@@ -4965,7 +4923,7 @@ int main(int argc, char** argv)
 	// Complete Test Theories Test:
 	//tMethod_TS_Random();
 
-	wMethod_TS_Random2();
+	//wMethod_TS_Random2();
 	//wMethod_Dfsm_TS_Random();
 	//wMethodOnMinimisedFsm_Fsm_TS_Random();
 	//wMethodOnMinimisedDfsm_Dfsm_TS_Random();
