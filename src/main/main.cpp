@@ -1282,11 +1282,11 @@ bool checkUnreachableNodesList(const vector<shared_ptr<FsmNode>> &unreachableNod
 	This function creates and returns a randomly created Dfsm object. It is needed because the Dfsm Constructor that create randomized Dfsms does not set
 	the maxState member correctly, so no Dfsm Object created would fullfill the invariant.
 */
-Dfsm createRandomDfsm(const string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer) {
-	Dfsm dfsm(fsmName, maxNodes, maxInput, maxOutput, presentationLayer);
-	dfsm.setMaxState(dfsm.getNodes().size() - 1);
-	return dfsm;
-}
+//Dfsm createRandomDfsm(const string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer) {
+//	Dfsm dfsm(fsmName, maxNodes, maxInput, maxOutput, presentationLayer);
+//	dfsm.setMaxState(dfsm.getNodes().size() - 1);
+//	return dfsm;
+//}
 
 //TODO Other random creation wrapper (createRandomMinimisedFsm) if needed (some may be needed because constructor or some transformation method
 // does not set maxState correctly, which matters if Fsm::createMutant() will be used on the created fsm)
@@ -1928,8 +1928,8 @@ void minimise_Dfsm_TS() {
 
 	//random tests
 	for (int i = 0; i < 100; ++i) {
-		auto dfsm = createRandomDfsm("M", 10, 4, 4, pl);
-		testMinimise_Dfsm(dfsm);
+		//auto dfsm = createRandomDfsm("M", 10, 4, 4, pl);
+		//testMinimise_Dfsm(dfsm);
 	}
 
 	// practical examples

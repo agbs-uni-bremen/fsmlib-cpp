@@ -274,7 +274,6 @@ public:
     void toDot(const std::string & fname);
 
 	int getMaxState() const;
-	void setMaxState(int maxState);
     
     /**
      Create a new FSM that represents the intersection of this and the other FSM
