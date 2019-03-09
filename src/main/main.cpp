@@ -4796,6 +4796,45 @@ shared_ptr<Fsm> makeStatesEquivalent(const Fsm &m) {
 	return make_shared<Fsm>(m.getName(), mI, mO, lst, m.getPresentationLayer());
 }
 
+// Selects some node of m at random and deletes all incoming transitions of this node in the new Fsm.
+// The returned Fsm contains unreachable nodes if the selected node is not the initial node.
+// It is expected that srand() was called before.
+shared_ptr<Fsm> makeStatesUnreachable(const Fsm &m) {
+	vector<shared_ptr<FsmNode> > lst;
+	for (int n = 0; n <= m.getMaxState(); n++) {
+		lst.push_back(make_shared<FsmNode>(n, m.getName(), m.getPresentationLayer()));
+	}
+
+	unsigned int nodeIdx = rand() % m.getNodes().size();
+	cout << "n: " << nodeIdx << endl;
+
+	// Now add transitions that correspond exactly to the transitions in m, but ignore transitions
+	// to node at nodeIdx
+	for (int n = 0; n <= m.getMaxState(); n++) {
+		auto theNewFsmNodeSrc = lst[n];
+		auto theOldFsmNodeSrc = m.getNodes()[n];
+		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
+			int tgtId = tr->getTarget()->getId();
+			if (tgtId == nodeIdx) continue;
+			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
+			shared_ptr<FsmTransition> newTr =
+				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
+			theNewFsmNodeSrc->addTransition(newTr);
+		}
+	}
+	unsigned int mI = 0;
+	unsigned int mO = 0;
+	for (const auto n : lst) {
+		for (const auto tr : n->getTransitions()) {
+			if (tr->getLabel()->getInput() > mI) mI = tr->getLabel()->getInput();
+			if (tr->getLabel()->getOutput() > mO) mO = tr->getLabel()->getOutput();
+		}
+	}
+	cout << "mI: " << mI << endl;
+	cout << "mO: " << mO << endl;
+	return make_shared<Fsm>(m.getName(), mI, mO, lst, m.getPresentationLayer());
+}
+
 void randomFSMTestData() {
 	const int seed = time(NULL);//1234;
 	srand(seed);
@@ -4859,7 +4898,7 @@ void randomFSMTestData() {
 		int mI = rand() % 4;
 		int mO = (rand() % 6) + 1;
 		auto m = Fsm::createRandomFsmRepeatable("M",mI, mO, size, pl);
-		m = makeStatesEquivalent(*m);
+		m = makeStatesUnreachable(*m);
 		cout << "Fsm Inv: " << checkFsmClassInvariant(*m) << endl;
 		cout << *m << endl;
 
