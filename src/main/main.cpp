@@ -1048,7 +1048,7 @@ unordered_set<shared_ptr<FsmNode>> calcTargetNodes(unordered_set<shared_ptr<FsmN
 /**
 	This function returns true iff L(q) = L(u). Otherwise the function returns false.
 */
-bool ioEquivalenceCheck(std::shared_ptr<FsmNode> q, std::shared_ptr<FsmNode> u) {
+bool ioEquivalenceCheck(const std::shared_ptr<FsmNode> q, const std::shared_ptr<FsmNode> u) {
 	// init wl with (q,u)
 	std::deque<std::pair<std::unordered_set<std::shared_ptr<FsmNode>>, std::unordered_set<std::shared_ptr<FsmNode>>>> wl;
 	std::unordered_set<std::shared_ptr<FsmNode>> l = std::unordered_set<std::shared_ptr<FsmNode>>{q};
@@ -1091,7 +1091,7 @@ bool ioEquivalenceCheck(std::shared_ptr<FsmNode> q, std::shared_ptr<FsmNode> u) 
 	Checks if given fsm contains a pair of states with the same language. Returns true iff fsm contains states q, q' with
 	q != q' and L(q) = L(q').
 */
-bool hasEquivalentStates(Fsm &fsm) {
+bool hasEquivalentStates(const Fsm &fsm) {
 	for (int c1 = 0; c1 < fsm.getNodes().size(); c1++) {
 		for (int c2 = c1 + 1; c2 < fsm.getNodes().size(); c2++) {
 			if (ioEquivalenceCheck(fsm.getNodes().at(c1), fsm.getNodes().at(c2))) {
@@ -3669,26 +3669,26 @@ void wMethod_TS_Random2() {
 
 	// random tests
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	//for (int i = 0; i < 50; ++i) {
-	//	cout << "i:" << i << endl;
-	//	int size = rand() % 6 + 1; // = 6; 
-	//	int mI = rand() % 4;
-	//	int mO = (rand() % 6) + 1;
-	//	//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
-	//	auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
-	//	const size_t nullOutput = m->getMaxOutput() + 1;
+	for (int i = 0; i < 1000; ++i) {
+		cout << "i:" << i << endl;
+		int size = (rand() % 6) + 1; // = 6; 
+		int mI = rand() % 4; // (rand() % 5) + 1;
+		int mO = (rand() % 6) + 1;
+		auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
+		//auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
+		const size_t nullOutput = m->getMaxOutput() + 1;
 
-	//	vector<shared_ptr<const Fsm>> mutants;
-	//	for (int j = 0; j < 20; ++j) {
-	//		size_t numOutFaults = (rand() % 2);
-	//		size_t numTrFaults = (rand() % 2);
-	//		if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
-	//		auto minMut = m->createMutantRepeatable("Mutant_" + j, numOutFaults, numTrFaults)->minimise();
-	//		//mutants.push_back(make_shared<Fsm>(minMut));
-	//		mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput)); // m->getMaxOutput()
-	//	}
-	//	testTestTheory(*m, mutants, nullOutput, tsGenerator);
-	//}
+		vector<shared_ptr<const Fsm>> mutants;
+		for (int j = 0; j < 20; ++j) {
+			size_t numOutFaults = (rand() % 2);
+			size_t numTrFaults = (rand() % 2);
+			if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
+			auto minMut = m->createMutantRepeatable("Mutant_" + j, numOutFaults, numTrFaults)->minimise();
+			//mutants.push_back(make_shared<Fsm>(minMut));
+			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput)); // m->getMaxOutput()
+		}
+		testTestTheory(*m, mutants, nullOutput, tsGenerator);
+	}
 
 	// practical examples
 	{
@@ -4747,12 +4747,196 @@ void tMethod_TS_Random() {
 //	}
 //}
 
+//void randomFSMTest() {
+//	const int seed = 876298;
+//	srand(seed);
+//	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+//	vector<shared_ptr<Dfsm>> dfsmList;
+//	//for (int i = 0; i < 100; ++i) {
+//	//	int size = rand() % 15 + 1;
+//	//	int mI = rand() % 6;
+//	//	int mO = (rand() % 6) + 1; // cases with maxOutput = 0 are trivial
+//	//	auto m = Dfsm("M", size, mI, mO, pl, true);
+//	//	m.setMaxState(m.getNodes().size() - 1);
+//	//	cout << m << endl;
+//	//	cout << "mI: " << m.getMaxInput() << endl;
+//	//	cout << "mO: " << m.getMaxOutput() << endl;
+//	//	cout << "size: " << m.getNodes().size() << endl;
+//	//	cout << "=====================================================" << endl;
+//	//}
+//
+//	//vector<shared_ptr<Fsm>> fsmList;
+//	//for (int i = 0; i < 100; ++i) {
+//	//	cout << "i:" << i << endl;
+//	//	int size = rand() % 6 + 1; // = 6; 
+//	//	int mI = rand() % 5 + 1;
+//	//	int mO = (rand() % 6) + 1;
+//	//	//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
+//	//	auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl))->minimise();
+//	//	for (auto fsm : fsmList) {
+//	//		if (ioEquivalenceCheck(fsm->getInitialState(), m.getInitialState())) {
+//	//			cout << "equal language found" << endl;
+//	//		}
+//	//	}
+//	//fsmList.push_back(make_shared<Fsm>(m));
+//	//	const size_t nullOutput = m.getMaxOutput() + 1;
+//	//	cout << m << endl;
+//	//	cout << "mI: " << m.getMaxInput() << endl;
+//	//	cout << "mO: " << m.getMaxOutput() << endl;
+//	//	cout << "size: " << m.getNodes().size() << endl;
+//	//	cout << "=====================================================" << endl;
+//	//}
+//
+//	vector<shared_ptr<Fsm>> fsmList;
+//	for (int i = 0; i < 100; ++i) {
+//		cout << "i:" << i << endl;
+//		int size = rand() % 6 + 1; // = 6; 
+//		int mI = rand() % 5 + 1;
+//		int mO = (rand() % 6) + 1;
+//		auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl)->minimise();
+//
+//		cout << m << endl;
+//		cout << "mI: " << m.getMaxInput() << endl;
+//		cout << "mO: " << m.getMaxOutput() << endl;
+//		cout << "size: " << m.getNodes().size() << endl;
+//
+//		vector<shared_ptr<Fsm>> mutants;
+//		mutants.push_back(make_shared<Fsm>(m));
+//		const size_t nullOutput = m.getMaxOutput() + 1;
+//		for (int i = 0; i < 20; ++i) {
+//					size_t numOutFaults = (rand() % 2);
+//					size_t numTrFaults = (rand() % 2);
+//					if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
+//					auto minMut = m.createMutantRepeatable("Mutant_" + i, numOutFaults, numTrFaults)->minimise();
+//					mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput));
+//		}
+//
+//		//for (int i = 0; i < mutants.size(); ++i) {
+//			for (int j = 0 + 1; j < mutants.size(); ++j) {
+//				if (ioEquivalenceCheck(mutants.at(0)->getInitialState(), mutants.at(j)->getInitialState())) {
+//								cout << "equal language found" << endl;
+//							}
+//			}
+//		//}
+//		
+//
+//		cout << "=====================================================" << endl;
+//	}
+//
+//	
+//	//for (int i = 0; i < 100; ++i) {
+//	//	cout << "i:" << i << endl;
+//	//	int size = rand() % 6 + 1; // = 6; 
+//	//	int mI = rand() % 5 + 1;
+//	//	int mO = (rand() % 6) + 1;
+//	//	//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
+//	//	auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
+//	//	for (auto fsm : fsmList) {
+//	//		if (checkForEqualStructure(*fsm, *m)) {
+//	//			cout << "equal structure found" << endl;
+//	//		}
+//	//	}
+//	//	fsmList.push_back(m);
+//	//	const size_t nullOutput = m->getMaxOutput() + 1;
+//	//	cout << *m << endl;
+//	//	cout << "mI: " << m->getMaxInput() << endl;
+//	//	cout << "mO: " << m->getMaxOutput() << endl;
+//	//	cout << "size: " << m->getNodes().size() << endl;
+//	//	cout << "=====================================================" << endl;
+//	//}
+//}
+
+void randomFSMTestData() {
+	const int seed = 1234;
+	srand(seed);
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	vector<shared_ptr<Dfsm>> dfsmList;
+	//for (int i = 0; i < 100; ++i) {
+	//	int size = rand() % 15 + 1;
+	//	int mI = rand() % 6;
+	//	int mO = (rand() % 6) + 1; // cases with maxOutput = 0 are trivial
+	//	auto m = Dfsm("M", size, mI, mO, pl, true);
+	//	m.setMaxState(m.getNodes().size() - 1);
+	//	cout << m << endl;
+	//	cout << "mI: " << m.getMaxInput() << endl;
+	//	cout << "mO: " << m.getMaxOutput() << endl;
+	//	cout << "size: " << m.getNodes().size() << endl;
+	//	cout << "=====================================================" << endl;
+	//}
+
+	//vector<shared_ptr<Fsm>> fsmList;
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	int size = rand() % 6 + 1; // = 6; 
+	//	int mI = rand() % 5 + 1;
+	//	int mO = (rand() % 6) + 1;
+	//	//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
+	//	auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl))->minimise();
+	//	for (auto fsm : fsmList) {
+	//		if (ioEquivalenceCheck(fsm->getInitialState(), m.getInitialState())) {
+	//			cout << "equal language found" << endl;
+	//		}
+	//	}
+	//fsmList.push_back(make_shared<Fsm>(m));
+	//	const size_t nullOutput = m.getMaxOutput() + 1;
+	//	cout << m << endl;
+	//	cout << "mI: " << m.getMaxInput() << endl;
+	//	cout << "mO: " << m.getMaxOutput() << endl;
+	//	cout << "size: " << m.getNodes().size() << endl;
+	//	cout << "=====================================================" << endl;
+	//}
+
+	vector<shared_ptr<Fsm>> fsmList;
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		int size = rand() % 6 + 1; // = 6; 
+		int mI = rand() % 4;
+		int mO = (rand() % 6) + 1;
+		auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
+
+		cout << m << endl;
+		cout << "mI: " << m->getMaxInput() << endl;
+		cout << "mO: " << m->getMaxOutput() << endl;
+		cout << "size: " << m->getNodes().size() << endl;
+		cout << "obs: " << m->isObservable() << endl;
+		cout << "ic: " << isInitialConnected(*m) << endl;
+		cout << "reduced: " << hasEquivalentStates(*m) << endl;
+		cout << "compl: " << m->isCompletelyDefined() << endl;
+
+		cout << "=====================================================" << endl;
+	}
+
+	
+	//for (int i = 0; i < 100; ++i) {
+	//	cout << "i:" << i << endl;
+	//	int size = rand() % 6 + 1; // = 6; 
+	//	int mI = rand() % 5 + 1;
+	//	int mO = (rand() % 6) + 1;
+	//	//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
+	//	auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
+	//	for (auto fsm : fsmList) {
+	//		if (checkForEqualStructure(*fsm, *m)) {
+	//			cout << "equal structure found" << endl;
+	//		}
+	//	}
+	//	fsmList.push_back(m);
+	//	const size_t nullOutput = m->getMaxOutput() + 1;
+	//	cout << *m << endl;
+	//	cout << "mI: " << m->getMaxInput() << endl;
+	//	cout << "mO: " << m->getMaxOutput() << endl;
+	//	cout << "size: " << m->getNodes().size() << endl;
+	//	cout << "=====================================================" << endl;
+	//}
+}
+
+
 
 
 
 int main(int argc, char** argv)
 {
 	std::cout << "test start" << std::endl;
+	//randomFSMTest();
 	
 	//parseTestCase();
 	//createMutants();
@@ -4781,7 +4965,7 @@ int main(int argc, char** argv)
 	// Complete Test Theories Test:
 	//tMethod_TS_Random();
 
-	//wMethod_TS_Random2();
+	wMethod_TS_Random2();
 	//wMethod_Dfsm_TS_Random();
 	//wMethodOnMinimisedFsm_Fsm_TS_Random();
 	//wMethodOnMinimisedDfsm_Dfsm_TS_Random();
@@ -4790,7 +4974,7 @@ int main(int argc, char** argv)
 	//wpMethodOnMinimisedDfsm_Dfsm_TS_Random();
 	//hsiMethod_Fsm_TS_Random();
 	//hsiMethod_Dfsm_TS_Random();
-	hMethodOnMinimisedDfsm_Dfsm_TS_Random();
+	//hMethodOnMinimisedDfsm_Dfsm_TS_Random();
 
 
 
