@@ -1,5 +1,7 @@
-set (FSM_MAIN_SOURCES
+﻿set (FSM_MAIN_SOURCES
 	main.cpp
+	Tests.cpp
+	Tests.h
 )
 
 add_executable (fsm-main ${FSM_MAIN_SOURCES})
