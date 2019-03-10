@@ -49,7 +49,7 @@ void runTestClass(shared_ptr<Dfsm> dfsm ,int numOutputFaults,int numTransitionFa
   int count_wMethod_pass = 0;
   int count_wpMethod_pass = 0;
   int count_hMethod_pass = 0;
-  for(int i=0; i < 50;i++) {
+  for(int i=0; i < 1000;i++) {
     shared_ptr<Dfsm> mutant = dfsm->createMutant("Mutant",numOutputFaults,numTransitionFaults);
 
     bool result = dfsm->equivalenceCheck(*mutant);
@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
 {
     shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(3,5,3);
 
-    shared_ptr<Dfsm> dfsm{new Dfsm("Dfsm",30,6,6,pl)};
+    shared_ptr<Dfsm> dfsm{new Dfsm("Dfsm",100,6,6,pl)};
 
     dfsm->minimise();
 
@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
     }
     cout << "TMethod size: " << tMethodIOTraces.size() << endl;
 
-    IOListContainer b = dfsm->wMethod(3);
+    IOListContainer b = dfsm->wMethod(0);
     vector<IOTrace> wMethodIOTraces;
     for(vector<int> v: *b.getIOLists()) {
         InputTrace i(v,pl);
@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
     }
     cout << "WMethod size: " << wMethodIOTraces.size() << endl;
 
-    IOListContainer c = dfsm->wpMethod(3);
+    IOListContainer c = dfsm->wpMethod(0);
     vector<IOTrace> wpMethodIOTraces;
     for(vector<int> v: *c.getIOLists()) {
         InputTrace i(v,pl);
@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
     }
     cout << "WpMethod size: " << wpMethodIOTraces.size() << endl;
 
-    IOListContainer d = dfsm->hMethodOnMinimisedDfsm(3);
+    IOListContainer d = dfsm->hMethodOnMinimisedDfsm(0);
     vector<IOTrace> hMethodIOTraces;
     for(vector<int> v: *d.getIOLists()) {
         InputTrace i(v,pl);

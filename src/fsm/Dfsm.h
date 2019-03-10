@@ -15,9 +15,6 @@
 #include <string>
 #include <vector>
 
-#include <tuple>
-#include <algorithm>
-
 #include "fsm/DFSMTable.h"
 #include "fsm/Fsm.h"
 #include "fsm/SegmentedTrace.h"
