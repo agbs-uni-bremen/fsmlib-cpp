@@ -4835,6 +4835,43 @@ shared_ptr<Fsm> makeStatesUnreachable(const Fsm &m) {
 	return make_shared<Fsm>(m.getName(), mI, mO, lst, m.getPresentationLayer());
 }
 
+// Selects some input in each state of m and removes each transition for this input.
+// It is expected that srand() was called before.
+shared_ptr<Fsm> makeStatesPartial(shared_ptr<Fsm> m) {
+	vector<shared_ptr<FsmNode> > lst;
+	for (int n = 0; n <= m->getMaxState(); n++) {
+		lst.push_back(make_shared<FsmNode>(n, m->getName(), m->getPresentationLayer()));
+	}
+
+	// Now add transitions that correspond exactly to the transitions in
+	// m, but ignore transitions with some randomly selected input
+	for (int n = 0; n <= m->getMaxState(); n++) {
+		auto theNewFsmNodeSrc = lst[n];
+		auto theOldFsmNodeSrc = m->getNodes()[n];
+		int ignoreInput = rand() % (m->getMaxInput() + 1);
+		cout << "ignoreInput: " << ignoreInput << endl;
+		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
+			if (tr->getLabel()->getInput() == ignoreInput) continue;
+			int tgtId = tr->getTarget()->getId();
+			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
+			shared_ptr<FsmTransition> newTr =
+				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
+			theNewFsmNodeSrc->addTransition(newTr);
+		}
+	}
+	unsigned int mI = 0;
+	unsigned int mO = 0;
+	for (const auto n : lst) {
+		for (const auto tr : n->getTransitions()) {
+			if (tr->getLabel()->getInput() > mI) mI = tr->getLabel()->getInput();
+			if (tr->getLabel()->getOutput() > mO) mO = tr->getLabel()->getOutput();
+		}
+	}
+	cout << "mI: " << mI << endl;
+	cout << "mO: " << mO << endl;
+	return make_shared<Fsm>(m->getName(), mI, mO, lst, m->getPresentationLayer());	
+}
+
 void randomFSMTestData() {
 	const int seed = time(NULL);//1234;
 	srand(seed);
@@ -4892,13 +4929,18 @@ void randomFSMTestData() {
 	//}
 
 	size_t obsC = 0, icC = 0, reducedC = 0, minimalC = 0, normC = 0, complC = 0, obsAndMiZero = 0, size1C = 0;
-	for (int i = 0; i < 1; ++i) {
+	for (int i = 0; i < 10; ++i) {
 		cout << "i:" << i << endl;
 		int size = (rand() % 6) + 1; // = 6; 
-		int mI = rand() % 4;
+		int mI = rand() % 4 + 1; //rand() % 4;
 		int mO = (rand() % 6) + 1;
 		auto m = Fsm::createRandomFsmRepeatable("M",mI, mO, size, pl);
-		m = makeStatesUnreachable(*m);
+		cout << "before_mI: " << m->getMaxInput() << endl;
+		cout << "before_mO: " << m->getMaxOutput() << endl;
+		cout << "before_size: " << m->getNodes().size() << endl;
+
+		//m = makeStatesPartial(makeStatesEquivalent(*m));
+		m = makeStatesEquivalent(*makeStatesPartial(m));
 		cout << "Fsm Inv: " << checkFsmClassInvariant(*m) << endl;
 		cout << *m << endl;
 
