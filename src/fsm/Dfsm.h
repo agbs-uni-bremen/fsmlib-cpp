@@ -1,6 +1,6 @@
 /*
  * Copyright. Gaël Dottel, Christoph Hilken, and Jan Peleska 2016 - 2021
- * 
+ *
  * Licensed under the EUPL V.1.1
  */
 #ifndef FSM_FSM_DFSM_H_
@@ -14,6 +14,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#include <tuple>
+#include <algorithm>
 
 #include "fsm/DFSMTable.h"
 #include "fsm/Fsm.h"
@@ -41,29 +44,29 @@ private:
 	@return The DFSMTable created
 	*/
 	std::shared_ptr<DFSMTable> toDFSMTable() const;
-    
+
     std::shared_ptr<FsmPresentationLayer> createPresentationLayerFromCsvFormat(const std::string& fname);
-    
+
     std::shared_ptr<FsmPresentationLayer> createPresentationLayerFromCsvFormat(const std::string& fname,const std::shared_ptr<FsmPresentationLayer> pl);
-    
+
     void createDfsmTransitionGraph(const std::string& fname);
-    
+
     /**
      *   distTraces[n][m] contains a vector of pointers to
      *   traces distinguishing this from FsmNode number n
      */
     std::vector< std::vector< std::vector< std::shared_ptr< std::vector<int> > > > > distTraces;
-    
+
     void initDistTraces();
-    
+
     std::vector< std::shared_ptr< std::vector<int> > > calcDistTraces(FsmNode& s1,
                                                                       FsmNode& s2);
-    
+
     std::vector< std::shared_ptr< std::vector<int> > > calcDistTraces(size_t l,
                                                                       std::shared_ptr< std::vector<int> > trc,
                                                                       int id1,
                                                                       int id2);
-    
+
     std::vector< std::shared_ptr< std::vector<int> > > calcDistTraces(std::shared_ptr< std::vector<int> > trc,
                                                                       int id1,
                                                                       int id2);
@@ -79,7 +82,7 @@ public:
 	@param maxOutput Maximal value of (integer) output alphabet - admissible
 	values are 0..maxOutput
 	@param presentationLayer The presentation layer used by the DFSM
-     
+
      \note This constructor is deprecated and will be removed in a future version
 	*/
 	Dfsm(const std::string & fname,
@@ -88,13 +91,13 @@ public:
          const int maxInput,
          const int maxOutput,
          const std::shared_ptr<FsmPresentationLayer> presentationLayer);
-    
+
     /**
      Create a DFSM from a file description
      @param fname The name of the file containing the FSM informations
      @param presentationLayer The presentation layer used by the DFSM
      @param fsmName The name of the DFSM
-     
+
      The parameters maxNodes, maxInput, and maxOutput used in the constructor above
      are determined from the input file specifying the FSM.
      */
@@ -102,12 +105,12 @@ public:
          const std::shared_ptr<FsmPresentationLayer> presentationLayer,
          const std::string & fsmName);
 
-    
+
     /**
      Create a random mutant of this DFSM
      */
     void createAtRandom();
-    
+
 	/**
 	Random creation of a completely defined deterministic FSM
 	@param fsmName The name of the DFSM
@@ -145,8 +148,8 @@ public:
 	@param fsm The deterministic FSM
 	*/
 	Dfsm(const Fsm & fsm);
-    
-    
+
+
     /**
      * Create a DFSM from a file written in csv format.
      * @item fields are separated by ;
@@ -154,10 +157,10 @@ public:
      *       input event names to be used by presentation layer
      * @item Consecutive rows are ordered by DFSM states,
      *       starting with the initial state
-     * @item Each of these rows contain the state name in the first 
+     * @item Each of these rows contain the state name in the first
      *       column, as it should be used by the presentation layer.
      * @item In row indexed by state s, column indexed by input x
-     *       contains entry 
+     *       contains entry
      *                  s' / y
      *       where s' is the post-state reached when applying x in state s,
      *       and y is the associated output.
@@ -167,7 +170,7 @@ public:
      */
     Dfsm(const std::string& fname,
          const std::string& fsmName);
-    
+
     /**
      *  This constructor acts like the previous, but uses a
      *  a given presentation layer. Typically, this is required
@@ -186,8 +189,8 @@ public:
     Dfsm(const std::string& fname,
          const std::string& fsmName,
          const std::shared_ptr<FsmPresentationLayer> presentationLayer);
-    
-    
+
+
     /**
      *  Construct an DFSM from a json model file. The DFSM is completely
      *  specified: in every state of the json model, inputs x that do
@@ -197,16 +200,16 @@ public:
      *  to the output alphabet.
      */
     Dfsm(const Json::Value& jsonModel);
-    
+
     /**
-     *  This constructor acts like the previous, but uses a 
+     *  This constructor acts like the previous, but uses a
      *  a given presentation layer. Typically, this is required
      *  if an implementation DFSM is read from a file where
-     *  inputs and outputs occur in a different order, and 
+     *  inputs and outputs occur in a different order, and
      *  where some inputs/outputs occurring in the reference model
      *  do not occur in the implementation. Also, the implementation
      *  might use additional inputs and/or outputs that do not
-     *  occur in the reference model. These are appended to the respective 
+     *  occur in the reference model. These are appended to the respective
      *  lists of the given presentation layer.
      *
      *  The constructor ensures that both implementation model and
@@ -273,7 +276,7 @@ public:
     * The reference DFSM will first be minimised, and then the
     * proper W-Method is applied to the minimised DFSM.
 	* @param numAddStates The maximal number of additional states,
-    *                     which the implementation DFSM in minimised 
+    *                     which the implementation DFSM in minimised
     *                     for may have, when compared to the reference
     *                     model in minimised form.
 	* @return A test suite
@@ -327,9 +330,9 @@ public:
      */
     IOListContainer hsiMethod(const unsigned int numAddStates);
     /**
-     * Perform test generation by means of the T-Method. The algorithm 
+     * Perform test generation by means of the T-Method. The algorithm
      * applies to deterministic FSMs which are completely defined.
-     * It produces test cases from the transition cover. The resulting 
+     * It produces test cases from the transition cover. The resulting
      * test suite is complete for I/O-equivalence in the fault domain
      * of all completely defined DFSMs M' differing from the reference
      * model M only by zero or more output faults. The number of in M and M'
@@ -337,14 +340,14 @@ public:
      * must be identical as well to ensure completeness.
      */
     IOListContainer tMethod();
-    
-    
+
+
     /**
-     *  Perform test generation by means of the H-Method, as 
+     *  Perform test generation by means of the H-Method, as
      *  described in Theorem 1 of
      *    Rita Dorofeeva1, Khaled El-Fakih, and Nina Yevtushenko:
-     *    An Improved Conformance Testing Method. 
-     *    F. Wang (Ed.): FORTE 2005, LNCS 3731, pp. 204 – 218, 2005. 
+     *    An Improved Conformance Testing Method.
+     *    F. Wang (Ed.): FORTE 2005, LNCS 3731, pp. 204 – 218, 2005.
      *    IFIP International Federation for Information Processing 2005
      *
      *  This implementation requires the DFSM to be already minimised and
@@ -353,19 +356,19 @@ public:
      *  @note This implementation is still under construction.
      *  @note Further operations implementing the variants of the
      *        H-Method for nondeterministic FSMs which are not
-     *        completely specified will be added to the library 
+     *        completely specified will be added to the library
      *        in the future.
      */
     IOListContainer hMethodOnMinimisedDfsm(const unsigned int numAddStates);
-    
-    
+
+
     /**
      *  Output DFSM in tabular format as *.csv file
      *  The table consists of one row per state and one column per input.
      *  The table entry for state s and input x consists of the pair
      *  s'/y, where s' is the post-state of the transition triggered
      *  by x in state s, and y is the corresponding output.
-     *  @param fname Name of the output file without extension; 
+     *  @param fname Name of the output file without extension;
      *         extension .csv is added internally to the filename.
      */
     void toCsv(const std::string& fname);
@@ -384,7 +387,7 @@ public:
      * @return a distinguishing trace for s_i and s_j
      */
     InputTrace calcDistinguishingTrace(const std::shared_ptr<InputTrace> iAlpha, const std::shared_ptr<InputTrace> iBeta, const std::shared_ptr<Tree> tree);
-    
+
     std::vector<int> calcDistinguishingTrace(std::shared_ptr<SegmentedTrace> alpha,
                                              std::shared_ptr<SegmentedTrace> beta, const std::shared_ptr<TreeNode> treeNode);
 
@@ -421,23 +424,34 @@ public:
 
     std::vector<std::shared_ptr<PkTable> > getPktblLst() const;
     std::shared_ptr<DFSMTable> getDFSMTable() const { return dfsmTable; }
-    
-    
+
+
     /**
      *  Return true if and only if the two FSM states are distinhuishable
      */
     virtual bool distinguishable(const FsmNode& s1, const FsmNode& s2);
-    
+
     /**
      *   Calculate the distinguishability matrix
      */
     void calculateDistMatrix();
-    
+
     /**
      * Return the vector of shortest traces distinguishing s1 and s2
      */
     std::vector< std::shared_ptr< std::vector<int> > > getDistTraces(FsmNode& s1,
                                                                      FsmNode& s2);
-    
+
+	 /**
+     *  Create a mutant of the FSM, producing output faults
+     *  and/or transition faults only.
+     *
+     *  The number of states remains the same. If FSM is completely
+     *  specified and deterministic, the same will hold for the mutant.
+     */
+    std::shared_ptr<Dfsm> createMutant(const std::string & fsmName,
+                                      const size_t numOutputFaults,
+                                      const size_t numTransitionFaults);
+
 };
 #endif //FSM_FSM_DFSM_H_

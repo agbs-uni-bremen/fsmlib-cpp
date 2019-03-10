@@ -57,6 +57,8 @@ add_subdirectory (example)
 add_subdirectory (generator)
 add_subdirectory (checker)
 
+add_subdirectory (method-checker)
+
 if(gui)
 	add_subdirectory (window)
 

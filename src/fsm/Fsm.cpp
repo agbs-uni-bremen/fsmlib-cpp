@@ -72,7 +72,7 @@ shared_ptr<FsmNode> Fsm::findp(const vector<shared_ptr<FsmNode>>& lst,
 void Fsm::parseLine(const string & line)
 {
     stringstream ss(line);
-    
+
     int source;
     int input;
     int output;
@@ -81,7 +81,7 @@ void Fsm::parseLine(const string & line)
     ss >> input;
     ss >> output;
     ss >> target;
-    
+
     if (source < 0 || static_cast<int> (nodes.size()) <= source)
     {
         return;
@@ -98,13 +98,13 @@ void Fsm::parseLine(const string & line)
     {
         return;
     }
-    
+
     /*First node number occurring in the file defines the initial state*/
     if (initStateIdx < 0)
     {
         initStateIdx = source;
     }
-    
+
     if (currentParsedNode == nullptr)
     {
         currentParsedNode = make_shared<FsmNode>(source, name, presentationLayer);
@@ -119,12 +119,12 @@ void Fsm::parseLine(const string & line)
     {
         currentParsedNode = nodes[source];
     }
-    
+
     if (nodes[target] == nullptr)
     {
         nodes[target] = make_shared<FsmNode>(target, name, presentationLayer);
     }
-    
+
     shared_ptr<FsmLabel> theLabel =
     make_shared<FsmLabel>(input, output, presentationLayer);
     currentParsedNode->addTransition(make_shared<FsmTransition>(currentParsedNode,
@@ -135,7 +135,7 @@ void Fsm::parseLine(const string & line)
 void Fsm::parseLineInitial (const string & line)
 {
     stringstream ss(line);
-    
+
     int source;
     int input;
     int output;
@@ -144,28 +144,28 @@ void Fsm::parseLineInitial (const string & line)
     ss >> input;
     ss >> output;
     ss >> target;
-    
+
     if ( source > maxState ) maxState = source;
     if ( target > maxState ) maxState = target;
     if ( input > maxInput ) maxInput = input;
     if ( output > maxOutput ) maxOutput = output;
-    
+
 }
 
 
 void Fsm::readFsm(const string & fname)
 {
-    
+
     // Read the FSM file first to determine maxInput, maxOutput, maxState
     readFsmInitial(fname);
-    
+
     // Create the node vector, but first with null-nodes only
     for ( int n = 0; n <= maxState; n++ ) {
         nodes.push_back(nullptr);
     }
-    
+
     // Now read FSM file again to specify the FSM nodes and their transitions
-    
+
     /* Mark that the initial state has not yet been determined
      (will be done in parseLine()) */
     initStateIdx = -1;
@@ -178,20 +178,20 @@ void Fsm::readFsm(const string & fname)
             parseLine(line);
         }
         inputFile.close();
-        
+
     }
     else
     {
         cout << "Unable to open input file" << endl;
         exit(EXIT_FAILURE);
     }
-    
+
 }
 
 void Fsm::readFsmInitial (const string & fname)
 {
-    
-    
+
+
     initStateIdx = -1;
     ifstream inputFile (fname);
     if (inputFile.is_open())
@@ -208,14 +208,14 @@ void Fsm::readFsmInitial (const string & fname)
         cout << "Unable to open input file" << endl;
         exit(EXIT_FAILURE);
     }
-    
+
 }
 
 
 string Fsm::labelString(unordered_set<shared_ptr<FsmNode>>& lbl) const
 {
     string s = "{ ";
-    
+
     bool isFirst = true;
     for (shared_ptr<FsmNode> n : lbl)
     {
@@ -226,7 +226,7 @@ string Fsm::labelString(unordered_set<shared_ptr<FsmNode>>& lbl) const
         isFirst = false;
         s += n->getName() + "(" + to_string(n->getId()) + ")";
     }
-    
+
     s += " }";
     return s;
 }
@@ -234,7 +234,7 @@ string Fsm::labelString(unordered_set<shared_ptr<FsmNode>>& lbl) const
 Fsm::Fsm() { }
 
 Fsm::Fsm(const Fsm& other) {
-    
+
     name = other.name;
     currentParsedNode = nullptr;
     maxInput = other.maxInput;
@@ -244,11 +244,11 @@ Fsm::Fsm(const Fsm& other) {
     characterisationSet = nullptr;
     minimal = other.minimal;
     presentationLayer = other.presentationLayer;
-    
+
     for ( int n = 0; n <= maxState; n++ ) {
         nodes.push_back(make_shared<FsmNode>(n,name,presentationLayer));
     }
-    
+
     // Now add transitions that correspond exactly to the transitions in
     // this FSM
     for ( int n = 0; n <= maxState; n++ ) {
@@ -262,10 +262,10 @@ Fsm::Fsm(const Fsm& other) {
             theNewFsmNodeSrc->addTransition(newTr);
         }
     }
-    
+
     // Mark the initial node
     nodes[initStateIdx]->markAsInitial();
-    
+
 }
 
 Fsm::Fsm(const shared_ptr<FsmPresentationLayer> presentationLayer)
@@ -280,7 +280,7 @@ characterisationSet(nullptr),
 minimal(Maybe),
 presentationLayer(presentationLayer)
 {
-    
+
 }
 
 Fsm::Fsm(const string& fname,
@@ -298,7 +298,7 @@ presentationLayer(presentationLayer)
 {
     readFsm(fname);
     if ( initStateIdx >= 0 ) nodes[initStateIdx]->markAsInitial();
-    
+
 }
 
 Fsm::Fsm(const string & fname,
@@ -317,7 +317,7 @@ characterisationSet(nullptr),
 minimal(Maybe),
 presentationLayer(presentationLayer)
 {
-    
+
     for (int i = 0; i < maxNodes; ++ i)
     {
         nodes.push_back (nullptr);
@@ -345,14 +345,14 @@ presentationLayer(presentationLayer)
 {
     nodes.insert(nodes.end(), lst.begin(), lst.end());
     // reset all nodes as 'white' and 'unvisited'
-    
+
     for ( auto n : nodes ) {
         n->setColor(FsmNode::white);
         n->setUnvisited();
     }
-    
+
     nodes[initStateIdx]->markAsInitial();
-    
+
 }
 
 
@@ -439,17 +439,17 @@ Fsm Fsm::intersect(const Fsm & f)
     // A list of node pairs which is used to
     // control the breath-first search (BFS)
     deque<shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>> nodeList;
-    
+
     // A list of new FSM states, each state created from a pair of
     // this-nodes and f-nodes. At the end of this operation,
     // the new FSM will be created from this list.
     vector<shared_ptr<FsmNode>> fsmInterNodes;
     int id = 0;
-    
+
     // Initially, add the pair of initial this-node and f-node
     // into the BFS list.
     nodeList.push_back(make_shared<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>(getInitialState(), f.getInitialState()));
-    
+
     // We need a new presentation layer. It has the same inputs and
     // outputs as this Fsm, but the state names will be pairs of
     // state names from this FSM and f
@@ -458,7 +458,7 @@ Fsm Fsm::intersect(const Fsm & f)
     make_shared<FsmPresentationLayer>(presentationLayer->getIn2String(),
                                       presentationLayer->getOut2String(),
                                       stateNames);
-    
+
     // This is the BFS loop, running over the (this,f)-node pairs
     while (!nodeList.empty())
     {
@@ -468,40 +468,40 @@ Fsm Fsm::intersect(const Fsm & f)
         shared_ptr<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>
             p = nodeList.front();
         nodeList.pop_front();
-        
+
         // current node of this FSM
         shared_ptr<FsmNode> myCurrentNode = p->first;
-        
+
         // current node of the f-FSM
         shared_ptr<FsmNode> theirCurrentNode = p->second;
-        
+
         // Do we already have an FSM state for the new FSM
         // stored in fsmInterNodes, which is associated
         // with the current pair p?
         shared_ptr<FsmNode> nSource = findp(fsmInterNodes, p);
-        
+
         if (nSource == nullptr)
         {
-            
+
             // Set the node name as pair of the individual node names
             string newNodeName("(" + myCurrentNode->getName() + "," +
                                theirCurrentNode->getName() + ")");
-            
+
             // Register node name in new presentation layer
             newPl->addState2String(newNodeName);
-            
+
             // We create the new FSM state associated with p:
             // nSource is created from the state
             // pair(myCurrentNode,theirCurrentNode)
             // which is identified by p.
             nSource = newNode(id++, p, newPl);
             fsmInterNodes.push_back(nSource);
-            
+
         }
-        
+
         // Mark this node: now all of its outgoing transitions are constructed
         nSource->setVisited();
-        
+
         // Loop over all transitions emanating from myCurrentNode
         for (auto tr : myCurrentNode->getTransitions())
         {
@@ -516,13 +516,13 @@ Fsm Fsm::intersect(const Fsm & f)
                    and target node (tr.getTarget(),trOther.getTarget()),
                    which is the pair of the target nodes
                    of each transition.*/
-                
+
                 if (*tr->getLabel() == *trOther->getLabel())
                 {
-                    
+
                     // New target node represented as a pair (this-node,f-node)
                     auto pTarget = make_shared<pair<shared_ptr<FsmNode>, shared_ptr<FsmNode>>>(tr->getTarget(), trOther->getTarget());
-                    
+
                     // If the target node does not yet exist in the list
                     // of state for the new FSM, then create it now
                     shared_ptr<FsmNode> nTarget = findp(fsmInterNodes, pTarget);
@@ -532,20 +532,20 @@ Fsm Fsm::intersect(const Fsm & f)
                         string newNodeName("(" + tr->getTarget()->getName() +
                                            "," +
                                            trOther->getTarget()->getName() + ")");
-                        
+
                         // Register node name in new presentation layer
                         newPl->addState2String(newNodeName);
-                        
+
                         nTarget = newNode(id++, pTarget, newPl);
                         fsmInterNodes.push_back(nTarget);
                     }
-                    
+
                     // Add transition from nSource to nTarget
                     auto newTr = make_shared<FsmTransition>(nSource,
                                                             nTarget,
                                                             tr->getLabel());
                     nSource->addTransition(newTr);
-                    
+
                     /* Conditions for insertion of the target pair
                        into the nodeList:
                      1. the target node corresponding to the pair
@@ -562,9 +562,9 @@ Fsm Fsm::intersect(const Fsm & f)
             }
         }
     }
-    
+
     newPl->dumpState(cout);
-    
+
     return Fsm(f.getName(), maxInput, maxOutput, fsmInterNodes, newPl);
 }
 
@@ -573,21 +573,21 @@ shared_ptr<Tree> Fsm::getStateCover()
     resetColor();
     deque<shared_ptr<FsmNode>> bfsLst;
     unordered_map<shared_ptr<FsmNode>, shared_ptr<TreeNode>> f2t;
-    
+
     shared_ptr<TreeNode> root = make_shared<TreeNode>();
     shared_ptr<Tree> scov = make_shared<Tree>(root, presentationLayer);
-    
+
     shared_ptr<FsmNode> initState = getInitialState();
     initState->setColor(FsmNode::grey);
     bfsLst.push_back(initState);
     f2t[initState] = root;
-    
+
     while (!bfsLst.empty())
     {
         shared_ptr<FsmNode> thisNode = bfsLst.front();
         bfsLst.pop_front();
         shared_ptr<TreeNode> currentTreeNode = f2t[thisNode];
-        
+
         for (int x = 0; x <= maxInput; ++x)
         {
             for (shared_ptr<FsmNode> tgt : thisNode->after(x))
@@ -611,20 +611,20 @@ shared_ptr<Tree> Fsm::getTransitionCover()
 {
     shared_ptr<Tree> scov = getStateCover();
     resetColor();
-    
+
     shared_ptr<vector<vector<int>>> tlst = make_shared<vector<vector<int>>>();
-    
+
     for (int x = 0; x <= maxInput; ++ x)
     {
         vector<int> l;
         l.push_back(x);
         tlst->push_back(l);
     }
-    
+
     IOListContainer tcl = IOListContainer(tlst, presentationLayer);
-    
+
     scov->add(tcl);
-    
+
     return scov;
 }
 
@@ -635,29 +635,29 @@ OutputTree Fsm::apply(const InputTrace & itrc, bool markAsVisited)
 
 Fsm Fsm::transformToObservableFSM() const
 {
-    
+
     // List to be filled with the new states to be created
     // for the observable FSM
     vector<shared_ptr<FsmNode>> nodeLst;
-    
+
     // Breadth first search list, containing the
     // new FSM nodes, still to be processed by the algorithm
     vector<shared_ptr<FsmNode>> bfsLst;
-    
+
     // Map a newly created node to the set of nodes from the
     // original FSM, comprised in the new FSM state
     unordered_map<shared_ptr<FsmNode>, unordered_set<shared_ptr<FsmNode>>> node2NodeLabel;
-    
+
     // Set of nodes from the original FSM, comprised in the
     // current new node
     unordered_set<shared_ptr<FsmNode>> theNodeLabel;
-    
+
     // For the first step of the algorithm, the initial
     // state of the original FSM is the only state comprised
     // in the initial state of the new FSM
     theNodeLabel.insert(getInitialState());
 
-    
+
     // Create a new presentation layer which has
     // the same names for the inputs and outputs as
     // the old presentation layer, but still an EMPTY vector
@@ -667,12 +667,12 @@ Fsm Fsm::transformToObservableFSM() const
     make_shared<FsmPresentationLayer>(presentationLayer->getIn2String(),
                                       presentationLayer->getOut2String(),
                                       obsState2String);
-    
-    
+
+
     // id to be taken for the next state of the new
     // observable FSM to be created.
     int id = 0;
-    
+
     // The initial state of the new FSM is labelled with
     // the set containing just the initial state of the old FSM
     string nodeName = labelString(theNodeLabel);
@@ -680,11 +680,11 @@ Fsm Fsm::transformToObservableFSM() const
     nodeLst.push_back(q0);
     bfsLst.push_back(q0);
     node2NodeLabel[q0] = theNodeLabel;
-    
+
     // The node label is added to the presentation layer,
     // as name of the initial state
     obsPl->addState2String(nodeName);
-    
+
     // Loop while there is at least one node in the BFS list.
     // Initially, the list contains just the new initial state
     // of the new FSM.
@@ -693,7 +693,7 @@ Fsm Fsm::transformToObservableFSM() const
         // Pop the first node from the list
         shared_ptr<FsmNode> q = bfsLst.front();
         bfsLst.erase(bfsLst.begin());
-        
+
         // Nested loop over all input/output labels that
         // might be associated with one or more outgoing transitions
         for (int x = 0; x <= maxInput; ++ x)
@@ -703,7 +703,7 @@ Fsm Fsm::transformToObservableFSM() const
                 // This is the transition label currently processed
                 shared_ptr<FsmLabel> lbl =
                 make_shared<FsmLabel>(x, y, obsPl);
-                
+
                 // Clear the set of node labels that may
                 // serve as node name for the target node to be
                 // created (or already exists). This target node
@@ -711,7 +711,7 @@ Fsm Fsm::transformToObservableFSM() const
                 // can be reached from q under a transition labelled
                 // with lbl
                 theNodeLabel.clear();
-                
+
                 // Loop over all nodes of the original FSM which
                 // are comprised by q
                 for (shared_ptr<FsmNode> n : node2NodeLabel.at(q))
@@ -729,29 +729,29 @@ Fsm Fsm::transformToObservableFSM() const
                         }
                     }
                 }
-                
+
                 // Process only non-empty label sets.
                 // An empty label set means that no transition labelled
                 // by lbl exists.
                 if (!theNodeLabel.empty())
                 {
-                    
+
                     shared_ptr<FsmNode> tgtNode = nullptr;
-                    
+
                     // Loop over the node-2-label map and check
                     // if there exists already a node labelled
                     // by theNodeLabel. If this is the case,
                     // it will become the target node reached from q
                     // under lbl
                     for ( auto u : node2NodeLabel ) {
-                        
+
                         if ( u.second == theNodeLabel ) {
                             tgtNode = u.first;
                             break;
                         }
-                        
+
                     }
-                    
+
                     if (tgtNode == nullptr)
                     {
                         // We need to create a new target node, to be reached
@@ -763,7 +763,7 @@ Fsm Fsm::transformToObservableFSM() const
                         node2NodeLabel[tgtNode] = theNodeLabel;
                         obsPl->addState2String(nodeName);
                     }
-                    
+
                     // Create the transition from q to tgtNode
                     auto trNew = make_shared<FsmTransition>(q, tgtNode, lbl);
                     q->addTransition(trNew);
@@ -792,13 +792,13 @@ Minimal Fsm::isMinimal() const
 }
 
 void Fsm::calcOFSMTables() {
-    
+
     ofsmTableLst.clear();
-    
+
     // Create the initial OFSMTable representing the FSM,
     //  where all FSM states belong to the same class
     shared_ptr<OFSMTable> tbl = make_shared<OFSMTable>(nodes, maxInput, maxOutput, presentationLayer);
-    
+
     // Create all possible OFSMTables, each new one from its
     // predecessor, and add them to the ofsmTableLst
     while (tbl != nullptr)
@@ -806,7 +806,7 @@ void Fsm::calcOFSMTables() {
         ofsmTableLst.push_back(tbl);
         tbl = tbl->next();
     }
-    
+
 }
 
 Fsm Fsm::minimiseObservableFSM()
@@ -816,7 +816,7 @@ Fsm Fsm::minimiseObservableFSM()
     // The last OFSMTable defined has classes corresponding to
     // the minimised FSM to be constructed*/
     shared_ptr<OFSMTable> tbl = ofsmTableLst.back();
-    
+
     // Create the minimised FSM from tbl and return it
     Fsm fsm = tbl->toFsm(name + "_MIN");
     fsm.minimal = True;
@@ -825,15 +825,15 @@ Fsm Fsm::minimiseObservableFSM()
 
 Fsm Fsm::minimise()
 {
-    
+
     vector<shared_ptr<FsmNode>> uNodes;
     removeUnreachableNodes(uNodes);
-    
+
     if (!isObservable())
     {
         return transformToObservableFSM().minimiseObservableFSM();
     }
-    
+
     return minimiseObservableFSM();
 }
 
@@ -859,12 +859,12 @@ void Fsm::minimiseCharSet(const shared_ptr<Tree> w)
     {
         return;
     }
-    
+
     for (unsigned int i = 0; i < wcnt.getIOLists()->size(); ++ i)
     {
         IOListContainer wcntNew = IOListContainer(wcnt);
         wcnt.getIOLists()->erase(wcnt.getIOLists()->begin() + i);
-        
+
         shared_ptr<Tree> itr = make_shared<Tree>(make_shared<TreeNode>(), presentationLayer);
         itr->addToRoot(wcntNew);
         if (isCharSet(itr))
@@ -880,44 +880,44 @@ void Fsm::minimiseCharSet(const shared_ptr<Tree> w)
 
 IOListContainer Fsm::getCharacterisationSet()
 {
-    
+
     // Do we already have a characterisation set ?
     if ( characterisationSet != nullptr ) {
         IOListContainer tcl = characterisationSet->getIOLists();
         return tcl;
     }
-    
-    
+
+
     // We have to calculate teh chracterisation set from scratch
     if (!isObservable())
     {
         cout << "This FSM is not observable - cannot calculate the charactersiation set." << endl;
         exit(EXIT_FAILURE);
     }
-    
+
     /*Call minimisation algorithm again for creating the OFSM-Tables*/
     minimise();
-    
+
     /*Create an empty characterisation set as an empty InputTree instance*/
     shared_ptr<Tree> w = make_shared<Tree>(make_shared<TreeNode>(), presentationLayer);
-    
+
     /*Loop over all non-equal pairs of states.
      Calculate the state identification sets.*/
     for (unsigned int left = 0; left < nodes.size(); ++ left)
     {
         shared_ptr<FsmNode> leftNode = nodes.at(left);
-        
+
         for (unsigned int right = left + 1; right < nodes.size(); ++ right)
         {
             shared_ptr<FsmNode> rightNode = nodes.at(right);
-            
+
             /*Nothing to do if leftNode and rightNode are
              already distinguished by an element of w*/
             if (leftNode->distinguished(rightNode, w) != nullptr)
             {
                 continue;
             }
-            
+
             /*We have to create a new input trace and add it to w, because
              leftNode and rightNode are not distinguished by the current
              input traces contained in w. */
@@ -928,19 +928,19 @@ IOListContainer Fsm::getCharacterisationSet()
             shared_ptr<vector<vector<int>>> lli = make_shared<vector<vector<int>>>();
             lli->push_back(i.get());
             IOListContainer tcli = IOListContainer(lli, presentationLayer);
-            
+
             /*Insert this also into w*/
             w->addToRoot(tcli);
         }
     }
-    
+
     /*Minimise and store characterisation set*/
     characterisationSet = w;
     //    minimiseCharSet(w);
-    
+
     /*Wrap list of lists by an IOListContainer instance*/
     IOListContainer tcl = characterisationSet->getIOLists();
-    
+
     return tcl;
 }
 
@@ -951,23 +951,23 @@ void Fsm::calcStateIdentificationSets()
         cout << "This FSM is not observable - cannot calculate the charactersiation set." << endl;
         exit(EXIT_FAILURE);
     }
-    
+
     if (characterisationSet == nullptr)
     {
         cout << "Missing characterisation set - exit." << endl;
         exit(EXIT_FAILURE);
     }
-    
+
     /*Create empty state identification sets for every FSM state*/
     stateIdentificationSets.clear();
-    
+
     /*Identify W by integers 0..m*/
     IOListContainer wIC = characterisationSet->getIOLists();
     shared_ptr<vector<vector<int>>> wLst = wIC.getIOLists();
-    
+
     /*wLst.get(0) is identified with Integer(0),
      wLst.get(1) is identified with Integer(1), ...*/
-    
+
     vector<vector<unordered_set<int>>> z;
     for (unsigned int i = 0; i < nodes.size(); ++ i)
     {
@@ -977,19 +977,19 @@ void Fsm::calcStateIdentificationSets()
             z.at(i).push_back(unordered_set<int>());
         }
     }
-    
+
     for (unsigned int i = 0; i < nodes.size(); ++ i)
     {
         shared_ptr<FsmNode> iNode = nodes.at(i);
-        
+
         for (unsigned int j = i + 1; j < nodes.size(); ++ j)
         {
             shared_ptr<FsmNode> jNode = nodes.at(j);
-            
+
             for (unsigned int u = 0; u < wLst->size(); ++ u)
             {
                 vector<int> thisTrace = wLst->at(u);
-                
+
                 if (iNode->distinguished(jNode, thisTrace))
                 {
                     z.at(i).at(j).insert(u);
@@ -998,7 +998,7 @@ void Fsm::calcStateIdentificationSets()
             }
         }
     }
-    
+
     for (unsigned int i = 0; i < nodes.size(); ++ i)
     {
         vector<unordered_set<int>> iLst;
@@ -1008,15 +1008,15 @@ void Fsm::calcStateIdentificationSets()
             {
                 continue;
             }
-            
+
             iLst.push_back(z.at(i).at(j));
         }
-        
+
         /*Calculate minimal state identification set for
          FsmNode i*/
         HittingSet hs = HittingSet(iLst);
         unordered_set<int> h = hs.calcMinCardHittingSet();
-        
+
         shared_ptr<Tree> iTree = make_shared<Tree>(make_shared<TreeNode>(), presentationLayer);
         for (int u : h)
         {
@@ -1026,16 +1026,16 @@ void Fsm::calcStateIdentificationSets()
             iTree->addToRoot(IOListContainer(lllli, presentationLayer));
         }
         stateIdentificationSets.push_back(iTree);
-        
+
     }
-    
+
 #if 0
     for (unsigned int n = 0; n < stateIdentificationSets.size(); ++ n)
     {
         cout << "W(" << n << ") = " << stateIdentificationSets.at(n)->getTestCases() << endl;
     }
 #endif
-    
+
 }
 
 
@@ -1047,27 +1047,27 @@ void Fsm::calcStateIdentificationSetsFast()
         cout << "This FSM is not observable - cannot calculate the charactersiation set." << endl;
         exit(EXIT_FAILURE);
     }
-    
+
     if (characterisationSet == nullptr)
     {
         cout << "Missing characterisation set - exit." << endl;
         exit(EXIT_FAILURE);
     }
-    
+
     /*Create empty state identification sets for every FSM state*/
     stateIdentificationSets.clear();
-    
+
     /*Identify W by integers 0..m*/
     IOListContainer wIC = characterisationSet->getIOLists();
     shared_ptr<vector<vector<int>>> wLst = wIC.getIOLists();
-    
+
     // Matrix indexed over nodes
     vector< vector<int> > distinguish;
-    
+
     // Every node is associated with an IOListContainer
     // containing its distinguishing traces
     vector< shared_ptr<IOListContainer> > node2iolc;
-    
+
     for (size_t i = 0; i < size(); ++ i) {
         node2iolc.push_back(make_shared<IOListContainer>(presentationLayer));
         vector<int> v;
@@ -1076,16 +1076,16 @@ void Fsm::calcStateIdentificationSetsFast()
             distinguish.at(i).push_back(-1);
         }
     }
-    
+
     for (size_t i = 0; i < size(); ++ i) {
-        
+
         int traceIdx = 0;
         for (auto trc : *wLst) {
-            
+
             bool complete = true;
             for ( size_t j = i+1; j < size(); j++ ) {
                 if ( distinguish.at(i).at(j) == -1 ) {
-                    
+
                     if (nodes[i]->distinguished(nodes[j], trc))
                     {
                         distinguish.at(i).at(j) = traceIdx;
@@ -1097,52 +1097,52 @@ void Fsm::calcStateIdentificationSetsFast()
                     else {
                         complete = false;
                     }
-                    
+
                 }
             }
-            
+
             if ( complete ) break;
             traceIdx++;
-        
+
         }
     }
-    
-    
+
+
     for (size_t i = 0; i < size(); ++ i) {
         shared_ptr<Tree> iTree = make_shared<Tree>(make_shared<TreeNode>(), presentationLayer);
         iTree->addToRoot(*node2iolc.at(i));
         stateIdentificationSets.push_back(iTree);
     }
-    
+
 #if 0
     for (unsigned int n = 0; n < stateIdentificationSets.size(); ++ n)
     {
         cout << "W(" << n << ") = " << stateIdentificationSets.at(n)->getTestCases() << endl;
     }
 #endif
-    
+
 }
 
 
 void Fsm::appendStateIdentificationSets(const shared_ptr<Tree> Wp2) const
 {
     IOListContainer cnt = Wp2->getIOLists();
-    
+
     for (vector<int> lli : *cnt.getIOLists())
     {
         InputTrace itrc = InputTrace(lli, presentationLayer);
-        
+
         /*Which are the target nodes reachable via input trace lli
          in this FSM?*/
         unordered_set<shared_ptr<FsmNode>> tgtNodes = getInitialState()->after(itrc);
-        
+
         for (shared_ptr<FsmNode> n : tgtNodes)
         {
             int nodeId = n->getId();
-            
+
             /*Get state identification set associated with n*/
             shared_ptr<Tree> wNodeId = stateIdentificationSets.at(nodeId);
-            
+
             /*Append state identification set to Wp2 tree node
              reached after applying  itrc*/
             Wp2->addAfter(itrc, wNodeId->getIOLists());
@@ -1152,18 +1152,18 @@ void Fsm::appendStateIdentificationSets(const shared_ptr<Tree> Wp2) const
 
 
 IOListContainer Fsm::wMethod(const unsigned int numAddStates) {
-    
+
     Fsm fo = transformToObservableFSM();
     Fsm fom = fo.minimise();
-    
+
     return fom.wMethodOnMinimisedFsm(numAddStates);
 }
 
 
 IOListContainer Fsm::wMethodOnMinimisedFsm(const unsigned int numAddStates) {
-    
+
     shared_ptr<Tree> iTree = getTransitionCover();
-    
+
     if ( numAddStates > 0 ) {
         IOListContainer inputEnum = IOListContainer(maxInput,
                                                     1,
@@ -1171,40 +1171,40 @@ IOListContainer Fsm::wMethodOnMinimisedFsm(const unsigned int numAddStates) {
                                                     presentationLayer);
         iTree->add(inputEnum);
     }
-    
-    
+
+
     IOListContainer w = getCharacterisationSet();
     iTree->add(w);
-    
+
     return iTree->getIOLists();
-    
+
 }
 
 IOListContainer Fsm::wpMethod(const unsigned int numAddStates)
 {
-    
+
     shared_ptr<Tree> scov = getStateCover();
-    
+
     shared_ptr<Tree> tcov = getTransitionCover();
-    
+
     tcov->remove(scov);
     shared_ptr<Tree> r = tcov;
-    
+
     IOListContainer w = getCharacterisationSet();
-        
+
     calcStateIdentificationSetsFast();
-    
+
     shared_ptr<Tree> Wp1 = scov;
     if (numAddStates > 0)
     {
         IOListContainer inputEnum = IOListContainer(maxInput, 1,
                                                     (int)numAddStates,
                                                     presentationLayer);
-        
+
         Wp1->add(inputEnum);
     }
     Wp1->add(w);
-    
+
     shared_ptr<Tree> Wp2 = r;
     if (numAddStates > 0)
     {
@@ -1212,7 +1212,7 @@ IOListContainer Fsm::wpMethod(const unsigned int numAddStates)
                                                     (int)numAddStates,
                                                     (int)numAddStates,
                                                     presentationLayer);
-        
+
         Wp2->add(inputEnum);
     }
     appendStateIdentificationSets(Wp2);
@@ -1230,7 +1230,7 @@ IOListContainer Fsm::hsiMethod(const unsigned int numAddStates)
         cout << "This FSM is not observable - cannot calculate the harmonized state identification set." << endl;
         exit(EXIT_FAILURE);
     }
-    
+
     IOListContainer wSet = getCharacterisationSet();
 
     shared_ptr<Tree> scov = getStateCover();
@@ -1309,13 +1309,13 @@ TestSuite Fsm::createTestSuite(const IOListContainer & testCases)
 {
     shared_ptr<vector<vector<int>>> tcLst = testCases.getIOLists();
     TestSuite theSuite;
-    
+
     for (unsigned int i = 0; i < tcLst->size(); ++ i)
     {
         OutputTree ot = apply(InputTrace(tcLst->at(i), presentationLayer));
         theSuite.push_back(ot);
     }
-    
+
     return theSuite;
 }
 
@@ -1371,20 +1371,20 @@ ostream & operator<<(ostream & out, const Fsm & fsm)
         {
             out << endl << "node [shape = doublecircle]" << endl;
         }
-        
+
         if (fsm.nodes.at(i) == nullptr)
         {
             continue;
         }
         string nodeName = (fsm.nodes.at(i)->getName().empty()) ? "s" : fsm.nodes.at(i)->getName();
         out << i << "[label=\"" << nodeName << "(" << fsm.nodes.at(i)->getId() << ")\"];" << endl;
-        
+
         if (i == fsm.initStateIdx)
         {
             out << endl << "node [shape = ellipse]" << endl;
         }
     }
-    
+
     for (shared_ptr<FsmNode> node : fsm.nodes)
     {
         if (node != nullptr)
@@ -1398,10 +1398,10 @@ ostream & operator<<(ostream & out, const Fsm & fsm)
 
 
 unsigned int Fsm::getRandomSeed() {
-    
+
     return static_cast<unsigned int>
     (high_resolution_clock::now().time_since_epoch().count());
-    
+
 }
 
 
@@ -1412,7 +1412,7 @@ Fsm::createRandomFsm(const string & fsmName,
                      const int maxState,
                      const shared_ptr<FsmPresentationLayer> pl,
                      const unsigned seed) {
-    
+
     // Initialisation of random number generation
     if ( seed == 0 ) {
         srand(getRandomSeed());
@@ -1420,7 +1420,7 @@ Fsm::createRandomFsm(const string & fsmName,
     else {
         srand(seed);
     }
-    
+
     // Produce the nodes and put them into a vector.
     // All nodes are marked 'white' by the costructor - this is now
     // used to mark unreachable states which have to be made reachable
@@ -1428,30 +1428,30 @@ Fsm::createRandomFsm(const string & fsmName,
     for ( int n = 0; n <= maxState; n++ ) {
         lst.push_back(make_shared<FsmNode>(n,fsmName,pl));
     }
-    
+
     // At index 0 of the vector, the initial state is store, and
     // this is reachable
     lst[0]->setColor(FsmNode::black);
-    
+
     // We create transitions by starting from black (reachable) nodes
     // and trying to reach at least one white node from there.
     deque< shared_ptr<FsmNode> > bfsq;
     bfsq.push_back(lst[0]);
-    
+
     while ( not bfsq.empty() ) {
-        
+
         shared_ptr<FsmNode> srcNode = bfsq.front();
         bfsq.pop_front();
-        
+
         // Generation part 1.
         // Select an uncovered node at random
         int whiteNodeIndex = rand() % (maxState+1);
         shared_ptr<FsmNode> whiteNode = nullptr;
         shared_ptr<FsmNode> startNode = lst[whiteNodeIndex];
         shared_ptr<FsmNode> thisNode = startNode;
-        
+
         do {
-            
+
             if ( thisNode->getColor() == FsmNode::white ) {
                 whiteNode = thisNode;
             }
@@ -1459,14 +1459,14 @@ Fsm::createRandomFsm(const string & fsmName,
                 whiteNodeIndex = (whiteNodeIndex + 1) % (maxState+1);
                 thisNode = lst[whiteNodeIndex];
             }
-            
+
         } while ( whiteNode == nullptr and thisNode != startNode );
-        
+
         // Link srcNode by random transition to thisNode
         // and mark thisNode as black. Also insert into BFS queue
         int x0 = -1;
         int y0 = -1;
-        
+
         if ( whiteNode != nullptr ) {
             x0 = rand() % (maxInput+1);
             y0 = rand() % (maxOutput+1);
@@ -1478,7 +1478,7 @@ Fsm::createRandomFsm(const string & fsmName,
             thisNode->setColor(FsmNode::black);
             bfsq.push_back(thisNode);
         }
-        
+
         // Generation part 2.
         // Random transition generation.
         // At least one transition for every input, with
@@ -1487,7 +1487,7 @@ Fsm::createRandomFsm(const string & fsmName,
             // If x equals x0 produced already above,
             // we may skip it at random
             if ( x == x0 and (rand() % 2) ) continue;
-            
+
             // How many transitions do we want for input x?
             // We construct at most 2 of these transitions
             int numTrans = rand() % 2;
@@ -1507,13 +1507,13 @@ Fsm::createRandomFsm(const string & fsmName,
                 // Add transition to adjacency list of the source node
                 srcNode->addTransition(theTrans);
             }
-            
+
         }
-        
+
     }
-    
+
     return make_shared<Fsm>(fsmName,maxInput,maxOutput,lst,pl);
-    
+
 }
 
 
@@ -1523,15 +1523,15 @@ Fsm::createRandomFsm(const string & fsmName,
 shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                                   const size_t numOutputFaults,
                                   const size_t numTransitionFaults){
-    
+
     srand(getRandomSeed());
-    
+
     // Create new nodes for the mutant.
     vector<shared_ptr<FsmNode> > lst;
     for ( int n = 0; n <= maxState; n++ ) {
         lst.push_back(make_shared<FsmNode>(n,fsmName,presentationLayer));
     }
-    
+
     // Now add transitions that correspond exactly to the transitions in
     // this FSM
     for ( int n = 0; n <= maxState; n++ ) {
@@ -1545,7 +1545,7 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
             theNewFsmNodeSrc->addTransition(newTr);
         }
     }
-    
+
     // Now add transition faults to the new machine
     for ( size_t tf = 0; tf < numTransitionFaults; tf++ ) {
         int srcNodeId = rand() % (maxState+1);
@@ -1557,10 +1557,9 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
         }
         lst[srcNodeId]->getTransitions()[trNo]->setTarget(lst[newTgtNodeId]);
     }
-    
+
     // Now add output faults to the new machine
     for (size_t of = 0; of < numOutputFaults; of++ ) {
-        
         int srcNodeId = rand() % (maxState+1);
         int trNo = rand() % lst[srcNodeId]->getTransitions().size();
         auto tr = lst[srcNodeId]->getTransitions()[trNo];
@@ -1568,14 +1567,14 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
         int newOutVal = rand() % (maxOutput+1);
         int originalNewOutVal = rand() % (maxOutput+1);
         bool newOutValOk;
-        
+
         // We don't want to modify this transition in such a way
         // that another one with the same label and the same
         // source/target nodes already exists.
         do {
-            
+
             newOutValOk = true;
-            
+
             for ( auto trOther : lst[srcNodeId]->getTransitions() ) {
                 if ( tr == trOther ) continue;
                 if ( trOther->getTarget()->getId() != tr->getTarget()->getId() )
@@ -1585,58 +1584,58 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
                     newOutValOk = false;
                 }
             }
-            
+
             if ( not newOutValOk ) {
                 newOutVal = (newOutVal+1) % (maxOutput+1);
             }
-            
+
         } while ( (not newOutValOk) and (originalNewOutVal != newOutVal) );
-        
+
         if ( newOutValOk ) {
-            
+
             auto newLbl = make_shared<FsmLabel>(tr->getLabel()->getInput(),
-                                                
+
                                                 newOutVal,
                                                 presentationLayer);
-            
+
             tr->setLabel(newLbl);
         }
     }
-    
+
     return make_shared<Fsm>(fsmName,maxInput,maxOutput,lst,presentationLayer);
-    
+
 }
 
 
 
 std::vector< std::unordered_set<int> >
 Fsm::getEquivalentInputsFromPrimeMachine() {
-    
+
     vector< std::unordered_set<int> > v;
-    
+
     shared_ptr<OFSMTable> ot =
         make_shared<OFSMTable>(nodes,
                                maxInput,
                                maxOutput,
                                presentationLayer);
-    
+
     // mark all inputs as non-equivalent
     vector<bool> equivalentToSmallerInput;
     for ( int x = 0; x <= maxInput; x++ )
         equivalentToSmallerInput.push_back(false);
-    
+
     // Check inputs for equivalence
     for ( int x1 = 0; x1 <= maxInput; x1++ ) {
-        
+
         if ( equivalentToSmallerInput[x1] ) continue;
-        
+
         unordered_set<int> classOfX1;
         classOfX1.insert(x1);
-        
+
         for ( int x2 = x1 + 1; x2 <= maxInput; x2++ ) {
-            
+
             bool x2EquivX1 = true;
-            
+
             // To check whether x1 is equivalent to x2,
             // loop over all outputs y and compare OFSM
             // table columns x1/y and x2/y
@@ -1646,64 +1645,64 @@ Fsm::getEquivalentInputsFromPrimeMachine() {
                     break;
                 }
             }
-            
+
             if ( x2EquivX1 ) {
                 equivalentToSmallerInput[x2] = true;
                 classOfX1.insert(x2);
             }
-            
+
         }
-        
+
         v.push_back(classOfX1);
 
     }
-    
+
     return v;
-    
+
 }
 
 std::vector< std::unordered_set<int> > Fsm::getEquivalentInputs() {
-    
+
     if ( minimal != True ) {
         return minimise().getEquivalentInputsFromPrimeMachine();
     }
     else {
         return getEquivalentInputsFromPrimeMachine();
     }
-    
+
 }
 
 
 void Fsm::accept(FsmVisitor& v) {
-    
+
     deque< shared_ptr<FsmNode> > bfsq;
-    
+
     resetColor();
-    
+
     v.visit(*this);
-    
+
     bfsq.push_back(nodes[initStateIdx]);
-    
+
     while ( not bfsq.empty() ) {
         shared_ptr<FsmNode> theNode = bfsq.front();
         bfsq.pop_front();
         v.setNew(true);
         theNode->accept(v,bfsq);
     }
-    
-    
+
+
 }
 
 
 
 bool Fsm::removeUnreachableNodes(std::vector<shared_ptr<FsmNode>>& unreachableNodes) {
-    
+
     vector<shared_ptr<FsmNode>> newNodes;
     FsmVisitor v;
-    
+
     // Mark all reachable nodes as 'visited'
     accept(v);
-    
+
     // When removing nodes from the FSM, the node ids of all remaining nodes
     // have to be adapted, in order to match the index in the list of nodes.
     // This is necessary, because during minimisation with OFSM tables or
@@ -1721,26 +1720,71 @@ bool Fsm::removeUnreachableNodes(std::vector<shared_ptr<FsmNode>>& unreachableNo
             newNodes.push_back(n);
         }
     }
-    
+
     nodes = newNodes;
-    
+
     return (unreachableNodes.size() > 0);
 }
 
 
 
 bool Fsm::distinguishable(const FsmNode& s1, const FsmNode& s2) {
-    
+
     if ( ofsmTableLst.empty() ) {
         calcOFSMTables();
     }
-    
+
     shared_ptr<OFSMTable> p = ofsmTableLst.back();
-    
+
     return ( p->getS2C().at(s1.getId()) != p->getS2C().at(s2.getId()) );
-    
+
 }
 
+bool Fsm::equivalenceCheck(const Fsm& fsm) {
+    //Get Initial FSMNodes of both Dfsms
+    shared_ptr< FsmNode > is_this = getInitialState();
+    shared_ptr< FsmNode > is_other = fsm.getInitialState();
 
+    tuple< shared_ptr<FsmNode>, shared_ptr<FsmNode> > iss = make_tuple(is_this,is_other);
 
+    vector< tuple< shared_ptr<FsmNode>, shared_ptr<FsmNode> > > set_one;
+    vector< tuple< shared_ptr<FsmNode>, shared_ptr<FsmNode> > > set_two;
 
+    set_two.push_back(iss);
+
+    while(!set_two.empty()) {
+        auto nodes = set_two.front();
+        set_two.erase(set_two.begin());
+        set_one.push_back(nodes);
+
+        shared_ptr<FsmNode> node_this = get<0>(nodes);
+        shared_ptr<FsmNode> node_other = get<1>(nodes);
+
+        vector< shared_ptr< FsmTransition > > transitions_this = node_this->getTransitions();
+        vector< shared_ptr< FsmTransition > > transitions_other = node_other->getTransitions();
+
+        for(const auto &transition_this: transitions_this) {
+              auto label_this = transition_this->getLabel();
+              shared_ptr<FsmTransition> associated_transition(nullptr);
+              for(const auto &transition_other: transitions_other) {
+                  auto label_other = transition_other->getLabel();
+                  if(*label_this == *label_other) {
+                    associated_transition = transition_other;
+                  }
+              }
+              if(associated_transition != nullptr) {
+                  auto target_this = transition_this->getTarget();
+                  auto target_other = associated_transition->getTarget();
+
+                  tuple< shared_ptr<FsmNode>, shared_ptr<FsmNode> > targets   = make_tuple(target_this,target_other);
+                  if(find(set_one.begin(), set_one.end(), targets) == set_one.end() &&
+                      find(set_two.begin(), set_two.end(), targets) == set_two.end() ) {
+                          set_two.push_back(targets);
+                  }
+              } else {
+                return false;
+              }
+        }
+    }
+    return true;
+}
