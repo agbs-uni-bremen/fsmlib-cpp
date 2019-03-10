@@ -36,6 +36,133 @@
 using namespace std;
 using namespace Json;
 
+
+// Selects two nodes of m randomly and changes the transitions of one of those nodes in a way that makes both equivalent.
+// It is expected that srand() was called before.
+shared_ptr<Fsm> makeStatesEquivalent(const Fsm &m) {
+	vector<shared_ptr<FsmNode> > lst;
+	for (int n = 0; n <= m.getMaxState(); n++) {
+		lst.push_back(make_shared<FsmNode>(n, m.getName(), m.getPresentationLayer()));
+	}
+
+	unsigned int first = rand() % m.getNodes().size();
+	unsigned int second = rand() % m.getNodes().size();
+	if (first == second) second = (second + 1) % m.getNodes().size();
+	cout << "first: " << first << endl;
+	cout << "second: " << second << endl;
+
+
+	// Now add transitions that correspond exactly to the transitions in m,
+	for (int n = 0; n <= m.getMaxState(); n++) {
+		auto theNewFsmNodeSrc = lst[n];
+		auto theOldFsmNodeSrc = m.getNodes()[n];
+		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
+			int tgtId = tr->getTarget()->getId();
+			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
+			shared_ptr<FsmTransition> newTr =
+				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
+			theNewFsmNodeSrc->addTransition(newTr);
+		}
+	}
+	// replaced transitions of lst[second] by transitions with the same labels and targets as the transitions of 
+	// lst[first]. This results in two equivalent nodes iff first != second.
+	if (first != second) {
+		lst[second]->getTransitions().clear();
+		for (const auto tr : lst[first]->getTransitions()) {
+			lst[second]->getTransitions().push_back(make_shared<FsmTransition>(lst[second], tr->getTarget(), make_shared<FsmLabel>(*(tr->getLabel()))));
+		}
+	}
+	unsigned int mI = 0;
+	unsigned int mO = 0;
+	for (const auto n : lst) {
+		for (const auto tr : n->getTransitions()) {
+			if (tr->getLabel()->getInput() > mI) mI = tr->getLabel()->getInput();
+			if (tr->getLabel()->getOutput() > mO) mO = tr->getLabel()->getOutput();
+		}
+	}
+	cout << "mI: " << mI << endl;
+	cout << "mO: " << mO << endl;
+	return make_shared<Fsm>(m.getName(), mI, mO, lst, m.getPresentationLayer());
+}
+
+// Selects some node of m at random and deletes all incoming transitions of this node in the new Fsm.
+// The returned Fsm contains unreachable nodes if the selected node is not the initial node.
+// It is expected that srand() was called before.
+shared_ptr<Fsm> makeStatesUnreachable(const Fsm &m) {
+	vector<shared_ptr<FsmNode> > lst;
+	for (int n = 0; n <= m.getMaxState(); n++) {
+		lst.push_back(make_shared<FsmNode>(n, m.getName(), m.getPresentationLayer()));
+	}
+
+	unsigned int nodeIdx = rand() % m.getNodes().size();
+	cout << "n: " << nodeIdx << endl;
+
+	// Now add transitions that correspond exactly to the transitions in m, but ignore transitions
+	// to node at nodeIdx
+	for (int n = 0; n <= m.getMaxState(); n++) {
+		auto theNewFsmNodeSrc = lst[n];
+		auto theOldFsmNodeSrc = m.getNodes()[n];
+		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
+			int tgtId = tr->getTarget()->getId();
+			if (tgtId == nodeIdx) continue;
+			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
+			shared_ptr<FsmTransition> newTr =
+				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
+			theNewFsmNodeSrc->addTransition(newTr);
+		}
+	}
+	unsigned int mI = 0;
+	unsigned int mO = 0;
+	for (const auto n : lst) {
+		for (const auto tr : n->getTransitions()) {
+			if (tr->getLabel()->getInput() > mI) mI = tr->getLabel()->getInput();
+			if (tr->getLabel()->getOutput() > mO) mO = tr->getLabel()->getOutput();
+		}
+	}
+	cout << "mI: " << mI << endl;
+	cout << "mO: " << mO << endl;
+	return make_shared<Fsm>(m.getName(), mI, mO, lst, m.getPresentationLayer());
+}
+
+// Selects some input in each state of m and removes each transition for this input.
+// It is expected that srand() was called before.
+shared_ptr<Fsm> makeStatesPartial(shared_ptr<Fsm> m) {
+	vector<shared_ptr<FsmNode> > lst;
+	for (int n = 0; n <= m->getMaxState(); n++) {
+		lst.push_back(make_shared<FsmNode>(n, m->getName(), m->getPresentationLayer()));
+	}
+
+	// Now add transitions that correspond exactly to the transitions in
+	// m, but ignore transitions with some randomly selected input
+	for (int n = 0; n <= m->getMaxState(); n++) {
+		auto theNewFsmNodeSrc = lst[n];
+		auto theOldFsmNodeSrc = m->getNodes()[n];
+		int ignoreInput = rand() % (m->getMaxInput() + 1);
+		cout << "ignoreInput: " << ignoreInput << endl;
+		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
+			if (tr->getLabel()->getInput() == ignoreInput) continue;
+			int tgtId = tr->getTarget()->getId();
+			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
+			shared_ptr<FsmTransition> newTr =
+				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
+			theNewFsmNodeSrc->addTransition(newTr);
+		}
+	}
+	unsigned int mI = 0;
+	unsigned int mO = 0;
+	for (const auto n : lst) {
+		for (const auto tr : n->getTransitions()) {
+			if (tr->getLabel()->getInput() > mI) mI = tr->getLabel()->getInput();
+			if (tr->getLabel()->getOutput() > mO) mO = tr->getLabel()->getOutput();
+		}
+	}
+	cout << "mI: " << mI << endl;
+	cout << "mO: " << mO << endl;
+	return make_shared<Fsm>(m->getName(), mI, mO, lst, m->getPresentationLayer());
+}
+
+
+
 void fsmlib_assert(string tc, bool verdict, string comment = "");
 
 /*
@@ -2484,7 +2611,14 @@ void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 						break;
 					}*/
 		}
-		fsmlib_assert("TC", ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState()) != diff, "M and mutant are i/o-equivalent iff mutant passed test suite.");
+		bool eq = ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState());
+		fsmlib_assert("TC", eq != diff, "M and mutant are i/o-equivalent iff mutant passed test suite.");
+		if (eq == diff) {
+			cout << *completeM << endl;
+			cout << *mutant << endl;
+			cout << "TS: " << *ts << endl;
+			cout << "nullOutput: " << nullOutput << endl;
+		}
 		//if (not diff) {
 		//	cout << "calcs equivalence" << endl;
 		//	fsmlib_assert("TC", ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState()), "M and mutant are i/o-equivalent if mutant passed test suite.");
@@ -2734,8 +2868,9 @@ void wMethod_TS_Random2() {
 		int size = (rand() % 6) + 1; // = 6; 
 		int mI = rand() % 4; // (rand() % 5) + 1;
 		int mO = (rand() % 6) + 1;
-		auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
+		//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
 		//auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
+		auto m = makeStatesUnreachable(*Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
 		const size_t nullOutput = m->getMaxOutput() + 1;
 
 		vector<shared_ptr<const Fsm>> mutants;
@@ -3808,129 +3943,7 @@ void tMethod_TS_Random() {
 //}
 
 
-// Selects two nodes of m randomly and changes the transitions of one of those nodes in a way that makes both equivalent.
-// It is expected that srand() was called before.
-shared_ptr<Fsm> makeStatesEquivalent(const Fsm &m) {
-	vector<shared_ptr<FsmNode> > lst;
-	for (int n = 0; n <= m.getMaxState(); n++) {
-		lst.push_back(make_shared<FsmNode>(n, m.getName(), m.getPresentationLayer()));
-	}
 
-	unsigned int first = rand() % m.getNodes().size();
-	unsigned int second = rand() % m.getNodes().size();
-	if (first == second) second = (second + 1) % m.getNodes().size();
-	cout << "first: " << first << endl;
-	cout << "second: " << second << endl;
-
-
-	// Now add transitions that correspond exactly to the transitions in m,
-	for (int n = 0; n <= m.getMaxState(); n++) {
-		auto theNewFsmNodeSrc = lst[n];
-		auto theOldFsmNodeSrc = m.getNodes()[n];
-		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
-			int tgtId = tr->getTarget()->getId();
-			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
-			shared_ptr<FsmTransition> newTr =
-				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
-			theNewFsmNodeSrc->addTransition(newTr);
-		}
-	}
-	// replaced transitions of lst[second] by transitions with the same labels and targets as the transitions of 
-	// lst[first]. This results in two equivalent nodes iff first != second.
-	if (first != second) {
-		lst[second]->getTransitions().clear();
-		for (const auto tr : lst[first]->getTransitions()) {
-			lst[second]->getTransitions().push_back(make_shared<FsmTransition>(lst[second], tr->getTarget(), make_shared<FsmLabel>(*(tr->getLabel()))));
-		}
-	}
-	unsigned int mI = 0;
-	unsigned int mO = 0;
-	for (const auto n : lst) {
-		for (const auto tr : n->getTransitions()) {
-			if (tr->getLabel()->getInput() > mI) mI = tr->getLabel()->getInput();
-			if (tr->getLabel()->getOutput() > mO) mO = tr->getLabel()->getOutput();
-		}
-	}
-	cout << "mI: " << mI << endl;
-	cout << "mO: " << mO << endl;
-	return make_shared<Fsm>(m.getName(), mI, mO, lst, m.getPresentationLayer());
-}
-
-// Selects some node of m at random and deletes all incoming transitions of this node in the new Fsm.
-// The returned Fsm contains unreachable nodes if the selected node is not the initial node.
-// It is expected that srand() was called before.
-shared_ptr<Fsm> makeStatesUnreachable(const Fsm &m) {
-	vector<shared_ptr<FsmNode> > lst;
-	for (int n = 0; n <= m.getMaxState(); n++) {
-		lst.push_back(make_shared<FsmNode>(n, m.getName(), m.getPresentationLayer()));
-	}
-
-	unsigned int nodeIdx = rand() % m.getNodes().size();
-	cout << "n: " << nodeIdx << endl;
-
-	// Now add transitions that correspond exactly to the transitions in m, but ignore transitions
-	// to node at nodeIdx
-	for (int n = 0; n <= m.getMaxState(); n++) {
-		auto theNewFsmNodeSrc = lst[n];
-		auto theOldFsmNodeSrc = m.getNodes()[n];
-		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
-			int tgtId = tr->getTarget()->getId();
-			if (tgtId == nodeIdx) continue;
-			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
-			shared_ptr<FsmTransition> newTr =
-				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
-			theNewFsmNodeSrc->addTransition(newTr);
-		}
-	}
-	unsigned int mI = 0;
-	unsigned int mO = 0;
-	for (const auto n : lst) {
-		for (const auto tr : n->getTransitions()) {
-			if (tr->getLabel()->getInput() > mI) mI = tr->getLabel()->getInput();
-			if (tr->getLabel()->getOutput() > mO) mO = tr->getLabel()->getOutput();
-		}
-	}
-	cout << "mI: " << mI << endl;
-	cout << "mO: " << mO << endl;
-	return make_shared<Fsm>(m.getName(), mI, mO, lst, m.getPresentationLayer());
-}
-
-// Selects some input in each state of m and removes each transition for this input.
-// It is expected that srand() was called before.
-shared_ptr<Fsm> makeStatesPartial(shared_ptr<Fsm> m) {
-	vector<shared_ptr<FsmNode> > lst;
-	for (int n = 0; n <= m->getMaxState(); n++) {
-		lst.push_back(make_shared<FsmNode>(n, m->getName(), m->getPresentationLayer()));
-	}
-
-	// Now add transitions that correspond exactly to the transitions in
-	// m, but ignore transitions with some randomly selected input
-	for (int n = 0; n <= m->getMaxState(); n++) {
-		auto theNewFsmNodeSrc = lst[n];
-		auto theOldFsmNodeSrc = m->getNodes()[n];
-		int ignoreInput = rand() % (m->getMaxInput() + 1);
-		cout << "ignoreInput: " << ignoreInput << endl;
-		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
-			if (tr->getLabel()->getInput() == ignoreInput) continue;
-			int tgtId = tr->getTarget()->getId();
-			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
-			shared_ptr<FsmTransition> newTr =
-				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
-			theNewFsmNodeSrc->addTransition(newTr);
-		}
-	}
-	unsigned int mI = 0;
-	unsigned int mO = 0;
-	for (const auto n : lst) {
-		for (const auto tr : n->getTransitions()) {
-			if (tr->getLabel()->getInput() > mI) mI = tr->getLabel()->getInput();
-			if (tr->getLabel()->getOutput() > mO) mO = tr->getLabel()->getOutput();
-		}
-	}
-	cout << "mI: " << mI << endl;
-	cout << "mO: " << mO << endl;
-	return make_shared<Fsm>(m->getName(), mI, mO, lst, m->getPresentationLayer());
-}
 
 void randomFSMTestData() {
 	const int seed = time(NULL);//1234;
