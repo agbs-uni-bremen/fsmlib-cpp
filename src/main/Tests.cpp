@@ -1053,23 +1053,26 @@ void parseFsmTransformationTSFile(const string &testSuitePath, vector<FsmTransfo
  * Test Suite: Fsm::removeUnreachableNodes()
  */
 void removeUnreachableNodes_TS() {
+	cout << "============================= Start Test of Fsm::removeUnreachableNodes =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
-	//random tests
+	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	for (int i = 0; i < 100; ++i) {
 		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, pl);
 		testRemoveUnreachableNodes(*fsm);
 	}
 
-	// practical examples
+	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
 	testRemoveUnreachableNodes(*csm);
+	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
 	testRemoveUnreachableNodes(*fsb);
+	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
 	testRemoveUnreachableNodes(*gdc);
 
-	// partition test cases
+	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<FsmTransformationTestCase<Fsm>> testSuite;
 	parseFsmTransformationTSFile<Fsm>("../../../resources/TestSuites/FSM-Transformations/Fsm_removeUnreachableNodes.testsuite", testSuite);
 	for (auto tc : testSuite) {
@@ -1082,23 +1085,26 @@ void removeUnreachableNodes_TS() {
  * Test Suite: Fsm::transformToObservableFSM()
  */
 void transformToObservableFSM_TS() {
+	cout << "============================= Start Test of Fsm::transformToObservableFSM =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
-	//random tests
+	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	for (int i = 0; i < 100; ++i) {
 		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, pl);
 		testTransformToObservableFSM(*fsm);
 	}
 
-	// practical examples
+	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
 	testTransformToObservableFSM(*csm);
+	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
 	testTransformToObservableFSM(*fsb);
+	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
 	testTransformToObservableFSM(*gdc);
 
-	// partition test cases
+	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<FsmTransformationTestCase<Fsm>> testSuite;
 	parseFsmTransformationTSFile<Fsm>("../../../resources/TestSuites/FSM-Transformations/Fsm_transformToObservable.testsuite", testSuite);
 	for (auto tc : testSuite) {
@@ -1111,23 +1117,26 @@ void transformToObservableFSM_TS() {
  * Test Suite: Dfsm::minimise()
  */
 void minimise_Dfsm_TS() {
+	cout << "============================= Start Test of Dfsm::minimise =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
-	//random tests
+	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	for (int i = 0; i < 100; ++i) {
 		//auto dfsm = createRandomDfsm("M", 10, 4, 4, pl);
 		//testMinimise_Dfsm(dfsm);
 	}
 
-	// practical examples
+	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	shared_ptr<Dfsm> csm = make_shared<Dfsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
 	testMinimise_Dfsm(*csm);
+	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	shared_ptr<Dfsm> fsb = make_shared<Dfsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
 	testMinimise_Dfsm(*fsb);
+	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
 	testMinimise_Dfsm(*gdc);
 
-	// partition test cases
+	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<FsmTransformationTestCase<Dfsm>> testSuite;
 	parseFsmTransformationTSFile<Dfsm>("../../../resources/TestSuites/FSM-Transformations/Dfsm_minimise.testsuite", testSuite);
 	for (auto tc : testSuite) {
@@ -1140,24 +1149,27 @@ void minimise_Dfsm_TS() {
  * Test Suite: Fsm::minimiseObservableFSM()
  */
 void minimiseObservableFSM_TS() {
+	cout << "============================= Start Test of Fsm::minimiseObservableFSM =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
-	//random tests
+	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	for (int i = 0; i < 100; ++i) {
 		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, pl);
 		Fsm ofsm = fsm->transformToObservableFSM();
 		testMinimiseObservableFSM(ofsm);
 	}
 
-	// practical examples
+	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
 	testMinimiseObservableFSM(*csm);
+	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
 	testMinimiseObservableFSM(*fsb);
+	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
 	testMinimiseObservableFSM(*gdc);
 
-	// partition test cases
+	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<FsmTransformationTestCase<Fsm>> testSuite;
 	parseFsmTransformationTSFile<Fsm>("../../../resources/TestSuites/FSM-Transformations/Fsm_minimiseObservable.testsuite", testSuite);
 	for (auto tc : testSuite) {
@@ -1170,19 +1182,22 @@ void minimiseObservableFSM_TS() {
  * Test Suite: Fsm::minimise()
  */
 void minimise_Fsm_TS() {
+	cout << "============================= Start Test of Fsm::minimise =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
-	//random tests
+	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	for (int i = 0; i < 100; ++i) {
 		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, pl);
 		testMinimise_Fsm(*fsm);
 	}
 
-	// practical examples
+	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
 	testMinimise_Fsm(*csm);
+	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
 	testMinimise_Fsm(*fsb);
+	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
 	testMinimise_Fsm(*gdc);
 
@@ -1190,7 +1205,7 @@ void minimise_Fsm_TS() {
 	//"../../../resources/TestSuites/FSM029.fsm"
 	//"../../../resources/TestSuites/FSM053.fsm") {
 
-	// partition test cases
+	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<FsmTransformationTestCase<Fsm>> testSuite;
 	parseFsmTransformationTSFile<Fsm>("../../../resources/TestSuites/FSM-Transformations/Fsm_minimise.testsuite", testSuite);
 	for (auto tc : testSuite) {
@@ -1361,11 +1376,13 @@ shared_ptr<vector<IntersectTestCase>> parseIntersectTSFile(const string &testSui
 }
 
 /*
- *	Random Test Suite for test of Fsm::getCharacterisationSet().
+ *	Test Suite of Fsm::intersect
 */
 void intersection_TS_Random() {
+	cout << "============================= Start Test of Fsm::intersect =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
+	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	const int seed = 8950;
 	srand(seed);
 	// random tests
@@ -1400,24 +1417,23 @@ void intersection_TS_Random() {
 	//	testIntersection(m1, m2);
 	//}
 
-	// practical examples
-	cout << "CSM Tests" << endl;
+	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
 	for (int i = 0; i < 100; ++i) {
 		testIntersection(*csm, *csm->createMutantRepeatable("Mutant", rand() % 6 + 1, rand() % 6 + 1));
 	}
-	cout << "FSB Tests" << endl;
+	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
 	for (int i = 0; i < 100; ++i) {
 		testIntersection(*fsb, *fsb->createMutantRepeatable("Mutant", rand() % 6 + 1, rand() % 6 + 1));
 	}
-	cout << "GDC Tests" << endl;
+	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC");
 	for (int i = 0; i < 100; ++i) {
 		testIntersection(*gdc, *gdc->createMutantRepeatable("Mutant", rand() % 6 + 1, rand() % 6 + 1));
 	}
 
-	// partition test cases
+	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseIntersectTSFile("../../../resources/TestSuites/Intersection/Fsm_intersect.testsuite");
 	for (auto tc : *testSuite) {
 		cout << "Start Test Case : " << tc.id << endl;
@@ -1951,9 +1967,12 @@ shared_ptr<vector<DistinguishingTraceTestCase>> parseDistinguishingTraceTSFile(c
 }
 
 /*
- *	Random Test Suite for test of Fsm::getCharacterisationSet().
+ *	Random Test Suite for test of Dfsm::getCharacterisationSet().
  */
 void getCharacterisationSet_Dfsm_TS_Random() {
+	cout << "============================= Start Test of Dfsm::getCharacterisationSet =============================" << endl;
+
+	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	const int seed = 261250;
 	srand(seed);
 
@@ -1967,22 +1986,22 @@ void getCharacterisationSet_Dfsm_TS_Random() {
 	//	testGetCharacterisationSet_Dfsm(minM);
 	//}
 
-	// practical examples
+	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	cout << "CSM Tests" << endl;
 	Dfsm csm = Dfsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
 	testGetCharacterisationSet_Dfsm(csm);
 
-	cout << "FSB Tests" << endl;
+	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	Dfsm fsb = Dfsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
 	testGetCharacterisationSet_Dfsm(fsb);
 
-	cout << "GDC Tests" << endl;
+	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	Dfsm gdc = Dfsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
 	testGetCharacterisationSet_Dfsm(gdc);
 
 
-	// partition test cases
-/*	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Dfsm_getCharacterisationSet.testsuite");
+	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
+	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Dfsm_getCharacterisationSet.testsuite");
 	for (auto tc : *testSuite) {
 		cout << "Start Test Case : " << tc.id << endl;
 		shared_ptr<Dfsm> m = make_shared<Dfsm>(tc.fsmPath, pl, "M");
@@ -1995,55 +2014,57 @@ void getCharacterisationSet_Dfsm_TS_Random() {
 			m->calcStateIdentificationSetsFast();
 		}
 		testGetCharacterisationSet_Dfsm(*m);
-	}*/
+	}
 }
 
 /*
  *	Random Test Suite for test of Fsm::getCharacterisationSet().
  */
 void getCharacterisationSet_Fsm_TS_Random() {
+	cout << "============================= Start Test of Fsm::getCharacterisationSet =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 
 	const int seed = 64162;
 	srand(seed);
 
 	// random tests
-	/*for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 100; ++i) {
 		cout << "i:" << i << endl;
 		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, pl);
 		auto minFsm = fsm->minimise();
 		cout << "minFsm size: " << minFsm.size() << endl;
 		testGetCharacterisationSet_Fsm(minFsm);
-	}*/
+	}
 
-	// practical examples
-	cout << "CSM Tests" << endl;
+	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	Fsm csm = Fsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
 	testGetCharacterisationSet_Fsm(csm);
 
-	cout << "FSB Tests" << endl;
+	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	Fsm fsb = Fsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
 	testGetCharacterisationSet_Fsm(fsb);
 
-	cout << "GDC Tests" << endl;
+	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	Fsm gdc = Fsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
 	testGetCharacterisationSet_Fsm(gdc);
 
-	// partition test cases
-	//auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_getCharacterisationSet.testsuite");
-	//for (auto tc : *testSuite) {
-	//	cout << "Start Test Case : " << tc.id << endl;
-	//	shared_ptr<Fsm> m = make_shared<Fsm>(tc.fsmPath, pl, "M");
-	//	if (tc.csp == "true") {
-	//		cout << "csp = true" << endl;
-	//		m->getCharacterisationSet();
-	//	}
-	//	if (tc.sisp == "true") {
-	//		cout << "sisp = true" << endl;
-	//		m->calcStateIdentificationSetsFast();
-	//	}
-	//	testGetCharacterisationSet_Fsm(*m);
-	//}
+	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
+	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_getCharacterisationSet.testsuite");
+	for (auto tc : *testSuite) {
+		cout << "Start Test Case : " << tc.id << endl;
+		shared_ptr<Fsm> m = make_shared<Fsm>(tc.fsmPath, pl, "M");
+		if (tc.csp == "true") {
+			cout << "csp = true" << endl;
+			m->getCharacterisationSet();
+		}
+		if (tc.sisp == "true") {
+			cout << "sisp = true" << endl;
+			m->calcStateIdentificationSetsFast();
+		}
+		testGetCharacterisationSet_Fsm(*m);
+	}
 }
 
 /*
@@ -2052,48 +2073,48 @@ void getCharacterisationSet_Fsm_TS_Random() {
  *                                           const int maxInput)
  */
 void calcDistinguishingTrace1_TS_Random() {
+	cout << "============================= Start Test of FsmNode::calcDistinguishingTrace(pkTables) =============================" << endl;
 	const int seed = 329132;
 	srand(seed);
 
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
-	// random tests
-	//for (int i = 0; i < 100; ++i) {
-	//	cout << "i:" << i << endl;
-	//	auto m = Dfsm("M", 15, 4, 2, pl);
-	//	auto minM = m.minimise();
-	//	cout << "minFsm size: " << minM.size() << endl;
-	//	testCalcDistinguishingTrace1(minM);
-	//}
+	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		auto m = Dfsm("M", 15, 4, 2, pl);
+		auto minM = m.minimise();
+		cout << "minFsm size: " << minM.size() << endl;
+		testCalcDistinguishingTrace1(minM);
+	}
 
-	// practical examples
-	cout << "CSM Tests" << endl;
+	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	Dfsm csm = Dfsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
 	testCalcDistinguishingTrace1(csm);
 
-	cout << "FSB Tests" << endl;
+	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	Dfsm fsb = Dfsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
 	testCalcDistinguishingTrace1(fsb);
 
-	cout << "GDC Tests" << endl;
+	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	Dfsm gdc = Dfsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
 	testCalcDistinguishingTrace1(gdc);
 
-	// partition test cases
-	//auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/FsmNode_calcDistinguishingTrace_pk.testsuite");
-	//for (auto tc : *testSuite) {
-	//	cout << "Start Test Case : " << tc.id << endl;
-	//	shared_ptr<Dfsm> m = make_shared<Dfsm>(tc.fsmPath, pl, "M");
-	//	if (tc.csp == "true") {
-	//		cout << "csp = true" << endl;
-	//		m->getCharacterisationSet();
-	//	}
-	//	if (tc.sisp == "true") {
-	//		cout << "sisp = true" << endl;
-	//		m->calcStateIdentificationSetsFast();
-	//	}
-	//	testCalcDistinguishingTrace1(*m);
-	//}
+	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
+	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/FsmNode_calcDistinguishingTrace_pk.testsuite");
+	for (auto tc : *testSuite) {
+		cout << "Start Test Case : " << tc.id << endl;
+		shared_ptr<Dfsm> m = make_shared<Dfsm>(tc.fsmPath, pl, "M");
+		if (tc.csp == "true") {
+			cout << "csp = true" << endl;
+			m->getCharacterisationSet();
+		}
+		if (tc.sisp == "true") {
+			cout << "sisp = true" << endl;
+			m->calcStateIdentificationSetsFast();
+		}
+		testCalcDistinguishingTrace1(*m);
+	}
 }
 
 /*
@@ -2103,112 +2124,113 @@ void calcDistinguishingTrace1_TS_Random() {
  *                                           const int maxOutput)
  */
 void calcDistinguishingTrace2_TS_Random() {
+	cout << "============================= Start Test of FsmNode::calcDistinguishingTrace(ofsmTables) =============================" << endl;
+
+	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	const int seed = 36185;
 	srand(seed);
 
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
-	// random tests
-	//for (int i = 0; i < 100; ++i) {
-	//	cout << "i:" << i << endl;
-	//	auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, pl);
-	//	auto minFsm = fsm->minimise();
-	//	cout << "minFsm size: " << minFsm.size() << endl;
-	//	testCalcDistinguishingTrace2(minFsm);
-	//}
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, pl);
+		auto minFsm = fsm->minimise();
+		cout << "minFsm size: " << minFsm.size() << endl;
+		testCalcDistinguishingTrace2(minFsm);
+	}
 
-	// practical examples
-	cout << "CSM Tests" << endl;
+	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	Fsm csm = Fsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
 	testCalcDistinguishingTrace2(csm);
 
-	cout << "FSB Tests" << endl;
+	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	Fsm fsb = Fsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
 	testCalcDistinguishingTrace2(fsb);
 
-	cout << "GDC Tests" << endl;
+	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	Fsm gdc = Fsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
 	testCalcDistinguishingTrace2(gdc);
 
-	// partition tests
-	//auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/FsmNode_calcDistinguishingTrace_ofsm.testsuite");
-	//for (auto tc : *testSuite) {
-	//	cout << "Start Test Case : " << tc.id << endl;
-	//	shared_ptr<Fsm> m = make_shared<Fsm>(tc.fsmPath, pl, "M");
-	//	if (tc.csp == "true") {
-	//		cout << "csp = true" << endl;
-	//		m->getCharacterisationSet();
-	//	}
-	//	if (tc.sisp == "true") {
-	//		cout << "sisp = true" << endl;
-	//		m->calcStateIdentificationSetsFast();
-	//	}
-	//	testCalcDistinguishingTrace2(*m);
-	//}
+	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
+	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/FsmNode_calcDistinguishingTrace_ofsm.testsuite");
+	for (auto tc : *testSuite) {
+		cout << "Start Test Case : " << tc.id << endl;
+		shared_ptr<Fsm> m = make_shared<Fsm>(tc.fsmPath, pl, "M");
+		if (tc.csp == "true") {
+			cout << "csp = true" << endl;
+			m->getCharacterisationSet();
+		}
+		if (tc.sisp == "true") {
+			cout << "sisp = true" << endl;
+			m->calcStateIdentificationSetsFast();
+		}
+		testCalcDistinguishingTrace2(*m);
+	}
 }
 
 /*
  *	Random Test Suite for test of Fsm::calcStateIdentificationSets().
  */
 void calcStateIdentificationSets_TS_Random() {
+	cout << "============================= Start Test of Fsm::calcStateIdentificationSets() =============================" << endl;
+
+	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
-	//const int seed = 3447;
-	//srand(seed);
+	const int seed = 3447;
+	srand(seed);
 
-	// random tests
-	//for (int i = 0; i < 100; ++i) {
-	//	cout << "i:" << i << endl;
-	//	int size = rand() % 10 + 1;
-	//	int mI = rand() % 7;
-	//	int mO = mI;
-	//	auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
-	//	auto minFsm = fsm->minimise();
-	//	cout << "minFsm size: " << minFsm.size() << endl;
-	//	testCalcStateIdentificationSets(minFsm);
-	//}
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		int size = rand() % 10 + 1;
+		int mI = rand() % 7;
+		int mO = mI;
+		auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
+		auto minFsm = fsm->minimise();
+		cout << "minFsm size: " << minFsm.size() << endl;
+		testCalcStateIdentificationSets(minFsm);
+	}
 
-	//shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	//for (int i = 0; i < 100; ++i) {
-	//	cout << "i:" << i << endl;
-	//	int size = rand() % 15 + 1;
-	//	int mI = rand() % 6;
-	//	int mO = rand() % 6;
-	//	auto m = Dfsm("M", size, mI, mO, pl, true);
-	//	auto minM = m.minimise();
-	//	cout << "minFsm size: " << minM.size() << endl;
-	//	cout << minM << endl;
-	//	testCalcStateIdentificationSets(minM);
-	//}
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		int size = rand() % 15 + 1;
+		int mI = rand() % 6;
+		int mO = rand() % 6;
+		auto m = Dfsm("M", size, mI, mO, pl, true);
+		auto minM = m.minimise();
+		cout << "minFsm size: " << minM.size() << endl;
+		cout << minM << endl;
+		testCalcStateIdentificationSets(minM);
+	}
 
-	// practical examples
-	cout << "CSM Tests" << endl;
+	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	Fsm csm = Fsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
 	testCalcStateIdentificationSets(csm);
 
-	cout << "FSB Tests" << endl;
+	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	Fsm fsb = Fsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
 	testCalcStateIdentificationSets(fsb);
 
-	cout << "GDC Tests" << endl;
+	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	Fsm gdc = Fsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
 	testCalcStateIdentificationSets(gdc);
 
-	// partition tests
-	//auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_calcStateIdentificationSets.testsuite");
-	//for (auto tc : *testSuite) {
-	//	cout << "Start Test Case : " << tc.id << endl;
-	//	shared_ptr<Fsm> m = make_shared<Fsm>(tc.fsmPath, pl, "M");
-	//	if (tc.csp == "true") {
-	//		cout << "csp = true" << endl;
-	//		m->getCharacterisationSet();
-	//	}
-	//	if (tc.sisp == "true") {
-	//		cout << "sisp = true" << endl;
-	//		m->calcStateIdentificationSetsFast();
-	//	}
-	//	testCalcStateIdentificationSets(*m);
-	//}
+	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
+	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_calcStateIdentificationSets.testsuite");
+	for (auto tc : *testSuite) {
+		cout << "Start Test Case : " << tc.id << endl;
+		shared_ptr<Fsm> m = make_shared<Fsm>(tc.fsmPath, pl, "M");
+		if (tc.csp == "true") {
+			cout << "csp = true" << endl;
+			m->getCharacterisationSet();
+		}
+		if (tc.sisp == "true") {
+			cout << "sisp = true" << endl;
+			m->calcStateIdentificationSetsFast();
+		}
+		testCalcStateIdentificationSets(*m);
+	}
 }
 
 shared_ptr<Fsm> createPartialMutant(shared_ptr<Fsm> m) {
@@ -2328,33 +2350,35 @@ shared_ptr<Fsm> transformToComplete(shared_ptr<Fsm> m) {
  *	Random Test Suite for test of Fsm::calcStateIdentificationSetsFast().
 */
 void calcStateIdentificationSetsFast_TS_Random() {
-	//const int seed = 1376;
-	//srand(seed);
+	cout << "============================= Start Test of Fsm::calcStateIdentificationSetsFast =============================" << endl;
 
-	// random tests
-	//for (int i = 0; i < 100; ++i) {
-	//	cout << "i:" << i << endl;
-	//	int size = rand() % 10 + 1;
-	//	int mI = rand() % 7;
-	//	int mO = mI;
-	//	auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
-	//	auto tmp = createPartialMutant(fsm);
-	//	auto minFsm = tmp->minimise();
-	//	cout << "minFsm size: " << minFsm.size() << endl;
-	//	cout << "minFsm cs? " << minFsm.isCompletelyDefined() << endl;
-	//	testCalcStateIdentificationSetsFast(minFsm);
-	//}
+	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	const int seed = 1376;
+	srand(seed);
 
-	//for (int i = 0; i < 100; ++i) {
-	//	cout << "i:" << i << endl;
-	//	int size = rand() % 10 + 1;
-	//	int mI = rand() % 7;		
-	//	int mO = mI;
-	//	auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
-	//	auto minFsm = fsm->minimise();
-	//	cout << "minFsm size: " << minFsm.size() << endl;
-	//	testCalcStateIdentificationSetsFast(minFsm);
-	//}
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		int size = rand() % 10 + 1;
+		int mI = rand() % 7;
+		int mO = mI;
+		auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
+		auto tmp = createPartialMutant(fsm);
+		auto minFsm = tmp->minimise();
+		cout << "minFsm size: " << minFsm.size() << endl;
+		cout << "minFsm cs? " << minFsm.isCompletelyDefined() << endl;
+		testCalcStateIdentificationSetsFast(minFsm);
+	}
+
+	for (int i = 0; i < 100; ++i) {
+		cout << "i:" << i << endl;
+		int size = rand() % 10 + 1;
+		int mI = rand() % 7;		
+		int mO = mI;
+		auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
+		auto minFsm = fsm->minimise();
+		cout << "minFsm size: " << minFsm.size() << endl;
+		testCalcStateIdentificationSetsFast(minFsm);
+	}
 
 
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
@@ -2370,35 +2394,34 @@ void calcStateIdentificationSetsFast_TS_Random() {
 	//	testCalcStateIdentificationSetsFast(minM);
 	//}
 
-	// practical examples
-	cout << "CSM Tests" << endl;
+	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	Fsm csm = Fsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
 	testCalcStateIdentificationSetsFast(csm);
 
-	cout << "FSB Tests" << endl;
+	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	Fsm fsb = Fsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
 	testCalcStateIdentificationSetsFast(fsb);
 
-	cout << "GDC Tests" << endl;
+	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	Fsm gdc = Fsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
 	testCalcStateIdentificationSetsFast(gdc);
 
 
-	// partition tests
-	//auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_calcStateIdentificationSetsFast.testsuite");
-	//for (auto tc : *testSuite) {
-	//	cout << "Start Test Case : " << tc.id << endl;
-	//	shared_ptr<Fsm> m = make_shared<Fsm>(tc.fsmPath, pl, "M");
-	//	if (tc.csp == "true") {
-	//		cout << "csp = true" << endl;
-	//		m->getCharacterisationSet();
-	//	}
-	//	if (tc.sisp == "true") {
-	//		cout << "sisp = true" << endl;
-	//		m->calcStateIdentificationSetsFast();
-	//	}
-	//	testCalcStateIdentificationSetsFast(*m);
-	//}
+	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
+	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_calcStateIdentificationSetsFast.testsuite");
+	for (auto tc : *testSuite) {
+		cout << "Start Test Case : " << tc.id << endl;
+		shared_ptr<Fsm> m = make_shared<Fsm>(tc.fsmPath, pl, "M");
+		if (tc.csp == "true") {
+			cout << "csp = true" << endl;
+			m->getCharacterisationSet();
+		}
+		if (tc.sisp == "true") {
+			cout << "sisp = true" << endl;
+			m->calcStateIdentificationSetsFast();
+		}
+		testCalcStateIdentificationSetsFast(*m);
+	}
 }
 
 // ====================================================================================================
