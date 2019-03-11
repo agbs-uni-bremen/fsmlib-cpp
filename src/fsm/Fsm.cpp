@@ -567,7 +567,7 @@ Fsm Fsm::intersect(const Fsm & f)
         }
     }
     
-    newPl->dumpState(cout);
+    //newPl->dumpState(cout);  commented because of test outputs
     
     return Fsm(f.getName(), maxInput, maxOutput, fsmInterNodes, newPl);
 }
