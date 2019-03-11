@@ -5007,8 +5007,7 @@ int main(int argc, char** argv)
 
 	// Complete Test Theories Test:
 	//tMethod_TS_Random();
-
-	wMethod_TS_Random2();
+	//wMethod_TS_Random2();
 	//wMethod_Dfsm_TS_Random();
 	//wMethodOnMinimisedFsm_Fsm_TS_Random();
 	//wMethodOnMinimisedDfsm_Dfsm_TS_Random();
@@ -5017,7 +5016,7 @@ int main(int argc, char** argv)
 	//wpMethodOnMinimisedDfsm_Dfsm_TS_Random();
 	//hsiMethod_Fsm_TS_Random();
 	//hsiMethod_Dfsm_TS_Random();
-	//hMethodOnMinimisedDfsm_Dfsm_TS_Random();
+	hMethodOnMinimisedDfsm_Dfsm_TS_Random();
 
 
 

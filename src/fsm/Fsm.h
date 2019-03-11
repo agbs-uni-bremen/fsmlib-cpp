@@ -522,7 +522,7 @@ public:
      * Parameter m is expected to be a minimal and observable Fsm.
 	 * Needs access to characterisationSet of this class.
      */
-	friend void testGetCharacterisationSet_Fsm(Fsm &m);
+	friend void testGetCharacterisationSet_Fsm(Fsm &m, const std::string &tcID);
 
 	/**
 	 * Test function for FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
@@ -531,19 +531,19 @@ public:
                                              const int maxOutput).
 	   Needs access to ofsmTables of this class.
 	*/
-	friend void testCalcDistinguishingTrace2(Fsm &m);
+	friend void testCalcDistinguishingTrace2(Fsm &m, const std::string &tcID);
 
 	/**
 	 * Test function for Fsm::calcStateIdentificationSets().
 	 * Needs access to stateIdentificationSets of this class.
 	 */
-	friend void testCalcStateIdentificationSets(Fsm &m);
+	friend void testCalcStateIdentificationSets(Fsm &m, const std::string &tcID);
 
 	/**
      * Test function for Fsm::calcStateIdentificationSetsFast().
      * Needs access to stateIdentificationSets of this class.
      */
-	friend void testCalcStateIdentificationSetsFast(Fsm &m);
+	friend void testCalcStateIdentificationSetsFast(Fsm &m, const std::string &tcID);
 
 	/**
      * Transform m to a complete Fsm by adding self loops in states for undefined inputs producing some nullouput not contained in the
