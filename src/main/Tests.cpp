@@ -32,6 +32,8 @@
 
 #include "Tests.h"
 
+#include <typeinfo>
+
 
 using namespace std;
 using namespace Json;
@@ -385,7 +387,7 @@ bool checkAllTransitions(const Fsm &fsm) {
 /*
 	This function checks the Fsm class invariant for the given Fsm object.
 */
-bool checkFsmClassInvariant(const Fsm &fsm) {
+bool checkFsmClassInvariant(const Fsm &fsm) {	
 	if (fsm.getMaxInput() < 0) return false;
 	if (fsm.getMaxOutput() < 0) return false;
 	if (fsm.getNodes().size() < 1) return false;
@@ -756,7 +758,7 @@ void testRemoveUnreachableNodes(Fsm &m1, const string &tcID) {
 	bool b = m1.removeUnreachableNodes(unreachableNodes);
 
 	// first check invariant of m1
-	bool invariantViolation = not checkFsmClassInvariant(m1);
+	bool invariantViolation = not m1.checkInvariant();//not checkFsmClassInvariant(m1);
 	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
@@ -1060,6 +1062,11 @@ void removeUnreachableNodes_TS() {
 	for (int i = 0; i < 100; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M", rand() % 4, rand() % 4 + 1, rand() % 10, pl);
 		testRemoveUnreachableNodes(*fsm, "TC-Rand-" + to_string(i));
+	}
+	srand(1514225);
+	for (int i = 0; i < 100; ++i) {
+		Dfsm dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
+		testRemoveUnreachableNodes(dfsm, "TC-Rand-" + to_string(i));
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;

@@ -448,6 +448,13 @@ public:
 
 
 	//---------------------------------------------------------------------------------------
+	// defined in Master Thesis "Systematischer Test einer FSM-Klassenbibliothek"
+
+	/**
+	 * Returns true iff the Dfsm class invariant holds for this object.
+	 */
+	virtual bool checkInvariant() const;
+
 	/**
 	 * Test function for Dfsm::getCharacterisationSet().
 	 * Parameter m is expected to be a minimal and complete Dfsm.

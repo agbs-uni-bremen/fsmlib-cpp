@@ -515,7 +515,14 @@ public:
     virtual bool distinguishable(const FsmNode& s1, const FsmNode& s2);
 
 
-	//--------------------------------------------
+	
+	//----------------------------------------------------------------------------
+	// defined in Master Thesis "Systematischer Test einer FSM-Klassenbibliothek"
+
+	/**
+	 * Returns true iff the Fsm class invariant holds for this object.
+	 */
+	virtual bool checkInvariant() const;
 
 	/**
      * Test function for Fsm::getCharacterisationSet().
@@ -551,6 +558,22 @@ public:
      */
 	friend std::shared_ptr<Fsm> transformToComplete(const std::shared_ptr<const Fsm> m, const size_t nullOutput);
 
+
+private:
+	/**
+	 * Returns true iff nodes[i].id == i for all 0 <= i < fsm.getNodes().size()
+     */
+	bool checkNodeIds() const;
+
+	/**
+	 * Returns true iff nodes contains given FsmNode.
+     */
+	bool contains(const std::shared_ptr<FsmNode> node) const;
+
+	/**
+	 * Checks the transitions and return false iff any transitions hurts the invariant of Fsm.
+     */
+	bool checkAllTransitions() const;
 	//--------------------------------------------
 
 };

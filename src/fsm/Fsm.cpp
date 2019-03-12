@@ -1842,5 +1842,49 @@ bool Fsm::distinguishable(const FsmNode& s1, const FsmNode& s2) {
 }
 
 
+//------------------------------------------------------------------------------------
 
+bool Fsm::checkNodeIds() const {
+	for (size_t i = 0; i < nodes.size(); ++i) {
+		if (nodes.at(i)->getId() != i) return false;
+	}
+	return true;
+}
+
+bool Fsm::contains(const shared_ptr<FsmNode> node) const {
+	for (auto n : nodes) {
+		if (n == node) return true;
+	}
+	return false;
+}
+
+bool Fsm::checkAllTransitions() const {
+	for (auto n : nodes) {
+		for (auto tr : n->getTransitions()) {
+			if (tr == nullptr || tr->getLabel() == nullptr || tr->getLabel()->getInput() > maxInput
+				|| tr->getLabel()->getOutput() > maxOutput || tr->getLabel()->getInput() < 0 || tr->getLabel()->getOutput() < 0
+				|| tr->getSource() != n
+				|| not contains(tr->getTarget())) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+/**
+ * Returns true iff the Fsm class invariant holds for this object.
+ */
+bool Fsm::checkInvariant() const {
+	cout << "Fsm_inv" << endl;
+	if (maxInput < 0) return false;
+	if (maxOutput < 0) return false;
+	if (nodes.size() < 1) return false;
+	if (not checkNodeIds()) return false;
+	if (contains(nullptr)) return false;
+	if (not checkAllTransitions()) return false;
+	if (maxState != nodes.size() - 1) return false;
+	if (not(0 <= initStateIdx and initStateIdx <= maxState)) return false;
+	return true;
+}
 
