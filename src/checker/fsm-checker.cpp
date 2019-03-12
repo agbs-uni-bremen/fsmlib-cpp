@@ -116,6 +116,7 @@ static void readSUTModel() {
             
             if ( jReader.parse(document.str(),root) ) {
                 dfsmSut = make_shared<Dfsm>(root);
+                pl = dfsmSut->getPresentationLayer();
             }
             else {
                 cerr << "Could not parse JSON model - exit." << endl;
