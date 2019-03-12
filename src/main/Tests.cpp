@@ -1056,8 +1056,9 @@ void removeUnreachableNodes_TS() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	srand(59288);
 	for (int i = 0; i < 100; ++i) {
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, pl);
+		auto fsm = Fsm::createRandomFsmRepeatable("M", rand() % 5, rand() % 5, rand() % 15, pl);
 		testRemoveUnreachableNodes(*fsm, "TC-Rand-" + to_string(i));
 	}
 
@@ -1087,8 +1088,9 @@ void transformToObservableFSM_TS() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	srand(84618);
 	for (int i = 0; i < 100; ++i) {
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, pl);
+		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 5, rand() % 5, rand() % 15, pl);
 		testTransformToObservableFSM(*fsm, "TC-Rand-" + to_string(i));
 	}
 
@@ -1118,8 +1120,9 @@ void minimise_Dfsm_TS() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	srand(56958);
 	for (int i = 0; i < 100; ++i) {
-		Dfsm dfsm("M", 10, 4, 4, pl, true); //createRandomDfsm("M", 10, 4, 4, pl);
+		Dfsm dfsm("M", rand() % 15 + 1, rand() % 5, rand() % 5, pl, true); //createRandomDfsm("M", 10, 4, 4, pl);
 		testMinimise_Dfsm(dfsm, "TC-Rand-" + to_string(i));
 	}
 
@@ -1149,8 +1152,9 @@ void minimiseObservableFSM_TS() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	srand(37580);
 	for (int i = 0; i < 100; ++i) {
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, pl);
+		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 5, rand() % 5, rand() % 15, pl);
 		Fsm ofsm = fsm->transformToObservableFSM();
 		testMinimiseObservableFSM(ofsm, "TC-Rand-" + to_string(i));
 	}
@@ -1181,8 +1185,9 @@ void minimise_Fsm_TS() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	srand(8368);
 	for (int i = 0; i < 100; ++i) {
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, pl);
+		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 5, rand() % 5, rand() % 15, pl);
 		testMinimise_Fsm(*fsm, "TC-Rand-" + to_string(i));
 	}
 
@@ -1377,34 +1382,34 @@ void intersection_TS_Random() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
-	const int seed = 8950;
+	const int seed = 950;
 	srand(seed);
 	// random tests
 	unsigned int id = 0;
 	for (/*int i = 0*/; /*i < 100*/ id < 100; /*++i*/ ++id) {
 		//cout << "i:" << i << endl;
-		auto m1 = Fsm::createRandomFsmRepeatable("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-		const auto m2 = m1->createMutantRepeatable("M2", 2, 2);
+		auto m1 = Fsm::createRandomFsmRepeatable("M1", rand() % 5, rand() % 5, rand() % 10, make_shared<FsmPresentationLayer>());
+		const auto m2 = m1->createMutantRepeatable("M2", rand() % 5, rand() % 5);
 		testIntersection(*m1, *m2, "TC-Rand-(1)-" + to_string(id));
 	}
 
 	for (; id < 200; ++id) {		
-		auto m1 = Fsm::createRandomFsmRepeatable("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-		const auto m2 = Fsm::createRandomFsmRepeatable("M2", 4, 4, 10, make_shared<FsmPresentationLayer>());
+		auto m1 = Fsm::createRandomFsmRepeatable("M1", rand() % 5, rand() % 5, rand() % 10, make_shared<FsmPresentationLayer>());
+		const auto m2 = Fsm::createRandomFsmRepeatable("M2", rand() % 5, rand() % 5, rand() % 10, make_shared<FsmPresentationLayer>());
 		testIntersection(*m1, *m2, "TC-Rand-(2)-" + to_string(id));
 	}
 
 	for (; id < 300; ++id) {
-		auto m1 = Dfsm("M", 15, 4, 4, pl);
+		auto m1 = Dfsm("M", rand() % 15 + 1, rand() % 5, rand() % 5, pl, true);
 		//auto m1 = createRandomDfsm("M1", 15, 4, 4, pl);
-		const auto m2 = m1.createMutant("M2", 2, 2);
+		const auto m2 = m1.createMutantRepeatable("M2", rand() % 5, rand() % 5);
 		testIntersection(m1, *m2, "TC-Rand-(3)-" + to_string(id));
 	}
 
 	for (; id < 400; ++id) {
-		auto m1 = Dfsm("M1", 15, 4, 4, pl, true);
+		auto m1 = Dfsm("M1", rand() % 15 + 1, rand() % 5, rand() % 5, pl, true);
 		//auto m1 = createRandomDfsm("M1", 15, 4, 4, pl);
-		const auto m2 = Dfsm("M1", 15, 4, 4, pl, true);
+		const auto m2 = Dfsm("M1", rand() % 15 + 1, rand() % 5, rand() % 5, pl, true);
 		testIntersection(m1, m2, "TC-Rand-(4)-" + to_string(id));
 	}
 
@@ -1969,7 +1974,7 @@ void getCharacterisationSet_Dfsm_TS_Random() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	// random tests
 	for (int i = 0; i < 100; ++i) {
-		auto m = Dfsm("M", 15, 4, 4, pl);
+		auto m = Dfsm("M", rand() % 15 + 1, rand() % 5, rand() % 5, pl, true);
 		auto minM = m.minimise();
 		testGetCharacterisationSet_Dfsm(minM, "TC-Rand-" + to_string(i));
 	}
@@ -2015,7 +2020,7 @@ void getCharacterisationSet_Fsm_TS_Random() {
 
 	// random tests
 	for (int i = 0; i < 100; ++i) {
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 6, pl);
+		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 5, rand() % 5, rand() % 7, pl);
 		auto minFsm = fsm->minimise();
 		testGetCharacterisationSet_Fsm(minFsm, "TC-Rand-" + to_string(i));
 	}
@@ -2060,7 +2065,7 @@ void calcDistinguishingTrace1_TS_Random() {
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	for (int i = 0; i < 100; ++i) {
-		auto m = Dfsm("M", 15, 4, 2, pl);
+		auto m = Dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4, pl, true);
 		auto minM = m.minimise();
 		testCalcDistinguishingTrace1(minM, "TC-Rand-" + to_string(i));
 	}
@@ -2107,7 +2112,7 @@ void calcDistinguishingTrace2_TS_Random() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
 	for (int i = 0; i < 100; ++i) {
-		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 5, pl);
+		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 5, rand() % 5, rand() % 6, pl);
 		auto minFsm = fsm->minimise();
 		testCalcDistinguishingTrace2(minFsm, "TC-Rand-" + to_string(i));
 	}
@@ -2151,7 +2156,7 @@ void calcStateIdentificationSets_TS_Random() {
 	srand(seed);
 
 	for (int i = 0; i < 100; ++i) {
-		auto fsm = Fsm::createRandomFsmRepeatable("M", rand() % 4, rand() % 4, rand() % 6 + 1, make_shared<FsmPresentationLayer>());
+		auto fsm = Fsm::createRandomFsmRepeatable("M", rand() % 4, rand() % 4, rand() % 7, make_shared<FsmPresentationLayer>());
 		auto minFsm = fsm->minimise();
 		if (minFsm.size() > 50) {
 			cout << "M is too big. Stop Test Case." << endl;
@@ -2319,20 +2324,14 @@ void calcStateIdentificationSetsFast_TS_Random() {
 	srand(seed);
 
 	for (int i = 0; i < 100; ++i) {
-		int size = rand() % 10 + 1;
-		int mI = rand() % 7;
-		int mO = mI;
-		auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
+		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 5, rand() % 5, rand() % 10, make_shared<FsmPresentationLayer>());
 		auto minFsm = fsm->minimise();
 		cout << "minFsm size: " << minFsm.size() << endl;
 		testCalcStateIdentificationSetsFast(minFsm, "TC-Rand-" + to_string(i));
 	}
 
 	for (int i = 0; i < 100; ++i) {
-		int size = rand() % 10 + 1;
-		int mI = rand() % 7;
-		int mO = mI;
-		auto fsm = Fsm::createRandomFsmRepeatable("M1", mI, mO, size, make_shared<FsmPresentationLayer>());
+		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 5 + 1, rand() % 5, rand() % 10, make_shared<FsmPresentationLayer>());
 		auto tmp = createPartialMutant(fsm);
 		auto minFsm = tmp->minimise();
 		testCalcStateIdentificationSetsFast(minFsm, "TC-Rand-(MSP)" + to_string(i));
@@ -3611,7 +3610,7 @@ void hMethodOnMinimisedDfsm_Dfsm_TS_Random() {
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	for (int i = 0; i < 100; ++i) {
-		int size = rand() % 20 + 2;
+		int size = rand() % 15 + 2;
 		int mI = rand() % 6;
 		int mO = (rand() % 6) + 1;
 		Dfsm m("M", size, mI, mO, pl, true); // m.setMaxState(m.getNodes().size() - 1);
