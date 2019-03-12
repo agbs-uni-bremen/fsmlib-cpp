@@ -759,7 +759,7 @@ void testRemoveUnreachableNodes(Fsm &m1, const string &tcID) {
 
 	// first check invariant of m1
 	bool invariantViolation = not m1.checkInvariant();//not checkFsmClassInvariant(m1);
-	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M1 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, "Invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
 
@@ -780,84 +780,6 @@ void testRemoveUnreachableNodes(Fsm &m1, const string &tcID) {
 	//fsmlib_assert(tcID, checkFsmClassInvariant(m1), "FSM still fullfills class invariants after transformation");
 }
 
-///**
-// * Test function: Fsm::removeUnreachableNodes()
-// */
-//void testRemoveUnreachableNodes(Fsm &m1, vector<shared_ptr<FsmNode>> &unreachableNodes) {
-//	// determine set of unreachable nodes in m1
-//	auto reachable = getReachableStates(m1);
-//	unordered_set<shared_ptr<FsmNode>> unreachable;
-//	for (auto n : m1.getNodes()) {
-//		if (reachable.count(n) == 0) unreachable.insert(n);
-//	}
-//
-//	// get copy of m1 and unreachableNodes
-//	Fsm copyOfM1 = Fsm(m1);
-//	vector<shared_ptr<FsmNode>> copyOfUnreachableNodes(unreachableNodes.begin(), unreachableNodes.end());
-//
-//	// use algorithm to transform m1
-//	bool b = m1.removeUnreachableNodes(unreachableNodes);
-//
-//	// first check invariant of m1
-//	bool invariantViolation = not checkFsmClassInvariant(m1);
-//	fsmlib_assert("TC", not invariantViolation, "class invariant holds for M1 after transformation");
-//	// stop test execution at this point if invariant of m does not hold anymore
-//	if (invariantViolation) return;
-//
-//	// check properties of m1
-//	fsmlib_assert("TC", not contains(m1,unreachable), "Resulting FSM of removeUnreachableNodes() contains none of the nodes that were unreachable before.");
-//	fsmlib_assert("TC", isInitialConnected(m1), "Result of removeUnreachableNodes() is initial connected");
-//
-//	// check if L(m1) = L(copyOfM1)
-//	fsmlib_assert("TC", ioEquivalenceCheck(m1.getInitialState(), copyOfM1.getInitialState()), "removeUnreachableNodes() does not change language of the FSM");
-//
-//	// check b and unreachableNodes
-//	fsmlib_assert("TC", (b and (not unreachable.empty())) || (not b and unreachable.empty()), "removeUnreachableNodes() returns true iff FSM contains some unreachable node");
-//	fsmlib_assert("TC", checkUnreachableNodesList(copyOfUnreachableNodes, unreachableNodes, unreachable), "unreachableNodes contains all unreachable nodes that were removed and all nodes from before");
-//
-//	//// check unexpected side effects
-//	//fsmlib_assert("TC", checkFsmClassInvariant(m1), "FSM still fullfills class invariants after transformation");
-//}
-
-/**
- * Test function: Fsm::removeUnreachableNodes()
- */
-void testRemoveUnreachableNodes(Dfsm &m1, vector<shared_ptr<FsmNode>> &unreachableNodes, const string &tcID) {
-	// determine set of unreachable nodes in m1
-	auto reachable = getReachableStates(m1);
-	unordered_set<shared_ptr<FsmNode>> unreachable;
-	for (auto n : m1.getNodes()) {
-		if (reachable.count(n) == 0) unreachable.insert(n);
-	}
-
-	// get copy of m1 and unreachableNodes
-	Dfsm copyOfM1 = m1;
-	vector<shared_ptr<FsmNode>> copyOfUnreachableNodes(unreachableNodes.begin(), unreachableNodes.end());
-
-	// use algorithm to transform m1
-	bool b = m1.removeUnreachableNodes(unreachableNodes);
-
-	// first check invariant of m1
-	bool invariantViolation = not m1.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M1 after transformation");
-	// stop test execution at this point if invariant of m does not hold anymore
-	if (invariantViolation) return;
-
-	// check properties of m1
-	fsmlib_assert(tcID, not contains(m1, unreachable), "Resulting FSM of removeUnreachableNodes() contains none of the nodes that were unreachable before.");
-	fsmlib_assert(tcID, isInitialConnected(m1), "Result of removeUnreachableNodes() is initial connected");
-
-	// check if L(m1) = L(copyOfM1)
-	fsmlib_assert(tcID, ioEquivalenceCheck(m1.getInitialState(), copyOfM1.getInitialState()), "removeUnreachableNodes() does not change language of the FSM");
-
-	// check b and unreachableNodes
-	fsmlib_assert(tcID, (b and (not unreachable.empty())) || (not b and unreachable.empty()), "removeUnreachableNodes() returns true iff FSM contains some unreachable node");
-	fsmlib_assert(tcID, checkUnreachableNodesList(copyOfUnreachableNodes, unreachableNodes, unreachable), "unreachableNodes contains all unreachable nodes that were removed and all nodes from before");
-
-	//// check unexpected side effects
-	//fsmlib_assert(tcID, checkDfsmClassInvariant(m1), "DFSM still fullfills class invariants after transformation");
-}
-
 /**
  * Test function: Fsm::transformToObservableFSM()
  */
@@ -870,7 +792,7 @@ void testTransformToObservableFSM(Fsm &m1, const string &tcID) {
 
 	// first check invariant of m2
 	bool invariantViolation = not m2.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M2 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, "Invariant holds for M2 after transformation");
 	// stop test execution at this point if invariant of m2 does not hold anymore
 	if (invariantViolation) return;
 
@@ -886,7 +808,7 @@ void testTransformToObservableFSM(Fsm &m1, const string &tcID) {
 
 	// check invariant of m1
 	invariantViolation = not m1.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M1 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, "Invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m1 does not hold anymore
 	if (invariantViolation) return;
 
@@ -905,7 +827,7 @@ void testMinimise_Dfsm(Dfsm &m1, const string &tcID) {
 
 	// first check invariant of m2
 	bool invariantViolation = not m2.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M2 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, "Invariant holds for M2 after transformation");
 	// stop test execution at this point if invariant of m2 does not hold anymore
 	if (invariantViolation) return;
 
@@ -923,7 +845,7 @@ void testMinimise_Dfsm(Dfsm &m1, const string &tcID) {
 
 	// check invariant of m1
 	invariantViolation = not m1.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M1 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, "Invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m1 does not hold anymore
 	if (invariantViolation) return;
 	fsmlib_assert(tcID, isInitialConnected(m1), "M1 is initial connected after minimise()");
@@ -942,7 +864,7 @@ void testMinimiseObservableFSM(Fsm &m1, const string &tcID) {
 
 	// first check invariant of m2
 	bool invariantViolation = not m2.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M2 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, "Invariant holds for M2 after transformation");
 	// stop test execution at this point if invariant of m2 does not hold anymore
 	if (invariantViolation) return;
 
@@ -959,7 +881,7 @@ void testMinimiseObservableFSM(Fsm &m1, const string &tcID) {
 
 	// check invariant of m1
 	invariantViolation = not m1.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M1 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, "Invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m1 does not hold anymore
 	if (invariantViolation) return;
 	fsmlib_assert(tcID, checkForEqualStructure(m1, copyOfM1), "M1 was not changed by algorithm");
@@ -977,7 +899,7 @@ void testMinimise_Fsm(Fsm &m1, const string &tcID) {
 
 	// first check invariant of m2
 	bool invariantViolation = not m2.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M2 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, "Invariant holds for M2 after transformation");
 	// stop test execution at this point if invariant of m2 does not hold anymore
 	if (invariantViolation) return;
 
@@ -1799,7 +1721,7 @@ void testCalcStateIdentificationSets(Fsm &m, const string &tcID) {
 
 	// first check invariant of m
 	bool invariantViolation = not m.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Fsm class invariant still holds for M after calculation.");
+	fsmlib_assert(tcID, not invariantViolation, "Invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
 
@@ -1873,7 +1795,7 @@ void testCalcStateIdentificationSetsFast(Fsm &m, const string &tcID) {
 
 	// first check invariant of m
 	bool invariantViolation = not m.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Fsm class invariant still holds for M after calculation.");
+	fsmlib_assert(tcID, not invariantViolation, "Invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
 
@@ -2529,7 +2451,7 @@ void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 
 	// first check invariant of m
 	bool invariantViolation = not m.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Fsm class invariant still holds for M after calculation.");
+	fsmlib_assert(tcID, not invariantViolation, "Invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
 
@@ -2632,7 +2554,7 @@ void testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 
 	// first check invariant of m
 	bool invariantViolation = not m.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Dfsm class invariant still holds for M after calculation.");
+	fsmlib_assert(tcID, not invariantViolation, "Invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
 
