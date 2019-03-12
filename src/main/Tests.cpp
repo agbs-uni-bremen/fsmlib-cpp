@@ -339,29 +339,29 @@ unordered_set<shared_ptr<FsmNode>> getReachableStates(const Fsm &fsm) {
 /*
 	Returns true iff nodes[i].id == i for all 0 <= i < fsm.getNodes().size()
 */
-bool checkNodeIds(const Fsm &fsm) {
-	for (size_t i = 0; i < fsm.getNodes().size(); ++i) {
-		if (fsm.getNodes().at(i)->getId() != i) return false;
-	}
-	return true;
-}
+//bool checkNodeIds(const Fsm &fsm) {
+//	for (size_t i = 0; i < fsm.getNodes().size(); ++i) {
+//		if (fsm.getNodes().at(i)->getId() != i) return false;
+//	}
+//	return true;
+//}
 
 /*
 	Returns true iff fsm.getNodes() contains given node pointer.
 */
-bool contains(const Fsm &fsm, const shared_ptr<FsmNode> node) {
-	for (auto n : fsm.getNodes()) {
-		if (n == node) return true;
-	}
-	return false;
-}
+//bool contains(const Fsm &fsm, const shared_ptr<FsmNode> node) {
+//	for (auto n : fsm.getNodes()) {
+//		if (n == node) return true;
+//	}
+//	return false;
+//}
 
 /*
 	Returns true iff fsm.getNodes() contains any of the given node pointers in nodes.
 */
 bool contains(const Fsm &fsm, const unordered_set<shared_ptr<FsmNode>> nodes) {
 	for (auto n : nodes) {
-		if (contains(fsm, n)) return true;
+		if (fsm.contains(n)) return true;
 	}
 	return false;
 }
@@ -370,38 +370,38 @@ bool contains(const Fsm &fsm, const unordered_set<shared_ptr<FsmNode>> nodes) {
 /*
 	Checks the transitions and return false iff any transitions hurts the invariant of Fsm.
 */
-bool checkAllTransitions(const Fsm &fsm) {
-	for (auto n : fsm.getNodes()) {
-		for (auto tr : n->getTransitions()) {
-			if (tr == nullptr || tr->getLabel() == nullptr || tr->getLabel()->getInput() > fsm.getMaxInput()
-				|| tr->getLabel()->getOutput() > fsm.getMaxOutput() || tr->getLabel()->getInput() < 0 || tr->getLabel()->getOutput() < 0
-				|| tr->getSource() != n
-				|| not contains(fsm, tr->getTarget())) {
-				return false;
-			}
-		}
-	}
-	return true;
-}
+//bool checkAllTransitions(const Fsm &fsm) {
+//	for (auto n : fsm.getNodes()) {
+//		for (auto tr : n->getTransitions()) {
+//			if (tr == nullptr || tr->getLabel() == nullptr || tr->getLabel()->getInput() > fsm.getMaxInput()
+//				|| tr->getLabel()->getOutput() > fsm.getMaxOutput() || tr->getLabel()->getInput() < 0 || tr->getLabel()->getOutput() < 0
+//				|| tr->getSource() != n
+//				|| not contains(fsm, tr->getTarget())) {
+//				return false;
+//			}
+//		}
+//	}
+//	return true;
+//}
 
 /*
 	This function checks the Fsm class invariant for the given Fsm object.
 */
-bool checkFsmClassInvariant(const Fsm &fsm) {	
-	if (fsm.getMaxInput() < 0) return false;
-	if (fsm.getMaxOutput() < 0) return false;
-	if (fsm.getNodes().size() < 1) return false;
-	if (not checkNodeIds(fsm)) return false;
-	if (contains(fsm, nullptr)) return false;
-	if (not checkAllTransitions(fsm)) return false;
-	if (fsm.getMaxState() != fsm.getNodes().size() - 1) return false;
-	if (not(0 <= fsm.getInitStateIdx() and fsm.getInitStateIdx() <= fsm.getMaxState())) return false;
-	return true;
-}
+//bool checkFsmClassInvariant(const Fsm &fsm) {	
+//	if (fsm.getMaxInput() < 0) return false;
+//	if (fsm.getMaxOutput() < 0) return false;
+//	if (fsm.getNodes().size() < 1) return false;
+//	if (not checkNodeIds(fsm)) return false;
+//	if (contains(fsm, nullptr)) return false;
+//	if (not checkAllTransitions(fsm)) return false;
+//	if (fsm.getMaxState() != fsm.getNodes().size() - 1) return false;
+//	if (not(0 <= fsm.getInitStateIdx() and fsm.getInitStateIdx() <= fsm.getMaxState())) return false;
+//	return true;
+//}
 
-bool checkDfsmClassInvariant(Dfsm &dfsm) {
-	return checkFsmClassInvariant(dfsm) and dfsm.isDeterministic();
-}
+//bool checkDfsmClassInvariant(Dfsm &dfsm) {
+//	return checkFsmClassInvariant(dfsm) and dfsm.isDeterministic();
+//}
 
 /*
 	Checks if the given fsm is initial connected.
@@ -838,7 +838,7 @@ void testRemoveUnreachableNodes(Dfsm &m1, vector<shared_ptr<FsmNode>> &unreachab
 	bool b = m1.removeUnreachableNodes(unreachableNodes);
 
 	// first check invariant of m1
-	bool invariantViolation = not checkDfsmClassInvariant(m1);
+	bool invariantViolation = not m1.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
@@ -869,7 +869,7 @@ void testTransformToObservableFSM(Fsm &m1, const string &tcID) {
 	Fsm m2 = m1.transformToObservableFSM();
 
 	// first check invariant of m2
-	bool invariantViolation = not checkFsmClassInvariant(m2);
+	bool invariantViolation = not m2.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M2 after transformation");
 	// stop test execution at this point if invariant of m2 does not hold anymore
 	if (invariantViolation) return;
@@ -885,7 +885,7 @@ void testTransformToObservableFSM(Fsm &m1, const string &tcID) {
 	//fsmlib_assert(tcID, checkFsmClassInvariant(m2), "M2 still fullfills class invariants after transformation");
 
 	// check invariant of m1
-	invariantViolation = not checkFsmClassInvariant(m1);
+	invariantViolation = not m1.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m1 does not hold anymore
 	if (invariantViolation) return;
@@ -904,7 +904,7 @@ void testMinimise_Dfsm(Dfsm &m1, const string &tcID) {
 	Dfsm m2 = m1.minimise();
 
 	// first check invariant of m2
-	bool invariantViolation = not checkDfsmClassInvariant(m2);
+	bool invariantViolation = not m2.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M2 after transformation");
 	// stop test execution at this point if invariant of m2 does not hold anymore
 	if (invariantViolation) return;
@@ -922,7 +922,7 @@ void testMinimise_Dfsm(Dfsm &m1, const string &tcID) {
 	//fsmlib_assert(tcID, checkDfsmClassInvariant(m2), "M2 still fullfills class invariants after transformation");
 
 	// check invariant of m1
-	invariantViolation = not checkDfsmClassInvariant(m1);
+	invariantViolation = not m1.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m1 does not hold anymore
 	if (invariantViolation) return;
@@ -941,7 +941,7 @@ void testMinimiseObservableFSM(Fsm &m1, const string &tcID) {
 	Fsm m2 = m1.minimiseObservableFSM();
 
 	// first check invariant of m2
-	bool invariantViolation = not checkFsmClassInvariant(m2);
+	bool invariantViolation = not m2.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M2 after transformation");
 	// stop test execution at this point if invariant of m2 does not hold anymore
 	if (invariantViolation) return;
@@ -958,7 +958,7 @@ void testMinimiseObservableFSM(Fsm &m1, const string &tcID) {
 	//fsmlib_assert(tcID, checkFsmClassInvariant(m2), "M2 still fullfills class invariants after transformation");
 
 	// check invariant of m1
-	invariantViolation = not checkFsmClassInvariant(m1);
+	invariantViolation = not m1.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m1 does not hold anymore
 	if (invariantViolation) return;
@@ -976,7 +976,7 @@ void testMinimise_Fsm(Fsm &m1, const string &tcID) {
 	Fsm m2 = m1.minimise();
 
 	// first check invariant of m2
-	bool invariantViolation = not checkFsmClassInvariant(m2);
+	bool invariantViolation = not m2.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M2 after transformation");
 	// stop test execution at this point if invariant of m2 does not hold anymore
 	if (invariantViolation) return;
@@ -994,7 +994,7 @@ void testMinimise_Fsm(Fsm &m1, const string &tcID) {
 	//fsmlib_assert(tcID, checkFsmClassInvariant(m2), "M2 still fullfills class invariants after transformation");
 
 	// check invariant of m1
-	invariantViolation = not checkFsmClassInvariant(m1);
+	invariantViolation = not m1.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m1 does not hold anymore
 	if (invariantViolation) return;
@@ -1303,10 +1303,10 @@ void testIntersection(Fsm &m1, const Fsm &m2, const string &tcID) {
 	const Fsm intersection = m1.intersect(m2);
 
 	// first check invariant for m1 and intersection   (we don't need to check invariant for m2 because it's const)
-	bool invariantViolationOfM1 = not checkFsmClassInvariant(m1);
-	fsmlib_assert(tcID, not invariantViolationOfM1, "Fsm class invariant still holds for M1 after calculation.");
-	bool invariantViolationOfIntersection = not checkFsmClassInvariant(intersection);
-	fsmlib_assert(tcID, not invariantViolationOfIntersection, "Fsm class invariant holds for intersection after calculation.");
+	bool invariantViolationOfM1 = not m1.checkInvariant();
+	fsmlib_assert(tcID, not invariantViolationOfM1, "Invariant still holds for M1 after calculation.");
+	bool invariantViolationOfIntersection = not intersection.checkInvariant();
+	fsmlib_assert(tcID, not invariantViolationOfIntersection, "Invariant holds for intersection after calculation.");
 	// stop test execution at this point if invariant of m or intersection does not hold anymore
 	if (invariantViolationOfM1 || invariantViolationOfIntersection) return;
 
@@ -1320,27 +1320,27 @@ void testIntersection(Fsm &m1, const Fsm &m2, const string &tcID) {
 /**
  * Test function for Fsm::intersect(const Fsm & f). (Dfsm Context)
  */
-void testIntersection(Dfsm &m1, const Fsm &m2, const string &tcID) {
-	// get copy of m1 and m2
-	const Dfsm copyOfM1 = Dfsm(m1);
-
-	// use Algorithm to calculate result
-	const Fsm intersection = m1.intersect(m2);
-
-	// first check invariant for m1 and intersection   (we don't need to check invariant for m2 because it's const)
-	bool invariantViolationOfM1 = not checkDfsmClassInvariant(m1);
-	fsmlib_assert(tcID, not invariantViolationOfM1, "Dfsm class invariant still holds for M1 after calculation.");
-	bool invariantViolationOfIntersection = not checkFsmClassInvariant(intersection);
-	fsmlib_assert(tcID, not invariantViolationOfIntersection, "Fsm class invariant holds for intersection after calculation.");
-	// stop test execution at this point if invariant of m or intersection does not hold anymore
-	if (invariantViolationOfM1 || invariantViolationOfIntersection) return;
-
-	// check language intersection
-	fsmlib_assert(tcID, languageIntersectionCheck(m1, m2, intersection), "Language of the result is intersection of L(M1) and L(M2)");
-
-	// check for forbidden side effects
-	fsmlib_assert(tcID, checkForEqualStructure(m1, copyOfM1), "M1 was not changed by algorithm");
-}
+//void testIntersection(Dfsm &m1, const Fsm &m2, const string &tcID) {
+//	// get copy of m1 and m2
+//	const Dfsm copyOfM1 = Dfsm(m1);
+//
+//	// use Algorithm to calculate result
+//	const Fsm intersection = m1.intersect(m2);
+//
+//	// first check invariant for m1 and intersection   (we don't need to check invariant for m2 because it's const)
+//	bool invariantViolationOfM1 = not m1.checkInvariant();
+//	fsmlib_assert(tcID, not invariantViolationOfM1, "Dfsm class invariant still holds for M1 after calculation.");
+//	bool invariantViolationOfIntersection = not intersection.checkInvariant();
+//	fsmlib_assert(tcID, not invariantViolationOfIntersection, "Fsm class invariant holds for intersection after calculation.");
+//	// stop test execution at this point if invariant of m or intersection does not hold anymore
+//	if (invariantViolationOfM1 || invariantViolationOfIntersection) return;
+//
+//	// check language intersection
+//	fsmlib_assert(tcID, languageIntersectionCheck(m1, m2, intersection), "Language of the result is intersection of L(M1) and L(M2)");
+//
+//	// check for forbidden side effects
+//	fsmlib_assert(tcID, checkForEqualStructure(m1, copyOfM1), "M1 was not changed by algorithm");
+//}
 
 struct IntersectTestCase {
 	string id;
@@ -1661,7 +1661,7 @@ void testGetCharacterisationSet_Dfsm(Dfsm &m, const string &tcID) {
 	const auto w = m.getCharacterisationSet();
 
 	// first check invariant of m
-	bool invariantViolation = not checkDfsmClassInvariant(m);
+	bool invariantViolation = not m.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "Dfsm class invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
@@ -1687,7 +1687,7 @@ void testGetCharacterisationSet_Fsm(Fsm &m, const string &tcID) {
 	const auto w = m.getCharacterisationSet();
 
 	// first check invariant of m
-	bool invariantViolation = not checkFsmClassInvariant(m);
+	bool invariantViolation = not m.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "Fsm class invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
@@ -1726,7 +1726,7 @@ void testCalcDistinguishingTrace1(Dfsm &m, const string &tcID) {
 			InputTrace inTrc = q1->calcDistinguishingTrace(q2, tables, m.getMaxInput());
 
 			// first check invariant of m
-			bool invariantViolation = not checkDfsmClassInvariant(m);
+			bool invariantViolation = not m.checkInvariant();
 			fsmlib_assert(tcID, not invariantViolation, "Dfsm class invariant still holds for M after calculation.");
 			// stop test execution at this point if invariant of m does not hold anymore
 			if (invariantViolation) return;
@@ -1766,7 +1766,7 @@ void testCalcDistinguishingTrace2(Fsm &m, const string &tcID) {
 			InputTrace inTrc = q1->calcDistinguishingTrace(q2, tables, m.getMaxInput(), m.getMaxOutput());
 
 			// first check invariant of m
-			bool invariantViolation = not checkFsmClassInvariant(m);
+			bool invariantViolation = not m.checkInvariant();
 			fsmlib_assert(tcID, not invariantViolation, "Fsm class invariant still holds for M after calculation.");
 			// stop test execution at this point if invariant of m does not hold anymore
 			if (invariantViolation) return;
@@ -1798,7 +1798,7 @@ void testCalcStateIdentificationSets(Fsm &m, const string &tcID) {
 	const auto stateIdSets = m.stateIdentificationSets;
 
 	// first check invariant of m
-	bool invariantViolation = not checkFsmClassInvariant(m);
+	bool invariantViolation = not m.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "Fsm class invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
@@ -1835,7 +1835,7 @@ void testCalcStateIdentificationSets(Dfsm &m, const string &tcID) {
 	const auto stateIdSets = m.stateIdentificationSets;
 
 	// first check invariant of m
-	bool invariantViolation = not checkDfsmClassInvariant(m);
+	bool invariantViolation = not m.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "Dfsm class invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
@@ -1872,7 +1872,7 @@ void testCalcStateIdentificationSetsFast(Fsm &m, const string &tcID) {
 	const auto stateIdSets = m.stateIdentificationSets;
 
 	// first check invariant of m
-	bool invariantViolation = not checkFsmClassInvariant(m);
+	bool invariantViolation = not m.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "Fsm class invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
@@ -1908,7 +1908,7 @@ void testCalcStateIdentificationSetsFast(Dfsm &m, const string &tcID) {
 	const auto stateIdSets = m.stateIdentificationSets;
 
 	// first check invariant of m
-	bool invariantViolation = not checkDfsmClassInvariant(m);
+	bool invariantViolation = not m.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "Dfsm class invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
@@ -2528,7 +2528,7 @@ void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 	//int nullOutput = getMaxOutput(m, mutants) + 1;
 
 	// first check invariant of m
-	bool invariantViolation = not checkFsmClassInvariant(m);
+	bool invariantViolation = not m.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "Fsm class invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
@@ -2631,7 +2631,7 @@ void testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 	const auto ts = tsGen->generateTestSuite(m, numAddStates);
 
 	// first check invariant of m
-	bool invariantViolation = not checkDfsmClassInvariant(m);
+	bool invariantViolation = not m.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "Dfsm class invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
@@ -3658,7 +3658,7 @@ void testTMethod(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, const s
 	//int nullOutput = getMaxOutput(m, mutants) + 1;
 
 	// first check invariant of m
-	bool invariantViolation = not checkDfsmClassInvariant(m);
+	bool invariantViolation = not m.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, "Dfsm class invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return;
@@ -3941,7 +3941,7 @@ void randomFSMTestData() {
 
 		//m = makeStatesPartial(makeStatesEquivalent(*m));
 		m = makeStatesEquivalent(*makeStatesPartial(m));
-		cout << "Fsm Inv: " << checkFsmClassInvariant(*m) << endl;
+		cout << "Fsm Inv: " << m->checkInvariant() << endl;
 		cout << *m << endl;
 
 		cout << "mI: " << m->getMaxInput() << endl;

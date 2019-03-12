@@ -525,6 +525,11 @@ public:
 	virtual bool checkInvariant() const;
 
 	/**
+	 * Returns true iff nodes contains given FsmNode.
+	 */
+	bool contains(const std::shared_ptr<FsmNode> node) const;
+
+	/**
      * Test function for Fsm::getCharacterisationSet().
      * Parameter m is expected to be a minimal and observable Fsm.
 	 * Needs access to characterisationSet of this class.
@@ -564,11 +569,6 @@ private:
 	 * Returns true iff nodes[i].id == i for all 0 <= i < fsm.getNodes().size()
      */
 	bool checkNodeIds() const;
-
-	/**
-	 * Returns true iff nodes contains given FsmNode.
-     */
-	bool contains(const std::shared_ptr<FsmNode> node) const;
 
 	/**
 	 * Checks the transitions and return false iff any transitions hurts the invariant of Fsm.
