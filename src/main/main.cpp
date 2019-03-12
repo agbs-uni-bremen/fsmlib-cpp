@@ -4988,14 +4988,14 @@ int main(int argc, char** argv)
 
 	// FSM Transformation Tests:
 
-	//removeUnreachableNodes_TS();
-	//transformToObservableFSM_TS();
-	//minimise_Dfsm_TS();
-	//minimiseObservableFSM_TS();
-	//minimise_Fsm_TS();
+	/*removeUnreachableNodes_TS();
+	transformToObservableFSM_TS();
+	minimise_Dfsm_TS();
+	minimiseObservableFSM_TS();
+	minimise_Fsm_TS();*/
 
 	// Intersection Test:
-	//intersection_TS_Random();
+	intersection_TS_Random();
 
 	// Calculation of Distinguishing Traces Test:
 	//getCharacterisationSet_Dfsm_TS_Random();
@@ -5016,7 +5016,7 @@ int main(int argc, char** argv)
 	//wpMethodOnMinimisedDfsm_Dfsm_TS_Random();
 	//hsiMethod_Fsm_TS_Random();
 	//hsiMethod_Dfsm_TS_Random();
-	hMethodOnMinimisedDfsm_Dfsm_TS_Random();
+	//hMethodOnMinimisedDfsm_Dfsm_TS_Random();
 
 
 
