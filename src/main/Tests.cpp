@@ -2774,31 +2774,20 @@ shared_ptr<vector<TestTheoryTestCase>> parseTestTheoryTSFile(const string &testS
 	if (inputFile.is_open())
 	{
 		string line;
-
 		while (getline(inputFile, line))
 		{
 			vector<string> lineContent;
 			stringstream ss(line);
-
 			for (string elem; getline(ss, elem, ';'); lineContent.push_back(elem));
-
 			TestTheoryTestCase tc;
 			tc.id = lineContent.at(0);
 			tc.rmPath = lineContent.at(1);
-			//tc.mutantPaths 
-
-
 			for (int i = 2; i < lineContent.size(); ++i) {
 				tc.mutantPaths.push_back(lineContent.at(i));
-				//cout << lineContent.at(i) << endl;
-				//shared_ptr<Fsm> fsm = make_shared<Fsm>(lineContent.at(i), make_shared<FsmPresentationLayer>(), "M");
-				//fsmlib_assert("TC", checkFsmClassInvariant(*fsm), "inv check");
-				//cout << fsm->size() << endl;
 			}
 			testSuite.push_back(tc);
 		}
 		inputFile.close();
-
 		return make_shared<vector<TestTheoryTestCase>>(testSuite);
 	}
 	else
@@ -2807,6 +2796,7 @@ shared_ptr<vector<TestTheoryTestCase>> parseTestTheoryTSFile(const string &testS
 		exit(EXIT_FAILURE);
 	}
 }
+
 
 // Test Fsm::wMethod(...)
 void wMethod_TS_Random2() {
@@ -2817,27 +2807,27 @@ void wMethod_TS_Random2() {
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	for (int i = 0; i < 1000; ++i) {
-		cout << "i:" << i << endl;
-		int size = (rand() % 6) + 1; // = 6; 
-		int mI = rand() % 4; // (rand() % 5) + 1;
-		int mO = (rand() % 6) + 1;
-		//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
-		//auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
-		auto m = makeStatesUnreachable(*Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
-		const size_t nullOutput = m->getMaxOutput() + 1;
+	//for (int i = 0; i < 1000; ++i) {
+	//	cout << "i:" << i << endl;
+	//	int size = (rand() % 6) + 1; // = 6; 
+	//	int mI = rand() % 4; // (rand() % 5) + 1;
+	//	int mO = (rand() % 6) + 1;
+	//	//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
+	//	//auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
+	//	auto m = makeStatesUnreachable(*Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
+	//	const size_t nullOutput = m->getMaxOutput() + 1;
 
-		vector<shared_ptr<const Fsm>> mutants;
-		for (int j = 0; j < 20; ++j) {
-			size_t numOutFaults = (rand() % 2);
-			size_t numTrFaults = (rand() % 2);
-			if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
-			auto minMut = m->createMutantRepeatable("Mutant_" + to_string(j), numOutFaults, numTrFaults)->minimise();
-			//mutants.push_back(make_shared<Fsm>(minMut));
-			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput)); // m->getMaxOutput()
-		}
-		testTestTheory(*m, mutants, nullOutput, tsGenerator, "TC-Rand-(MSU)-"+ to_string(i));
-	}
+	//	vector<shared_ptr<const Fsm>> mutants;
+	//	for (int j = 0; j < 20; ++j) {
+	//		size_t numOutFaults = (rand() % 2);
+	//		size_t numTrFaults = (rand() % 2);
+	//		if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
+	//		auto minMut = m->createMutantRepeatable("Mutant_" + to_string(j), numOutFaults, numTrFaults)->minimise();
+	//		//mutants.push_back(make_shared<Fsm>(minMut));
+	//		mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput)); // m->getMaxOutput()
+	//	}
+	//	testTestTheory(*m, mutants, nullOutput, tsGenerator, "TC-Rand-(MSU)-"+ to_string(i));
+	//}
 
 	// practical examples
 	{
@@ -2874,7 +2864,6 @@ void wMethod_TS_Random2() {
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Fsm_wMethod.testsuite");
 	for (auto tc : *testSuite) {
-		cout << "Start Test Case : " << tc.id << endl;
 		shared_ptr<Fsm> ref = make_shared<Fsm>(tc.rmPath, pl, "M");
 		vector<shared_ptr<const Fsm>> partialMutants;
 		for (int i = 0; i < tc.mutantPaths.size(); ++i) {
@@ -3061,7 +3050,6 @@ void wMethodOnMinimisedFsm_Fsm_TS_Random() {
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Fsm_wMethodOnMinimisedFsm.testsuite");
 	for (auto tc : *testSuite) {
-		cout << "Start Test Case : " << tc.id << endl;
 		shared_ptr<Fsm> ref = make_shared<Fsm>(tc.rmPath, pl, "M");
 		vector<shared_ptr<const Fsm>> partialMutants;
 		for (int i = 0; i < tc.mutantPaths.size(); ++i) {
