@@ -4995,7 +4995,7 @@ int main(int argc, char** argv)
 	minimise_Fsm_TS();*/
 
 	// Intersection Test:
-	intersection_TS_Random();
+	//intersection_TS_Random();
 
 	// Calculation of Distinguishing Traces Test:
 	//getCharacterisationSet_Dfsm_TS_Random();
@@ -5003,7 +5003,7 @@ int main(int argc, char** argv)
 	//calcDistinguishingTrace1_TS_Random();
 	//calcDistinguishingTrace2_TS_Random();
 	//calcStateIdentificationSets_TS_Random();
-	//calcStateIdentificationSetsFast_TS_Random();
+	calcStateIdentificationSetsFast_TS_Random();
 
 	// Complete Test Theories Test:
 	//tMethod_TS_Random();

@@ -1919,39 +1919,38 @@ void testCalcStateIdentificationSetsFast(Dfsm &m, const string &tcID) {
 	fsmlib_assert(tcID, *tracesOfW.getIOLists() == *m.characterisationSet->getIOLists().getIOLists(), "characterisation set of M has not changed");
 }
 
+template <typename T>
 struct DistinguishingTraceTestCase {
 	string id;
-	string fsmPath;
-	string csp;
-	string sisp;
+	shared_ptr<T> m;
 };
 
-shared_ptr<vector<DistinguishingTraceTestCase>> parseDistinguishingTraceTSFile(const string &testSuitePath) {
+template <typename T>
+void parseDistinguishingTraceTSFile(const string &testSuitePath, vector<DistinguishingTraceTestCase<T>> &testSuite) {
 	string fname = testSuitePath;
-	vector<DistinguishingTraceTestCase> testSuite;
 	ifstream inputFile(fname);
 	if (inputFile.is_open())
 	{
+		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 		string line;
-
 		while (getline(inputFile, line))
 		{
 			vector<string> lineContent;
 			stringstream ss(line);
-
 			for (string elem; getline(ss, elem, ';'); lineContent.push_back(elem));
-
-			DistinguishingTraceTestCase tc;
+			DistinguishingTraceTestCase<T> tc;
 			tc.id = lineContent.at(0);
-			tc.fsmPath = lineContent.at(1);
-			tc.csp = lineContent.at(2);
-			tc.sisp = lineContent.at(3);
-
+			string mPath = lineContent.at(1);
+			tc.m = make_shared<T>(mPath, pl, "M");
+			if (lineContent.at(2) == "true") { 
+				tc.m->getCharacterisationSet();
+			};
+			if (lineContent.at(3) == "true") {
+				tc.m->calcStateIdentificationSetsFast();
+			}; 
 			testSuite.push_back(tc);
 		}
 		inputFile.close();
-
-		return make_shared<vector<DistinguishingTraceTestCase>>(testSuite);
 	}
 	else
 	{
@@ -1992,16 +1991,10 @@ void getCharacterisationSet_Dfsm_TS_Random() {
 
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
-	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Dfsm_getCharacterisationSet.testsuite");
-	for (auto tc : *testSuite) {
-		shared_ptr<Dfsm> m = make_shared<Dfsm>(tc.fsmPath, pl, "M");
-		if (tc.csp == "true") {
-			m->getCharacterisationSet();
-		}
-		if (tc.sisp == "true") {
-			m->calcStateIdentificationSetsFast();
-		}
-		testGetCharacterisationSet_Dfsm(*m, "TC-Part-" + tc.id);
+	vector<DistinguishingTraceTestCase<Dfsm>> testSuite;
+	parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Dfsm_getCharacterisationSet.testsuite", testSuite);
+	for (auto tc : testSuite) {
+		testGetCharacterisationSet_Dfsm(*tc.m, "TC-Part-" + tc.id);
 	}
 }
 
@@ -2037,16 +2030,10 @@ void getCharacterisationSet_Fsm_TS_Random() {
 	testGetCharacterisationSet_Fsm(gdc, "TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
-	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_getCharacterisationSet.testsuite");
-	for (auto tc : *testSuite) {
-		shared_ptr<Fsm> m = make_shared<Fsm>(tc.fsmPath, pl, "M");
-		if (tc.csp == "true") {
-			m->getCharacterisationSet();
-		}
-		if (tc.sisp == "true") {
-			m->calcStateIdentificationSetsFast();
-		}
-		testGetCharacterisationSet_Fsm(*m, "TC-Part-" + tc.id);
+	vector<DistinguishingTraceTestCase<Fsm>> testSuite;
+	parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_getCharacterisationSet.testsuite", testSuite);
+	for (auto tc : testSuite) {
+		testGetCharacterisationSet_Fsm(*tc.m, "TC-Part-" + tc.id);
 	}
 }
 
@@ -2082,16 +2069,10 @@ void calcDistinguishingTrace1_TS_Random() {
 	testCalcDistinguishingTrace1(gdc, "TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
-	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/FsmNode_calcDistinguishingTrace_pk.testsuite");
-	for (auto tc : *testSuite) {
-		shared_ptr<Dfsm> m = make_shared<Dfsm>(tc.fsmPath, pl, "M");
-		if (tc.csp == "true") {
-			m->getCharacterisationSet();
-		}
-		if (tc.sisp == "true") {
-			m->calcStateIdentificationSetsFast();
-		}
-		testCalcDistinguishingTrace1(*m, "TC-Part-" + tc.id);
+	vector<DistinguishingTraceTestCase<Dfsm>> testSuite;
+	parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/FsmNode_calcDistinguishingTrace_pk.testsuite", testSuite);
+	for (auto tc : testSuite) {
+		testCalcDistinguishingTrace1(*tc.m, "TC-Part-" + tc.id);
 	}
 }
 
@@ -2129,16 +2110,10 @@ void calcDistinguishingTrace2_TS_Random() {
 	testCalcDistinguishingTrace2(gdc, "TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
-	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/FsmNode_calcDistinguishingTrace_ofsm.testsuite");
-	for (auto tc : *testSuite) {
-		shared_ptr<Fsm> m = make_shared<Fsm>(tc.fsmPath, pl, "M");
-		if (tc.csp == "true") {
-			m->getCharacterisationSet();
-		}
-		if (tc.sisp == "true") {
-			m->calcStateIdentificationSetsFast();
-		}
-		testCalcDistinguishingTrace2(*m, "TC-Part-" + tc.id);
+	vector<DistinguishingTraceTestCase<Fsm>> testSuite;
+	parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/FsmNode_calcDistinguishingTrace_ofsm.testsuite", testSuite);
+	for (auto tc : testSuite) {
+		testCalcDistinguishingTrace2(*tc.m, "TC-Part-" + tc.id);
 	}
 }
 
@@ -2186,16 +2161,10 @@ void calcStateIdentificationSets_TS_Random() {
 	testCalcStateIdentificationSets(gdc, "TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
-	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_calcStateIdentificationSets.testsuite");
-	for (auto tc : *testSuite) {
-		shared_ptr<Fsm> m = make_shared<Fsm>(tc.fsmPath, pl, "M");
-		if (tc.csp == "true") {
-			m->getCharacterisationSet();
-		}
-		if (tc.sisp == "true") {
-			m->calcStateIdentificationSetsFast();
-		}
-		testCalcStateIdentificationSets(*m, "TC-Part-" + tc.id);
+	vector<DistinguishingTraceTestCase<Fsm>> testSuite;
+	parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_calcStateIdentificationSets.testsuite", testSuite);
+	for (auto tc : testSuite) {
+		testCalcStateIdentificationSets(*tc.m, "TC-Part-" + tc.id);
 	}
 }
 
@@ -2376,16 +2345,10 @@ void calcStateIdentificationSetsFast_TS_Random() {
 
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
-	auto testSuite = parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_calcStateIdentificationSetsFast.testsuite");
-	for (auto tc : *testSuite) {
-		shared_ptr<Fsm> m = make_shared<Fsm>(tc.fsmPath, make_shared<FsmPresentationLayer>(), "M");
-		if (tc.csp == "true") {
-			m->getCharacterisationSet();
-		}
-		if (tc.sisp == "true") {
-			m->calcStateIdentificationSetsFast();
-		}
-		testCalcStateIdentificationSetsFast(*m, "TC-Part-" + tc.id);
+	vector<DistinguishingTraceTestCase<Fsm>> testSuite;
+	parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_calcStateIdentificationSetsFast.testsuite", testSuite);
+	for (auto tc : testSuite) {
+		testCalcStateIdentificationSetsFast(*tc.m, "TC-Part-" + tc.id);
 	}
 }
 
