@@ -4988,7 +4988,7 @@ int main(int argc, char** argv)
 
 	// FSM Transformation Tests:
 
-	removeUnreachableNodes_TS();
+	//removeUnreachableNodes_TS();
 	//transformToObservableFSM_TS();
 	//minimise_Dfsm_TS();
 	//minimiseObservableFSM_TS();
@@ -5009,7 +5009,7 @@ int main(int argc, char** argv)
 	//tMethod_TS_Random();
 	//wMethod_TS_Random2();
 	//wMethod_Dfsm_TS_Random();
-	//wMethodOnMinimisedFsm_Fsm_TS_Random();
+	wMethodOnMinimisedFsm_Fsm_TS_Random();
 	//wMethodOnMinimisedDfsm_Dfsm_TS_Random();
 	//wpMethod_Fsm_TS_Random();
 	//wpMethod_Dfsm_TS_Random();
