@@ -4995,28 +4995,28 @@ int main(int argc, char** argv)
 	//minimise_Fsm_TS();
 
 	// Intersection Test:
-	//intersection_TS_Random();
+	//intersect_TS();
 
 	// Calculation of Distinguishing Traces Test:
-	//getCharacterisationSet_Dfsm_TS_Random();
-	//getCharacterisationSet_Fsm_TS_Random();
-	//calcDistinguishingTrace1_TS_Random();
-	//calcDistinguishingTrace2_TS_Random();
-	//calcStateIdentificationSets_TS_Random();
-	//calcStateIdentificationSetsFast_TS_Random();
+	//getCharacterisationSet_Dfsm_TS();
+	//getCharacterisationSet_Fsm_TS();
+	//calcDistinguishingTrace_PkTables_TS();
+	calcDistinguishingTrace_OFSMTables_TS();
+	//calcStateIdentificationSets_TS();
+	//calcStateIdentificationSetsFast_TS();
 
 	// Complete Test Theories Test:
-	//tMethod_TS_Random();
-	//wMethod_TS_Random2();
-	//wMethod_Dfsm_TS_Random();
-	wMethodOnMinimisedFsm_Fsm_TS_Random();
-	//wMethodOnMinimisedDfsm_Dfsm_TS_Random();
-	//wpMethod_Fsm_TS_Random();
-	//wpMethod_Dfsm_TS_Random();
-	//wpMethodOnMinimisedDfsm_Dfsm_TS_Random();
-	//hsiMethod_Fsm_TS_Random();
-	//hsiMethod_Dfsm_TS_Random();
-	//hMethodOnMinimisedDfsm_Dfsm_TS_Random();
+	//tMethod_TS();
+	//wMethod_Fsm_TS();
+	//wMethod_Dfsm_TS();
+	//wMethodOnMinimisedFsm_TS();
+	//wMethodOnMinimisedDfsm_TS();
+	//wpMethod_Fsm_TS();
+	//wpMethod_Dfsm_TS();
+	//wpMethodOnMinimisedDfsm_TS();
+	//hsiMethod_Fsm_TS();
+	//hsiMethod_Dfsm_TS();
+	//hMethodOnMinimisedDfsm_TS();
 
 
 

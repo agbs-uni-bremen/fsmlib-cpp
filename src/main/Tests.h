@@ -29,24 +29,24 @@ void minimise_Fsm_TS();
 /*
  *	Random Test Suite for test of Fsm::getCharacterisationSet().
  */
-void intersection_TS_Random();
+void intersect_TS();
 
 /*
  *	Random Test Suite for test of Fsm::getCharacterisationSet().
  */
-void getCharacterisationSet_Dfsm_TS_Random();
+void getCharacterisationSet_Dfsm_TS();
 
 /*
  *	Random Test Suite for test of Fsm::getCharacterisationSet().
  */
-void getCharacterisationSet_Fsm_TS_Random();
+void getCharacterisationSet_Fsm_TS();
 
 /*
  *	Random Test Suite for test of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
  *                                           const vector<shared_ptr<PkTable>>& pktblLst,
  *                                           const int maxInput)
  */
-void calcDistinguishingTrace1_TS_Random();
+void calcDistinguishingTrace_PkTables_TS();
 
 /*
  *	Random Test Suite for test of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
@@ -54,51 +54,51 @@ void calcDistinguishingTrace1_TS_Random();
  *                                           const int maxInput,
  *                                           const int maxOutput)
  */
-void calcDistinguishingTrace2_TS_Random();
+void calcDistinguishingTrace_OFSMTables_TS();
 
 /*
  *	Random Test Suite for test of Fsm::calcStateIdentificationSets().
  */
-void calcStateIdentificationSets_TS_Random();
+void calcStateIdentificationSets_TS();
 
 /*
  *	Random Test Suite for test of Fsm::calcStateIdentificationSetsFast().
  */
-void calcStateIdentificationSetsFast_TS_Random();
+void calcStateIdentificationSetsFast_TS();
 
 /*
  *	Random Test Suite for test of Dfsm::tMethod().
  */
-void tMethod_TS_Random();
+void tMethod_TS();
 
 // Test Fsm::wMethod(...)
-void wMethod_TS_Random2();
+void wMethod_Fsm_TS();
 
 // Test Dfsm::wMethod(...)
-void wMethod_Dfsm_TS_Random();
+void wMethod_Dfsm_TS();
 
 // Test Fsm::wMethodOnMinimisedFsm(...)
-void wMethodOnMinimisedFsm_Fsm_TS_Random();
+void wMethodOnMinimisedFsm_TS();
 
 // test Dfsm::wMethodOnMinimisedDfsm(...)
-void wMethodOnMinimisedDfsm_Dfsm_TS_Random();
+void wMethodOnMinimisedDfsm_TS();
 
 // test Fsm::wpMethod(...)
-void wpMethod_Fsm_TS_Random();
+void wpMethod_Fsm_TS();
 
 // Test Dfsm::wpMethod(...)
-void wpMethod_Dfsm_TS_Random();
+void wpMethod_Dfsm_TS();
 
 // Test Dfsm::wpMethodOnMinimisedDfsm(...)
-void wpMethodOnMinimisedDfsm_Dfsm_TS_Random();
+void wpMethodOnMinimisedDfsm_TS();
 
 // test Fsm::hsiMethod(...)
-void hsiMethod_Fsm_TS_Random();
+void hsiMethod_Fsm_TS();
 
 // Test Dfsm::hsiMethod(...)
-void hsiMethod_Dfsm_TS_Random();
+void hsiMethod_Dfsm_TS();
 
 // Test Dfsm::hMethodOnMinimisedDfsm(...)
-void hMethodOnMinimisedDfsm_Dfsm_TS_Random();
+void hMethodOnMinimisedDfsm_TS();
 
 #endif
