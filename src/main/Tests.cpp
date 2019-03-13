@@ -1322,36 +1322,33 @@ void intersection_TS_Random() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
-	const int seed = 950;
-	srand(seed);
-	// random tests
+	srand(950);
 	for (int i = 0; i < 100; ++i) {
-		//cout << "i:" << i << endl;
 		auto m1 = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 8, make_shared<FsmPresentationLayer>());
 		const auto m2 = m1->createMutantRepeatable("M2", rand() % 5 + 1, rand() % 5 + 1);
 		testIntersection(*m1, *m2, "TC-Rand-(1)-" + to_string(i));
 	}
-
+	srand(104385);
 	for (int i = 0; i < 100; ++i) {
 		auto m1 = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, make_shared<FsmPresentationLayer>());
 		const auto m2 = Fsm::createRandomFsmRepeatable("M2", rand() % 4, rand() % 4 + 1, rand() % 10, make_shared<FsmPresentationLayer>());
 		testIntersection(*m1, *m2, "TC-Rand-(2)-" + to_string(i));
 	}
-
+	srand(158487);
 	for (int i = 0; i < 100; ++i) {
 		auto m1 = Dfsm("M1", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
-		//auto m1 = createRandomDfsm("M1", 15, 4, 4, pl);
+		if (i == 45) cout << m1 << endl;
 		const auto m2 = m1.createMutantRepeatable("M2", rand() % 5, rand() % 5);
 		testIntersection(m1, *m2, "TC-Rand-(3)-" + to_string(i));
 	}
-
+	srand(627627);
 	for (int i = 0; i < 100; ++i) {
 		auto m1 = Dfsm("M1", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
-		//auto m1 = createRandomDfsm("M1", 15, 4, 4, pl);
 		const auto m2 = Dfsm("M2", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		testIntersection(m1, m2, "TC-Rand-(4)-" + to_string(i));
 	}
 
+	srand(353890);
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
 	for (int i = 0; i < 100; ++i) {
@@ -1906,11 +1903,8 @@ void getCharacterisationSet_Dfsm_TS_Random() {
 	cout << "============================= Start Test of Dfsm::getCharacterisationSet =============================" << endl;
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
-	const int seed = 261250;
-	srand(seed);
-
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	// random tests
+	srand(261250);
 	for (int i = 0; i < 100; ++i) {
 		auto m = Dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		auto minM = m.minimise();
@@ -1945,12 +1939,8 @@ void getCharacterisationSet_Fsm_TS_Random() {
 	cout << "============================= Start Test of Fsm::getCharacterisationSet =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
-	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
-
-	const int seed = 64162;
-	srand(seed);
-
-	// random tests
+	cout << "------------------------------- Start Random Tests -------------------------------" << endl;	
+	srand(64162);
 	for (int i = 0; i < 100; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 6, pl);
 		auto minFsm = fsm->minimise();
@@ -1983,15 +1973,13 @@ void getCharacterisationSet_Fsm_TS_Random() {
  *                                           const int maxInput)
  */
 void calcDistinguishingTrace1_TS_Random() {
-	cout << "============================= Start Test of FsmNode::calcDistinguishingTrace(pkTables) =============================" << endl;
-	const int seed = 329132;
-	srand(seed);
-
+	cout << "============================= Start Test of FsmNode::calcDistinguishingTrace(pkTables) =============================" << endl;	
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
-	for (int i = 0; i < 100; ++i) {
-		auto m = Dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
+	srand(329132);
+	for (int i = 0; i < 1000; ++i) {
+		auto m = Dfsm("M", rand() % 10 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		auto minM = m.minimise();
 		testCalcDistinguishingTrace1(minM, "TC-Rand-" + to_string(i));
 	}
@@ -2025,13 +2013,10 @@ void calcDistinguishingTrace1_TS_Random() {
 void calcDistinguishingTrace2_TS_Random() {
 	cout << "============================= Start Test of FsmNode::calcDistinguishingTrace(ofsmTables) =============================" << endl;
 
-	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
-	const int seed = 36185;
-	srand(seed);
-
+	cout << "------------------------------- Start Random Tests -------------------------------" << endl;	
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-
-	for (int i = 0; i < 100; ++i) {
+	srand(36185);
+	for (int i = 0; i < 1000; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 6, pl);
 		auto minFsm = fsm->minimise();
 		testCalcDistinguishingTrace2(minFsm, "TC-Rand-" + to_string(i));
@@ -2065,10 +2050,7 @@ void calcStateIdentificationSets_TS_Random() {
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-
-	const int seed = 3447;
-	srand(seed);
-
+	srand(3447);
 	for (int i = 0; i < 100; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M", rand() % 4, rand() % 4 + 1, rand() % 6, make_shared<FsmPresentationLayer>());
 		auto minFsm = fsm->minimise();
@@ -2224,10 +2206,8 @@ shared_ptr<Fsm> transformToComplete(shared_ptr<Fsm> m) {
 void calcStateIdentificationSetsFast_TS_Random() {
 	cout << "============================= Start Test of Fsm::calcStateIdentificationSetsFast =============================" << endl;
 
-	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
-	const int seed = 1376;
-	srand(seed);
-
+	cout << "------------------------------- Start Random Tests -------------------------------" << endl;	
+	srand(1376);
 	for (int i = 0; i < 100; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 6, make_shared<FsmPresentationLayer>());
 		auto minFsm = fsm->minimise();
@@ -2237,7 +2217,7 @@ void calcStateIdentificationSetsFast_TS_Random() {
 		}
 		testCalcStateIdentificationSetsFast(minFsm, "TC-Rand-" + to_string(i));
 	}
-
+	srand(711100);
 	for (int i = 0; i < 100; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4 + 1, rand() % 4 + 1, rand() % 6, make_shared<FsmPresentationLayer>());
 		auto tmp = createPartialMutant(fsm);
@@ -2248,14 +2228,14 @@ void calcStateIdentificationSetsFast_TS_Random() {
 		}
 		testCalcStateIdentificationSetsFast(minFsm, "TC-Rand-(MSP)" + to_string(i));
 	}
-
+	srand(266306);
 	for (int i = 0; i < 100; ++i) {
 		auto m = Dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, make_shared<FsmPresentationLayer>(), true);
 		auto minM = m.minimise();
 		cout << "minFsm size: " << minM.size() << endl;
 		testCalcStateIdentificationSetsFast(minM, "TC-Rand-(Dfsm)-" + to_string(i));
 	}
-
+	srand(485639);
 	for (int i = 0; i < 100; ++i) {
 		auto m = Dfsm("M", rand() % 15 + 1, rand() % 4 + 1, rand() % 4 + 1, make_shared<FsmPresentationLayer>(), true);
 		Dfsm minM = Dfsm(*makeStatesPartial(make_shared<Dfsm>(m))).minimise();
@@ -2400,36 +2380,10 @@ public:
 	}
 };
 
-/**
- * Test function for Fsm::wMethod(const unsigned int numAddStates)
- * Each element of mutants is expected to be complete and normalized and to have the same input alphabet as m.
- * nullOutput is expected to be the output that was used as nulloutputs in the completion of the mutants.
- */
-void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const size_t nullOutput,
-	                const shared_ptr<TestSuiteGenerator> tsGen, const string &tcID) {
-	const Fsm copyOfM = Fsm(m);
-	// calculate numAddStates 
-	vector<shared_ptr<const Fsm>> filteredMutants;
+// Calculates and returns numAddStates and adds each mutant that has at most maxAddStates many additional states to filteredMutants
+int calcNumAddStatesAndFilterMutants(const vector<shared_ptr<const Fsm>>& mutants, const Fsm& minComplM, vector<shared_ptr<const Fsm>> &filteredMutants) {
+	const int maxAddStates = 2;
 	int numAddStates = 0;
-	auto completeM = transformToComplete(make_shared<Fsm>(m), nullOutput);
-	auto minComplM = completeM->minimise();
-	if (minComplM.size() > 30) {
-		cout << "FSM too big. Stop Test Case." << endl;
-		return;
-	}
-	const int maxAddStates = 2;	
-
-	// filter out Fsms with too many states
-/*	for (const auto mutant : mutants) {
-		int sizeDiff = mutant->size() - minComplM.size();
-		cout << "maxAddStates: " <<  maxAddStates << endl;
-		cout << "sizeDiff: " << sizeDiff << endl;
-		if (sizeDiff > maxAddStates) continue;
-		filteredMutants.push_back(mutant);
-		if (sizeDiff > numAddStates) {
-			numAddStates = sizeDiff;
-		}
-	}	*/
 
 	for (const auto mutant : mutants) {
 		if (mutant->size() > minComplM.size()) {
@@ -2445,12 +2399,47 @@ void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 			filteredMutants.push_back(mutant);
 		}
 	}
+	return numAddStates;
+}
+
+/**
+ * Test function for Fsm::wMethod(const unsigned int numAddStates)
+ * Each element of mutants is expected to be complete and normalized and to have the same input alphabet as m.
+ * nullOutput is expected to be the output that was used as nulloutputs in the completion of the mutants.
+ */
+void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const size_t nullOutput,
+	                const shared_ptr<TestSuiteGenerator> tsGen, const string &tcID) {
+	const Fsm copyOfM = Fsm(m);
+	// calculate numAddStates 
+	vector<shared_ptr<const Fsm>> filteredMutants;
+	//int numAddStates = 0;
+	auto completeM = transformToComplete(make_shared<Fsm>(m), nullOutput);
+	auto minComplM = completeM->minimise();
+	if (minComplM.size() > 30) {
+		cout << "FSM too big. Stop Test Case." << endl;
+		return;
+	}
+	/*const int maxAddStates = 2;	
+
+	for (const auto mutant : mutants) {
+		if (mutant->size() > minComplM.size()) {
+			int sizeDiff = mutant->size() - minComplM.size();
+			cout << "sizeDiff: " << sizeDiff << endl;
+			if (sizeDiff > maxAddStates) continue;
+			filteredMutants.push_back(mutant);
+			if (sizeDiff > numAddStates) {
+				numAddStates = sizeDiff;
+			}
+		}
+		else {
+			filteredMutants.push_back(mutant);
+		}
+	}*/
+	int numAddStates = calcNumAddStatesAndFilterMutants(mutants, minComplM, filteredMutants);
 
 	// Calculate complete test suite
 	cout << typeid(m).name() << endl;
 	const auto ts = tsGen->generateTestSuite(m, numAddStates);
-
-	//int nullOutput = getMaxOutput(m, mutants) + 1;
 
 	// first check invariant of m
 	bool invariantViolation = not m.checkInvariant();
@@ -2475,12 +2464,6 @@ void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 		return;
 	}
 
-	// save outputs of completeM in hash table
-	//unordered_map < int, set<vector<int>>> outputsOfCompleteM;
-	//for (int i = 0; i < ts->getIOLists()->size(); ++i) {
-	//	outputsOfCompleteM[i] = calcCompleteOutputTraces2(completeM->getInitialState(), ts->getIOLists()->at(i), nullOutput);
-	//}
-
 	// Check completeness of test suite with help of the mutants
 	for (const auto mutant : filteredMutants) {
 		bool diff = false;
@@ -2490,10 +2473,6 @@ void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 				diff = true;
 				break;
 			}
-			/*		if (outputsOfCompleteM.at(i) != calcCompleteOutputTraces2(mutant->getInitialState(), ts->getIOLists()->at(i), nullOutput)) {
-						diff = true;
-						break;
-					}*/
 		}
 		bool eq = ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState());
 		fsmlib_assert(tcID, eq != diff, "M and mutant are i/o-equivalent iff mutant passed test suite.");
@@ -2503,14 +2482,9 @@ void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 			cout << "TS: " << *ts << endl;
 			cout << "nullOutput: " << nullOutput << endl;
 		}
-		//if (not diff) {
-		//	cout << "calcs equivalence" << endl;
-		//	fsmlib_assert(tcID, ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState()), "M and mutant are i/o-equivalent if mutant passed test suite.");
-		//}
 	}
 
 	// check if language of m has changed
-	/*fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");*/
 	fsmlib_assert(tcID, ioEquivalenceCheck(m.getInitialState(), copyOfM.getInitialState()), "Language of M has not changed");
 }
 
@@ -2524,35 +2498,28 @@ void testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 	const Dfsm copyOfM = Dfsm(m);
 	// calculate numAddStates 
 	vector<shared_ptr<const Fsm>> filteredMutants;
-	int numAddStates = 0;
+	//int numAddStates = 0;
 	auto completeM = transformToComplete(make_shared<Dfsm>(m), nullOutput);
 	auto minComplM = completeM->minimise();
 	if (minComplM.size() > 50) {
 		cout << "FSM too big. Stop Test Case." << endl;
 		return;
 	}
-	const int maxAddStates = 3;
+	//const int maxAddStates = 3;
 	//for (const auto mutant : mutants) {
-	//	int sizeDiff = mutant->size() - minComplM.size();
-	//	if (sizeDiff > maxAddStates) continue;
-	//	filteredMutants.push_back(mutant);
-	//	if (sizeDiff > numAddStates) {
-	//		numAddStates = sizeDiff;
+	//	if (mutant->size() > minComplM.size()) {
+	//		int sizeDiff = mutant->size() - minComplM.size();
+	//		if (sizeDiff > maxAddStates) continue;
+	//		filteredMutants.push_back(mutant);
+	//		if (sizeDiff > numAddStates) {
+	//			numAddStates = sizeDiff;
+	//		}
+	//	}
+	//	else {
+	//		filteredMutants.push_back(mutant);
 	//	}
 	//}
-	for (const auto mutant : mutants) {
-		if (mutant->size() > minComplM.size()) {
-			int sizeDiff = mutant->size() - minComplM.size();
-			if (sizeDiff > maxAddStates) continue;
-			filteredMutants.push_back(mutant);
-			if (sizeDiff > numAddStates) {
-				numAddStates = sizeDiff;
-			}
-		}
-		else {
-			filteredMutants.push_back(mutant);
-		}
-	}
+	int numAddStates = calcNumAddStatesAndFilterMutants(mutants, minComplM, filteredMutants);
 	const auto ts = tsGen->generateTestSuite(m, numAddStates);
 
 	// first check invariant of m
@@ -2580,10 +2547,7 @@ void testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 				break;
 			}
 		}
-		//fsmlib_assert("TC", ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState()) != diff, "M and mutant are i/o-equivalent iff mutant passed test suite.");
-		if (not diff) {
-			fsmlib_assert(tcID, ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState()), "M and mutant are i/o-equivalent if mutant passed test suite.");
-		}
+		fsmlib_assert(tcID, ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState()), "M and mutant are i/o-equivalent if mutant passed test suite.");		
 	}
 
 	// check if structure of m has changed
@@ -2733,35 +2697,34 @@ shared_ptr<vector<TestTheoryTestCase>> parseTestTheoryTSFile(const string &testS
 // Test Fsm::wMethod(...)
 void wMethod_TS_Random2() {
 	cout << "============================= Start Test of Fsm::wMethod =============================" << endl;
-	const int seed = 12792;
-	srand(seed);
+	
 	shared_ptr<WMethodGenerator> tsGenerator = make_shared<WMethodGenerator>();
-
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	for (int i = 0; i < 1000; ++i) {
-		cout << "i:" << i << endl;
-		int size = (rand() % 6) + 1; // = 6; 
-		int mI = rand() % 4; // (rand() % 5) + 1;
-		int mO = (rand() % 6) + 1;
-		//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
-		//auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
-		auto m = makeStatesUnreachable(*Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
-		const size_t nullOutput = m->getMaxOutput() + 1;
+	//srand(12792);
+	//for (int i = 0; i < 1000; ++i) {
+	//	cout << "i:" << i << endl;
+	//	int size = (rand() % 6) + 1; // = 6; 
+	//	int mI = rand() % 4; // (rand() % 5) + 1;
+	//	int mO = (rand() % 6) + 1;
+	//	//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
+	//	//auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
+	//	auto m = makeStatesUnreachable(*Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl));
+	//	const size_t nullOutput = m->getMaxOutput() + 1;
 
-		vector<shared_ptr<const Fsm>> mutants;
-		for (int j = 0; j < 20; ++j) {
-			size_t numOutFaults = (rand() % 2);
-			size_t numTrFaults = (rand() % 2);
-			if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
-			auto minMut = m->createMutantRepeatable("Mutant_" + to_string(j), numOutFaults, numTrFaults)->minimise();
-			//mutants.push_back(make_shared<Fsm>(minMut));
-			mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput)); // m->getMaxOutput()
-		}
-		testTestTheory(*m, mutants, nullOutput, tsGenerator, "TC-Rand-(MSU)-"+ to_string(i));
-	}
+	//	vector<shared_ptr<const Fsm>> mutants;
+	//	for (int j = 0; j < 20; ++j) {
+	//		size_t numOutFaults = (rand() % 2);
+	//		size_t numTrFaults = (rand() % 2);
+	//		if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
+	//		auto minMut = m->createMutantRepeatable("Mutant_" + to_string(j), numOutFaults, numTrFaults)->minimise();
+	//		//mutants.push_back(make_shared<Fsm>(minMut));
+	//		mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput)); // m->getMaxOutput()
+	//	}
+	//	testTestTheory(*m, mutants, nullOutput, tsGenerator, "TC-Rand-(MSU)-"+ to_string(i));
+	//}
 
-	// practical examples
+	srand(990137);
 	{
 		cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 		shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
@@ -2812,15 +2775,11 @@ void wMethod_TS_Random2() {
 
 // Test Dfsm::wMethod(...)
 void wMethod_Dfsm_TS_Random() {
-	cout << "============================= Start Test of Dfsm::wMethod =============================" << endl;
-	const int seed = 412725;
-	srand(seed);
-
+	cout << "============================= Start Test of Dfsm::wMethod =============================" << endl;	
 	shared_ptr<WMethodGenerator> tsGenerator = make_shared<WMethodGenerator>();
-
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	srand(412725);
 	for (int i = 0; i < 100; ++i) {
 		int size = rand() % 15 + 1; 
 		int mI = rand() % 6;
@@ -2839,7 +2798,7 @@ void wMethod_Dfsm_TS_Random() {
 		testTestTheory(m, mutants, nullOutput, tsGenerator, "TC-Rand-"+ to_string(i));
 	}
 
-	// practical examples
+	srand(130343);
 	{
 		cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 		shared_ptr<Dfsm> csm = make_shared<Dfsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
@@ -2890,15 +2849,11 @@ void wMethod_Dfsm_TS_Random() {
 
 // Test Fsm::wMethodOnMinimisedFsm(...)
 void wMethodOnMinimisedFsm_Fsm_TS_Random() {
-	cout << "============================= Start Test of Fsm::wMethodOnMinimisedFsm =============================" << endl;
-	const int seed = 27161;
-	srand(seed);
-
+	cout << "============================= Start Test of Fsm::wMethodOnMinimisedFsm =============================" << endl;	
 	shared_ptr<WMethodOnMinimisedFsmGenerator> tsGenerator = make_shared<WMethodOnMinimisedFsmGenerator>();
-
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	srand(27161);
 	for (int i = 0; i < 50; ++i) {
 		int size = rand() % 6 + 1; // = 6; 
 		int mI = rand() % 6;
@@ -2925,7 +2880,7 @@ void wMethodOnMinimisedFsm_Fsm_TS_Random() {
 		}
 		testTestTheory(m, mutants, nullOutput, tsGenerator, "TC-Rand-(MSP)-" + to_string(i));
 	}
-
+	srand(775565);
 	for (int i = 0; i < 10; ++i) {
 		int size = rand() % 15 + 1;
 		int mI = rand() % 6;
@@ -2946,7 +2901,7 @@ void wMethodOnMinimisedFsm_Fsm_TS_Random() {
 		testTestTheory(m, mutants, nullOutput, tsGenerator, "TC-Rand-(Dfsm)-" + to_string(i));
 	}
 
-	// practical examples
+	srand(326744);
 	{
 		cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 		Fsm csm = Fsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
@@ -2997,20 +2952,16 @@ void wMethodOnMinimisedFsm_Fsm_TS_Random() {
 
 // test Dfsm::wMethodOnMinimisedDfsm(...)
 void wMethodOnMinimisedDfsm_Dfsm_TS_Random() {
-	cout << "============================= Start Test of Dfsm::wMethodOnMinimisedDfsm =============================" << endl;
-	const int seed = 625;
-	srand(seed);
-
+	cout << "============================= Start Test of Dfsm::wMethodOnMinimisedDfsm =============================" << endl;	
 	shared_ptr<WMethodOnMinimisedDfsmGenerator> tsGenerator = make_shared<WMethodOnMinimisedDfsmGenerator>();
-
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	srand(625);
 	for (int i = 0; i < 100; ++i) {
 		int size = rand() % 15 + 1;
 		int mI = rand() % 6;
-		int mO = (rand() % 6) + 2;
-		Dfsm m("M", size, mI, mO, pl, true); //m.setMaxState(m.getNodes().size() - 1);
+		int mO = (rand() % 6) + 1;
+		Dfsm m("M", size, mI, mO, pl, true);
 		m = m.minimise();
 		const size_t nullOutput = m.getMaxOutput() + 1;
 
@@ -3024,8 +2975,7 @@ void wMethodOnMinimisedDfsm_Dfsm_TS_Random() {
 		}
 		testTestTheory(m, mutants, nullOutput, tsGenerator, "TC-Rand-" + to_string(i));
 	}
-
-	// practical examples
+	srand(69080);
 	{
 		cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 		Dfsm csm = Dfsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
@@ -3076,16 +3026,13 @@ void wMethodOnMinimisedDfsm_Dfsm_TS_Random() {
 
 // test Fsm::wpMethod(...)
 void wpMethod_Fsm_TS_Random() {
-	cout << "============================= Start Test of Fsm::wpMethod =============================" << endl;
-	const int seed = 5217;
-	srand(seed);
+	cout << "============================= Start Test of Fsm::wpMethod =============================" << endl;	
 	shared_ptr<WpMethodGenerator> tsGenerator = make_shared<WpMethodGenerator>();
-
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	srand(5217);
 	for (int i = 0; i < 50; ++i) {
-		int size = rand() % 6 + 1; // = 6; 
+		int size = rand() % 6 + 1; 
 		int mI = rand() % 4;
 		int mO = (rand() % 6) + 1;
 		auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl)->minimise();
@@ -3118,7 +3065,7 @@ void wpMethod_Fsm_TS_Random() {
 		testTestTheory(m, mutants, nullOutput, tsGenerator, "TC-Rand-" + to_string(i));
 	}
 
-	// practical examples
+	srand(156041);
 	{
 		cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 		Fsm csm = Fsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
@@ -3169,14 +3116,11 @@ void wpMethod_Fsm_TS_Random() {
 
 // Test Dfsm::wpMethod(...)
 void wpMethod_Dfsm_TS_Random() {
-	cout << "============================= Start Test of Dfsm::wpMethod =============================" << endl;
-	const int seed = 712871;
-	srand(seed);
+	cout << "============================= Start Test of Dfsm::wpMethod =============================" << endl;	
 	shared_ptr<WpMethodGenerator> tsGenerator = make_shared<WpMethodGenerator>();
-
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	srand(712871);
 	for (int i = 0; i < 100; ++i) {
 		int size = rand() % 15 + 1;
 		int mI = rand() % 6;
@@ -3196,7 +3140,7 @@ void wpMethod_Dfsm_TS_Random() {
 		testTestTheory(m, mutants, nullOutput, tsGenerator, "TC-Rand-" + to_string(i));
 	}
 
-	// practical examples
+	srand(37667);
 	{
 		cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 		shared_ptr<Dfsm> csm = make_shared<Dfsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
@@ -3247,14 +3191,11 @@ void wpMethod_Dfsm_TS_Random() {
 
 // Test Dfsm::wpMethodOnMinimisedDfsm(...)
 void wpMethodOnMinimisedDfsm_Dfsm_TS_Random() {
-	cout << "============================= Start Test of Dfsm::wpMethodOnMinimisedDfsm =============================" << endl;
-	const int seed = 625166;
-	srand(seed);
+	cout << "============================= Start Test of Dfsm::wpMethodOnMinimisedDfsm =============================" << endl;	
 	shared_ptr<WpMethodOnMinimisedDfsmGenerator> tsGenerator = make_shared<WpMethodOnMinimisedDfsmGenerator>();
-
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	srand(625166);
 	for (int i = 0; i < 100; ++i) {
 		int size = rand() % 15 + 1;
 		int mI = rand() % 6;
@@ -3275,7 +3216,7 @@ void wpMethodOnMinimisedDfsm_Dfsm_TS_Random() {
 		testTestTheory(m, mutants, nullOutput, tsGenerator, "TC-Rand-" + to_string(i));
 	}
 
-	// practical examples
+	srand(81460);
 	{
 		cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 		Dfsm csm = Dfsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
@@ -3326,14 +3267,11 @@ void wpMethodOnMinimisedDfsm_Dfsm_TS_Random() {
 
 // test Fsm::hsiMethod(...)
 void hsiMethod_Fsm_TS_Random() {
-	cout << "============================= Start Test of Fsm::hsiMethod =============================" << endl;
-	const int seed = 12;
-	srand(seed);
+	cout << "============================= Start Test of Fsm::hsiMethod =============================" << endl;	
 	shared_ptr<HsiMethodGenerator> tsGenerator = make_shared<HsiMethodGenerator>();
-
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	srand(12);
 	for (int i = 0; i < 50; ++i) {
 		int size = rand() % 6 + 1; // = 6; 
 		int mI = rand() % 4 + 1;
@@ -3360,7 +3298,7 @@ void hsiMethod_Fsm_TS_Random() {
 		testTestTheory(m, mutants, nullOutput, tsGenerator, "TC-Rand-(MSP)-" + to_string(i));
 	}
 
-	// practical examples
+	srand(15937);
 	{
 		cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 		Fsm csm = Fsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
@@ -3411,14 +3349,11 @@ void hsiMethod_Fsm_TS_Random() {
 
 // Test Dfsm::hsiMethod(...)
 void hsiMethod_Dfsm_TS_Random() {
-	cout << "============================= Start Test of Dfsm::hsiMethod =============================" << endl;
-	const int seed = 907;
-	srand(seed);
+	cout << "============================= Start Test of Dfsm::hsiMethod =============================" << endl;	
 	shared_ptr<HsiMethodGenerator> tsGenerator = make_shared<HsiMethodGenerator>();
-
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	srand(907);
 	for (int i = 0; i < 100; ++i) {
 		int size = rand() % 15 + 1;
 		int mI = rand() % 6;
@@ -3438,7 +3373,7 @@ void hsiMethod_Dfsm_TS_Random() {
 		testTestTheory(m, mutants, nullOutput, tsGenerator, "TC-Rand-" + to_string(i));
 	}
 
-	// practical examples
+	srand(349);
 	{
 		cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 		shared_ptr<Dfsm> csm = make_shared<Dfsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
@@ -3489,16 +3424,13 @@ void hsiMethod_Dfsm_TS_Random() {
 
 // Test Dfsm::hMethodOnMinimisedDfsm(...)
 void hMethodOnMinimisedDfsm_Dfsm_TS_Random() {
-	cout << "============================= Start Test of Dfsm::hMethodOnMinimisedDfsm =============================" << endl;
-	const int seed = 3234;
-	srand(seed);
+	cout << "============================= Start Test of Dfsm::hMethodOnMinimisedDfsm =============================" << endl;	
 	shared_ptr<HMethodOnMinimisedDfsmGenerator> tsGenerator = make_shared<HMethodOnMinimisedDfsmGenerator>();
-
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	srand(3234);
 	for (int i = 0; i < 100; ++i) {
-		int size = rand() % 15 + 2;
+		int size = rand() % 13 + 2;
 		int mI = rand() % 6;
 		int mO = (rand() % 6) + 1;
 		Dfsm m("M", size, mI, mO, pl, true); // m.setMaxState(m.getNodes().size() - 1);
@@ -3521,7 +3453,7 @@ void hMethodOnMinimisedDfsm_Dfsm_TS_Random() {
 		testTestTheory(m, mutants, nullOutput, tsGenerator, "TC-Rand-" + to_string(i));
 	}
 
-	// practical examples
+	srand(807);
 	{
 		cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 		Dfsm csm = Dfsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
@@ -3610,13 +3542,10 @@ void testTMethod(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, const s
  *	Random Test Suite for test of Dfsm::tMethod().
  */
 void tMethod_TS_Random() {
-	cout << "============================= Start Test of Dfsm::tMethod =============================" << endl;
-	const int seed = 876298;
-	srand(seed);
-
+	cout << "============================= Start Test of Dfsm::tMethod =============================" << endl;	
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	srand(876298);
 	for (int i = 0; i < 1000; ++i) {
 		int size = rand() % 15 + 1;
 		int mI = rand() % 6;
@@ -3630,7 +3559,7 @@ void tMethod_TS_Random() {
 		testTMethod(m, mutants, "TC-Rand-" + to_string(i));
 	}
 
-	// practical examples
+	srand(36);
 	{
 		cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 		shared_ptr<Dfsm> csm = make_shared<Dfsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
