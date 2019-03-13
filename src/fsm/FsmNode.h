@@ -1,6 +1,6 @@
 /*
  * Copyright. Gaël Dottel, Christoph Hilken, and Jan Peleska 2016 - 2021
- * 
+ *
  * Licensed under the EUPL V.1.1
  */
 #ifndef FSM_FSM_FSMNODE_H_
@@ -39,14 +39,14 @@ private:
 	int color;
 	std::shared_ptr<FsmPresentationLayer> presentationLayer;
 	std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> derivedFromPair;
-    
+
     bool isInitialNode;
-    
+
     /**
      *  List of requirements satisfied by the node
      */
     std::vector<std::string> satisfies;
-    
+
 public:
 	const static int white = 0;
 	const static int grey = 1;
@@ -56,14 +56,14 @@ public:
 	FsmNode(const int id,
             const std::string & name,
             const std::shared_ptr<FsmPresentationLayer> presentationLayer);
-    
+
     /**
      * Add a transition to the node. If another transition with the same label and
      * the same target node already exists, the new transition is silently ignored.
      */
 	void addTransition(std::shared_ptr<FsmTransition> transition);
-    
-    
+
+
     std::vector<std::shared_ptr<FsmTransition> >& getTransitions();
     int getId() const;
     void setId(const int id) { this->id = id; }
@@ -133,34 +133,34 @@ public:
 	 * Check if outgoing transitions of this node are deterministic
 	 */
 	bool isDeterministic() const;
-    
-    /** 
+
+    /**
      *  Mark that this noe is the initial node
      */
     void markAsInitial() { isInitialNode = true; }
     bool isInitial() const { return isInitialNode; }
-    
+
     /**
      * Accept an FsmVisitor, if this node has not been visited already.
-     * If the visitor is accepted, this node calls the accept methods of 
+     * If the visitor is accepted, this node calls the accept methods of
      * all transitions.
      */
     void accept(FsmVisitor& v);
     void accept(FsmVisitor& v,
                 std::deque< std::shared_ptr<FsmNode> >& bfsq);
-    
+
     /**
      *  Get list of requirements satisified by the node
      */
     std::vector<std::string>& getSatisfied() { return satisfies; }
     void addSatisfies(std::string req) { satisfies.push_back(req); }
 
-    
-    
+
+
     /** Put node information in dot format into the stream */
 	friend std::ostream & operator<<(std::ostream & out, const FsmNode & node);
-    
-    
+
+
 	friend bool operator==(FsmNode const & node1, FsmNode const & node2);
 };
 #endif //FSM_FSM_FSMNODE_H_
