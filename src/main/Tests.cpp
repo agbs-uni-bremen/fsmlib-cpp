@@ -2520,6 +2520,8 @@ void testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 	//	}
 	//}
 	int numAddStates = calcNumAddStatesAndFilterMutants(mutants, minComplM, filteredMutants);
+	cout << "numAddStates: " << numAddStates << endl;
+	cout << "fm.size: " << filteredMutants.size() << endl;
 	const auto ts = tsGen->generateTestSuite(m, numAddStates);
 
 	// first check invariant of m
@@ -2547,7 +2549,14 @@ void testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 				break;
 			}
 		}
-		fsmlib_assert(tcID, ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState()), "M and mutant are i/o-equivalent if mutant passed test suite.");		
+		bool eq = ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState());
+		fsmlib_assert(tcID, eq != diff, "M and mutant are i/o-equivalent iff mutant passed test suite.");
+		if (eq == diff) {
+			cout << *completeM << endl;
+			cout << *mutant << endl;
+			cout << "TS: " << *ts << endl;
+			cout << "nullOutput: " << nullOutput << endl;
+		}
 	}
 
 	// check if structure of m has changed
@@ -2886,6 +2895,7 @@ void wMethodOnMinimisedFsm_Fsm_TS_Random() {
 		int mI = rand() % 6;
 		int mO = (rand() % 6) + 1;
 		Dfsm m("M", size, mI, mO, pl, true); //m.setMaxState(m.getNodes().size() - 1);
+		cout << isInitialConnected(m) << endl;
 		m = m.minimise();
 
 		const size_t nullOutput = m.getMaxOutput() + 1;
