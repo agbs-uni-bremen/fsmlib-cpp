@@ -1001,26 +1001,38 @@ TestResult removeUnreachableNodes_TS() {
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(59288);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 2500; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M", rand() % 4, rand() % 4 + 1, rand() % 10, pl);
 		testRemoveUnreachableNodes(*fsm, "TC-Rand-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
+	srand(71);
+	for (int i = 0; i < 2500; ++i) {
+		auto fsm = makeStatesUnreachable(*Fsm::createRandomFsmRepeatable("M", rand() % 4, rand() % 4 + 1, rand() % 10, pl));
+		testRemoveUnreachableNodes(*fsm, "TC-Rand-(MSU)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSU)-" + to_string(i));
+	}
+	srand(519);
+	for (int i = 0; i < 2500; ++i) {
+		auto fsm = makeStatesEquivalent(*Fsm::createRandomFsmRepeatable("M", rand() % 4, rand() % 4 + 1, rand() % 10, pl));
+		testRemoveUnreachableNodes(*fsm, "TC-Rand-(MSE)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSE)-" + to_string(i));
+	}
 	srand(1514225);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 5000; ++i) {
 		Dfsm dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		testRemoveUnreachableNodes(dfsm, "TC-Rand-(Dfsm)-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-Rand-(Dfsm)-" + to_string(i));
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
-	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
+	shared_ptr<Dfsm> csm = make_shared<Dfsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
 	testRemoveUnreachableNodes(*csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
-	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
+	shared_ptr<Dfsm> fsb = make_shared<Dfsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
 	testRemoveUnreachableNodes(*fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
-	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
+	shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC");
 	testRemoveUnreachableNodes(*gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
@@ -1042,13 +1054,13 @@ TestResult transformToObservableFSM_TS() {
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(84618);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 9000; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, pl);
 		testTransformToObservableFSM(*fsm, "TC-Rand-" + to_string(i)) 
 			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 	srand(119);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 1000; ++i) {
 		Dfsm dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		testTransformToObservableFSM(dfsm, "TC-Rand-(Dfsm)-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-Rand-(Dfsm)-" + to_string(i));
@@ -1056,13 +1068,13 @@ TestResult transformToObservableFSM_TS() {
 
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
-	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
+	shared_ptr<Dfsm> csm = make_shared<Dfsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
 	testTransformToObservableFSM(*csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
-	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
+	shared_ptr<Dfsm> fsb = make_shared<Dfsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
 	testTransformToObservableFSM(*fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
-	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
+	shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC");
 	testTransformToObservableFSM(*gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
@@ -1084,9 +1096,16 @@ TestResult minimise_Dfsm_TS() {
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(56958);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 5000; ++i) {
 		Dfsm dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		testMinimise_Dfsm(dfsm, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
+	}
+	srand(195);
+	for (int i = 0; i < 5000; ++i) {
+		Dfsm dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
+		Dfsm m(*makeStatesPartial(make_shared<Dfsm>(dfsm)));
+		testMinimise_Dfsm(m, "TC-Rand-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 
@@ -1097,7 +1116,7 @@ TestResult minimise_Dfsm_TS() {
 	shared_ptr<Dfsm> fsb = make_shared<Dfsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
 	testMinimise_Dfsm(*fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
-	shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
+	shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC");
 	testMinimise_Dfsm(*gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
@@ -1131,13 +1150,13 @@ TestResult minimiseObservableFSM_TS() {
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
-	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
+	shared_ptr<Dfsm> csm = make_shared<Dfsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
 	testMinimiseObservableFSM(*csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
-	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
+	shared_ptr<Dfsm> fsb = make_shared<Dfsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
 	testMinimiseObservableFSM(*fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
-	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
+	shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC");
 	testMinimiseObservableFSM(*gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
@@ -1172,7 +1191,7 @@ TestResult minimise_Fsm_TS() {
 	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
 	testMinimise_Fsm(*fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
-	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
+	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC");
 	testMinimise_Fsm(*gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 	//		// these make the program crash
@@ -1389,19 +1408,19 @@ TestResult intersect_TS() {
 
 	srand(353890);
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
-	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
+	shared_ptr<Dfsm> csm = make_shared<Dfsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
 	for (int i = 0; i < 100; ++i) {
 		testIntersection(*csm, *csm->createMutantRepeatable("Mutant", rand() % 6 + 1, rand() % 6 + 1), "TC-CSM-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-CSM-" + to_string(i));
 	}
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
-	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
+	shared_ptr<Dfsm> fsb = make_shared<Dfsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
 	for (int i = 0; i < 100; ++i) {
 		testIntersection(*fsb, *fsb->createMutantRepeatable("Mutant", rand() % 6 + 1, rand() % 6 + 1), "TC-FSBC-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-FSBC-" + to_string(i));
 	}
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
-	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC");
+	shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC");
 	for (int i = 0; i < 100; ++i) {
 		testIntersection(*gdc, *gdc->createMutantRepeatable("Mutant", rand() % 6 + 1, rand() % 6 + 1), "TC-GDC-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-GDC-" + to_string(i));
@@ -2138,15 +2157,15 @@ TestResult calcStateIdentificationSets_TS() {
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
-	Fsm csm = Fsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
+	Dfsm csm = Dfsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
 	testCalcStateIdentificationSets(csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
-	Fsm fsb = Fsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
+	Dfsm fsb = Dfsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
 	testCalcStateIdentificationSets(fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
-	Fsm gdc = Fsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
+	Dfsm gdc = Dfsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
 	testCalcStateIdentificationSets(gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
@@ -2239,7 +2258,7 @@ TestResult calcStateIdentificationSetsFast_TS() {
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;	
 	srand(1376);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 2500; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 6, make_shared<FsmPresentationLayer>());
 		auto minFsm = fsm->minimise();
 		if (minFsm.size() > 50) {
@@ -2250,7 +2269,7 @@ TestResult calcStateIdentificationSetsFast_TS() {
 			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 	srand(711100);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 2500; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4 + 1, rand() % 4 + 1, rand() % 6, make_shared<FsmPresentationLayer>());
 		auto tmp = makeStatesPartial(fsm);
 		auto minFsm = tmp->minimise();
@@ -2262,7 +2281,7 @@ TestResult calcStateIdentificationSetsFast_TS() {
 			? ++result.pass : result.fails.push_back("TC-Rand-(MSP)" + to_string(i));
 	}
 	srand(266306);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 2500; ++i) {
 		auto m = Dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, make_shared<FsmPresentationLayer>(), true);
 		auto minM = m.minimise();
 		cout << "minFsm size: " << minM.size() << endl;
@@ -2270,7 +2289,7 @@ TestResult calcStateIdentificationSetsFast_TS() {
 			? ++result.pass : result.fails.push_back("TC-Rand-(Dfsm)-" + to_string(i));
 	}
 	srand(485639);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 2500; ++i) {
 		auto m = Dfsm("M", rand() % 15 + 1, rand() % 4 + 1, rand() % 4 + 1, make_shared<FsmPresentationLayer>(), true);
 		Dfsm minM = Dfsm(*makeStatesPartial(make_shared<Dfsm>(m))).minimise();
 		testCalcStateIdentificationSetsFast(minM, "TC-Rand-(Dfsm,MSP)-" + to_string(i))
@@ -2278,15 +2297,15 @@ TestResult calcStateIdentificationSetsFast_TS() {
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
-	Fsm csm = Fsm("../../../resources/TestSuites/examples/csm.fsm", make_shared<FsmPresentationLayer>(), "CSM").minimise();
+	Dfsm csm = Dfsm("../../../resources/TestSuites/examples/csm.fsm", make_shared<FsmPresentationLayer>(), "CSM").minimise();
 	testCalcStateIdentificationSetsFast(csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
-	Fsm fsb = Fsm("../../../resources/TestSuites/examples/fsb.fsm", make_shared<FsmPresentationLayer>(), "FSB").minimise();
+	Dfsm fsb = Dfsm("../../../resources/TestSuites/examples/fsb.fsm", make_shared<FsmPresentationLayer>(), "FSB").minimise();
 	testCalcStateIdentificationSetsFast(fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
-	Fsm gdc = Fsm("../../../resources/TestSuites/examples/gdc.fsm", make_shared<FsmPresentationLayer>(), "GDC").minimise();
+	Dfsm gdc = Dfsm("../../../resources/TestSuites/examples/gdc.fsm", make_shared<FsmPresentationLayer>(), "GDC").minimise();
 	testCalcStateIdentificationSetsFast(gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 
@@ -2790,7 +2809,7 @@ TestResult wMethodOnMinimisedFsm_TS() {
 	srand(326744);
 	{
 		cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
-		Fsm csm = Fsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
+		Dfsm csm = Dfsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
 		vector<shared_ptr<const Fsm>> mutants;
 		for (int i = 0; i < 100; ++i) {
 			// CSM is complete => created mutants are complete => minimised mutants are complete
@@ -2800,7 +2819,7 @@ TestResult wMethodOnMinimisedFsm_TS() {
 	}
 	{
 		cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
-		Fsm fsb = Fsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
+		Dfsm fsb = Dfsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
 		vector<shared_ptr<const Fsm>> mutants;
 		for (int i = 0; i < 100; ++i) {
 			// FSB is complete => created mutants are complete => minimised mutants are complete
@@ -2810,7 +2829,7 @@ TestResult wMethodOnMinimisedFsm_TS() {
 	}
 	{
 		cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
-		Fsm gdc = Fsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
+		Dfsm gdc = Dfsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
 		vector<shared_ptr<const Fsm>> mutants;
 		for (int i = 0; i < 100; ++i) {
 			// GDC is complete => created mutants are complete => minimised mutants are complete
