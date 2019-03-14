@@ -167,6 +167,12 @@ shared_ptr<Fsm> makeStatesPartial(shared_ptr<Fsm> m) {
 
 void fsmlib_assert(string tc, bool verdict, string comment = "");
 
+
+void fsmlib_assert(string tc, bool verdict, bool &accPass, string comment = "") {
+	accPass = accPass and verdict;
+	fsmlib_assert(tc, verdict, comment);
+}
+
 /*
 	Calculates the set of transitions labels of outgoing transitions from given nodes set.
 */
@@ -855,7 +861,8 @@ void testMinimise_Dfsm(Dfsm &m1, const string &tcID) {
 /**
  * Test function: Fsm::minimiseObservableFSM()
  */
-void testMinimiseObservableFSM(Fsm &m1, const string &tcID) {
+bool testMinimiseObservableFSM(Fsm &m1, const string &tcID) {
+	bool pass = true;
 	// get copy of m1
 	Fsm copyOfM1 = Fsm(m1);
 
@@ -864,16 +871,16 @@ void testMinimiseObservableFSM(Fsm &m1, const string &tcID) {
 
 	// first check invariant of m2
 	bool invariantViolation = not m2.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Invariant holds for M2 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, pass, "Invariant holds for M2 after transformation");
 	// stop test execution at this point if invariant of m2 does not hold anymore
-	if (invariantViolation) return;
+	if (invariantViolation) return pass;
 
 	// check properties of m2
-	fsmlib_assert(tcID, m2.isObservable(), "M2 is observable after minimiseObservable()");
-	fsmlib_assert(tcID, not hasEquivalentStates(m2), "M2 has no equivalent states after minimise()");
+	fsmlib_assert(tcID, m2.isObservable(), pass, "M2 is observable after minimiseObservable()");
+	fsmlib_assert(tcID, not hasEquivalentStates(m2), pass, "M2 has no equivalent states after minimise()");
 
 	// check if L(m1) = L(m2)
-	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), "minimiseObservableFSM() does not change the language");
+	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), pass, "minimiseObservableFSM() does not change the language");
 
 	//// check unexpected side effects
 	//fsmlib_assert(tcID, checkFsmClassInvariant(m1), "M1 still fullfills class invariants after transformation");
@@ -881,10 +888,11 @@ void testMinimiseObservableFSM(Fsm &m1, const string &tcID) {
 
 	// check invariant of m1
 	invariantViolation = not m1.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Invariant holds for M1 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, pass, "Invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m1 does not hold anymore
-	if (invariantViolation) return;
-	fsmlib_assert(tcID, checkForEqualStructure(m1, copyOfM1), "M1 was not changed by algorithm");
+	if (invariantViolation) return pass;
+	fsmlib_assert(tcID, checkForEqualStructure(m1, copyOfM1), pass, "M1 was not changed by algorithm");
+	return pass;
 }
 
 /**
@@ -1082,7 +1090,8 @@ void minimise_Dfsm_TS() {
 /**
  * Test Suite: Fsm::minimiseObservableFSM()
  */
-void minimiseObservableFSM_TS() {
+TestResult minimiseObservableFSM_TS() {
+	TestResult result("Fsm::minimiseObservableFSM()");
 	cout << "============================= Start Test of Fsm::minimiseObservableFSM =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
@@ -1091,30 +1100,31 @@ void minimiseObservableFSM_TS() {
 	for (int i = 0; i < 100; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, pl);
 		Fsm ofsm = fsm->transformToObservableFSM();
-		testMinimiseObservableFSM(ofsm, "TC-Rand-" + to_string(i));
+		testMinimiseObservableFSM(ofsm, "TC-Rand-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i)) ;
 	}
 	srand(973);
 	for (int i = 0; i < 100; ++i) {
 		Dfsm dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
-		testMinimiseObservableFSM(dfsm, "TC-Rand-(Dfsm)-" + to_string(i));
+		testMinimiseObservableFSM(dfsm, "TC-Rand-(Dfsm)-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-(Dfsm)-" + to_string(i));
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
-	testMinimiseObservableFSM(*csm, "TC-CSM-0");
+	testMinimiseObservableFSM(*csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
-	testMinimiseObservableFSM(*fsb, "TC-FSBC-0");
+	testMinimiseObservableFSM(*fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
-	testMinimiseObservableFSM(*gdc, "TC-GDC-0");
+	testMinimiseObservableFSM(*gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<FsmTransformationTestCase<Fsm>> testSuite;
 	parseFsmTransformationTSFile<Fsm>("../../../resources/TestSuites/FSM-Transformations/Fsm_minimiseObservable.testsuite", testSuite);
 	for (auto tc : testSuite) {
-		testMinimiseObservableFSM(*tc.m, "TC-Part-" + tc.id);
+		testMinimiseObservableFSM(*tc.m, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
+	return result;
 }
 
 /**
@@ -1605,10 +1615,6 @@ void testGetCharacterisationSet_Dfsm(Dfsm &m, const string &tcID) {
 	fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
 }
 
-void fsmlib_assert(string tc, bool verdict, bool &accPass, string comment = "") {
-	accPass = accPass and verdict;
-	fsmlib_assert(tc, verdict, comment);
-}
 
 /**
  * Test function for Fsm::getCharacterisationSet().
@@ -1684,7 +1690,8 @@ void testCalcDistinguishingTrace1(Dfsm &m, const string &tcID) {
  *                                           const int maxOutput)
  * Parameter m is expected to be a minimal and observable Fsm.
  */
-void testCalcDistinguishingTrace2(Fsm &m, const string &tcID) {
+bool testCalcDistinguishingTrace2(Fsm &m, const string &tcID) {
+	bool pass = true;
 	// get copy of m
 	const Fsm copyOfM = Fsm(m);
 
@@ -1704,17 +1711,18 @@ void testCalcDistinguishingTrace2(Fsm &m, const string &tcID) {
 
 			// first check invariant of m
 			bool invariantViolation = not m.checkInvariant();
-			fsmlib_assert(tcID, not invariantViolation, "Fsm class invariant still holds for M after calculation.");
+			fsmlib_assert(tcID, not invariantViolation, pass, "Fsm class invariant still holds for M after calculation.");
 			// stop test execution at this point if invariant of m does not hold anymore
-			if (invariantViolation) return;
+			if (invariantViolation) return pass;
 
 			// check definition of 'Distinguishing Trace' for inTrc
-			fsmlib_assert(tcID, isDistTrc(q1, q2, inTrc.get(), m.getMaxOutput()), "Calculated Trace is a Distinguishing Trace for q1 and q2.");
+			fsmlib_assert(tcID, isDistTrc(q1, q2, inTrc.get(), m.getMaxOutput()), pass, "Calculated Trace is a Distinguishing Trace for q1 and q2.");
 
 			// check if structure of m has changed
-			fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
+			fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), pass, "M was not changed by algorithm");
 		}
 	}
+	return pass;
 }
 
 /**
@@ -1974,7 +1982,7 @@ TestResult getCharacterisationSet_Fsm_TS() {
 	for (auto tc : testSuite) {
 		testGetCharacterisationSet_Fsm(*tc.m, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
-	//cout << "#Pass: " << pass << " - #Fail: " << fail;
+	result.printResults();
 	return result;
 }
 
@@ -2021,7 +2029,8 @@ void calcDistinguishingTrace_PkTables_TS() {
  *                                           const int maxInput,
  *                                           const int maxOutput)
  */
-void calcDistinguishingTrace_OFSMTables_TS() {
+TestResult calcDistinguishingTrace_OFSMTables_TS() {
+	TestResult result("FsmNode::calcDistinguishingTrace(ofsmTables");
 	cout << "============================= Start Test of FsmNode::calcDistinguishingTrace(ofsmTables) =============================" << endl;
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;	
@@ -2030,27 +2039,29 @@ void calcDistinguishingTrace_OFSMTables_TS() {
 	for (int i = 0; i < 1000; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 6, pl);
 		auto minFsm = fsm->minimise();
-		testCalcDistinguishingTrace2(minFsm, "TC-Rand-" + to_string(i));
+		testCalcDistinguishingTrace2(minFsm, "TC-Rand-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	Fsm csm = Fsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
-	testCalcDistinguishingTrace2(csm, "TC-CSM-0");
+	testCalcDistinguishingTrace2(csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	Fsm fsb = Fsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
-	testCalcDistinguishingTrace2(fsb, "TC-FSBC-0");
+	testCalcDistinguishingTrace2(fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	Fsm gdc = Fsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
-	testCalcDistinguishingTrace2(gdc, "TC-GDC-0");
+	testCalcDistinguishingTrace2(gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<DistinguishingTraceTestCase<Fsm>> testSuite;
 	parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/FsmNode_calcDistinguishingTrace_ofsm.testsuite", testSuite);
 	for (auto tc : testSuite) {
-		testCalcDistinguishingTrace2(*tc.m, "TC-Part-" + tc.id);
+		testCalcDistinguishingTrace2(*tc.m, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
+	result.printResults();
+	return result;
 }
 
 /*
@@ -2391,15 +2402,15 @@ bool compareOutputs(const shared_ptr<IOListContainer> ts, const shared_ptr<Fsm> 
  * Each element of mutants is expected to be complete and normalized and to have the same input alphabet as m.
  * nullOutput is expected to be the output that was used as nulloutputs in the completion of the mutants.
  */
-void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const size_t nullOutput,
+bool testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const size_t nullOutput,
 	                const shared_ptr<TestSuiteGenerator> tsGen, const string &tcID) {
-	cout << "inv" << endl;
+	bool pass = true;
 	const Fsm copyOfM = Fsm(m);		
 	auto completeM = transformToComplete(make_shared<Fsm>(m), nullOutput);
 	auto minComplM = completeM->minimise();
 	if (minComplM.size() > 30) {
 		cout << "FSM too big. Stop Test Case." << endl;
-		return;
+		return pass;
 	}
 	// calculate numAddStates 
 	vector<shared_ptr<const Fsm>> filteredMutants;
@@ -2410,9 +2421,9 @@ void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 
 	// first check invariant of m
 	bool invariantViolation = not m.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Invariant still holds for M after calculation.");
+	fsmlib_assert(tcID, not invariantViolation, pass, "Invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
-	if (invariantViolation) return;
+	if (invariantViolation) return pass;
 
 	cout << "ts.size: " << ts->size() << endl;
 	cout << "ts[0].size: " << ts->getIOLists()->at(0).size() << endl;
@@ -2428,14 +2439,14 @@ void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 	// stop test case is testcases are too long or test suite contains too many test cases
 	if (maxLength > 12 or ts->size() > 2000) {
 		cout << "Test Suite too big or test cases too long. Stop test case." << endl;
-		return;
+		return pass;
 	}
 
 	// Check completeness of test suite with help of the mutants
 	for (const auto mutant : filteredMutants) {
 		bool diff = compareOutputs(ts, completeM, nullOutput, mutant);
 		bool eq = ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState());
-		fsmlib_assert(tcID, eq != diff, "M and mutant are i/o-equivalent iff mutant passed test suite.");
+		fsmlib_assert(tcID, eq != diff, pass, "M and mutant are i/o-equivalent iff mutant passed test suite.");
 		if (eq == diff) {
 			cout << *completeM << endl;
 			cout << *mutant << endl;
@@ -2445,7 +2456,8 @@ void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 	}
 
 	// check if language of m has changed
-	fsmlib_assert(tcID, ioEquivalenceCheck(m.getInitialState(), copyOfM.getInitialState()), "Language of M has not changed");
+	fsmlib_assert(tcID, ioEquivalenceCheck(m.getInitialState(), copyOfM.getInitialState()), pass, "Language of M has not changed");
+	return pass;
 }
 
 /**
@@ -2453,15 +2465,15 @@ void testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
  * Each element of mutants is expected to be complete and normalized and to have the same input alphabet as m.
  * nullOutput is expected to be the output that was used as nulloutputs in the completion of the mutants.
  */
-void testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, const size_t nullOutput, 
+bool testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, const size_t nullOutput, 
 	                const shared_ptr<TestSuiteGenerator> tsGen, const string &tcID) {
-	cout << "dfsm inv" << endl;
+	bool pass = true;
 	const Dfsm copyOfM = Dfsm(m);
 	auto completeM = transformToComplete(make_shared<Dfsm>(m), nullOutput);
 	auto minComplM = completeM->minimise();
 	if (minComplM.size() > 30) {
 		cout << "FSM too big. Stop Test Case." << endl;
-		return;
+		return pass;
 	}
 	// calculate numAddStates 
 	vector<shared_ptr<const Fsm>> filteredMutants;
@@ -2472,9 +2484,9 @@ void testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 
 	// first check invariant of m
 	bool invariantViolation = not m.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Invariant still holds for M after calculation.");
+	fsmlib_assert(tcID, not invariantViolation, pass, "Invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
-	if (invariantViolation) return;
+	if (invariantViolation) return pass;
 
 	cout << "ts.size: " << ts->size() << endl;
 	cout << "ts[0].size: " << ts->getIOLists()->at(0).size() << endl;
@@ -2489,7 +2501,7 @@ void testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 	for (const auto mutant : filteredMutants) {
 		bool diff = compareOutputs(ts, completeM, nullOutput, mutant);
 		bool eq = ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState());
-		fsmlib_assert(tcID, eq != diff, "M and mutant are i/o-equivalent iff mutant passed test suite.");
+		fsmlib_assert(tcID, eq != diff, pass, "M and mutant are i/o-equivalent iff mutant passed test suite.");
 		if (eq == diff) {
 			cout << *completeM << endl;
 			cout << *mutant << endl;
@@ -2500,7 +2512,8 @@ void testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 
 	// check if structure of m has changed
 	//fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
-	fsmlib_assert(tcID, ioEquivalenceCheck(m.getInitialState(), copyOfM.getInitialState()), "Language of M has not changed");
+	fsmlib_assert(tcID, ioEquivalenceCheck(m.getInitialState(), copyOfM.getInitialState()), pass, "Language of M has not changed");
+	return pass;
 }
 
 struct TestTheoryTestCase {
@@ -2553,7 +2566,7 @@ shared_ptr<vector<shared_ptr<const Fsm>>> createMutants(const size_t nullOutput,
 }
 
 template<typename T>
-void executeTestTheoryTC(TestTheoryTestCase & tc, shared_ptr<TestSuiteGenerator> tsGenerator) {
+void executeTestTheoryTC(TestTheoryTestCase & tc, shared_ptr<TestSuiteGenerator> tsGenerator, TestResult &result) {
 	shared_ptr<T> ref = make_shared<T>(tc.rmPath, make_shared<FsmPresentationLayer>(), "M");
 	vector<shared_ptr<const Fsm>> partialMutants;
 	for (size_t i = 0; i < tc.mutantPaths.size(); ++i) {
@@ -2564,12 +2577,13 @@ void executeTestTheoryTC(TestTheoryTestCase & tc, shared_ptr<TestSuiteGenerator>
 
 	vector<shared_ptr<const Fsm>> completeMutants;
 	for (auto m : partialMutants) completeMutants.push_back(transformToComplete(m, nullOutput));
-	testTestTheory(*ref, completeMutants, nullOutput, tsGenerator, "TC-Part-" + tc.id);
+	testTestTheory(*ref, completeMutants, nullOutput, tsGenerator, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 }
 
 
 // Test Fsm::wMethod(...)
-void wMethod_Fsm_TS() {
+TestResult wMethod_Fsm_TS() {
+	TestResult result("Fsm::wMethod");
 	cout << "============================= Start Test of Fsm::wMethod =============================" << endl;
 	
 	shared_ptr<WMethodGenerator> tsGenerator = make_shared<WMethodGenerator>();
@@ -2582,7 +2596,8 @@ void wMethod_Fsm_TS() {
 		auto m = makeStatesUnreachable(*Fsm::createRandomFsmRepeatable("M", (rand() % 4) + 1, (rand() % 6) + 1, (rand() % 6) + 1, pl));
 		const size_t nullOutput = m->getMaxOutput() + 1;
 
-		testTestTheory(*m, *createMutants(nullOutput, m), nullOutput, tsGenerator, "TC-Rand-(MSU)-"+ to_string(i));
+		testTestTheory(*m, *createMutants(nullOutput, m), nullOutput, tsGenerator, "TC-Rand-(MSU)-"+ to_string(i)) 
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSU)-" + to_string(i));
 	}
 
 	srand(990137);
@@ -2594,7 +2609,8 @@ void wMethod_Fsm_TS() {
 			// CSM is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(csm->createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(*csm, mutants, csm->getMaxOutput() + 1, tsGenerator, "TC-CSM-0");
+		testTestTheory(*csm, mutants, csm->getMaxOutput() + 1, tsGenerator, "TC-CSM-0") 
+			? ++result.pass : result.fails.push_back("TC-CSM-0");
 	}
 	{
 		cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
@@ -2604,7 +2620,8 @@ void wMethod_Fsm_TS() {
 			// FSB is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(fsbc->createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(*fsbc, mutants, fsbc->getMaxOutput() + 1, tsGenerator, "TC-FSBC-0");
+		testTestTheory(*fsbc, mutants, fsbc->getMaxOutput() + 1, tsGenerator, "TC-FSBC-0")
+			? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	}
 	{
 		cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
@@ -2614,18 +2631,21 @@ void wMethod_Fsm_TS() {
 			// GDC is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(gdc->createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(*gdc, mutants, gdc->getMaxOutput() + 1, tsGenerator, "TC-GDC-0");
+		testTestTheory(*gdc, mutants, gdc->getMaxOutput() + 1, tsGenerator, "TC-GDC-0")
+			? ++result.pass : result.fails.push_back("TC-GDC-0");
 	}
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Fsm_wMethod.testsuite");
 	for (auto tc : *testSuite) {
-		executeTestTheoryTC<Fsm>(tc, tsGenerator);
+		executeTestTheoryTC<Fsm>(tc, tsGenerator, result);
 	}
+	return result;
 }
 
 // Test Dfsm::wMethod(...)
-void wMethod_Dfsm_TS() {
+TestResult wMethod_Dfsm_TS() {
+	TestResult result("Dfsm::wMethod");
 	cout << "============================= Start Test of Dfsm::wMethod =============================" << endl;	
 	shared_ptr<WMethodGenerator> tsGenerator = make_shared<WMethodGenerator>();
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
@@ -2634,7 +2654,8 @@ void wMethod_Dfsm_TS() {
 	for (int i = 0; i < 100; ++i) {
 		Dfsm m("M", rand() % 15 + 1, rand() % 6, (rand() % 6) + 1, pl, true);
 		const size_t nullOutput = m.getMaxOutput() + 1;
-		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i));
+		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 
 	srand(130343);
@@ -2646,7 +2667,8 @@ void wMethod_Dfsm_TS() {
 			// CSM is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(csm->createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(*csm, mutants, csm->getMaxOutput() + 1, tsGenerator, "TC-CSM-0");
+		testTestTheory(*csm, mutants, csm->getMaxOutput() + 1, tsGenerator, "TC-CSM-0")
+			? ++result.pass : result.fails.push_back("TC-CSM-0");
 	}
 	{
 		cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
@@ -2656,7 +2678,8 @@ void wMethod_Dfsm_TS() {
 			// FSB is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(fsb->createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(*fsb, mutants, fsb->getMaxOutput() + 1, tsGenerator, "TC-FSBC-0");
+		testTestTheory(*fsb, mutants, fsb->getMaxOutput() + 1, tsGenerator, "TC-FSBC-0")
+			? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	}
 	{
 		cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
@@ -2666,18 +2689,21 @@ void wMethod_Dfsm_TS() {
 			// GDC is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(gdc->createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(*gdc, mutants, gdc->getMaxOutput() + 1, tsGenerator, "TC-GDC-0");
+		testTestTheory(*gdc, mutants, gdc->getMaxOutput() + 1, tsGenerator, "TC-GDC-0")
+			? ++result.pass : result.fails.push_back("TC-GDC-0");
 	}
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Dfsm_wMethod.testsuite");
 	for (auto tc : *testSuite) {
-		executeTestTheoryTC<Dfsm>(tc, tsGenerator);
+		executeTestTheoryTC<Dfsm>(tc, tsGenerator, result);
 	}
+	return result;
 }
 
 // Test Fsm::wMethodOnMinimisedFsm(...)
-void wMethodOnMinimisedFsm_TS() {
+TestResult wMethodOnMinimisedFsm_TS() {
+	TestResult result("Fsm::wMethodOnMinimisedFsm");
 	cout << "============================= Start Test of Fsm::wMethodOnMinimisedFsm =============================" << endl;	
 	shared_ptr<WMethodOnMinimisedFsmGenerator> tsGenerator = make_shared<WMethodOnMinimisedFsmGenerator>();
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
@@ -2692,7 +2718,8 @@ void wMethodOnMinimisedFsm_TS() {
 			continue;
 		}
 		const size_t nullOutput = m.getMaxOutput() + 1;
-		testTestTheory(m, *createMutants(nullOutput, make_shared<Fsm>(m)), nullOutput, tsGenerator, "TC-Rand-(MSP)-" + to_string(i));
+		testTestTheory(m, *createMutants(nullOutput, make_shared<Fsm>(m)), nullOutput, tsGenerator, "TC-Rand-(MSP)-" + to_string(i)) 
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSP)-" + to_string(i));
 	}
 	srand(775565);
 	for (int i = 0; i < 10; ++i) {
@@ -2701,7 +2728,8 @@ void wMethodOnMinimisedFsm_TS() {
 		m = m.minimise();
 
 		const size_t nullOutput = m.getMaxOutput() + 1;
-		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-(Dfsm)-" + to_string(i));
+		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-(Dfsm)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(Dfsm)-" + to_string(i));
 	}
 
 	srand(326744);
@@ -2713,7 +2741,7 @@ void wMethodOnMinimisedFsm_TS() {
 			// CSM is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(csm.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(csm, mutants, csm.getMaxOutput() + 1, tsGenerator, "TC-CSM-0");
+		testTestTheory(csm, mutants, csm.getMaxOutput() + 1, tsGenerator, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 	}
 	{
 		cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
@@ -2723,7 +2751,7 @@ void wMethodOnMinimisedFsm_TS() {
 			// FSB is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(fsb.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(fsb, mutants, fsb.getMaxOutput() + 1, tsGenerator, "TC-FSBC-0");
+		testTestTheory(fsb, mutants, fsb.getMaxOutput() + 1, tsGenerator, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 	}
 	{
 		cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
@@ -2733,18 +2761,21 @@ void wMethodOnMinimisedFsm_TS() {
 			// GDC is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(gdc.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(gdc, mutants, gdc.getMaxOutput() + 1, tsGenerator, "TC-GDC-0");
+		testTestTheory(gdc, mutants, gdc.getMaxOutput() + 1, tsGenerator, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 	}
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Fsm_wMethodOnMinimisedFsm.testsuite");
 	for (auto tc : *testSuite) {
-		executeTestTheoryTC<Fsm>(tc, tsGenerator);
+		executeTestTheoryTC<Fsm>(tc, tsGenerator, result);
 	}
+	result.printResults();
+	return result;
 }
 
 // test Dfsm::wMethodOnMinimisedDfsm(...)
-void wMethodOnMinimisedDfsm_TS() {
+TestResult wMethodOnMinimisedDfsm_TS() {
+	TestResult result("Dfsm::wMethodOnMinimisedDfsm");
 	cout << "============================= Start Test of Dfsm::wMethodOnMinimisedDfsm =============================" << endl;	
 	shared_ptr<WMethodOnMinimisedDfsmGenerator> tsGenerator = make_shared<WMethodOnMinimisedDfsmGenerator>();
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
@@ -2754,7 +2785,8 @@ void wMethodOnMinimisedDfsm_TS() {
 		Dfsm m("M", rand() % 15 + 1, rand() % 6, (rand() % 6) + 1, pl, true);
 		m = m.minimise();
 		const size_t nullOutput = m.getMaxOutput() + 1;
-		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i));
+		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 	srand(69080);
 	{
@@ -2765,7 +2797,8 @@ void wMethodOnMinimisedDfsm_TS() {
 			// CSM is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(csm.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(csm, mutants, csm.getMaxOutput() + 1, tsGenerator, "TC-CSM-0");
+		testTestTheory(csm, mutants, csm.getMaxOutput() + 1, tsGenerator, "TC-CSM-0")
+			? ++result.pass : result.fails.push_back("TC-CSM-0");
 	}
 	{
 		cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
@@ -2775,7 +2808,8 @@ void wMethodOnMinimisedDfsm_TS() {
 			// FSB is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(fsb.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(fsb, mutants, fsb.getMaxOutput() + 1, tsGenerator, "TC-FSBC-0");
+		testTestTheory(fsb, mutants, fsb.getMaxOutput() + 1, tsGenerator, "TC-FSBC-0")
+			? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	}
 	{
 		cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
@@ -2785,18 +2819,21 @@ void wMethodOnMinimisedDfsm_TS() {
 			// GDC is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(gdc.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(gdc, mutants, gdc.getMaxOutput() + 1, tsGenerator, "TC-GDC-0");
+		testTestTheory(gdc, mutants, gdc.getMaxOutput() + 1, tsGenerator, "TC-GDC-0")
+			? ++result.pass : result.fails.push_back("TC-GDC-0");
 	}
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Dfsm_wMethodOnMinimisedDfsm.testsuite");
 	for (auto tc : *testSuite) {
-		executeTestTheoryTC<Dfsm>(tc, tsGenerator);
+		executeTestTheoryTC<Dfsm>(tc, tsGenerator, result);
 	}
+	return result;
 }
 
 // test Fsm::wpMethod(...)
-void wpMethod_Fsm_TS() {
+TestResult wpMethod_Fsm_TS() {
+	TestResult result("Fsm::wpMethod");
 	cout << "============================= Start Test of Fsm::wpMethod =============================" << endl;	
 	shared_ptr<WpMethodGenerator> tsGenerator = make_shared<WpMethodGenerator>();
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
@@ -2812,7 +2849,8 @@ void wpMethod_Fsm_TS() {
 			cout << "FSM too big. Stop Test Case." << endl;
 			continue;
 		}
-		testTestTheory(m, *createMutants(nullOutput, make_shared<Fsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i));
+		testTestTheory(m, *createMutants(nullOutput, make_shared<Fsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 
 	srand(156041);
@@ -2824,7 +2862,8 @@ void wpMethod_Fsm_TS() {
 			// CSM is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(csm.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(csm, mutants, csm.getMaxOutput() + 1, tsGenerator, "TC-CSM-0");
+		testTestTheory(csm, mutants, csm.getMaxOutput() + 1, tsGenerator, "TC-CSM-0")
+			? ++result.pass : result.fails.push_back("TC-CSM-0");
 	}
 	{
 		cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
@@ -2834,7 +2873,8 @@ void wpMethod_Fsm_TS() {
 			// FSB is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(fsb.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(fsb, mutants, fsb.getMaxOutput() + 1, tsGenerator, "TC-FSBC-0");
+		testTestTheory(fsb, mutants, fsb.getMaxOutput() + 1, tsGenerator, "TC-FSBC-0")
+			? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	}
 	{
 		cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
@@ -2844,18 +2884,21 @@ void wpMethod_Fsm_TS() {
 			// GDC is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(gdc.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(gdc, mutants, gdc.getMaxOutput() + 1, tsGenerator, "TC-GDC-0");
+		testTestTheory(gdc, mutants, gdc.getMaxOutput() + 1, tsGenerator, "TC-GDC-0")
+			? ++result.pass : result.fails.push_back("TC-GDC-0");
 	}
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Fsm_wpMethod.testsuite");
 	for (auto tc : *testSuite) {
-		executeTestTheoryTC<Fsm>(tc, tsGenerator);
+		executeTestTheoryTC<Fsm>(tc, tsGenerator, result);
 	}
+	return result;
 }
 
 // Test Dfsm::wpMethod(...)
-void wpMethod_Dfsm_TS() {
+TestResult wpMethod_Dfsm_TS() {
+	TestResult result("Dfsm::wpMethod");
 	cout << "============================= Start Test of Dfsm::wpMethod =============================" << endl;	
 	shared_ptr<WpMethodGenerator> tsGenerator = make_shared<WpMethodGenerator>();
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
@@ -2866,7 +2909,8 @@ void wpMethod_Dfsm_TS() {
 
 		const size_t nullOutput = m.getMaxOutput() + 1;
 
-		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i));
+		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 
 	srand(37667);
@@ -2878,7 +2922,8 @@ void wpMethod_Dfsm_TS() {
 			// CSM is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(csm->createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(*csm, mutants, csm->getMaxOutput() + 1, tsGenerator, "TC-CSM-0");
+		testTestTheory(*csm, mutants, csm->getMaxOutput() + 1, tsGenerator, "TC-CSM-0")
+			? ++result.pass : result.fails.push_back("TC-CSM-0");
 	}
 	{
 		cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
@@ -2888,7 +2933,8 @@ void wpMethod_Dfsm_TS() {
 			// FSB is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(fsb->createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(*fsb, mutants, fsb->getMaxOutput() + 1, tsGenerator, "TC-FSBC-0");
+		testTestTheory(*fsb, mutants, fsb->getMaxOutput() + 1, tsGenerator, "TC-FSBC-0")
+			? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	}
 	{
 		cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
@@ -2898,18 +2944,21 @@ void wpMethod_Dfsm_TS() {
 			// GDC is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(gdc->createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(*gdc, mutants, gdc->getMaxOutput() + 1, tsGenerator, "TC-GDC-0");
+		testTestTheory(*gdc, mutants, gdc->getMaxOutput() + 1, tsGenerator, "TC-GDC-0")
+			? ++result.pass : result.fails.push_back("TC-GDC-0");
 	}
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Dfsm_wpMethod.testsuite");
 	for (auto tc : *testSuite) {
-		executeTestTheoryTC<Dfsm>(tc, tsGenerator);
+		executeTestTheoryTC<Dfsm>(tc, tsGenerator, result);
 	}
+	return result;
 }
 
 // Test Dfsm::wpMethodOnMinimisedDfsm(...)
-void wpMethodOnMinimisedDfsm_TS() {
+TestResult wpMethodOnMinimisedDfsm_TS() {
+	TestResult result("Dfsm::wpMethodOnMinimisedDfsm");
 	cout << "============================= Start Test of Dfsm::wpMethodOnMinimisedDfsm =============================" << endl;	
 	shared_ptr<WpMethodOnMinimisedDfsmGenerator> tsGenerator = make_shared<WpMethodOnMinimisedDfsmGenerator>();
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
@@ -2921,7 +2970,8 @@ void wpMethodOnMinimisedDfsm_TS() {
 
 		const size_t nullOutput = m.getMaxOutput() + 1;
 
-		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i));
+		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 
 	srand(81460);
@@ -2933,7 +2983,8 @@ void wpMethodOnMinimisedDfsm_TS() {
 			// CSM is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(csm.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(csm, mutants, csm.getMaxOutput() + 1, tsGenerator, "TC-CSM-0");
+		testTestTheory(csm, mutants, csm.getMaxOutput() + 1, tsGenerator, "TC-CSM-0")
+			? ++result.pass : result.fails.push_back("TC-CSM-0");
 	}
 	{
 		cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
@@ -2943,7 +2994,8 @@ void wpMethodOnMinimisedDfsm_TS() {
 			// FSB is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(fsb.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(fsb, mutants, fsb.getMaxOutput() + 1, tsGenerator, "TC-FSBC-0");
+		testTestTheory(fsb, mutants, fsb.getMaxOutput() + 1, tsGenerator, "TC-FSBC-0")
+			? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	}
 	{
 		cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
@@ -2953,18 +3005,21 @@ void wpMethodOnMinimisedDfsm_TS() {
 			// GDC is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(gdc.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(gdc, mutants, gdc.getMaxOutput() + 1, tsGenerator, "TC-GDC-0");
+		testTestTheory(gdc, mutants, gdc.getMaxOutput() + 1, tsGenerator, "TC-GDC-0")
+			? ++result.pass : result.fails.push_back("TC-GDC-0");
 	}
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Dfsm_wpMethodOnMinimisedDfsm.testsuite");
 	for (auto tc : *testSuite) {
-		executeTestTheoryTC<Dfsm>(tc, tsGenerator);
+		executeTestTheoryTC<Dfsm>(tc, tsGenerator, result);
 	}
+	return result;
 }
 
 // test Fsm::hsiMethod(...)
-void hsiMethod_Fsm_TS() {
+TestResult hsiMethod_Fsm_TS() {
+	TestResult result("Fsm::hsiMethod");
 	cout << "============================= Start Test of Fsm::hsiMethod =============================" << endl;	
 	shared_ptr<HsiMethodGenerator> tsGenerator = make_shared<HsiMethodGenerator>();
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
@@ -2980,7 +3035,8 @@ void hsiMethod_Fsm_TS() {
 			cout << "FSM too big. Stop Test Case." << endl;
 			continue;
 		}
-		testTestTheory(m, *createMutants(nullOutput, make_shared<Fsm>(m)), nullOutput, tsGenerator, "TC-Rand-(MSP)-" + to_string(i));
+		testTestTheory(m, *createMutants(nullOutput, make_shared<Fsm>(m)), nullOutput, tsGenerator, "TC-Rand-(MSP)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSP)-" + to_string(i));
 	}
 
 	srand(15937);
@@ -2992,7 +3048,8 @@ void hsiMethod_Fsm_TS() {
 			// CSM is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(csm.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(csm, mutants, csm.getMaxOutput() + 1, tsGenerator, "TC-CSM-0");
+		testTestTheory(csm, mutants, csm.getMaxOutput() + 1, tsGenerator, "TC-CSM-0")
+			? ++result.pass : result.fails.push_back("TC-CSM-0");
 	}
 	{
 		cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
@@ -3002,7 +3059,8 @@ void hsiMethod_Fsm_TS() {
 			// FSB is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(fsb.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(fsb, mutants, fsb.getMaxOutput() + 1, tsGenerator, "TC-FSBC-0");
+		testTestTheory(fsb, mutants, fsb.getMaxOutput() + 1, tsGenerator, "TC-FSBC-0")
+			? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	}
 	{
 		cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
@@ -3012,18 +3070,21 @@ void hsiMethod_Fsm_TS() {
 			// GDC is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(gdc.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(gdc, mutants, gdc.getMaxOutput() + 1, tsGenerator, "TC-GDC-0");
+		testTestTheory(gdc, mutants, gdc.getMaxOutput() + 1, tsGenerator, "TC-GDC-0")
+			? ++result.pass : result.fails.push_back("TC-GDC-0");
 	}
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Fsm_hsiMethod.testsuite");
 	for (auto tc : *testSuite) {
-		executeTestTheoryTC<Fsm>(tc, tsGenerator);
+		executeTestTheoryTC<Fsm>(tc, tsGenerator, result);
 	}
+	return result;
 }
 
 // Test Dfsm::hsiMethod(...)
-void hsiMethod_Dfsm_TS() {
+TestResult hsiMethod_Dfsm_TS() {
+	TestResult result("Dfsm::hsiMethod");
 	cout << "============================= Start Test of Dfsm::hsiMethod =============================" << endl;	
 	shared_ptr<HsiMethodGenerator> tsGenerator = make_shared<HsiMethodGenerator>();
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
@@ -3034,7 +3095,8 @@ void hsiMethod_Dfsm_TS() {
 
 		const size_t nullOutput = m.getMaxOutput() + 1;
 
-		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i));
+		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 
 	srand(349);
@@ -3046,7 +3108,8 @@ void hsiMethod_Dfsm_TS() {
 			// CSM is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(csm->createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(*csm, mutants, csm->getMaxOutput() + 1, tsGenerator, "TC-CSM-0");
+		testTestTheory(*csm, mutants, csm->getMaxOutput() + 1, tsGenerator, "TC-CSM-0")
+			? ++result.pass : result.fails.push_back("TC-CSM-0");
 	}
 	{
 		cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
@@ -3056,7 +3119,8 @@ void hsiMethod_Dfsm_TS() {
 			// FSB is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(fsb->createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(*fsb, mutants, fsb->getMaxOutput() + 1, tsGenerator, "TC-FSBC-0");
+		testTestTheory(*fsb, mutants, fsb->getMaxOutput() + 1, tsGenerator, "TC-FSBC-0")
+			? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	}
 	{
 		cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
@@ -3066,18 +3130,21 @@ void hsiMethod_Dfsm_TS() {
 			// GDC is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(gdc->createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(*gdc, mutants, gdc->getMaxOutput() + 1, tsGenerator, "TC-GDC-0");
+		testTestTheory(*gdc, mutants, gdc->getMaxOutput() + 1, tsGenerator, "TC-GDC-0")
+			? ++result.pass : result.fails.push_back("TC-GDC-0");
 	}
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Dfsm_hsiMethod.testsuite");
 	for (auto tc : *testSuite) {
-		executeTestTheoryTC<Dfsm>(tc, tsGenerator);
+		executeTestTheoryTC<Dfsm>(tc, tsGenerator, result);
 	}
+	return result;
 }
 
 // Test Dfsm::hMethodOnMinimisedDfsm(...)
-void hMethodOnMinimisedDfsm_TS() {
+TestResult hMethodOnMinimisedDfsm_TS() {
+	TestResult result("Dfsm::hMethodOnMinimisedDfsm");
 	cout << "============================= Start Test of Dfsm::hMethodOnMinimisedDfsm =============================" << endl;	
 	shared_ptr<HMethodOnMinimisedDfsmGenerator> tsGenerator = make_shared<HMethodOnMinimisedDfsmGenerator>();
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
@@ -3091,7 +3158,8 @@ void hMethodOnMinimisedDfsm_TS() {
 			continue;
 		}
 		const size_t nullOutput = m.getMaxOutput() + 1;
-		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i));
+		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 
 	srand(807);
@@ -3103,7 +3171,8 @@ void hMethodOnMinimisedDfsm_TS() {
 			// CSM is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(csm.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(csm, mutants, csm.getMaxOutput() + 1, tsGenerator, "TC-CSM-0");
+		testTestTheory(csm, mutants, csm.getMaxOutput() + 1, tsGenerator, "TC-CSM-0")
+			? ++result.pass : result.fails.push_back("TC-CSM-0");
 	}
 	{
 		cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
@@ -3113,7 +3182,8 @@ void hMethodOnMinimisedDfsm_TS() {
 			// FSB is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(fsb.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(fsb, mutants, fsb.getMaxOutput() + 1, tsGenerator, "TC-FSBC-0");
+		testTestTheory(fsb, mutants, fsb.getMaxOutput() + 1, tsGenerator, "TC-FSBC-0")
+			? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	}
 	{
 		cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
@@ -3123,21 +3193,24 @@ void hMethodOnMinimisedDfsm_TS() {
 			// GDC is complete => created mutants are complete => minimised mutants are complete
 			mutants.push_back(make_shared<Fsm>(gdc.createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, rand() % 6 + 1)->minimise()));
 		}
-		testTestTheory(gdc, mutants, gdc.getMaxOutput() + 1, tsGenerator, "TC-GDC-0");
+		testTestTheory(gdc, mutants, gdc.getMaxOutput() + 1, tsGenerator, "TC-GDC-0")
+			? ++result.pass : result.fails.push_back("TC-GDC-0");
 	}
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Dfsm_hMethodOnMinimisedDfsm.testsuite");
 	for (auto tc : *testSuite) {
-		executeTestTheoryTC<Dfsm>(tc, tsGenerator);	
+		executeTestTheoryTC<Dfsm>(tc, tsGenerator, result);	
 	}
+	return result;
 }
 
 /**
  * Test function for Dfsm::tMethod().
  * m is expected to be complete. Each element of mutants is expected to differ from m only by zero or more output faults.
  */
-void testTMethod(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, const string &tcID) {
+bool testTMethod(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, const string &tcID) {
+	bool pass = true;
 	const Dfsm copyOfM = Dfsm(m);
 
 	const auto ts = m.tMethod();
@@ -3146,9 +3219,9 @@ void testTMethod(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, const s
 
 	// first check invariant of m
 	bool invariantViolation = not m.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Dfsm class invariant still holds for M after calculation.");
+	fsmlib_assert(tcID, not invariantViolation, pass, "Dfsm class invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
-	if (invariantViolation) return;
+	if (invariantViolation) return pass;
 
 	for (const auto mutant : mutants) {
 		bool diff = false;
@@ -3159,20 +3232,19 @@ void testTMethod(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, const s
 				break;
 			}
 		}
-		fsmlib_assert(tcID, ioEquivalenceCheck(m.getInitialState(), mutant->getInitialState()) != diff, "M and mutant are i/o-equivalent iff mutant passed test suite.");
-		//if (not diff) {
-		//	fsmlib_assert(tcID, ioEquivalenceCheck(m.getInitialState(), mutant->getInitialState()), "M and mutant are i/o-equivalent if mutant passed test suite.");
-		//}
+		fsmlib_assert(tcID, ioEquivalenceCheck(m.getInitialState(), mutant->getInitialState()) != diff, pass, "M and mutant are i/o-equivalent iff mutant passed test suite.");
 	}
 
 	// check if structure of m has changed
-	fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
+	fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), pass, "M was not changed by algorithm");
+	return pass;
 }
 
 /*
  *	Random Test Suite for test of Dfsm::tMethod().
  */
-void tMethod_TS() {
+TestResult tMethod_TS() {
+	TestResult result("Dfsm::tMethod");
 	cout << "============================= Start Test of Dfsm::tMethod =============================" << endl;	
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
@@ -3184,7 +3256,7 @@ void tMethod_TS() {
 			size_t numOutFaults = (rand() % 4) + 1;
 			mutants.push_back(m.createMutantRepeatable("Mutant_" + to_string(j), numOutFaults, 0));
 		}
-		testTMethod(m, mutants, "TC-Rand-" + to_string(i));
+		testTMethod(m, mutants, "TC-Rand-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 
 	srand(36);
@@ -3195,7 +3267,7 @@ void tMethod_TS() {
 		for (int i = 0; i < 100; ++i) {
 			mutants.push_back(csm->createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, 0));
 		}
-		testTMethod(*csm, mutants, "TC-CSM-0");
+		testTMethod(*csm, mutants, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 	}
 	{
 		cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
@@ -3204,7 +3276,7 @@ void tMethod_TS() {
 		for (int i = 0; i < 100; ++i) {
 			mutants.push_back(fsb->createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, 0));
 		}
-		testTMethod(*fsb, mutants, "TC-FSBC-0");
+		testTMethod(*fsb, mutants, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	}
 	{
 		cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
@@ -3213,7 +3285,7 @@ void tMethod_TS() {
 		for (int i = 0; i < 100; ++i) {
 			mutants.push_back(gdc->createMutantRepeatable("Mutant_" + to_string(i), rand() % 6 + 1, 0));
 		}
-		testTMethod(*gdc, mutants, "TC-GDC-0");
+		testTMethod(*gdc, mutants, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 	}
 
 
@@ -3226,8 +3298,9 @@ void tMethod_TS() {
 			shared_ptr<const Fsm> mutant = make_shared<Fsm>(tc.mutantPaths.at(i), pl, "Mut_" + to_string(i));
 			completeMutants.push_back(mutant);
 		}
-		testTMethod(*ref, completeMutants, "TC-Part-" + tc.id);
+		testTMethod(*ref, completeMutants, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
+	return result;
 }
 
 // ====================================================================================================

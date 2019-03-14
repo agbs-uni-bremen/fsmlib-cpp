@@ -38,7 +38,7 @@ void minimise_Dfsm_TS();
 /**
  * Test Suite: Fsm::minimiseObservableFSM()
  */
-void minimiseObservableFSM_TS();
+TestResult minimiseObservableFSM_TS();
 
 /**
  * Test Suite: Fsm::minimise()
@@ -73,7 +73,7 @@ void calcDistinguishingTrace_PkTables_TS();
  *                                           const int maxInput,
  *                                           const int maxOutput)
  */
-void calcDistinguishingTrace_OFSMTables_TS();
+TestResult calcDistinguishingTrace_OFSMTables_TS();
 
 /*
  *	Random Test Suite for test of Fsm::calcStateIdentificationSets().
@@ -88,37 +88,37 @@ void calcStateIdentificationSetsFast_TS();
 /*
  *	Random Test Suite for test of Dfsm::tMethod().
  */
-void tMethod_TS();
+TestResult tMethod_TS();
 
 // Test Fsm::wMethod(...)
-void wMethod_Fsm_TS();
+TestResult wMethod_Fsm_TS();
 
 // Test Dfsm::wMethod(...)
-void wMethod_Dfsm_TS();
+TestResult wMethod_Dfsm_TS();
 
 // Test Fsm::wMethodOnMinimisedFsm(...)
-void wMethodOnMinimisedFsm_TS();
+TestResult wMethodOnMinimisedFsm_TS();
 
 // test Dfsm::wMethodOnMinimisedDfsm(...)
-void wMethodOnMinimisedDfsm_TS();
+TestResult wMethodOnMinimisedDfsm_TS();
 
 // test Fsm::wpMethod(...)
-void wpMethod_Fsm_TS();
+TestResult wpMethod_Fsm_TS();
 
 // Test Dfsm::wpMethod(...)
-void wpMethod_Dfsm_TS();
+TestResult wpMethod_Dfsm_TS();
 
 // Test Dfsm::wpMethodOnMinimisedDfsm(...)
-void wpMethodOnMinimisedDfsm_TS();
+TestResult wpMethodOnMinimisedDfsm_TS();
 
 // test Fsm::hsiMethod(...)
-void hsiMethod_Fsm_TS();
+TestResult hsiMethod_Fsm_TS();
 
 // Test Dfsm::hsiMethod(...)
-void hsiMethod_Dfsm_TS();
+TestResult hsiMethod_Dfsm_TS();
 
 // Test Dfsm::hMethodOnMinimisedDfsm(...)
-void hMethodOnMinimisedDfsm_TS();
+TestResult hMethodOnMinimisedDfsm_TS();
 
 
 #endif
