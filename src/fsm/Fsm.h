@@ -534,7 +534,7 @@ public:
      * Parameter m is expected to be a minimal and observable Fsm.
 	 * Needs access to characterisationSet of this class.
      */
-	friend void testGetCharacterisationSet_Fsm(Fsm &m, const std::string &tcID);
+	friend bool testGetCharacterisationSet_Fsm(Fsm &m, const std::string &tcID);
 
 	/**
 	 * Test function for FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,

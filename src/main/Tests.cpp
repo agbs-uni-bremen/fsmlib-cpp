@@ -1605,11 +1605,17 @@ void testGetCharacterisationSet_Dfsm(Dfsm &m, const string &tcID) {
 	fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
 }
 
+void fsmlib_assert(string tc, bool verdict, bool &accPass, string comment = "") {
+	accPass = accPass and verdict;
+	fsmlib_assert(tc, verdict, comment);
+}
+
 /**
  * Test function for Fsm::getCharacterisationSet().
  * Parameter m is expected to be a minimal and observable Fsm.
  */
-void testGetCharacterisationSet_Fsm(Fsm &m, const string &tcID) {
+bool testGetCharacterisationSet_Fsm(Fsm &m, const string &tcID) {
+	bool pass = true;
 	// get copy of m
 	const Fsm copyOfM = Fsm(m);
 
@@ -1618,17 +1624,18 @@ void testGetCharacterisationSet_Fsm(Fsm &m, const string &tcID) {
 
 	// first check invariant of m
 	bool invariantViolation = not m.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Fsm class invariant still holds for M after calculation.");
+	fsmlib_assert(tcID, not invariantViolation, pass, "Fsm class invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
-	if (invariantViolation) return;
+	if (invariantViolation) return pass;
 
 	// check definition of 'Characterisation Set' for w
 	fsmlib_assert(tcID, isCharaterisationSet(m, w), "Result is a Characterisation Set for M.");
 
-	fsmlib_assert(tcID, *m.characterisationSet->getIOLists().getIOLists() == *w.getIOLists(), "Result is stored in attribute.");
+	fsmlib_assert(tcID, *m.characterisationSet->getIOLists().getIOLists() == *w.getIOLists(), pass, "Result is stored in attribute.");
 
 	// check if structure of m has changed
-	fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
+	fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), pass, "M was not changed by algorithm");
+	return pass;
 }
 
 /**
@@ -1935,7 +1942,8 @@ void getCharacterisationSet_Dfsm_TS() {
 /*
  *	Random Test Suite for test of Fsm::getCharacterisationSet().
  */
-void getCharacterisationSet_Fsm_TS() { 
+TestResult getCharacterisationSet_Fsm_TS() { 
+	TestResult result("Fsm::getCharacterisationSet()");
 	cout << "============================= Start Test of Fsm::getCharacterisationSet =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
@@ -1944,27 +1952,30 @@ void getCharacterisationSet_Fsm_TS() {
 	for (int i = 0; i < 100; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 6, pl);
 		auto minFsm = fsm->minimise();
-		testGetCharacterisationSet_Fsm(minFsm, "TC-Rand-" + to_string(i));
+		string id = "TC-Rand-" + to_string(i);
+		testGetCharacterisationSet_Fsm(minFsm, id) ? ++result.pass : result.fails.push_back(id);
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	Fsm csm = Fsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
-	testGetCharacterisationSet_Fsm(csm, "TC-CSM-0");
+	testGetCharacterisationSet_Fsm(csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	Fsm fsb = Fsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
-	testGetCharacterisationSet_Fsm(fsb, "TC-FSBC-0");
+	testGetCharacterisationSet_Fsm(fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	Fsm gdc = Fsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
-	testGetCharacterisationSet_Fsm(gdc, "TC-GDC-0");
+	testGetCharacterisationSet_Fsm(gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<DistinguishingTraceTestCase<Fsm>> testSuite;
 	parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_getCharacterisationSet.testsuite", testSuite);
 	for (auto tc : testSuite) {
-		testGetCharacterisationSet_Fsm(*tc.m, "TC-Part-" + tc.id);
+		testGetCharacterisationSet_Fsm(*tc.m, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
+	//cout << "#Pass: " << pass << " - #Fail: " << fail;
+	return result;
 }
 
 /*

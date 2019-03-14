@@ -1,6 +1,25 @@
 ﻿#ifndef FSM_MAIN_TESTS_H_
 #define FSM_MAIN_TESTS_H_
 
+struct TestResult {
+	std::string id;
+	size_t pass = 0;
+	std::vector<std::string> fails;
+	TestResult(const std::string &mutName) {
+		id = mutName;
+	}
+	void printResults() {
+		std::cout << "==============================================================" << std::endl;
+		std::cout << "Test of " << id << std::endl;
+		std::cout << "#PASS: " << pass << std::endl;
+		std::cout << "#FAIL: " << fails.size() << std::endl;
+		std::cout << "FAIL IDs: " << std::endl;
+		for (size_t i = 0; i < fails.size(); ++i) std::cout << fails.at(i) << ", ";
+		std::cout << std::endl;
+		std::cout << "==============================================================" << std::endl;
+	}
+};
+
 /**
  * Test Suite: Fsm::removeUnreachableNodes()
  */
@@ -39,7 +58,7 @@ void getCharacterisationSet_Dfsm_TS();
 /*
  *	Random Test Suite for test of Fsm::getCharacterisationSet().
  */
-void getCharacterisationSet_Fsm_TS();
+TestResult getCharacterisationSet_Fsm_TS();
 
 /*
  *	Random Test Suite for test of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
@@ -100,5 +119,6 @@ void hsiMethod_Dfsm_TS();
 
 // Test Dfsm::hMethodOnMinimisedDfsm(...)
 void hMethodOnMinimisedDfsm_TS();
+
 
 #endif
