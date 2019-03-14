@@ -23,17 +23,17 @@ struct TestResult {
 /**
  * Test Suite: Fsm::removeUnreachableNodes()
  */
-void removeUnreachableNodes_TS();
+TestResult removeUnreachableNodes_TS();
 
 /**
  * Test Suite: Fsm::transformToObservableFSM()
  */
-void transformToObservableFSM_TS();
+TestResult transformToObservableFSM_TS();
 
 /**
  * Test Suite: Dfsm::minimise()
  */
-void minimise_Dfsm_TS();
+TestResult minimise_Dfsm_TS();
 
 /**
  * Test Suite: Fsm::minimiseObservableFSM()
@@ -43,7 +43,7 @@ TestResult minimiseObservableFSM_TS();
 /**
  * Test Suite: Fsm::minimise()
  */
-void minimise_Fsm_TS();
+TestResult minimise_Fsm_TS();
 
 /*
  *	Random Test Suite for test of Fsm::getCharacterisationSet().

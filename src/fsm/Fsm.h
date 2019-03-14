@@ -543,7 +543,7 @@ public:
                                              const int maxOutput).
 	   Needs access to ofsmTables of this class.
 	*/
-	friend void testCalcDistinguishingTrace2(Fsm &m, const std::string &tcID);
+	friend bool testCalcDistinguishingTrace2(Fsm &m, const std::string &tcID);
 
 	/**
 	 * Test function for Fsm::calcStateIdentificationSets().

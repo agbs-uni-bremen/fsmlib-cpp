@@ -746,7 +746,8 @@ bool checkUnreachableNodesList(const vector<shared_ptr<FsmNode>> &unreachableNod
 /**
  * Test function: Fsm::removeUnreachableNodes()
  */
-void testRemoveUnreachableNodes(Fsm &m1, const string &tcID) {
+bool testRemoveUnreachableNodes(Fsm &m1, const string &tcID) {
+	bool pass = true;
 	// get copy of m1
 	Fsm copyOfM1 = Fsm(m1);
 	vector<shared_ptr<FsmNode>> unreachableNodes;
@@ -765,31 +766,33 @@ void testRemoveUnreachableNodes(Fsm &m1, const string &tcID) {
 
 	// first check invariant of m1
 	bool invariantViolation = not m1.checkInvariant();//not checkFsmClassInvariant(m1);
-	fsmlib_assert(tcID, not invariantViolation, "Invariant holds for M1 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, pass, "Invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m does not hold anymore
-	if (invariantViolation) return;
+	if (invariantViolation) return pass;
 
 	// check properties of m1	
-	fsmlib_assert(tcID, isInitialConnected(m1), "Result of removeUnreachableNodes() is initial connected");
-	fsmlib_assert(tcID, not contains(m1, unreachable), "Resulting FSM of removeUnreachableNodes() contains none of the nodes that were unreachable before.");
+	fsmlib_assert(tcID, isInitialConnected(m1), pass, "Result of removeUnreachableNodes() is initial connected");
+	fsmlib_assert(tcID, not contains(m1, unreachable), pass, "Resulting FSM of removeUnreachableNodes() contains none of the nodes that were unreachable before.");
 
 	// check if L(m1) = L(copyOfM1)
-	fsmlib_assert(tcID, ioEquivalenceCheck(m1.getInitialState(), copyOfM1.getInitialState()), "removeUnreachableNodes() does not change language of the FSM");
+	fsmlib_assert(tcID, ioEquivalenceCheck(m1.getInitialState(), copyOfM1.getInitialState()), pass, "removeUnreachableNodes() does not change language of the FSM");
 
 	unordered_set<shared_ptr<FsmNode>> unreachableNodesSet{ unreachableNodes.cbegin(), unreachableNodes.cend() };
 	// check b and unreachableNodes
-	fsmlib_assert(tcID, (b and (not unreachable.empty())) || (not b and unreachable.empty()), "removeUnreachableNodes() returns true iff FSM contains some unreachable node");
-	fsmlib_assert(tcID, (unreachableNodes.size() == unreachable.size()) and (unreachableNodesSet == unreachable), "unreachableNodes contains each unreachable node that was removed");
+	fsmlib_assert(tcID, (b and (not unreachable.empty())) || (not b and unreachable.empty()), pass, "removeUnreachableNodes() returns true iff FSM contains some unreachable node");
+	fsmlib_assert(tcID, (unreachableNodes.size() == unreachable.size()) and (unreachableNodesSet == unreachable), pass, "unreachableNodes contains each unreachable node that was removed");
 	/*fsmlib_assert(tcID, checkUnreachableNodesList(copyOfUnreachableNodes, unreachableNodes, unreachable), "unreachableNodes contains all unreachable nodes that were removed and all nodes from before");*/
 
 	//// check unexpected side effects
 	//fsmlib_assert(tcID, checkFsmClassInvariant(m1), "FSM still fullfills class invariants after transformation");
+	return pass;
 }
 
 /**
  * Test function: Fsm::transformToObservableFSM()
  */
-void testTransformToObservableFSM(Fsm &m1, const string &tcID) {
+bool testTransformToObservableFSM(Fsm &m1, const string &tcID) {
+	bool pass = true;
 	// get copy of m1
 	Fsm copyOfM1 = Fsm(m1);
 
@@ -798,15 +801,15 @@ void testTransformToObservableFSM(Fsm &m1, const string &tcID) {
 
 	// first check invariant of m2
 	bool invariantViolation = not m2.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Invariant holds for M2 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, pass, "Invariant holds for M2 after transformation");
 	// stop test execution at this point if invariant of m2 does not hold anymore
-	if (invariantViolation) return;
+	if (invariantViolation) return pass;
 
 	// check properties of m2
-	fsmlib_assert(tcID, m2.isObservable(), "M2 is observable after transformToObservable()");
+	fsmlib_assert(tcID, m2.isObservable(), pass, "M2 is observable after transformToObservable()");
 
 	// check if L(m1) = L(m2)
-	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), "transformToObservable() does not change the language");
+	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), pass, "transformToObservable() does not change the language");
 
 	//// check unexpected side effects
 	//fsmlib_assert(tcID, checkFsmClassInvariant(m1), "M1 still fullfills class invariants after transformation");
@@ -814,17 +817,20 @@ void testTransformToObservableFSM(Fsm &m1, const string &tcID) {
 
 	// check invariant of m1
 	invariantViolation = not m1.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Invariant holds for M1 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, pass, "Invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m1 does not hold anymore
-	if (invariantViolation) return;
+	if (invariantViolation) return pass;
 
-	fsmlib_assert(tcID, checkForEqualStructure(m1, copyOfM1), "M1 was not changed by algorithm");
+	fsmlib_assert(tcID, checkForEqualStructure(m1, copyOfM1), pass, "M1 was not changed by algorithm");
+
+	return pass;
 }
 
 /**
  * Test function: Dfsm::minimise()
  */
-void testMinimise_Dfsm(Dfsm &m1, const string &tcID) {
+bool testMinimise_Dfsm(Dfsm &m1, const string &tcID) {
+	bool pass = true;
 	// get copy of m1
 	Dfsm copyOfM1 = m1;//Dfsm(m1);
 
@@ -833,17 +839,17 @@ void testMinimise_Dfsm(Dfsm &m1, const string &tcID) {
 
 	// first check invariant of m2
 	bool invariantViolation = not m2.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Invariant holds for M2 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, pass, "Invariant holds for M2 after transformation");
 	// stop test execution at this point if invariant of m2 does not hold anymore
-	if (invariantViolation) return;
+	if (invariantViolation) return pass;
 
 	// check properties of m2
-	fsmlib_assert(tcID, m2.isDeterministic(), "M2 is deterministic after minimise()");
-	fsmlib_assert(tcID, isInitialConnected(m2), "M2 is initial connected after minimise()");
-	fsmlib_assert(tcID, not hasEquivalentStates(m2), "M2 has no equivalent states after minimise()");
+	fsmlib_assert(tcID, m2.isDeterministic(), pass, "M2 is deterministic after minimise()");
+	fsmlib_assert(tcID, isInitialConnected(m2), pass, "M2 is initial connected after minimise()");
+	fsmlib_assert(tcID, not hasEquivalentStates(m2), pass, "M2 has no equivalent states after minimise()");
 
 	// check if L(m1) = L(m2)
-	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), "minimise() does not change the language");
+	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), pass, "minimise() does not change the language");
 
 	//// check unexpected side effects
 	//fsmlib_assert(tcID, checkDfsmClassInvariant(m1), "M1 still fullfills class invariants after transformation");
@@ -851,11 +857,13 @@ void testMinimise_Dfsm(Dfsm &m1, const string &tcID) {
 
 	// check invariant of m1
 	invariantViolation = not m1.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Invariant holds for M1 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, pass, "Invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m1 does not hold anymore
-	if (invariantViolation) return;
-	fsmlib_assert(tcID, isInitialConnected(m1), "M1 is initial connected after minimise()");
-	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m1.getInitialState()), "Language of M1 was not changed by algorithm");
+	if (invariantViolation) return pass;
+	fsmlib_assert(tcID, isInitialConnected(m1), pass, "M1 is initial connected after minimise()");
+	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m1.getInitialState()), pass, "Language of M1 was not changed by algorithm");
+
+	return pass;
 }
 
 /**
@@ -898,7 +906,8 @@ bool testMinimiseObservableFSM(Fsm &m1, const string &tcID) {
 /**
  * Test function: Fsm::minimise()
  */
-void testMinimise_Fsm(Fsm &m1, const string &tcID) {
+bool testMinimise_Fsm(Fsm &m1, const string &tcID) {
+	bool pass = true;
 	// get copy of m1
 	Fsm copyOfM1 = Fsm(m1);
 
@@ -907,17 +916,17 @@ void testMinimise_Fsm(Fsm &m1, const string &tcID) {
 
 	// first check invariant of m2
 	bool invariantViolation = not m2.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Invariant holds for M2 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, pass, "Invariant holds for M2 after transformation");
 	// stop test execution at this point if invariant of m2 does not hold anymore
-	if (invariantViolation) return;
+	if (invariantViolation) return pass;
 
 	// check properties of m2	
-	fsmlib_assert(tcID, m2.isObservable(), "M2 is observable after minimise()");
-	fsmlib_assert(tcID, not hasEquivalentStates(m2), "M2 has no equivalent states after minimise()");
-	fsmlib_assert(tcID, isInitialConnected(m2), "M2 is initial connected after minimise()");
+	fsmlib_assert(tcID, m2.isObservable(), pass, "M2 is observable after minimise()");
+	fsmlib_assert(tcID, not hasEquivalentStates(m2), pass, "M2 has no equivalent states after minimise()");
+	fsmlib_assert(tcID, isInitialConnected(m2), pass, "M2 is initial connected after minimise()");
 
 	// check if L(m1) = L(m2)
-	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), "minimise() does not change the language");
+	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), pass, "minimise() does not change the language");
 
 	//// check unexpected side effects
 	//fsmlib_assert(tcID, checkFsmClassInvariant(m1), "M1 still fullfills class invariants after transformation");
@@ -925,13 +934,15 @@ void testMinimise_Fsm(Fsm &m1, const string &tcID) {
 
 	// check invariant of m1
 	invariantViolation = not m1.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "class invariant holds for M1 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, pass, "class invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m1 does not hold anymore
-	if (invariantViolation) return;
+	if (invariantViolation) return pass;
 
 	// check unexpected sideeffects
-	fsmlib_assert(tcID, isInitialConnected(m1), "M1 is initial connected after minimise()");
-	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m1.getInitialState()), "Language of M1 was not changed by algorithm");
+	fsmlib_assert(tcID, isInitialConnected(m1), pass, "M1 is initial connected after minimise()");
+	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m1.getInitialState()), pass, "Language of M1 was not changed by algorithm");
+
+	return pass;
 }
 
 template <typename T>
@@ -983,7 +994,8 @@ void parseFsmTransformationTSFile(const string &testSuitePath, vector<FsmTransfo
 /**
  * Test Suite: Fsm::removeUnreachableNodes()
  */
-void removeUnreachableNodes_TS() {
+TestResult removeUnreachableNodes_TS() {
+	TestResult result("Fsm::removeUnreachableNodes");
 	cout << "============================= Start Test of Fsm::removeUnreachableNodes =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
@@ -991,36 +1003,40 @@ void removeUnreachableNodes_TS() {
 	srand(59288);
 	for (int i = 0; i < 100; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M", rand() % 4, rand() % 4 + 1, rand() % 10, pl);
-		testRemoveUnreachableNodes(*fsm, "TC-Rand-" + to_string(i));
+		testRemoveUnreachableNodes(*fsm, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 	srand(1514225);
 	for (int i = 0; i < 100; ++i) {
 		Dfsm dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
-		testRemoveUnreachableNodes(dfsm, "TC-Rand-(Dfsm)-" + to_string(i));
+		testRemoveUnreachableNodes(dfsm, "TC-Rand-(Dfsm)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(Dfsm)-" + to_string(i));
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
-	testRemoveUnreachableNodes(*csm, "TC-CSM-0");
+	testRemoveUnreachableNodes(*csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
-	testRemoveUnreachableNodes(*fsb, "TC-FSBC-0");
+	testRemoveUnreachableNodes(*fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
-	testRemoveUnreachableNodes(*gdc, "TC-GDC-0");
+	testRemoveUnreachableNodes(*gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<FsmTransformationTestCase<Fsm>> testSuite;
 	parseFsmTransformationTSFile<Fsm>("../../../resources/TestSuites/FSM-Transformations/Fsm_removeUnreachableNodes.testsuite", testSuite);
 	for (auto tc : testSuite) {
-		testRemoveUnreachableNodes(*tc.m, "TC-Part-" + tc.id);
+		testRemoveUnreachableNodes(*tc.m, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
+	return result;
 }
 
 /**
  * Test Suite: Fsm::transformToObservableFSM()
  */
-void transformToObservableFSM_TS() {
+TestResult transformToObservableFSM_TS() {
+	TestResult result("Fsm::transformToObservableFSM");
 	cout << "============================= Start Test of Fsm::transformToObservableFSM =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
@@ -1028,70 +1044,76 @@ void transformToObservableFSM_TS() {
 	srand(84618);
 	for (int i = 0; i < 100; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, pl);
-		testTransformToObservableFSM(*fsm, "TC-Rand-" + to_string(i));
+		testTransformToObservableFSM(*fsm, "TC-Rand-" + to_string(i)) 
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 	srand(119);
 	for (int i = 0; i < 100; ++i) {
 		Dfsm dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
-		testTransformToObservableFSM(dfsm, "TC-Rand-(Dfsm)-" + to_string(i));
+		testTransformToObservableFSM(dfsm, "TC-Rand-(Dfsm)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(Dfsm)-" + to_string(i));
 	}
 
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
-	testTransformToObservableFSM(*csm, "TC-CSM-0");
+	testTransformToObservableFSM(*csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
-	testTransformToObservableFSM(*fsb, "TC-FSBC-0");
+	testTransformToObservableFSM(*fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
-	testTransformToObservableFSM(*gdc, "TC-GDC-0");
+	testTransformToObservableFSM(*gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<FsmTransformationTestCase<Fsm>> testSuite;
 	parseFsmTransformationTSFile<Fsm>("../../../resources/TestSuites/FSM-Transformations/Fsm_transformToObservable.testsuite", testSuite);
 	for (auto tc : testSuite) {
-		testTransformToObservableFSM(*tc.m, "TC-Part-" + tc.id);
+		testTransformToObservableFSM(*tc.m, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
+	return result;
 }
 
 /**
  * Test Suite: Dfsm::minimise()
  */
-void minimise_Dfsm_TS() {
+TestResult minimise_Dfsm_TS() {
+	TestResult result("Dfsm::minimise");
 	cout << "============================= Start Test of Dfsm::minimise =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(56958);
 	for (int i = 0; i < 100; ++i) {
-		Dfsm dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true); //createRandomDfsm("M", 10, 4, 4, pl);
-		testMinimise_Dfsm(dfsm, "TC-Rand-" + to_string(i));
+		Dfsm dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
+		testMinimise_Dfsm(dfsm, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	shared_ptr<Dfsm> csm = make_shared<Dfsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
-	testMinimise_Dfsm(*csm, "TC-CSM-0");
+	testMinimise_Dfsm(*csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	shared_ptr<Dfsm> fsb = make_shared<Dfsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
-	testMinimise_Dfsm(*fsb, "TC-FSBC-0");
+	testMinimise_Dfsm(*fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
-	testMinimise_Dfsm(*gdc, "TC-GDC-0");
+	testMinimise_Dfsm(*gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<FsmTransformationTestCase<Dfsm>> testSuite;
 	parseFsmTransformationTSFile<Dfsm>("../../../resources/TestSuites/FSM-Transformations/Dfsm_minimise.testsuite", testSuite);
 	for (auto tc : testSuite) {
-		testMinimise_Dfsm(*tc.m, "TC-Part-" + tc.id);
+		testMinimise_Dfsm(*tc.m, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
+	return result;
 }
 
 /**
  * Test Suite: Fsm::minimiseObservableFSM()
  */
 TestResult minimiseObservableFSM_TS() {
-	TestResult result("Fsm::minimiseObservableFSM()");
+	TestResult result("Fsm::minimiseObservableFSM");
 	cout << "============================= Start Test of Fsm::minimiseObservableFSM =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
@@ -1130,7 +1152,8 @@ TestResult minimiseObservableFSM_TS() {
 /**
  * Test Suite: Fsm::minimise()
  */
-void minimise_Fsm_TS() {
+TestResult minimise_Fsm_TS() {
+	TestResult result("Fsm::minimise");
 	cout << "============================= Start Test of Fsm::minimise =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
@@ -1138,18 +1161,19 @@ void minimise_Fsm_TS() {
 	srand(8368);
 	for (int i = 0; i < 100; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, pl);
-		testMinimise_Fsm(*fsm, "TC-Rand-" + to_string(i));
+		testMinimise_Fsm(*fsm, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
-	testMinimise_Fsm(*csm, "TC-CSM-0");
+	testMinimise_Fsm(*csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
-	testMinimise_Fsm(*fsb, "TC-FSBC-0");
+	testMinimise_Fsm(*fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "FSB");
-	testMinimise_Fsm(*gdc, "TC-GDC-0");
+	testMinimise_Fsm(*gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 	//		// these make the program crash
 	//"../../../resources/TestSuites/FSM029.fsm"
@@ -1159,8 +1183,9 @@ void minimise_Fsm_TS() {
 	vector<FsmTransformationTestCase<Fsm>> testSuite;
 	parseFsmTransformationTSFile<Fsm>("../../../resources/TestSuites/FSM-Transformations/Fsm_minimise.testsuite", testSuite);
 	for (auto tc : testSuite) {
-		testMinimise_Fsm(*tc.m, "TC-Part-" + tc.id);
+		testMinimise_Fsm(*tc.m, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
+	return result;
 }
 // ====================================================================================================
 
