@@ -549,13 +549,13 @@ public:
 	 * Test function for Fsm::calcStateIdentificationSets().
 	 * Needs access to stateIdentificationSets of this class.
 	 */
-	friend void testCalcStateIdentificationSets(Fsm &m, const std::string &tcID);
+	friend bool testCalcStateIdentificationSets(Fsm &m, const std::string &tcID);
 
 	/**
      * Test function for Fsm::calcStateIdentificationSetsFast().
      * Needs access to stateIdentificationSets of this class.
      */
-	friend void testCalcStateIdentificationSetsFast(Fsm &m, const std::string &tcID);
+	friend bool testCalcStateIdentificationSetsFast(Fsm &m, const std::string &tcID);
 
 	/**
      * Transform m to a complete Fsm by adding self loops in states for undefined inputs producing some nullouput not contained in the

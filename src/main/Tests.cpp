@@ -1263,7 +1263,8 @@ bool languageIntersectionCheck(const Fsm &m1, const Fsm &m2, const Fsm &intersec
 /**
  * Test function for Fsm::intersect(const Fsm & f).
  */
-void testIntersection(Fsm &m1, const Fsm &m2, const string &tcID) {
+bool testIntersection(Fsm &m1, const Fsm &m2, const string &tcID) {
+	bool pass = true;
 	// get copy of m1 and m2
 	const Fsm copyOfM1 = Fsm(m1);
 
@@ -1272,17 +1273,19 @@ void testIntersection(Fsm &m1, const Fsm &m2, const string &tcID) {
 
 	// first check invariant for m1 and intersection   (we don't need to check invariant for m2 because it's const)
 	bool invariantViolationOfM1 = not m1.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolationOfM1, "Invariant still holds for M1 after calculation.");
+	fsmlib_assert(tcID, not invariantViolationOfM1, pass, "Invariant still holds for M1 after calculation.");
 	bool invariantViolationOfIntersection = not intersection.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolationOfIntersection, "Invariant holds for intersection after calculation.");
+	fsmlib_assert(tcID, not invariantViolationOfIntersection, pass, "Invariant holds for intersection after calculation.");
 	// stop test execution at this point if invariant of m or intersection does not hold anymore
-	if (invariantViolationOfM1 || invariantViolationOfIntersection) return;
+	if (invariantViolationOfM1 || invariantViolationOfIntersection) return pass;
 
 	// check language intersection
-	fsmlib_assert(tcID, languageIntersectionCheck(m1, m2, intersection), "Language of the result is intersection of L(M1) and L(M2)");
+	fsmlib_assert(tcID, languageIntersectionCheck(m1, m2, intersection), pass, "Language of the result is intersection of L(M1) and L(M2)");
 
 	// check for forbidden side effects
-	fsmlib_assert(tcID, checkForEqualStructure(m1, copyOfM1), "M1 was not changed by algorithm");
+	fsmlib_assert(tcID, checkForEqualStructure(m1, copyOfM1), pass, "M1 was not changed by algorithm");
+
+	return pass;
 }
 
 /**
@@ -1352,7 +1355,8 @@ shared_ptr<vector<IntersectTestCase>> parseIntersectTSFile(const string &testSui
 /*
  *	Test Suite of Fsm::intersect
 */
-void intersect_TS() {
+TestResult intersect_TS() {
+	TestResult result("Fsm::intersect");
 	cout << "============================= Start Test of Fsm::intersect =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
@@ -1361,43 +1365,46 @@ void intersect_TS() {
 	for (int i = 0; i < 100; ++i) {
 		auto m1 = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 8, make_shared<FsmPresentationLayer>());
 		const auto m2 = m1->createMutantRepeatable("M2", rand() % 5 + 1, rand() % 5 + 1);
-		testIntersection(*m1, *m2, "TC-Rand-(1)-" + to_string(i));
+		testIntersection(*m1, *m2, "TC-Rand-(1)-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-(1)-" + to_string(i));
 	}
 	srand(104385);
 	for (int i = 0; i < 100; ++i) {
 		auto m1 = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, make_shared<FsmPresentationLayer>());
 		const auto m2 = Fsm::createRandomFsmRepeatable("M2", rand() % 4, rand() % 4 + 1, rand() % 10, make_shared<FsmPresentationLayer>());
-		testIntersection(*m1, *m2, "TC-Rand-(2)-" + to_string(i));
+		testIntersection(*m1, *m2, "TC-Rand-(2)-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-(2)-" + to_string(i));
 	}
 	srand(158487);
 	for (int i = 0; i < 100; ++i) {
 		auto m1 = Dfsm("M1", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		if (i == 45) cout << m1 << endl;
 		const auto m2 = m1.createMutantRepeatable("M2", rand() % 5, rand() % 5);
-		testIntersection(m1, *m2, "TC-Rand-(3)-" + to_string(i));
+		testIntersection(m1, *m2, "TC-Rand-(3)-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-(3)-" + to_string(i));
 	}
 	srand(627627);
 	for (int i = 0; i < 100; ++i) {
 		auto m1 = Dfsm("M1", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		const auto m2 = Dfsm("M2", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
-		testIntersection(m1, m2, "TC-Rand-(4)-" + to_string(i));
+		testIntersection(m1, m2, "TC-Rand-(4)-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-(4)-" + to_string(i));
 	}
 
 	srand(353890);
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
 	for (int i = 0; i < 100; ++i) {
-		testIntersection(*csm, *csm->createMutantRepeatable("Mutant", rand() % 6 + 1, rand() % 6 + 1), "TC-CSM-" + to_string(i));
+		testIntersection(*csm, *csm->createMutantRepeatable("Mutant", rand() % 6 + 1, rand() % 6 + 1), "TC-CSM-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-CSM-" + to_string(i));
 	}
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
 	for (int i = 0; i < 100; ++i) {
-		testIntersection(*fsb, *fsb->createMutantRepeatable("Mutant", rand() % 6 + 1, rand() % 6 + 1), "TC-FSBC-" + to_string(i));
+		testIntersection(*fsb, *fsb->createMutantRepeatable("Mutant", rand() % 6 + 1, rand() % 6 + 1), "TC-FSBC-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-FSBC-" + to_string(i));
 	}
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC");
 	for (int i = 0; i < 100; ++i) {
-		testIntersection(*gdc, *gdc->createMutantRepeatable("Mutant", rand() % 6 + 1, rand() % 6 + 1), "TC-GDC-" + to_string(i));
+		testIntersection(*gdc, *gdc->createMutantRepeatable("Mutant", rand() % 6 + 1, rand() % 6 + 1), "TC-GDC-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-GDC-" + to_string(i));
 	}
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
@@ -1405,8 +1412,9 @@ void intersect_TS() {
 	for (auto tc : *testSuite) {
 		shared_ptr<Fsm> m1 = make_shared<Fsm>(tc.m1Path, pl, "M1");
 		shared_ptr<Fsm> m2 = make_shared<Fsm>(tc.m2Path, pl, "M2");
-		testIntersection(*m1, *m2, "TC-Part-" + tc.id);
+		testIntersection(*m1, *m2, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
+	return result;
 }
 
 
@@ -1618,7 +1626,8 @@ bool isMinimalStateIdentificationSet(const Fsm &m, const shared_ptr<FsmNode> qi,
  * Test function for Dfsm::getCharacterisationSet().
  * Parameter m is expected to be a minimal and complete Dfsm.
  */
-void testGetCharacterisationSet_Dfsm(Dfsm &m, const string &tcID) {
+bool testGetCharacterisationSet_Dfsm(Dfsm &m, const string &tcID) {
+	bool pass = true;
 	// get copy of m
 	const Dfsm copyOfM = Dfsm(m);
 
@@ -1627,17 +1636,19 @@ void testGetCharacterisationSet_Dfsm(Dfsm &m, const string &tcID) {
 
 	// first check invariant of m
 	bool invariantViolation = not m.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Dfsm class invariant still holds for M after calculation.");
+	fsmlib_assert(tcID, not invariantViolation, pass, "Dfsm class invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
-	if (invariantViolation) return;
+	if (invariantViolation) return pass;
 
 	// check definition of 'Characterisation Set' for w
-	fsmlib_assert(tcID, isCharaterisationSet(m, w), "Result is a Characterisation Set for M.");
+	fsmlib_assert(tcID, isCharaterisationSet(m, w), pass, "Result is a Characterisation Set for M.");
 
-	fsmlib_assert(tcID, *m.characterisationSet->getIOLists().getIOLists() == *w.getIOLists(), "Result is stored in attribute.");
+	fsmlib_assert(tcID, *m.characterisationSet->getIOLists().getIOLists() == *w.getIOLists(), pass, "Result is stored in attribute.");
 
 	// check if structure of m has changed
-	fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
+	fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), pass, "M was not changed by algorithm");
+
+	return pass;
 }
 
 
@@ -1660,7 +1671,7 @@ bool testGetCharacterisationSet_Fsm(Fsm &m, const string &tcID) {
 	if (invariantViolation) return pass;
 
 	// check definition of 'Characterisation Set' for w
-	fsmlib_assert(tcID, isCharaterisationSet(m, w), "Result is a Characterisation Set for M.");
+	fsmlib_assert(tcID, isCharaterisationSet(m, w), pass, "Result is a Characterisation Set for M.");
 
 	fsmlib_assert(tcID, *m.characterisationSet->getIOLists().getIOLists() == *w.getIOLists(), pass, "Result is stored in attribute.");
 
@@ -1675,7 +1686,8 @@ bool testGetCharacterisationSet_Fsm(Fsm &m, const string &tcID) {
  *                                           const int maxInput)
  * Parameter m is expected to be a minimal and complete Dfsm.
  */
-void testCalcDistinguishingTrace1(Dfsm &m, const string &tcID) {
+bool testCalcDistinguishingTrace1(Dfsm &m, const string &tcID) {
+	bool pass = true;
 	// get copy of m
 	const Dfsm copyOfM = Dfsm(m);
 
@@ -1695,17 +1707,18 @@ void testCalcDistinguishingTrace1(Dfsm &m, const string &tcID) {
 
 			// first check invariant of m
 			bool invariantViolation = not m.checkInvariant();
-			fsmlib_assert(tcID, not invariantViolation, "Dfsm class invariant still holds for M after calculation.");
+			fsmlib_assert(tcID, not invariantViolation, pass, "Dfsm class invariant still holds for M after calculation.");
 			// stop test execution at this point if invariant of m does not hold anymore
-			if (invariantViolation) return;
+			if (invariantViolation) return pass;
 
 			// check definition of 'Distinguishing Trace' for inTrc
-			fsmlib_assert(tcID, isDistTrc(q1, q2, inTrc.get(), m.getMaxOutput()), "Calculated Trace is a Distinguishing Trace for q1 and q2.");
+			fsmlib_assert(tcID, isDistTrc(q1, q2, inTrc.get(), m.getMaxOutput()), pass, "Calculated Trace is a Distinguishing Trace for q1 and q2.");
 
 			// check if structure of m has changed
-			fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
+			fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), pass, "M was not changed by algorithm");
 		}
 	}
+	return pass;
 }
 
 /**
@@ -1791,7 +1804,8 @@ bool testCalcDistinguishingTrace2(Fsm &m, const string &tcID) {
  * Test function for Fsm::calcStateIdentificationSets(). Test in context of Dfsm.
  * m is expected to be a minimal Dfsm.
  */
-void testCalcStateIdentificationSets(Fsm &m, const string &tcID) {
+bool testCalcStateIdentificationSets(Fsm &m, const string &tcID) {
+	bool pass = true;
 	// get copy of m
 	const Fsm copyOfM = Fsm(m);
 
@@ -1806,22 +1820,24 @@ void testCalcStateIdentificationSets(Fsm &m, const string &tcID) {
 
 	// first check invariant of m
 	bool invariantViolation = not m.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Invariant still holds for M after calculation.");
+	fsmlib_assert(tcID, not invariantViolation, pass, "Invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
-	if (invariantViolation) return;
+	if (invariantViolation) return pass;
 
 	// Check Definition of minimal State Identification Set for each element in stateIdSets
-	fsmlib_assert(tcID, stateIdSets.size() == m.getNodes().size(), "Number of calculated State Identification Sets matches the number of states of M.");
+	fsmlib_assert(tcID, stateIdSets.size() == m.getNodes().size(), pass, "Number of calculated State Identification Sets matches the number of states of M.");
 	for (size_t i = 0; i < stateIdSets.size(); ++i) {
-		fsmlib_assert(tcID, isStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), "M.stateIdentificationSets[i] is a State Identification Set for M.nodes[i].");
-		fsmlib_assert(tcID, isMinimalStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), "M.stateIdentificationSets[i] is a minimal State Identification Set for M.nodes[i].");
+		fsmlib_assert(tcID, isStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), pass, "M.stateIdentificationSets[i] is a State Identification Set for M.nodes[i].");
+		fsmlib_assert(tcID, isMinimalStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), pass, "M.stateIdentificationSets[i] is a minimal State Identification Set for M.nodes[i].");
 	}
 
 	// check if structure of m has changed
-	fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
+	fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), pass, "M was not changed by algorithm");
 
 	// check if m.characterisationSet has changed
-	fsmlib_assert(tcID, *tracesOfW.getIOLists() == *m.characterisationSet->getIOLists().getIOLists(), "characterisation set of M has not changed");
+	fsmlib_assert(tcID, *tracesOfW.getIOLists() == *m.characterisationSet->getIOLists().getIOLists(), pass, "characterisation set of M has not changed");
+
+	return pass;
 }
 
 /**
@@ -1864,7 +1880,8 @@ void testCalcStateIdentificationSets(Fsm &m, const string &tcID) {
  * Test function for Fsm::calcStateIdentificationSetsFast().
  * m is expected to be a minimal and complete Dfsm.
  */
-void testCalcStateIdentificationSetsFast(Fsm &m, const string &tcID) {
+bool testCalcStateIdentificationSetsFast(Fsm &m, const string &tcID) {
+	bool pass = true;
 	// get copy of m
 	const Fsm copyOfM = Fsm(m);
 
@@ -1879,21 +1896,22 @@ void testCalcStateIdentificationSetsFast(Fsm &m, const string &tcID) {
 
 	// first check invariant of m
 	bool invariantViolation = not m.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, "Invariant still holds for M after calculation.");
+	fsmlib_assert(tcID, not invariantViolation, pass, "Invariant still holds for M after calculation.");
 	// stop test execution at this point if invariant of m does not hold anymore
-	if (invariantViolation) return;
+	if (invariantViolation) return pass;
 
 	// Check Definition of State Identification Set for each element in stateIdSets
 	fsmlib_assert(tcID, stateIdSets.size() == m.getNodes().size(), "Number of calculated State Identification Sets matches the number of states of M.");
 	for (size_t i = 0; i < stateIdSets.size(); ++i) {
-		fsmlib_assert(tcID, isStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), "M.stateIdentificationSets[i] is a State Identification Set for M.nodes[i].");
+		fsmlib_assert(tcID, isStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), pass, "M.stateIdentificationSets[i] is a State Identification Set for M.nodes[i].");
 	}
 
 	// check if structure of m has changed
-	fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
+	fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), pass, "M was not changed by algorithm");
 
 	// check if m.characterisationSet has changed
-	fsmlib_assert(tcID, *tracesOfW.getIOLists() == *m.characterisationSet->getIOLists().getIOLists(), "characterisation set of M has not changed");
+	fsmlib_assert(tcID, *tracesOfW.getIOLists() == *m.characterisationSet->getIOLists().getIOLists(), pass, "characterisation set of M has not changed");
+	return pass;
 }
 
 template <typename T>
@@ -1939,7 +1957,8 @@ void parseDistinguishingTraceTSFile(const string &testSuitePath, vector<Distingu
 /*
  *	Random Test Suite for test of Dfsm::getCharacterisationSet().
  */
-void getCharacterisationSet_Dfsm_TS() {
+TestResult getCharacterisationSet_Dfsm_TS() {
+	TestResult result("Dfsm::getCharacterisationSet");
 	cout << "============================= Start Test of Dfsm::getCharacterisationSet =============================" << endl;
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
@@ -1948,35 +1967,36 @@ void getCharacterisationSet_Dfsm_TS() {
 	for (int i = 0; i < 100; ++i) {
 		auto m = Dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		auto minM = m.minimise();
-		testGetCharacterisationSet_Dfsm(minM, "TC-Rand-" + to_string(i));
+		testGetCharacterisationSet_Dfsm(minM, "TC-Rand-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	Dfsm csm = Dfsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
-	testGetCharacterisationSet_Dfsm(csm, "TC-CSM-0");
+	testGetCharacterisationSet_Dfsm(csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	Dfsm fsb = Dfsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
-	testGetCharacterisationSet_Dfsm(fsb, "TC-FSBC-0");
+	testGetCharacterisationSet_Dfsm(fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	Dfsm gdc = Dfsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
-	testGetCharacterisationSet_Dfsm(gdc, "TC-GDC-0");
+	testGetCharacterisationSet_Dfsm(gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<DistinguishingTraceTestCase<Dfsm>> testSuite;
 	parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Dfsm_getCharacterisationSet.testsuite", testSuite);
 	for (auto tc : testSuite) {
-		testGetCharacterisationSet_Dfsm(*tc.m, "TC-Part-" + tc.id);
+		testGetCharacterisationSet_Dfsm(*tc.m, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
+	return result;
 }
 
 /*
  *	Random Test Suite for test of Fsm::getCharacterisationSet().
  */
 TestResult getCharacterisationSet_Fsm_TS() { 
-	TestResult result("Fsm::getCharacterisationSet()");
+	TestResult result("Fsm::getCharacterisationSet");
 	cout << "============================= Start Test of Fsm::getCharacterisationSet =============================" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
@@ -2007,7 +2027,6 @@ TestResult getCharacterisationSet_Fsm_TS() {
 	for (auto tc : testSuite) {
 		testGetCharacterisationSet_Fsm(*tc.m, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
-	result.printResults();
 	return result;
 }
 
@@ -2016,7 +2035,8 @@ TestResult getCharacterisationSet_Fsm_TS() {
  *                                           const vector<shared_ptr<PkTable>>& pktblLst,
  *                                           const int maxInput)
  */
-void calcDistinguishingTrace_PkTables_TS() {
+TestResult calcDistinguishingTrace_PkTables_TS() {
+	TestResult result("FsmNode::calcDistinguishingTracet(pkTables)");
 	cout << "============================= Start Test of FsmNode::calcDistinguishingTrace(pkTables) =============================" << endl;	
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
@@ -2025,27 +2045,28 @@ void calcDistinguishingTrace_PkTables_TS() {
 	for (int i = 0; i < 1000; ++i) {
 		auto m = Dfsm("M", rand() % 10 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		auto minM = m.minimise();
-		testCalcDistinguishingTrace1(minM, "TC-Rand-" + to_string(i));
+		testCalcDistinguishingTrace1(minM, "TC-Rand-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	Dfsm csm = Dfsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
-	testCalcDistinguishingTrace1(csm, "TC-CSM-0");
+	testCalcDistinguishingTrace1(csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	Dfsm fsb = Dfsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
-	testCalcDistinguishingTrace1(fsb, "TC-FSBC-0");
+	testCalcDistinguishingTrace1(fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	Dfsm gdc = Dfsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
-	testCalcDistinguishingTrace1(gdc, "TC-GDC-0");
+	testCalcDistinguishingTrace1(gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<DistinguishingTraceTestCase<Dfsm>> testSuite;
 	parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/FsmNode_calcDistinguishingTrace_pk.testsuite", testSuite);
 	for (auto tc : testSuite) {
-		testCalcDistinguishingTrace1(*tc.m, "TC-Part-" + tc.id);
+		testCalcDistinguishingTrace1(*tc.m, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
+	return result;
 }
 
 /*
@@ -2055,7 +2076,7 @@ void calcDistinguishingTrace_PkTables_TS() {
  *                                           const int maxOutput)
  */
 TestResult calcDistinguishingTrace_OFSMTables_TS() {
-	TestResult result("FsmNode::calcDistinguishingTrace(ofsmTables");
+	TestResult result("FsmNode::calcDistinguishingTrace(ofsmTables)");
 	cout << "============================= Start Test of FsmNode::calcDistinguishingTrace(ofsmTables) =============================" << endl;
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;	
@@ -2085,14 +2106,14 @@ TestResult calcDistinguishingTrace_OFSMTables_TS() {
 	for (auto tc : testSuite) {
 		testCalcDistinguishingTrace2(*tc.m, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
-	result.printResults();
 	return result;
 }
 
 /*
  *	Random Test Suite for test of Fsm::calcStateIdentificationSets().
  */
-void calcStateIdentificationSets_TS() {
+TestResult calcStateIdentificationSets_TS() {
+	TestResult result("Fsm::calcStateIdentificationSets");
 	cout << "============================= Start Test of Fsm::calcStateIdentificationSets() =============================" << endl;
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
@@ -2103,35 +2124,38 @@ void calcStateIdentificationSets_TS() {
 		auto minFsm = fsm->minimise();
 		if (minFsm.size() > 50) {
 			cout << "M is too big. Stop Test Case." << endl;
-			return;
+			continue;
 		}
-		testCalcStateIdentificationSets(minFsm, "TC-Rand-" + to_string(i));
+		testCalcStateIdentificationSets(minFsm, "TC-Rand-" + to_string(i)) 
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 	srand(436);
 	for (int i = 0; i < 100; ++i) {
 		auto m = Dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		auto minM = m.minimise();
-		testCalcStateIdentificationSets(minM, "TC-Rand-(Dfsm)-" + to_string(i));
+		testCalcStateIdentificationSets(minM, "TC-Rand-(Dfsm)-" + to_string(i)) 
+			? ++result.pass : result.fails.push_back("TC-Rand-(Dfsm)-" + to_string(i));
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	Fsm csm = Fsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
-	testCalcStateIdentificationSets(csm, "TC-CSM-0");
+	testCalcStateIdentificationSets(csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	Fsm fsb = Fsm("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB").minimise();
-	testCalcStateIdentificationSets(fsb, "TC-FSBC-0");
+	testCalcStateIdentificationSets(fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	Fsm gdc = Fsm("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC").minimise();
-	testCalcStateIdentificationSets(gdc, "TC-GDC-0");
+	testCalcStateIdentificationSets(gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<DistinguishingTraceTestCase<Fsm>> testSuite;
 	parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_calcStateIdentificationSets.testsuite", testSuite);
 	for (auto tc : testSuite) {
-		testCalcStateIdentificationSets(*tc.m, "TC-Part-" + tc.id);
+		testCalcStateIdentificationSets(*tc.m, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
+	return result;
 }
 
 //shared_ptr<Fsm> createPartialMutant(shared_ptr<Fsm> m) {
@@ -2209,7 +2233,8 @@ shared_ptr<Fsm> transformToComplete(const shared_ptr<const Fsm> m, const size_t 
 /*
  *	Random Test Suite for test of Fsm::calcStateIdentificationSetsFast().
 */
-void calcStateIdentificationSetsFast_TS() {
+TestResult calcStateIdentificationSetsFast_TS() {
+	TestResult result("Fsm::calcStateIdentificationSetsFast");
 	cout << "============================= Start Test of Fsm::calcStateIdentificationSetsFast =============================" << endl;
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;	
@@ -2219,9 +2244,10 @@ void calcStateIdentificationSetsFast_TS() {
 		auto minFsm = fsm->minimise();
 		if (minFsm.size() > 50) {
 			cout << "M is too big. Stop Test Case." << endl;
-			return;
+			continue;
 		}
-		testCalcStateIdentificationSetsFast(minFsm, "TC-Rand-" + to_string(i));
+		testCalcStateIdentificationSetsFast(minFsm, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 	srand(711100);
 	for (int i = 0; i < 100; ++i) {
@@ -2230,43 +2256,47 @@ void calcStateIdentificationSetsFast_TS() {
 		auto minFsm = tmp->minimise();
 		if (minFsm.size() > 50) {
 			cout << "M is too big. Stop Test Case." << endl;
-			return;
+			continue;
 		}
-		testCalcStateIdentificationSetsFast(minFsm, "TC-Rand-(MSP)" + to_string(i));
+		testCalcStateIdentificationSetsFast(minFsm, "TC-Rand-(MSP)" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSP)" + to_string(i));
 	}
 	srand(266306);
 	for (int i = 0; i < 100; ++i) {
 		auto m = Dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, make_shared<FsmPresentationLayer>(), true);
 		auto minM = m.minimise();
 		cout << "minFsm size: " << minM.size() << endl;
-		testCalcStateIdentificationSetsFast(minM, "TC-Rand-(Dfsm)-" + to_string(i));
+		testCalcStateIdentificationSetsFast(minM, "TC-Rand-(Dfsm)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(Dfsm)-" + to_string(i));
 	}
 	srand(485639);
 	for (int i = 0; i < 100; ++i) {
 		auto m = Dfsm("M", rand() % 15 + 1, rand() % 4 + 1, rand() % 4 + 1, make_shared<FsmPresentationLayer>(), true);
 		Dfsm minM = Dfsm(*makeStatesPartial(make_shared<Dfsm>(m))).minimise();
-		testCalcStateIdentificationSetsFast(minM, "TC-Rand-(Dfsm,MSP)-" + to_string(i));
+		testCalcStateIdentificationSetsFast(minM, "TC-Rand-(Dfsm,MSP)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(Dfsm,MSP)-" + to_string(i));
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	Fsm csm = Fsm("../../../resources/TestSuites/examples/csm.fsm", make_shared<FsmPresentationLayer>(), "CSM").minimise();
-	testCalcStateIdentificationSetsFast(csm, "TC-CSM-0");
+	testCalcStateIdentificationSetsFast(csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
 
 	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
 	Fsm fsb = Fsm("../../../resources/TestSuites/examples/fsb.fsm", make_shared<FsmPresentationLayer>(), "FSB").minimise();
-	testCalcStateIdentificationSetsFast(fsb, "TC-FSBC-0");
+	testCalcStateIdentificationSetsFast(fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
 
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	Fsm gdc = Fsm("../../../resources/TestSuites/examples/gdc.fsm", make_shared<FsmPresentationLayer>(), "GDC").minimise();
-	testCalcStateIdentificationSetsFast(gdc, "TC-GDC-0");
+	testCalcStateIdentificationSetsFast(gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<DistinguishingTraceTestCase<Fsm>> testSuite;
 	parseDistinguishingTraceTSFile("../../../resources/TestSuites/DistinguishingTraces/Fsm_calcStateIdentificationSetsFast.testsuite", testSuite);
 	for (auto tc : testSuite) {
-		testCalcStateIdentificationSetsFast(*tc.m, "TC-Part-" + tc.id);
+		testCalcStateIdentificationSetsFast(*tc.m, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
+	return result;
 }
 
 // ====================================================================================================
@@ -2794,7 +2824,6 @@ TestResult wMethodOnMinimisedFsm_TS() {
 	for (auto tc : *testSuite) {
 		executeTestTheoryTC<Fsm>(tc, tsGenerator, result);
 	}
-	result.printResults();
 	return result;
 }
 

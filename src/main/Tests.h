@@ -48,12 +48,12 @@ TestResult minimise_Fsm_TS();
 /*
  *	Random Test Suite for test of Fsm::getCharacterisationSet().
  */
-void intersect_TS();
+TestResult intersect_TS();
 
 /*
  *	Random Test Suite for test of Fsm::getCharacterisationSet().
  */
-void getCharacterisationSet_Dfsm_TS();
+TestResult getCharacterisationSet_Dfsm_TS();
 
 /*
  *	Random Test Suite for test of Fsm::getCharacterisationSet().
@@ -65,7 +65,7 @@ TestResult getCharacterisationSet_Fsm_TS();
  *                                           const vector<shared_ptr<PkTable>>& pktblLst,
  *                                           const int maxInput)
  */
-void calcDistinguishingTrace_PkTables_TS();
+TestResult calcDistinguishingTrace_PkTables_TS();
 
 /*
  *	Random Test Suite for test of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
@@ -78,12 +78,12 @@ TestResult calcDistinguishingTrace_OFSMTables_TS();
 /*
  *	Random Test Suite for test of Fsm::calcStateIdentificationSets().
  */
-void calcStateIdentificationSets_TS();
+TestResult calcStateIdentificationSets_TS();
 
 /*
  *	Random Test Suite for test of Fsm::calcStateIdentificationSetsFast().
  */
-void calcStateIdentificationSetsFast_TS();
+TestResult calcStateIdentificationSetsFast_TS();
 
 /*
  *	Random Test Suite for test of Dfsm::tMethod().

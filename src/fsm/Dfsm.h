@@ -460,7 +460,7 @@ public:
 	 * Parameter m is expected to be a minimal and complete Dfsm.
 	 * Needs access to characterisationSet of this class.
 	 */
-	friend void testGetCharacterisationSet_Dfsm(Dfsm &m, const std::string &tcID);
+	friend bool testGetCharacterisationSet_Dfsm(Dfsm &m, const std::string &tcID);
 
 	/**
      * Test function for FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
@@ -468,7 +468,7 @@ public:
      *                                           const int maxInput)
      * Needs access to pktblLst of this class.
      */
-	friend void testCalcDistinguishingTrace1(Dfsm &m, const std::string &tcID);
+	friend bool testCalcDistinguishingTrace1(Dfsm &m, const std::string &tcID);
 
 	/**
 	 * Test function for Fsm::calcStateIdentificationSets().
