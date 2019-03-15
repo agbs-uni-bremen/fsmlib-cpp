@@ -527,10 +527,6 @@ bool testMinimiseObservableFSM(Fsm &m1, const string &tcID) {
 	// check if L(m1) = L(m2)
 	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), pass, "minimiseObservableFSM() does not change the language");
 
-	//// check unexpected side effects
-	//fsmlib_assert(tcID, checkFsmClassInvariant(m1), "M1 still fullfills class invariants after transformation");
-	//fsmlib_assert(tcID, checkFsmClassInvariant(m2), "M2 still fullfills class invariants after transformation");
-
 	// check invariant of m1
 	invariantViolation = not m1.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, pass, "Invariant holds for M1 after transformation");
@@ -565,13 +561,9 @@ bool testMinimise_Fsm(Fsm &m1, const string &tcID) {
 	// check if L(m1) = L(m2)
 	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), pass, "minimise() does not change the language");
 
-	//// check unexpected side effects
-	//fsmlib_assert(tcID, checkFsmClassInvariant(m1), "M1 still fullfills class invariants after transformation");
-	//fsmlib_assert(tcID, checkFsmClassInvariant(m2), "M2 still fullfills class invariants after transformation");
-
 	// check invariant of m1
 	invariantViolation = not m1.checkInvariant();
-	fsmlib_assert(tcID, not invariantViolation, pass, "class invariant holds for M1 after transformation");
+	fsmlib_assert(tcID, not invariantViolation, pass, "Invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m1 does not hold anymore
 	if (invariantViolation) return pass;
 
@@ -1055,30 +1047,30 @@ TestResult intersect_TS() {
 // ====================================================================================================
 // Prüfverfahren "Berechnung von Distinguishing Traces"
 
-//set<vector<int>> calcCompleteOutputTraces(const shared_ptr<FsmNode> startNode, const vector<int> inputTrc) {	
-//	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl{ {startNode, vector<int>()} };
-//	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl_next;
-//
-//	for (int x : inputTrc) {
-//		for (auto reachedNode : wl) {
-//			for (auto transition : std::get<0>(reachedNode)->getTransitions()) {
-//				if (transition->getLabel()->getInput() != x) continue; 
-//				vector<int> outputTrc = get<1>(reachedNode);
-//				outputTrc.push_back(transition->getLabel()->getOutput());
-//				wl_next.insert({ transition->getTarget(), outputTrc });
-//			}
-//		}
-//		wl = wl_next;
-//		wl_next = set<std::tuple<shared_ptr<FsmNode>, vector<int>>>();
-//	}
-//
-//	set<vector<int>> outputTrcs;
-//	for (auto reachedNode : wl) {
-//		outputTrcs.insert(std::get<1>(reachedNode));
-//	}
-//
-//	return outputTrcs;
-//}
+set<vector<int>> calcCompleteOutputTraces(const shared_ptr<FsmNode> startNode, const vector<int> inputTrc) {	
+	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl{ {startNode, vector<int>()} };
+	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl_next;
+
+	for (int x : inputTrc) {
+		for (auto reachedNode : wl) {
+			for (auto transition : std::get<0>(reachedNode)->getTransitions()) {
+				if (transition->getLabel()->getInput() != x) continue; 
+				vector<int> outputTrc = get<1>(reachedNode);
+				outputTrc.push_back(transition->getLabel()->getOutput());
+				wl_next.insert({ transition->getTarget(), outputTrc });
+			}
+		}
+		wl = wl_next;
+		wl_next = set<std::tuple<shared_ptr<FsmNode>, vector<int>>>();
+	}
+
+	set<vector<int>> outputTrcs;
+	for (auto reachedNode : wl) {
+		outputTrcs.insert(std::get<1>(reachedNode));
+	}
+
+	return outputTrcs;
+}
 
 /*
 	Second Version of Algorithm. Applies inputTrc to startNode and produces set of outputtraces. If some FsmNode is reached with a prefix
@@ -1088,7 +1080,7 @@ TestResult intersect_TS() {
 set<vector<int>> calcCompleteOutputTraces2(const shared_ptr<FsmNode> startNode, const vector<int> inputTrc, const int maxOutput) {
 	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl{ {startNode, vector<int>()} };
 	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl_next;
-	const int nullOutput = maxOutput + 1; // or nullOutput = -1
+	const int nullOutput = maxOutput + 1;
 
 	for (int x : inputTrc) {
 		for (auto reachedNode : wl) {
@@ -1116,46 +1108,6 @@ set<vector<int>> calcCompleteOutputTraces2(const shared_ptr<FsmNode> startNode, 
 		//cout << "\n";
 		outputTrcs.insert(std::get<1>(reachedNode));
 	}
-	return outputTrcs;
-}
-
-/**
- *Third Version of Algorithm. Applies inputTrc to startNode and produces set of outputtraces.If some FsmNode is reached with a prefix
- *of inputTrc in which the next input of inputTrc is undefined, the corresponding output trace will be expanded by an 'NULL' output
- *(not contained in the output alphabet) and algorithm stays in this FsmNode.Then the next input is applied.
- */
-set<vector<int>> calcCompleteOutputTraces3(const shared_ptr<FsmNode> startNode, const vector<int> inputTrc, const int nullOutput, bool b) {
-	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl{ {startNode, vector<int>()} };
-	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl_next;
-	cout << "start" << endl;
-
-	for (int x : inputTrc) {
-		for (auto reachedNode : wl) {
-			bool defined = false;
-			for (auto transition : std::get<0>(reachedNode)->getTransitions()) {
-				if (transition->getLabel()->getInput() != x) continue;
-				defined = true;
-				vector<int> outputTrc = get<1>(reachedNode);
-				outputTrc.push_back(transition->getLabel()->getOutput());
-				wl_next.insert({ transition->getTarget(), outputTrc });
-			}
-			if (not defined) {
-				vector<int> outputTrc = get<1>(reachedNode);
-				outputTrc.push_back(nullOutput);
-				wl_next.insert({ std::get<0>(reachedNode), outputTrc });
-			}
-		}
-		wl = wl_next;
-		wl_next = set<std::tuple<shared_ptr<FsmNode>, vector<int>>>();
-	}
-
-	set<vector<int>> outputTrcs;
-	for (auto reachedNode : wl) {
-		//for (auto i : std::get<1>(reachedNode)) cout << i << ",";
-		//cout << "\n";
-		outputTrcs.insert(std::get<1>(reachedNode));
-	}
-	cout << "end" << endl;
 	return outputTrcs;
 }
 
