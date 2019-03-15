@@ -128,7 +128,7 @@ shared_ptr<Fsm> makeStatesUnreachable(const Fsm &m) {
 
 // Selects some input in each state of m and removes each transition for this input.
 // It is expected that srand() was called before.
-shared_ptr<Fsm> makeStatesPartial(shared_ptr<Fsm> m) {
+shared_ptr<Fsm> makeStatesPartial(const shared_ptr<Fsm> m) {
 	vector<shared_ptr<FsmNode> > lst;
 	for (int n = 0; n <= m->getMaxState(); n++) {
 		lst.push_back(make_shared<FsmNode>(n, m->getName(), m->getPresentationLayer()));
@@ -185,32 +185,6 @@ unordered_set<FsmLabel> calcLblSet(std::unordered_set < shared_ptr<FsmNode>> &no
 	}
 	return lblSet;
 }
-
-/*
-	Checks if processed contains front.
-*/
-//bool containsPair(std::vector<std::pair<std::unordered_set<std::shared_ptr<FsmNode>>, std::unordered_set<std::shared_ptr<FsmNode>>>> &processed,
-//	std::pair<std::unordered_set<std::shared_ptr<FsmNode>>, std::unordered_set<std::shared_ptr<FsmNode>>> &front) {
-//	for (auto p : processed) {
-//		if (p.first == front.first && p.second == front.second) {
-//			return true;
-//		}
-//	}
-//	return false;
-//}
-
-/*
-	Checks if wl contains pair.
-*/
-//bool containsPair(std::deque<std::pair<std::unordered_set<std::shared_ptr<FsmNode>>, std::unordered_set<std::shared_ptr<FsmNode>>>> &wl,
-//	std::pair<std::unordered_set<std::shared_ptr<FsmNode>>, std::unordered_set<std::shared_ptr<FsmNode>>> &pair) {
-//	for (auto p : wl) {
-//		if (p.first == pair.first && p.second == pair.second) {
-//			return true;
-//		}
-//	}
-//	return false;
-//}
 
 template<typename T>
 bool containsPair(T &lst, std::pair<std::unordered_set<std::shared_ptr<FsmNode>>, std::unordered_set<std::shared_ptr<FsmNode>>> &pair)
@@ -343,26 +317,6 @@ unordered_set<shared_ptr<FsmNode>> getReachableStates(const Fsm &fsm) {
 }
 
 /*
-	Returns true iff nodes[i].id == i for all 0 <= i < fsm.getNodes().size()
-*/
-//bool checkNodeIds(const Fsm &fsm) {
-//	for (size_t i = 0; i < fsm.getNodes().size(); ++i) {
-//		if (fsm.getNodes().at(i)->getId() != i) return false;
-//	}
-//	return true;
-//}
-
-/*
-	Returns true iff fsm.getNodes() contains given node pointer.
-*/
-//bool contains(const Fsm &fsm, const shared_ptr<FsmNode> node) {
-//	for (auto n : fsm.getNodes()) {
-//		if (n == node) return true;
-//	}
-//	return false;
-//}
-
-/*
 	Returns true iff fsm.getNodes() contains any of the given node pointers in nodes.
 */
 bool contains(const Fsm &fsm, const unordered_set<shared_ptr<FsmNode>> nodes) {
@@ -371,43 +325,6 @@ bool contains(const Fsm &fsm, const unordered_set<shared_ptr<FsmNode>> nodes) {
 	}
 	return false;
 }
-
-
-/*
-	Checks the transitions and return false iff any transitions hurts the invariant of Fsm.
-*/
-//bool checkAllTransitions(const Fsm &fsm) {
-//	for (auto n : fsm.getNodes()) {
-//		for (auto tr : n->getTransitions()) {
-//			if (tr == nullptr || tr->getLabel() == nullptr || tr->getLabel()->getInput() > fsm.getMaxInput()
-//				|| tr->getLabel()->getOutput() > fsm.getMaxOutput() || tr->getLabel()->getInput() < 0 || tr->getLabel()->getOutput() < 0
-//				|| tr->getSource() != n
-//				|| not contains(fsm, tr->getTarget())) {
-//				return false;
-//			}
-//		}
-//	}
-//	return true;
-//}
-
-/*
-	This function checks the Fsm class invariant for the given Fsm object.
-*/
-//bool checkFsmClassInvariant(const Fsm &fsm) {	
-//	if (fsm.getMaxInput() < 0) return false;
-//	if (fsm.getMaxOutput() < 0) return false;
-//	if (fsm.getNodes().size() < 1) return false;
-//	if (not checkNodeIds(fsm)) return false;
-//	if (contains(fsm, nullptr)) return false;
-//	if (not checkAllTransitions(fsm)) return false;
-//	if (fsm.getMaxState() != fsm.getNodes().size() - 1) return false;
-//	if (not(0 <= fsm.getInitStateIdx() and fsm.getInitStateIdx() <= fsm.getMaxState())) return false;
-//	return true;
-//}
-
-//bool checkDfsmClassInvariant(Dfsm &dfsm) {
-//	return checkFsmClassInvariant(dfsm) and dfsm.isDeterministic();
-//}
 
 /*
 	Checks if the given fsm is initial connected.
@@ -473,273 +390,6 @@ bool checkUnreachableNodesList(const vector<shared_ptr<FsmNode>> &unreachableNod
 	return true;
 }
 
-/*
-	This function creates and returns a randomly created Dfsm object. It is needed because the Dfsm Constructor that create randomized Dfsms does not set
-	the maxState member correctly, so no Dfsm Object created would fullfill the invariant.
-*/
-//Dfsm createRandomDfsm(const string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer) {
-//	Dfsm dfsm(fsmName, maxNodes, maxInput, maxOutput, presentationLayer);
-//	dfsm.setMaxState(dfsm.getNodes().size() - 1);
-//	return dfsm;
-//}
-
-//TODO Other random creation wrapper (createRandomMinimisedFsm) if needed (some may be needed because constructor or some transformation method
-// does not set maxState correctly, which matters if Fsm::createMutant() will be used on the created fsm)
-
-
-//void testFsmClassInvariant() {
-//	for (int i = 0; i < 30; i++) {
-//		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-//		//auto fsm2 = fsm->minimise();
-//		fsmlib_assert("TC", checkFsmClassInvariant(*fsm), "Random FSM fullfills invariant");
-//		//fsmlib_assert("TC", checkFsmClassInvariant(fsm2), "Minimised Random FSM fullfills invariant");
-//	}
-//
-//	{
-//		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-//		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
-//		shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
-//		shared_ptr<FsmNode> q2 = make_shared<FsmNode>(2, pl);
-//		shared_ptr<FsmNode> q3 = make_shared<FsmNode>(3, pl);
-//
-//		shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(1, 1, pl));
-//		q0->addTransition(tr0);
-//		shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q0, q2, make_shared<FsmLabel>(1, 1, pl));
-//		q0->addTransition(tr1);
-//		shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(q2, q1, make_shared<FsmLabel>(2, 2, pl));
-//		q2->addTransition(tr2);
-//		Fsm fsm("M", 2, 2, { q0,q1,q2,q3 }, pl);
-//		fsmlib_assert("TC", checkFsmClassInvariant(fsm), "FSM fullfills invariant");
-//	}
-//
-//	{
-//		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-//		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
-//		Fsm fsm("M", 0, 0, { q0 }, pl);
-//		fsmlib_assert("TC", checkFsmClassInvariant(fsm), "FSM fullfills invariant");
-//	}
-//
-//	{
-//		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-//		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
-//		shared_ptr<FsmNode> q1 = make_shared<FsmNode>(0, pl);
-//		shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(1, 0, pl));
-//		q0->addTransition(tr0);
-//		Fsm fsm("M", 0, 0, { q0, q1 }, pl);
-//		fsmlib_assert("TC", not checkFsmClassInvariant(fsm), "FSM does not fullfill invariant if some input is greater than maxInput");
-//	}
-//
-//
-//}
-
-//void testCheckDfsmClassInvariant() {
-//	for (int i = 0; i < 10; ++i) {
-//		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-//		Dfsm dfsm = createRandomDfsm("M", 10, 3, 4, pl);
-//		fsmlib_assert("TC", checkDfsmClassInvariant(dfsm), "Random DFSM fullfills invariant.");
-//	}
-//}
-
-
-//void testIOEquivalenceCheck() {
-//	{
-//	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-//	shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
-//	shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
-//
-//	shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(0, 1, pl));
-//	q0->addTransition(tr0);
-//	shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q1, q1, make_shared<FsmLabel>(1, 1, pl));
-//	q1->addTransition(tr1);
-//
-//	shared_ptr<FsmNode> u0 = make_shared<FsmNode>(0, pl);
-//	shared_ptr<FsmNode> u1 = make_shared<FsmNode>(1, pl);
-//	shared_ptr<FsmNode> u2 = make_shared<FsmNode>(2, pl);
-//
-//	shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(u0, u1, make_shared<FsmLabel>(0, 1, pl));
-//	u0->addTransition(tr2);
-//	shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(u1, u1, make_shared<FsmLabel>(1, 1, pl));
-//	u1->addTransition(tr3);
-//	shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(u0, u2, make_shared<FsmLabel>(1, 1, pl));
-//	u0->addTransition(tr4);
-//
-//	cout << ioEquivalenceCheck(q0, u0) << endl;
-//	}
-//
-//	for (int i = 0; i < 30; i++) {
-//		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-//		cout << "fsm.size: " << fsm->size() << endl;
-//		auto fsm2 = fsm->minimise();
-//		cout << "fsm2.size: " << fsm2.size() << endl;
-//		cout << ioEquivalenceCheck(fsm->getInitialState(), fsm2.getInitialState()) << endl;
-//	}
-//
-//	cout << "-------------------------------" << endl;
-//
-//	for (int i = 0; i < 5; i++) {
-//		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-//		cout << "fsm.size: " << fsm->size() << endl;
-//		auto fsm2 = fsm->minimise();
-//		cout << "fsm2.size: " << fsm2.size() << endl;
-//		if (hasEquivalentStates(fsm2)) {
-//			cout << "FAULT" << endl;
-//		}
-//	}
-//
-//	cout << "-------------------------------" << endl;
-//
-//	{
-//		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-//		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
-//		shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
-//
-//		shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(0, 1, pl));
-//		q0->addTransition(tr0);
-//		shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q1, q1, make_shared<FsmLabel>(1, 1, pl));
-//		q1->addTransition(tr1);
-//		shared_ptr<FsmTransition> tr5 = make_shared<FsmTransition>(q0, q0, make_shared<FsmLabel>(1, 1, pl));
-//		q0->addTransition(tr5);
-//
-//		shared_ptr<FsmNode> u0 = make_shared<FsmNode>(0, pl);
-//		shared_ptr<FsmNode> u1 = make_shared<FsmNode>(1, pl);
-//		shared_ptr<FsmNode> u2 = make_shared<FsmNode>(2, pl);
-//
-//		shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(u0, u1, make_shared<FsmLabel>(0, 1, pl));
-//		u0->addTransition(tr2);
-//		shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(u1, u1, make_shared<FsmLabel>(1, 1, pl));
-//		u1->addTransition(tr3);
-//		shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(u0, u2, make_shared<FsmLabel>(1, 1, pl));
-//		u0->addTransition(tr4);
-//
-//		cout << ioEquivalenceCheck(q0, u0) << endl;
-//	}
-//
-//	cout << "-------------------------------" << endl;
-//
-//	{
-//		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-//		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
-//		shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
-//		shared_ptr<FsmNode> q2 = make_shared<FsmNode>(2, pl);
-//		shared_ptr<FsmNode> q3 = make_shared<FsmNode>(3, pl);
-//
-//		shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(1, 1, pl));
-//		q0->addTransition(tr0);
-//		shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q0, q2, make_shared<FsmLabel>(1, 1, pl));
-//		q0->addTransition(tr1);
-//		shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(q2, q1, make_shared<FsmLabel>(2, 2, pl));
-//		q2->addTransition(tr2);
-//		shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(q1, q3, make_shared<FsmLabel>(0, 1, pl));
-//		q1->addTransition(tr3);
-//		shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(q3, q0, make_shared<FsmLabel>(0, 0, pl));
-//		q3->addTransition(tr4);
-//
-//		shared_ptr<FsmNode> u0 = make_shared<FsmNode>(0, pl);
-//		shared_ptr<FsmNode> u1 = make_shared<FsmNode>(1, pl);
-//		shared_ptr<FsmNode> u2 = make_shared<FsmNode>(2, pl);
-//		shared_ptr<FsmNode> u3 = make_shared<FsmNode>(3, pl);
-//
-//		shared_ptr<FsmTransition> tr5 = make_shared<FsmTransition>(u0, u1, make_shared<FsmLabel>(1, 1, pl));
-//		u0->addTransition(tr5);
-//		shared_ptr<FsmTransition> tr6 = make_shared<FsmTransition>(u1, u2, make_shared<FsmLabel>(2, 2, pl));
-//		u1->addTransition(tr6);
-//		shared_ptr<FsmTransition> tr7 = make_shared<FsmTransition>(u1, u3, make_shared<FsmLabel>(0, 1, pl));
-//		u1->addTransition(tr7);
-//		shared_ptr<FsmTransition> tr8 = make_shared<FsmTransition>(u2, u3, make_shared<FsmLabel>(0, 1, pl));
-//		u2->addTransition(tr8);
-//		shared_ptr<FsmTransition> tr9 = make_shared<FsmTransition>(u3, u0, make_shared<FsmLabel>(0, 0, pl));
-//		u3->addTransition(tr9);
-//		shared_ptr<FsmTransition> tr10 = make_shared<FsmTransition>(u2, u1, make_shared<FsmLabel>(0, 1, pl));
-//		u2->addTransition(tr10);
-//		
-//
-//		cout << ioEquivalenceCheck(q0, u0) << endl;
-//	}
-//
-//}
-
-/*
-	This function is used to test the checkForEqualStructure function
-*/
-//void testCheckForEqualStructure() {
-//	cout << "testCheckForEqualStructure" << endl;
-//
-//	cout << "positive cases:" << endl;
-//	for (int i = 0; i < 10; ++i) {
-//		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-//
-//		cout << checkForEqualStructure(*fsm, *fsm) << endl;
-//
-//		Fsm copy = Fsm(*fsm);
-//		cout << checkForEqualStructure(*fsm, copy) << endl;
-//		Fsm ofsm = fsm->transformToObservableFSM();
-//
-//		cout << checkForEqualStructure(*fsm, copy) << endl;
-//
-//		Fsm copy2 = Fsm(ofsm);
-//		Fsm minOfsm = ofsm.minimiseObservableFSM();
-//		cout << checkForEqualStructure(copy2, ofsm) << endl;
-//
-//		cout << "-----------------------------------" << endl;
-//	}
-//
-//	cout << "negative cases:" << endl;
-//
-//	for (int i = 0; i < 10; ++i) {
-//		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-//
-//		auto mutant = fsm->createMutant("mutant", 1, 1);
-//		
-//		cout << checkForEqualStructure(*fsm, *mutant) << endl;
-//
-//		cout << "-----------------------------------" << endl;
-//	}
-//
-//}
-
-/*
-	This function is used to test the getReachableStates function
-*/
-//void testGetReachableStates() {
-//	for (int i = 0; i < 10; ++i) {
-//		auto fsm = Fsm::createRandomFsm("M1", 4, 4, 10, make_shared<FsmPresentationLayer>());
-//
-//		unordered_set<shared_ptr<FsmNode>> reachable = getReachableStates(*fsm);
-//
-//		vector<shared_ptr<FsmNode>> nodes = fsm->getNodes();
-//		unordered_set<shared_ptr<FsmNode>> nodeSet(nodes.begin(), nodes.end());
-//
-//		fsmlib_assert("TC", reachable == nodeSet, "getReachableStates returns set containing each reachable state");
-//	}
-//	
-//	{
-//		shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-//		shared_ptr<FsmNode> q0 = make_shared<FsmNode>(0, pl);
-//		shared_ptr<FsmNode> q1 = make_shared<FsmNode>(1, pl);
-//		shared_ptr<FsmNode> q2 = make_shared<FsmNode>(2, pl);
-//		shared_ptr<FsmNode> q3 = make_shared<FsmNode>(3, pl);
-//
-//		shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(q0, q1, make_shared<FsmLabel>(1, 1, pl));
-//		q0->addTransition(tr0);
-//		shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(q0, q2, make_shared<FsmLabel>(1, 1, pl));
-//		q0->addTransition(tr1);
-//		shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(q2, q1, make_shared<FsmLabel>(2, 2, pl));
-//		q2->addTransition(tr2);
-//		//shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(q1, q3, make_shared<FsmLabel>(0, 1, pl));
-//		//q1->addTransition(tr3);
-//		/*shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(q3, q0, make_shared<FsmLabel>(0, 0, pl));
-//		q3->addTransition(tr4);*/
-//
-//		Fsm fsm("M",2,2,{q0,q1,q2,q3},pl);
-//		unordered_set<shared_ptr<FsmNode>> reachable = getReachableStates(fsm);
-//
-//		vector<shared_ptr<FsmNode>> nodes = fsm.getNodes();
-//		unordered_set<shared_ptr<FsmNode>> nodeSet(nodes.begin(), nodes.end());
-//
-//		fsmlib_assert("TC", reachable != nodeSet, "getReachableStates returns set containing only reachable state");
-//	}
-//}
-
 // ====================================================================================================
 // Prüfverfahren "Spracherhaltende FSM-Transformationen"
 
@@ -757,15 +407,13 @@ bool testRemoveUnreachableNodes(Fsm &m1, const string &tcID) {
 	unordered_set<shared_ptr<FsmNode>> unreachable;
 	for (auto n : m1.getNodes()) {
 		if (reachable.count(n) == 0) unreachable.insert(n);
-	}
-
-	//vector<shared_ptr<FsmNode>> copyOfUnreachableNodes(unreachableNodes.begin(), unreachableNodes.end());
+	}	
 
 	// use algorithm to transform m1
 	bool b = m1.removeUnreachableNodes(unreachableNodes);
 
 	// first check invariant of m1
-	bool invariantViolation = not m1.checkInvariant();//not checkFsmClassInvariant(m1);
+	bool invariantViolation = not m1.checkInvariant();
 	fsmlib_assert(tcID, not invariantViolation, pass, "Invariant holds for M1 after transformation");
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return pass;
@@ -781,10 +429,7 @@ bool testRemoveUnreachableNodes(Fsm &m1, const string &tcID) {
 	// check b and unreachableNodes
 	fsmlib_assert(tcID, (b and (not unreachable.empty())) || (not b and unreachable.empty()), pass, "removeUnreachableNodes() returns true iff FSM contains some unreachable node");
 	fsmlib_assert(tcID, (unreachableNodes.size() == unreachable.size()) and (unreachableNodesSet == unreachable), pass, "unreachableNodes contains each unreachable node that was removed");
-	/*fsmlib_assert(tcID, checkUnreachableNodesList(copyOfUnreachableNodes, unreachableNodes, unreachable), "unreachableNodes contains all unreachable nodes that were removed and all nodes from before");*/
 
-	//// check unexpected side effects
-	//fsmlib_assert(tcID, checkFsmClassInvariant(m1), "FSM still fullfills class invariants after transformation");
 	return pass;
 }
 
@@ -809,11 +454,7 @@ bool testTransformToObservableFSM(Fsm &m1, const string &tcID) {
 	fsmlib_assert(tcID, m2.isObservable(), pass, "M2 is observable after transformToObservable()");
 
 	// check if L(m1) = L(m2)
-	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), pass, "transformToObservable() does not change the language");
-
-	//// check unexpected side effects
-	//fsmlib_assert(tcID, checkFsmClassInvariant(m1), "M1 still fullfills class invariants after transformation");
-	//fsmlib_assert(tcID, checkFsmClassInvariant(m2), "M2 still fullfills class invariants after transformation");
+	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), pass, "transformToObservableFSM() does not change the language");
 
 	// check invariant of m1
 	invariantViolation = not m1.checkInvariant();
@@ -832,7 +473,7 @@ bool testTransformToObservableFSM(Fsm &m1, const string &tcID) {
 bool testMinimise_Dfsm(Dfsm &m1, const string &tcID) {
 	bool pass = true;
 	// get copy of m1
-	Dfsm copyOfM1 = m1;//Dfsm(m1);
+	const Dfsm copyOfM1 = m1;
 
 	// use algorithm to transform m1
 	Dfsm m2 = m1.minimise();
@@ -850,10 +491,6 @@ bool testMinimise_Dfsm(Dfsm &m1, const string &tcID) {
 
 	// check if L(m1) = L(m2)
 	fsmlib_assert(tcID, ioEquivalenceCheck(copyOfM1.getInitialState(), m2.getInitialState()), pass, "minimise() does not change the language");
-
-	//// check unexpected side effects
-	//fsmlib_assert(tcID, checkDfsmClassInvariant(m1), "M1 still fullfills class invariants after transformation");
-	//fsmlib_assert(tcID, checkDfsmClassInvariant(m2), "M2 still fullfills class invariants after transformation");
 
 	// check invariant of m1
 	invariantViolation = not m1.checkInvariant();
@@ -1012,12 +649,6 @@ TestResult removeUnreachableNodes_TS() {
 		testRemoveUnreachableNodes(*fsm, "TC-Rand-(MSU)-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-Rand-(MSU)-" + to_string(i));
 	}
-	srand(519);
-	for (int i = 0; i < 2500; ++i) {
-		auto fsm = makeStatesEquivalent(*Fsm::createRandomFsmRepeatable("M", rand() % 4, rand() % 4 + 1, rand() % 10, pl));
-		testRemoveUnreachableNodes(*fsm, "TC-Rand-(MSE)-" + to_string(i))
-			? ++result.pass : result.fails.push_back("TC-Rand-(MSE)-" + to_string(i));
-	}
 	srand(1514225);
 	for (int i = 0; i < 5000; ++i) {
 		Dfsm dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
@@ -1096,16 +727,9 @@ TestResult minimise_Dfsm_TS() {
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(56958);
-	for (int i = 0; i < 5000; ++i) {
+	for (int i = 0; i < 10000; ++i) {
 		Dfsm dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		testMinimise_Dfsm(dfsm, "TC-Rand-" + to_string(i))
-			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
-	}
-	srand(195);
-	for (int i = 0; i < 5000; ++i) {
-		Dfsm dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
-		Dfsm m(*makeStatesPartial(make_shared<Dfsm>(dfsm)));
-		testMinimise_Dfsm(m, "TC-Rand-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
 
@@ -1138,13 +762,19 @@ TestResult minimiseObservableFSM_TS() {
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(37580);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 2500; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, pl);
 		Fsm ofsm = fsm->transformToObservableFSM();
 		testMinimiseObservableFSM(ofsm, "TC-Rand-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i)) ;
 	}
+	srand(828);
+	for (int i = 0; i < 2500; ++i) {
+		auto fsm = makeStatesEquivalent(*Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, pl));
+		Fsm ofsm = fsm->transformToObservableFSM();
+		testMinimiseObservableFSM(ofsm, "TC-Rand-(MSE)-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-(MSE)-" + to_string(i));
+	}
 	srand(973);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 5000; ++i) {
 		Dfsm dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		testMinimiseObservableFSM(dfsm, "TC-Rand-(Dfsm)-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-(Dfsm)-" + to_string(i));
 	}
@@ -1178,10 +808,22 @@ TestResult minimise_Fsm_TS() {
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(8368);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 3334; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, pl);
 		testMinimise_Fsm(*fsm, "TC-Rand-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
+	}
+	srand(4438);
+	for (int i = 0; i < 3333; ++i) {
+		auto fsm = makeStatesUnreachable(*Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, pl));
+		testMinimise_Fsm(*fsm, "TC-Rand-(MSU)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSU)-" + to_string(i));
+	}
+	srand(6492);
+	for (int i = 0; i < 3333; ++i) {
+		auto fsm = makeStatesEquivalent(*Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, pl));
+		testMinimise_Fsm(*fsm, "TC-Rand-(MSE)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSE)-" + to_string(i));
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
@@ -1193,10 +835,6 @@ TestResult minimise_Fsm_TS() {
 	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
 	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC");
 	testMinimise_Fsm(*gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
-
-	//		// these make the program crash
-	//"../../../resources/TestSuites/FSM029.fsm"
-	//"../../../resources/TestSuites/FSM053.fsm") {
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<FsmTransformationTestCase<Fsm>> testSuite;
@@ -1307,31 +945,6 @@ bool testIntersection(Fsm &m1, const Fsm &m2, const string &tcID) {
 	return pass;
 }
 
-/**
- * Test function for Fsm::intersect(const Fsm & f). (Dfsm Context)
- */
-//void testIntersection(Dfsm &m1, const Fsm &m2, const string &tcID) {
-//	// get copy of m1 and m2
-//	const Dfsm copyOfM1 = Dfsm(m1);
-//
-//	// use Algorithm to calculate result
-//	const Fsm intersection = m1.intersect(m2);
-//
-//	// first check invariant for m1 and intersection   (we don't need to check invariant for m2 because it's const)
-//	bool invariantViolationOfM1 = not m1.checkInvariant();
-//	fsmlib_assert(tcID, not invariantViolationOfM1, "Dfsm class invariant still holds for M1 after calculation.");
-//	bool invariantViolationOfIntersection = not intersection.checkInvariant();
-//	fsmlib_assert(tcID, not invariantViolationOfIntersection, "Fsm class invariant holds for intersection after calculation.");
-//	// stop test execution at this point if invariant of m or intersection does not hold anymore
-//	if (invariantViolationOfM1 || invariantViolationOfIntersection) return;
-//
-//	// check language intersection
-//	fsmlib_assert(tcID, languageIntersectionCheck(m1, m2, intersection), "Language of the result is intersection of L(M1) and L(M2)");
-//
-//	// check for forbidden side effects
-//	fsmlib_assert(tcID, checkForEqualStructure(m1, copyOfM1), "M1 was not changed by algorithm");
-//}
-
 struct IntersectTestCase {
 	string id;
 	string m1Path;
@@ -1381,26 +994,26 @@ TestResult intersect_TS() {
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(950);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 2500; ++i) {
 		auto m1 = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 8, make_shared<FsmPresentationLayer>());
 		const auto m2 = m1->createMutantRepeatable("M2", rand() % 5 + 1, rand() % 5 + 1);
 		testIntersection(*m1, *m2, "TC-Rand-(1)-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-(1)-" + to_string(i));
 	}
 	srand(104385);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 2500; ++i) {
 		auto m1 = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, make_shared<FsmPresentationLayer>());
 		const auto m2 = Fsm::createRandomFsmRepeatable("M2", rand() % 4, rand() % 4 + 1, rand() % 10, make_shared<FsmPresentationLayer>());
 		testIntersection(*m1, *m2, "TC-Rand-(2)-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-(2)-" + to_string(i));
 	}
 	srand(158487);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 2500; ++i) {
 		auto m1 = Dfsm("M1", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		if (i == 45) cout << m1 << endl;
 		const auto m2 = m1.createMutantRepeatable("M2", rand() % 5, rand() % 5);
 		testIntersection(m1, *m2, "TC-Rand-(3)-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-(3)-" + to_string(i));
 	}
 	srand(627627);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 2500; ++i) {
 		auto m1 = Dfsm("M1", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		const auto m2 = Dfsm("M2", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		testIntersection(m1, m2, "TC-Rand-(4)-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-(4)-" + to_string(i));
@@ -1783,43 +1396,6 @@ bool testCalcDistinguishingTrace2(Fsm &m, const string &tcID) {
 }
 
 /**
- * Test function for Fsm::calcStateIdentificationSets().
- * m is expected to be a minimal and observable Fsm.
- */
-//void testCalcStateIdentificationSets(Fsm &m, const string &tcID) {
-//	// get copy of m
-//	const Fsm copyOfM = Fsm(m);
-//
-//	// calculate the needed parameters from m
-//	m.getCharacterisationSet();
-//	const IOListContainer tracesOfW = m.characterisationSet->getIOLists();
-//
-//
-//	// use Algorithm to calculate result
-//	m.calcStateIdentificationSets();
-//	const auto stateIdSets = m.stateIdentificationSets;
-//
-//	// first check invariant of m
-//	bool invariantViolation = not m.checkInvariant();
-//	fsmlib_assert(tcID, not invariantViolation, "Invariant still holds for M after calculation.");
-//	// stop test execution at this point if invariant of m does not hold anymore
-//	if (invariantViolation) return;
-//
-//	// Check Definition of minimal State Identification Set for each element in stateIdSets
-//	fsmlib_assert(tcID, stateIdSets.size() == m.getNodes().size(), "Number of calculated State Identification Sets matches the number of states of M.");
-//	for (int i = 0; i < stateIdSets.size(); ++i) {
-//		fsmlib_assert(tcID, isStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), "M.stateIdentificationSets[i] is a State Identification Set for M.nodes[i].");
-//		fsmlib_assert(tcID, isMinimalStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), "M.stateIdentificationSets[i] is a minimal State Identification Set for M.nodes[i].");
-//	}
-//
-//	// check if structure of m has changed
-//	fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
-//
-//	// check if m.characterisationSet has changed
-//	fsmlib_assert(tcID, *tracesOfW.getIOLists() == *m.characterisationSet->getIOLists().getIOLists(), "characterisation set of M has not changed");
-//}
-
-/**
  * Test function for Fsm::calcStateIdentificationSets(). Test in context of Dfsm.
  * m is expected to be a minimal Dfsm.
  */
@@ -1831,7 +1407,10 @@ bool testCalcStateIdentificationSets(Fsm &m, const string &tcID) {
 	// calculate the needed parameters from m
 	m.Fsm::getCharacterisationSet();
 	const IOListContainer tracesOfW = m.characterisationSet->getIOLists();
-
+	if (tracesOfW.size() > 5) {
+		cout << "Characterisation Set is too big. Stop Test Case." << endl;
+		return pass;
+	}	
 
 	// use Algorithm to calculate result
 	m.calcStateIdentificationSets();
@@ -1858,42 +1437,6 @@ bool testCalcStateIdentificationSets(Fsm &m, const string &tcID) {
 
 	return pass;
 }
-
-/**
- * Test function for Fsm::calcStateIdentificationSetsFast().
- * m is expected to be a minimal and observable Fsm.
- */
-//void testCalcStateIdentificationSetsFast(Fsm &m, const string &tcID) {
-//	// get copy of m
-//	const Fsm copyOfM = Fsm(m);
-//
-//	// calculate the needed parameters from m
-//	m.getCharacterisationSet();
-//	const IOListContainer tracesOfW = m.characterisationSet->getIOLists();
-//
-//
-//	// use Algorithm to calculate result
-//	m.calcStateIdentificationSetsFast();
-//	const auto stateIdSets = m.stateIdentificationSets;
-//
-//	// first check invariant of m
-//	bool invariantViolation = not m.checkInvariant();
-//	fsmlib_assert(tcID, not invariantViolation, "Invariant still holds for M after calculation.");
-//	// stop test execution at this point if invariant of m does not hold anymore
-//	if (invariantViolation) return;
-//
-//	// Check Definition of State Identification Set for each element in stateIdSets
-//	fsmlib_assert(tcID, stateIdSets.size() == m.getNodes().size(), "Number of calculated State Identification Sets matches the number of states of M.");
-//	for (int i = 0; i < stateIdSets.size(); ++i) {
-//		fsmlib_assert(tcID, isStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), "M.stateIdentificationSets[i] is a State Identification Set for M.nodes[i].");
-//	}
-//
-//	// check if structure of m has changed
-//	fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
-//
-//	// check if m.characterisationSet has changed
-//	fsmlib_assert(tcID, *tracesOfW.getIOLists() == *m.characterisationSet->getIOLists().getIOLists(), "characterisation set of M has not changed");
-//}
 
 /**
  * Test function for Fsm::calcStateIdentificationSetsFast().
@@ -1983,7 +1526,7 @@ TestResult getCharacterisationSet_Dfsm_TS() {
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	srand(261250);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 10000; ++i) {
 		auto m = Dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		auto minM = m.minimise();
 		testGetCharacterisationSet_Dfsm(minM, "TC-Rand-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
@@ -2021,10 +1564,17 @@ TestResult getCharacterisationSet_Fsm_TS() {
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;	
 	srand(64162);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 5000; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 6, pl);
 		auto minFsm = fsm->minimise();
 		string id = "TC-Rand-" + to_string(i);
+		testGetCharacterisationSet_Fsm(minFsm, id) ? ++result.pass : result.fails.push_back(id);
+	}
+	srand(7197);
+	for (int i = 0; i < 5000; ++i) {
+		auto fsm = makeStatesPartial(Fsm::createRandomFsmRepeatable("M1", rand() % 4 + 1, rand() % 4 + 1, rand() % 6, pl));
+		auto minFsm = fsm->minimise();
+		string id = "TC-Rand-(MSP)-" + to_string(i);
 		testGetCharacterisationSet_Fsm(minFsm, id) ? ++result.pass : result.fails.push_back(id);
 	}
 
@@ -2061,7 +1611,7 @@ TestResult calcDistinguishingTrace_PkTables_TS() {
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(329132);
-	for (int i = 0; i < 1000; ++i) {
+	for (int i = 0; i < 2000; ++i) {
 		auto m = Dfsm("M", rand() % 10 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		auto minM = m.minimise();
 		testCalcDistinguishingTrace1(minM, "TC-Rand-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
@@ -2106,6 +1656,12 @@ TestResult calcDistinguishingTrace_OFSMTables_TS() {
 		auto minFsm = fsm->minimise();
 		testCalcDistinguishingTrace2(minFsm, "TC-Rand-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
+	srand(6075);
+	for (int i = 0; i < 1000; ++i) {
+		auto fsm = makeStatesPartial(Fsm::createRandomFsmRepeatable("M1", rand() % 4 + 1, rand() % 4 + 1, rand() % 6, pl));
+		auto minFsm = fsm->minimise();
+		testCalcDistinguishingTrace2(minFsm, "TC-Rand-(MSP)-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-(MSP)-" + to_string(i));
+	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
 	Fsm csm = Fsm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM").minimise();
@@ -2138,9 +1694,10 @@ TestResult calcStateIdentificationSets_TS() {
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	srand(3447);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 2500; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M", rand() % 4, rand() % 4 + 1, rand() % 6, make_shared<FsmPresentationLayer>());
 		auto minFsm = fsm->minimise();
+		cout << minFsm.size() << endl;
 		if (minFsm.size() > 50) {
 			cout << "M is too big. Stop Test Case." << endl;
 			continue;
@@ -2148,12 +1705,30 @@ TestResult calcStateIdentificationSets_TS() {
 		testCalcStateIdentificationSets(minFsm, "TC-Rand-" + to_string(i)) 
 			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
 	}
+	srand(76412);
+	for (int i = 0; i < 2500; ++i) {
+		auto fsm = makeStatesPartial(Fsm::createRandomFsmRepeatable("M", rand() % 4 + 1, rand() % 4 + 1, rand() % 6, make_shared<FsmPresentationLayer>()));
+		auto minFsm = fsm->minimise();
+		if (minFsm.size() > 50) {
+			cout << "M is too big. Stop Test Case." << endl;
+			continue;
+		}
+		testCalcStateIdentificationSets(minFsm, "TC-Rand-(MSP)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSP)-" + to_string(i));
+	}
 	srand(436);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 2500; ++i) {
 		auto m = Dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
 		auto minM = m.minimise();
 		testCalcStateIdentificationSets(minM, "TC-Rand-(Dfsm)-" + to_string(i)) 
 			? ++result.pass : result.fails.push_back("TC-Rand-(Dfsm)-" + to_string(i));
+	}
+	srand(63129);
+	for (int i = 0; i < 2500; ++i) {
+		auto m = Dfsm(*makeStatesPartial(make_shared<Dfsm>(Dfsm("M", rand() % 15 + 1, rand() % 4 + 1, rand() % 4 + 1, pl, true))));
+		auto minM = m.minimise();
+		testCalcStateIdentificationSets(minM, "TC-Rand-(Dfsm,MSP)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(Dfsm,MSP)-" + to_string(i));
 	}
 
 	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
@@ -2177,29 +1752,6 @@ TestResult calcStateIdentificationSets_TS() {
 	return result;
 }
 
-//shared_ptr<Fsm> createPartialMutant(shared_ptr<Fsm> m) {
-//	vector<shared_ptr<FsmNode> > lst;
-//	for (int n = 0; n <= m->getMaxState(); n++) {
-//		lst.push_back(make_shared<FsmNode>(n, m->getName(), m->getPresentationLayer()));
-//	}
-//
-//	// Now add transitions that correspond exactly to the transitions in
-//	// this FSM
-//	for (int n = 0; n <= m->getMaxState(); n++) {
-//		auto theNewFsmNodeSrc = lst[n];
-//		auto theOldFsmNodeSrc = m->getNodes()[n];
-//		int ignoreInput = rand() % (m->getMaxInput() + 1);
-//		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
-//			if (tr->getLabel()->getInput() == ignoreInput) continue;
-//			int tgtId = tr->getTarget()->getId();
-//			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
-//			shared_ptr<FsmTransition> newTr =
-//				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
-//			theNewFsmNodeSrc->addTransition(newTr);
-//		}
-//	}
-//	return make_shared<Fsm>(m->getName(), m->getMaxInput(), m->getMaxOutput(), lst, m->getPresentationLayer());
-//}
 
 /**
  * Transform m to a complete Fsm by adding self loops in states for undefined inputs producing some nullouput not contained in the
@@ -2472,7 +2024,7 @@ bool compareOutputs(const shared_ptr<IOListContainer> ts, const shared_ptr<Fsm> 
 }
 
 /**
- * Test function for Fsm::wMethod(const unsigned int numAddStates)
+ * Test function for test theories.
  * Each element of mutants is expected to be complete and normalized and to have the same input alphabet as m.
  * nullOutput is expected to be the output that was used as nulloutputs in the completion of the mutants.
  */
@@ -2664,14 +2216,44 @@ TestResult wMethod_Fsm_TS() {
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	srand(12792);
-	for (int i = 0; i < 1000; ++i) {
-		cout << "i:" << i << endl;
-		//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
+	for (int i = 0; i < 2000; ++i) {
 		auto m = makeStatesUnreachable(*Fsm::createRandomFsmRepeatable("M", (rand() % 4) + 1, (rand() % 6) + 1, (rand() % 6) + 1, pl));
 		const size_t nullOutput = m->getMaxOutput() + 1;
 
 		testTestTheory(*m, *createMutants(nullOutput, m), nullOutput, tsGenerator, "TC-Rand-(MSU)-"+ to_string(i)) 
 			? ++result.pass : result.fails.push_back("TC-Rand-(MSU)-" + to_string(i));
+	}
+	srand(94563);
+	for (int i = 0; i < 2000; ++i) {
+		auto m = Fsm::createRandomFsmRepeatable("M", (rand() % 4) + 1, (rand() % 6) + 1, (rand() % 6) + 1, pl);
+		const size_t nullOutput = m->getMaxOutput() + 1;
+
+		testTestTheory(*m, *createMutants(nullOutput, m), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
+	}
+	srand(3641);
+	for (int i = 0; i < 2000; ++i) {
+		auto m = makeStatesEquivalent(*Fsm::createRandomFsmRepeatable("M", (rand() % 4) + 1, (rand() % 6) + 1, (rand() % 6) + 1, pl));
+		const size_t nullOutput = m->getMaxOutput() + 1;
+
+		testTestTheory(*m, *createMutants(nullOutput, m), nullOutput, tsGenerator, "TC-Rand-(MSE)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSE)-" + to_string(i));
+	}
+	srand(94775);
+	for (int i = 0; i < 2000; ++i) {
+		auto m = makeStatesPartial(Fsm::createRandomFsmRepeatable("M", (rand() % 4) + 1, (rand() % 6) + 1, (rand() % 6) + 1, pl));
+		const size_t nullOutput = m->getMaxOutput() + 1;
+
+		testTestTheory(*m, *createMutants(nullOutput, m), nullOutput, tsGenerator, "TC-Rand-(MSP)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSP)-" + to_string(i));
+	}
+	srand(2022);
+	for (int i = 0; i < 2000; ++i) {
+		auto m = makeStatesEquivalent(*makeStatesPartial(Fsm::createRandomFsmRepeatable("M", (rand() % 4) + 1, (rand() % 6) + 1, (rand() % 6) + 1, pl)));
+		const size_t nullOutput = m->getMaxOutput() + 1;
+
+		testTestTheory(*m, *createMutants(nullOutput, m), nullOutput, tsGenerator, "TC-Rand-(MSE,MSP)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSE,MSP)-" + to_string(i));
 	}
 
 	srand(990137);
@@ -2725,7 +2307,7 @@ TestResult wMethod_Dfsm_TS() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(412725);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 10000; ++i) {
 		Dfsm m("M", rand() % 15 + 1, rand() % 6, (rand() % 6) + 1, pl, true);
 		const size_t nullOutput = m.getMaxOutput() + 1;
 		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
@@ -2782,12 +2364,24 @@ TestResult wMethodOnMinimisedFsm_TS() {
 	shared_ptr<WMethodOnMinimisedFsmGenerator> tsGenerator = make_shared<WMethodOnMinimisedFsmGenerator>();
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
-	srand(27161);
-	for (int i = 0; i < 50; ++i) {
-		//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl)->minimise();
-		auto m = makeStatesPartial(Fsm::createRandomFsmRepeatable("M", rand() % 6, (rand() % 6) + 1, rand() % 6 + 1, pl))->minimise();
+	srand(50301);
+	for (int i = 0; i < 2500; ++i) {
+		auto m = Fsm::createRandomFsmRepeatable("M", rand() % 6, (rand() % 6) + 1, rand() % 6 + 1, pl)->minimise();
+		cout << "pre: m.size: " << m.size() << endl;
 		// filter fsm that have too many states
-		if (m.size() > 30) {
+		if (m.size() > 20) {
+			cout << "FSM too big. Stop Test Case." << endl;
+			continue;
+		}		
+		const size_t nullOutput = m.getMaxOutput() + 1;
+		testTestTheory(m, *createMutants(nullOutput, make_shared<Fsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
+	}
+	srand(27161);
+	for (int i = 0; i < 2500; ++i) {
+		auto m = makeStatesPartial(Fsm::createRandomFsmRepeatable("M", rand() % 6 + 1, (rand() % 6) + 1, rand() % 6 + 1, pl))->minimise();
+		// filter fsm that have too many states
+		if (m.size() > 20) {
 			cout << "FSM too big. Stop Test Case." << endl;
 			continue;
 		}
@@ -2796,14 +2390,22 @@ TestResult wMethodOnMinimisedFsm_TS() {
 			? ++result.pass : result.fails.push_back("TC-Rand-(MSP)-" + to_string(i));
 	}
 	srand(775565);
-	for (int i = 0; i < 10; ++i) {
-		Dfsm m("M", rand() % 15 + 1, rand() % 6, (rand() % 6) + 1, pl, true); //m.setMaxState(m.getNodes().size() - 1);
-		cout << isInitialConnected(m) << endl;
+	for (int i = 0; i < 2500; ++i) {
+		Dfsm m("M", rand() % 15 + 1, rand() % 6, (rand() % 6) + 1, pl, true);
 		m = m.minimise();
 
 		const size_t nullOutput = m.getMaxOutput() + 1;
 		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-(Dfsm)-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-Rand-(Dfsm)-" + to_string(i));
+	}
+	srand(67131);
+	for (int i = 0; i < 2500; ++i) {
+		Dfsm m(*makeStatesPartial(make_shared<Dfsm>(Dfsm("M", rand() % 15 + 1, rand() % 6 + 1, (rand() % 6) + 1, pl, true))));
+		m = m.minimise();
+
+		const size_t nullOutput = m.getMaxOutput() + 1;
+		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-(Dfsm,MSP)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(Dfsm,MSP)-" + to_string(i));
 	}
 
 	srand(326744);
@@ -2854,7 +2456,7 @@ TestResult wMethodOnMinimisedDfsm_TS() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(625);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 10000; ++i) {
 		Dfsm m("M", rand() % 15 + 1, rand() % 6, (rand() % 6) + 1, pl, true);
 		m = m.minimise();
 		const size_t nullOutput = m.getMaxOutput() + 1;
@@ -2912,18 +2514,30 @@ TestResult wpMethod_Fsm_TS() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(5217);
-	for (int i = 0; i < 50; ++i) {
+	for (int i = 0; i < 5000; ++i) {
 		auto m = Fsm::createRandomFsmRepeatable("M", rand() % 4, (rand() % 6) + 1, rand() % 6 + 1, pl)->minimise();
-		//auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl))->minimise();
 		const size_t nullOutput = m.getMaxOutput() + 1;
 
 		// filter fsm that have too many states
-		if (m.size() > 30) {
+		if (m.size() > 20) {
 			cout << "FSM too big. Stop Test Case." << endl;
 			continue;
 		}
 		testTestTheory(m, *createMutants(nullOutput, make_shared<Fsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
+	}
+	srand(41575);
+	for (int i = 0; i < 5000; ++i) {
+		auto m = makeStatesPartial(Fsm::createRandomFsmRepeatable("M", rand() % 4 + 1, (rand() % 6) + 1, rand() % 6 + 1, pl))->minimise();
+		const size_t nullOutput = m.getMaxOutput() + 1;
+
+		// filter fsm that have too many states
+		if (m.size() > 20) {
+			cout << "FSM too big. Stop Test Case." << endl;
+			continue;
+		}
+		testTestTheory(m, *createMutants(nullOutput, make_shared<Fsm>(m)), nullOutput, tsGenerator, "TC-Rand-(MSP)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSP)-" + to_string(i));
 	}
 
 	srand(156041);
@@ -2977,8 +2591,8 @@ TestResult wpMethod_Dfsm_TS() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(712871);
-	for (int i = 0; i < 100; ++i) {
-		Dfsm m("M", rand() % 15 + 1, rand() % 6, (rand() % 6) + 1, pl, true); //m.setMaxState(m.getNodes().size() - 1);
+	for (int i = 0; i < 10000; ++i) {
+		Dfsm m("M", rand() % 15 + 1, rand() % 6, (rand() % 6) + 1, pl, true);
 
 		const size_t nullOutput = m.getMaxOutput() + 1;
 
@@ -3037,8 +2651,8 @@ TestResult wpMethodOnMinimisedDfsm_TS() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(625166);
-	for (int i = 0; i < 100; ++i) {
-		Dfsm m("M", rand() % 15 + 1, rand() % 6, (rand() % 6) + 1, pl, true); //m.setMaxState(m.getNodes().size() - 1);
+	for (int i = 0; i < 10000; ++i) {
+		Dfsm m("M", rand() % 15 + 1, rand() % 6, (rand() % 6) + 1, pl, true);
 		m = m.minimise();
 
 		const size_t nullOutput = m.getMaxOutput() + 1;
@@ -3097,14 +2711,26 @@ TestResult hsiMethod_Fsm_TS() {
 	shared_ptr<HsiMethodGenerator> tsGenerator = make_shared<HsiMethodGenerator>();
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
+	srand(42676);
+	for (int i = 0; i < 5000; ++i) {
+		auto m = Fsm::createRandomFsmRepeatable("M", rand() % 4, (rand() % 6) + 1, rand() % 6 + 1, pl)->minimise();
+		const size_t nullOutput = m.getMaxOutput() + 1;
+
+		// filter fsm that have too many states
+		if (m.size() > 20) {
+			cout << "FSM too big. Stop Test Case." << endl;
+			continue;
+		}
+		testTestTheory(m, *createMutants(nullOutput, make_shared<Fsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
+	}
 	srand(12);
-	for (int i = 0; i < 50; ++i) {
-		//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
+	for (int i = 0; i < 5000; ++i) {
 		auto m = makeStatesPartial(Fsm::createRandomFsmRepeatable("M", rand() % 4 + 1, (rand() % 6) + 1, rand() % 6 + 1, pl))->minimise();
 		const size_t nullOutput = m.getMaxOutput() + 1;
 
 		// filter fsm that have too many states
-		if (m.size() > 30) {
+		if (m.size() > 20) {
 			cout << "FSM too big. Stop Test Case." << endl;
 			continue;
 		}
@@ -3163,13 +2789,22 @@ TestResult hsiMethod_Dfsm_TS() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(907);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 5000; ++i) {
 		Dfsm m("M", rand() % 15 + 1, rand() % 6, (rand() % 6) + 1, pl, true);
 
 		const size_t nullOutput = m.getMaxOutput() + 1;
 
 		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
+	}
+	srand(6144);
+	for (int i = 0; i < 5000; ++i) {
+		Dfsm m(*makeStatesPartial(make_shared<Dfsm>(Dfsm("M", rand() % 15 + 1, rand() % 6 + 1, (rand() % 6) + 1, pl, true))));
+
+		const size_t nullOutput = m.getMaxOutput() + 1;
+
+		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-(MSP)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSP)-" + to_string(i));
 	}
 
 	srand(349);
@@ -3223,8 +2858,8 @@ TestResult hMethodOnMinimisedDfsm_TS() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(3234);
-	for (int i = 0; i < 100; ++i) {
-		Dfsm m("M", rand() % 13 + 2, rand() % 6, (rand() % 6) + 1, pl, true);
+	for (int i = 0; i < 10000; ++i) {
+		Dfsm m("M", rand() % 13 + 2, rand() % 6 + 1, (rand() % 6) + 1, pl, true);
 		m = m.minimise();
 		if (m.size() < 2) {
 			cout << "M has less than 2 states. Stop test case." << endl;
@@ -3322,7 +2957,7 @@ TestResult tMethod_TS() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(876298);
-	for (int i = 0; i < 1000; ++i) {
+	for (int i = 0; i < 10000; ++i) {
 		auto m = Dfsm("M", (rand() % 15 + 1), rand() % 6, (rand() % 6) + 1, pl, true);
 		vector<shared_ptr<const Fsm>> mutants;
 		for (int j = 0; j < 20; ++j) {
@@ -3379,123 +3014,6 @@ TestResult tMethod_TS() {
 // ====================================================================================================
 
 
-//void createMutants() {
-//	// set accordingly
-//	const string path = "../../../resources/TestSuites/TestTheories/RM31.fsm";
-//	const string writePathPref = "../../../resources/TestSuites/TestTheories/Mut32_";
-//	const int numAddStates = 1;
-//	const int sizeOfMinRef = 4;
-//
-//	shared_ptr<Fsm> fsm = make_shared<Fsm>(path, make_shared<FsmPresentationLayer>(), "M");
-//    cout << "initIdx: " << fsm->getInitStateIdx() << endl;
-//    cout << "mI: " << fsm->getMaxInput() << endl;
-//	cout << "mO:" << fsm->getMaxOutput() << endl;
-//	cout << "size: " << fsm->getNodes().size() << endl;
-//	cout << "comp. spec: " << fsm->isCompletelyDefined() << endl;
-//	cout << "det: " << fsm->isDeterministic() << endl;
-//	cout << "obs: " << fsm->isObservable() << endl;
-//	cout << checkFsmClassInvariant(*fsm) << endl;
-//
-//
-//	// create Mutants
-//	srand(time(NULL));
-//	cout << rand()<< endl;
-//	int numMutants = 0;
-//	vector<shared_ptr<Fsm>> mutants;
-//	while (numMutants < 5) {
-//		size_t numOutFaults = rand() % 3;
-//		size_t numTrFaults = rand() % 3;
-//		if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;
-//		cout << "numOutFaults: " << numOutFaults << endl;
-//		cout << "numTrFaults: " << numTrFaults << endl;
-//		auto mutant = fsm->createMutant("Mut", numOutFaults, numTrFaults)->minimise();
-//		if (mutant.size() == sizeOfMinRef + numAddStates) {//(mutant.size() <= sizeOfMinRef + numAddStates) {
-//			cout << "created mutant with size " << mutant.size() << endl;
-//			++numMutants;
-//			mutants.push_back(make_shared<Fsm>(mutant));
-//		}
-//		else {
-//			cout << "too big" << endl;
-//		}
-//	}
-//
-//	//vector<shared_ptr<Fsm>> remaining;
-//	//for (auto m : mutants) {
-//	//	bool found = false;
-//	//	for (auto mu : remaining) {
-//	//		if (not checkForEqualStructure(*m, *mu)) {
-//	//			remaining.push_back(m)
-//	//		}
-//	//	}
-//	//}
-//
-//	// write mutants 
-//	for (int i = 0; i < mutants.size(); ++i) {
-//		std::stringstream writePath;
-//		writePath << writePathPref << i << ".fsm";
-//		ofstream outFile(writePath.str());
-//		mutants.at(i)->dumpFsm(outFile);
-//		outFile.close();
-//	}
-//}
-
-//void createMutantsForTMethod() {
-//	// set accordingly
-//	const string path = "../../../resources/TestSuites/TestTheories/RM25.fsm";
-//	const string writePathPref = "../../../resources/TestSuites/TestTheories/Mut25_t_";
-//	const int numAddStates = 0;
-//	const int sizeOfMinRef = 3;
-//
-//	shared_ptr<Fsm> fsm = make_shared<Fsm>(path, make_shared<FsmPresentationLayer>(), "M");
-//    cout << "initIdx: " << fsm->getInitStateIdx() << endl;
-//    cout << "mI: " << fsm->getMaxInput() << endl;
-//	cout << "mO:" << fsm->getMaxOutput() << endl;
-//	cout << "size: " << fsm->getNodes().size() << endl;
-//	cout << "comp. spec: " << fsm->isCompletelyDefined() << endl;
-//	cout << "det: " << fsm->isDeterministic() << endl;
-//	cout << "obs: " << fsm->isObservable() << endl;
-//	cout << checkFsmClassInvariant(*fsm) << endl;
-//
-//
-//	// create Mutants
-//	srand(time(NULL));
-//	cout << rand()<< endl;
-//	int numMutants = 0;
-//	vector<shared_ptr<Fsm>> mutants;
-//	while (numMutants < 5) {
-//		size_t numOutFaults = 1;
-//		size_t numTrFaults = 0;
-//		
-//		cout << "numOutFaults: " << numOutFaults << endl;
-//		cout << "numTrFaults: " << numTrFaults << endl;
-//		auto mutant = fsm->createMutant("Mut", numOutFaults, numTrFaults);
-//		
-//			
-//			++numMutants;
-//			mutants.push_back(mutant);
-//
-//	}
-//
-//	//vector<shared_ptr<Fsm>> remaining;
-//	//for (auto m : mutants) {
-//	//	bool found = false;
-//	//	for (auto mu : remaining) {
-//	//		if (not checkForEqualStructure(*m, *mu)) {
-//	//			remaining.push_back(m)
-//	//		}
-//	//	}
-//	//}
-//
-//	// write mutants 
-//	for (int i = 0; i < mutants.size(); ++i) {
-//		std::stringstream writePath;
-//		writePath << writePathPref << i << ".fsm";
-//		ofstream outFile(writePath.str());
-//		mutants.at(i)->dumpFsm(outFile);
-//		outFile.close();
-//	}
-//}
-
 
 
 
@@ -3503,57 +3021,6 @@ void randomFSMTestData() {
 	const int seed = time(NULL);//1234;
 	srand(seed);
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-	//size_t obsC = 0, icC = 0, reducedC = 0, minimalC = 0, normC = 0, complC = 0, obsAndMiZero = 0, size1C = 0;
-	//for (int i = 0; i < 1000; ++i) {
-	//	int size = rand() % 10 + 1;
-	//	int mI = rand() % 6;
-	//	int mO = (rand() % 6) + 1; // cases with maxOutput = 0 are trivial
-	//	auto m = Dfsm("M", size, mI, mO, pl, true);
-	//	cout << "mI: " << m.getMaxInput() << endl;
-	//	cout << "mO: " << m.getMaxOutput() << endl;
-	//	cout << "size: " << m.getNodes().size() << endl;
-	//	if (m.isObservable()) ++obsC;
-	//	if (isInitialConnected(m)) ++icC;
-	//	if (not hasEquivalentStates(m)) ++reducedC;
-	//	if (isInitialConnected(m) && not hasEquivalentStates(m)) ++minimalC;
-	//	if (m.isObservable() && isInitialConnected(m) && not hasEquivalentStates(m)) ++normC;
-	//	if (m.isCompletelyDefined()) ++complC;
-	//	if (m.isObservable() and m.getMaxInput() == 0) ++obsAndMiZero;
-	//	if (m.getNodes().size() == 1) ++size1C;
-
-	//	cout << "=====================================================" << endl;
-	//}
-	//cout << "obsC: " << obsC << endl;
-	//cout << "icC: " << icC << endl;
-	//cout << "reducedC: " << reducedC << endl;
-	//cout << "minimalC: " << minimalC << endl;
-	//cout << "normC: " << normC << endl;
-	//cout << "complC: " << complC << endl;
-	//cout << "obsAndMiZero: " << obsAndMiZero << endl;
-	//cout << "size1C: " << size1C << endl;
-
-
-	//vector<shared_ptr<Fsm>> fsmList;
-	//for (int i = 0; i < 100; ++i) {
-	//	cout << "i:" << i << endl;
-	//	int size = rand() % 6 + 1; // = 6; 
-	//	int mI = rand() % 5 + 1;
-	//	int mO = (rand() % 6) + 1;
-	//	//auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
-	//	auto m = createPartialMutant(Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl))->minimise();
-	//	for (auto fsm : fsmList) {
-	//		if (ioEquivalenceCheck(fsm->getInitialState(), m.getInitialState())) {
-	//			cout << "equal language found" << endl;
-	//		}
-	//	}
-	//fsmList.push_back(make_shared<Fsm>(m));
-	//	const size_t nullOutput = m.getMaxOutput() + 1;
-	//	cout << m << endl;
-	//	cout << "mI: " << m.getMaxInput() << endl;
-	//	cout << "mO: " << m.getMaxOutput() << endl;
-	//	cout << "size: " << m.getNodes().size() << endl;
-	//	cout << "=====================================================" << endl;
-	//}
 
 	size_t obsC = 0, icC = 0, reducedC = 0, minimalC = 0, normC = 0, complC = 0, obsAndMiZero = 0, size1C = 0;
 	for (int i = 0; i < 10; ++i) {
