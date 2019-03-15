@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "fsm/Int2IntMap.h"
-#include "fsm/typedef.inc"
+#include "fsm/typedef.h"
 
 /**
 Class representing one table row of an OFSMTable

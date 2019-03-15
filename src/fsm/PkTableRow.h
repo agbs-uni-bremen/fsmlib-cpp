@@ -8,7 +8,7 @@
 
 #include <iostream>
 
-#include "fsm/typedef.inc"
+#include "fsm/typedef.h"
 
 class PkTableRow
 {

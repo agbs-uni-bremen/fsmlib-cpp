@@ -81,6 +81,8 @@ add_subdirectory (checker)
 add_subdirectory (cloneable)
 add_subdirectory (utils)
 
+add_subdirectory (graphs)
+
 add_subdirectory (method-checker)
 
 if(gui)

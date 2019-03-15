@@ -9,7 +9,7 @@
 #include <iostream>
 
 #include "fsm/Int2IntMap.h"
-#include "fsm/typedef.inc"
+#include "fsm/typedef.h"
 
 /**
 Class representing one row of a DFSM table

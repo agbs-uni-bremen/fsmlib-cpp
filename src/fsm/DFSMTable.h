@@ -9,7 +9,7 @@
 #include <memory>
 #include <vector>
 
-#include "fsm/typedef.inc"
+#include "fsm/typedef.h"
 
 class DFSMTableRow;
 class PkTable;

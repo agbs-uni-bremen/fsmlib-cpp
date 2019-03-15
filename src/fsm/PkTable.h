@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-#include "fsm/typedef.inc"
+#include "fsm/typedef.h"
 
 #include "fsm/PkTableRow.h"
 #include "interface/FsmPresentationLayer.h"

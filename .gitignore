@@ -132,3 +132,6 @@ Release.OSX/sets/Makefile
 Release.OSX/trees/cmake_install.cmake
 Release.OSX/trees/libfsm-trees.a
 Release.OSX/trees/Makefile
+
+src/cmake-build-debug
+.idea

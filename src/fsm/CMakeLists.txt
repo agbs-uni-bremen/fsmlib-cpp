@@ -46,7 +46,7 @@ set (FSM_FSM_SOURCES
 	Trace.h
         VPrimeLazy.cpp
         VPrimeLazy.h
-	typedef.inc
+	typedef.h
 )
 
 add_library (fsm-fsm OBJECT ${FSM_FSM_SOURCES})
