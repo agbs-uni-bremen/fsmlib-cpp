@@ -4979,44 +4979,51 @@ void test16() {
 int main(int argc, char** argv)
 {
 	std::cout << "test start" << std::endl;
+	cout << argc << endl;
+	cout << argv[0] << endl;
+	//cout << argv[1] << endl;
+	//if (argv[1] == "tMethod") exit(0);
+	//if (*argv[1] == '1')exit(0);
 	//randomFSMTestData();
 	
 	//parseTestCase();
 	//createMutants();
 	//createMutantsForTMethod();
-
+	vector<TestResult> results;
 
 	// FSM Transformation Tests:
 
-	//removeUnreachableNodes_TS();
-	//transformToObservableFSM_TS();
-	//minimise_Dfsm_TS();
-	//minimiseObservableFSM_TS();
-	//minimise_Fsm_TS();
+	//removeUnreachableNodes_TS().printResults();
+	//transformToObservableFSM_TS().printResults();
+	//minimise_Dfsm_TS().printResults();
+	//results.push_back(minimiseObservableFSM_TS());
+	//minimise_Fsm_TS().printResults();
 
 	// Intersection Test:
-	//intersect_TS();
+	//intersect_TS().printResults();
 
 	// Calculation of Distinguishing Traces Test:
-	//getCharacterisationSet_Dfsm_TS();
-	//getCharacterisationSet_Fsm_TS();
-	//calcDistinguishingTrace_PkTables_TS();
-	calcDistinguishingTrace_OFSMTables_TS();
-	//calcStateIdentificationSets_TS();
-	//calcStateIdentificationSetsFast_TS();
+	//getCharacterisationSet_Dfsm_TS().printResults();
+	getCharacterisationSet_Fsm_TS().printResults();
+	//calcDistinguishingTrace_PkTables_TS().printResults();
+	//calcDistinguishingTrace_OFSMTables_TS();
+	//calcStateIdentificationSets_TS().printResults();
+	//calcStateIdentificationSetsFast_TS().printResults();
 
 	// Complete Test Theories Test:
-	//tMethod_TS();
+	//tMethod_TS().printResults();
 	//wMethod_Fsm_TS();
 	//wMethod_Dfsm_TS();
-	//wMethodOnMinimisedFsm_TS();
+	//wMethodOnMinimisedFsm_TS().printResults();
 	//wMethodOnMinimisedDfsm_TS();
-	//wpMethod_Fsm_TS();
+	//wpMethod_Fsm_TS().printResults();
 	//wpMethod_Dfsm_TS();
 	//wpMethodOnMinimisedDfsm_TS();
-	//hsiMethod_Fsm_TS();
-	//hsiMethod_Dfsm_TS();
-	//hMethodOnMinimisedDfsm_TS();
+	//hsiMethod_Fsm_TS().printResults();
+	//hsiMethod_Dfsm_TS().printResults();
+	//hMethodOnMinimisedDfsm_TS().printResults();
+
+	for (auto &result : results) result.printResults();
 
 
 
