@@ -16,10 +16,12 @@
 #include "trees/TreeEdge.h"
 #include "trees/TreeNode.h"
 #include "fsm/SegmentedTrace.h"
+#include "cloneable/ICloneable.h"
 
-class Tree : public std::enable_shared_from_this<Tree>
+class Tree: public ICloneable, public std::enable_shared_from_this<Tree>
 {
 protected:
+    Tree(const Tree* other);
 	/**
 	The root of this tree
 	*/
@@ -42,16 +44,16 @@ protected:
 	std::vector<std::shared_ptr<TreeNode const>> calcLeaves() const;
 
 	//TODO
-	void remove(const std::shared_ptr<TreeNode> thisNode,
-                const std::shared_ptr<TreeNode> otherNode);
+    void remove(const std::shared_ptr<TreeNode>& thisNode,
+                const std::shared_ptr<TreeNode>& otherNode);
 
 	/**
-	Print every childran of this tree to a dot format into a standard output stream
-	@param out The standard output stream to use
-	@param top The root of the tree
-	@param idNode The id of this node, used to differenciate node in dot format
+	 * Print all children of this tree to a dot format into a standard output stream
+	 * @param out The standard output stream to use
+	 * @param top The root of the tree
+	 * @param idNode The id of this node, used to differenciate node in dot format
 	*/
-	void printChildren(std::ostream & out, const std::shared_ptr<TreeNode> top, const std::shared_ptr<int> idNode) const;
+    void printChildren(std::ostream & out, const std::shared_ptr<TreeNode>& top, const std::shared_ptr<int>& idNode) const;
 
     /**
      *  @return true if one of the input traces is prefix of the other one, false otherwise.
@@ -63,8 +65,8 @@ public:
 	@param root  root of the tree
 	@param presentationLayer The presentation layer to use
 	*/
-	Tree(const std::shared_ptr<TreeNode> root,
-         const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    Tree(const std::shared_ptr<TreeNode>& root,
+         const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
 	/**
 	Calculate the leaves, then give the leaves back
@@ -105,7 +107,7 @@ public:
 	an edge in this tree, the corresponding source
 	node and target node in this tree are marked as deleted.
 	*/
-	void remove(const std::shared_ptr<Tree> otherTree);
+    void remove(const std::shared_ptr<Tree>& otherTree);
 
 	/**
 	Output this tree to a dot format, into a standard output stream
@@ -118,6 +120,15 @@ public:
 	@return the test cases
 	*/
 	IOListContainer getTestCases();
+
+    /**
+     * Calculates all test cases that are being represented by this tree.
+     * Prefixes are not being removed, since this is needed for deterministic
+     * state cover. Every d-reachable state has to be d-reached (not just visited)
+     * by some input sequence.
+     * @return Test cases in form of input sequences.
+     */
+	IOListContainer getDeterministicTestCases();
 
 	/**
 	Append a list of input traces to EVERY node of the input tree.
@@ -143,13 +154,24 @@ public:
 	Construct the union of this Tree and otherTree by adding
 	every maximal input trace of otherTree to this inputTree.
 	*/
-	void unionTree(const std::shared_ptr<Tree> otherTree);
+    void unionTree(const std::shared_ptr<Tree>& otherTree);
 
 	//TODO
 	void addAfter(const InputTrace & tr, const IOListContainer & cnt);
+
+    /**
+     * Determines wether this tree's root node has an outgoing edge with the given io.
+     * @param y The given io
+     * @return {@code true}, if there is an outgoing edge with the given io,
+     * {@code false} otherwise.
+     */
+    bool isDefined(int y) const;
     
     /** Return number of nodes in the tree */
     size_t size();
+
+    virtual Tree* _clone() const;
+    std::shared_ptr<Tree> Clone() const;
 
     /**
      *  Construct a pseudo-intersection tree of this Tree and b.
@@ -172,7 +194,7 @@ public:
      * @return Tree subtree with after-alpha as the new root node
      *         or null if no tree node could be found after applying alpha
      */
-    std::shared_ptr<Tree> getSubTree(const std::shared_ptr<InputTrace> alpha);
+    std::shared_ptr<Tree> getSubTree(const std::shared_ptr<InputTrace>& alpha);
     
     /**
      *  return te TreeNode where the subtree after input trace alpha starts
@@ -196,5 +218,8 @@ public:
     int tentativeAddToRoot(const std::vector<int>& alpha);
     int tentativeAddToRoot(SegmentedTrace& alpha) const;
 
+    friend std::ostream & operator<<(std::ostream & out, Tree & t);
+
+    std::string str();
 };
 #endif //FSM_TREES_TREE_H_

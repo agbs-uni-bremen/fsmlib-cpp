@@ -1,0 +1,12 @@
+digraph g {
+
+node [shape = circle]
+
+
+node [shape = doublecircle]
+0[label="s0"];
+
+0 -> 0[label="a/1"];
+0 -> 0[label="b/0"];
+
+}

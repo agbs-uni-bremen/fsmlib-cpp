@@ -5,4 +5,4 @@ set (FSM_SETS_SOURCES
 	HsTreeNode.h
 )
 
-add_library (fsm-sets ${FSM_SETS_SOURCES})
+add_library (fsm-sets OBJECT ${FSM_SETS_SOURCES})

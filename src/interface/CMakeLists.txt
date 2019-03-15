@@ -3,4 +3,4 @@ set (FSM_INTERFACE_SOURCES
 	FsmPresentationLayer.h
 )
 
-add_library (fsm-interface ${FSM_INTERFACE_SOURCES})
+add_library (fsm-interface OBJECT ${FSM_INTERFACE_SOURCES})

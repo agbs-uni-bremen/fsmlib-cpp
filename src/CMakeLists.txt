@@ -3,6 +3,28 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.8.11)
 
 #set the name of the project
 PROJECT (fsm)
+#####################################################################
+#Setting debug macro if this is a DEBUG build
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DENABLE_DEBUG_MACRO")
+
+#####################################################################
+# Adding flag, in order to auto configure the Easylogging++ logger
+add_definitions(-DAUTO_INITIALIZE_EASYLOGGINGPP)
+
+#####################################################################
+# Configure logger
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_definitions(-DELPP_FEATURE_PERFORMANCE_TRACKING)
+    add_definitions(-DELPP_LOGGING_FLAGS_FROM_ARG)
+    #add_definitions(-DELPP_PERFORMANCE_MICROSECONDS)
+endif()
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_definitions(-DELPP_FEATURE_PERFORMANCE_TRACKING)
+    #add_definitions(-DELPP_PERFORMANCE_MICROSECONDS)
+endif()
 
 #####################################################################
 #enable warning for MSVC and gcc
@@ -56,6 +78,8 @@ add_subdirectory (harness)
 add_subdirectory (example)
 add_subdirectory (generator)
 add_subdirectory (checker)
+add_subdirectory (cloneable)
+add_subdirectory (utils)
 
 add_subdirectory (method-checker)
 
@@ -80,3 +104,5 @@ configure_file (../resources/fsmGillA7.in								window/fsmGillA7.in								COPY
 configure_file (../resources/fsmGillA7.out								window/fsmGillA7.out								COPYONLY)
 configure_file (../resources/fsmGillA7.state							window/fsmGillA7.state							COPYONLY)
 endif(gui)
+
+include(cppcheck.cmake)

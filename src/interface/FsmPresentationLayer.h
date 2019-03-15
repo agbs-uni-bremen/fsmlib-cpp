@@ -32,7 +32,7 @@ private:
 	 */
 	std::vector<std::string> state2String;
 public:
-	/**
+    /**
 	 * Create a new presentation layer containing nothing
 	 */
 	FsmPresentationLayer();
@@ -64,6 +64,14 @@ public:
 
     void addState2String(std::string name);
     void removeState2String(const int index);
+    void setState2String(std::vector<std::string> state2String);
+    int addOut2String(std::string name);
+    int addOut2String(const int i, std::string name);
+    int addIn2String(std::string name);
+    int addIn2String(const int i, std::string name);
+    void truncateState2String(const int index);
+    void truncateIn2String(const int index);
+    void truncateOut2String(const int index);
 
 	/**
 	 * Getter for a particular input name
@@ -141,5 +149,6 @@ public:
 	 * @param otherPresentationLayer The other presentation layer to be compared
 	 */
 	bool compare(std::shared_ptr<FsmPresentationLayer> otherPresentationLayer);
+    FsmPresentationLayer& operator=(FsmPresentationLayer& other);
 };
 #endif //FSM_INTERFACE_FSMPRESENTATIONLAYER_H_

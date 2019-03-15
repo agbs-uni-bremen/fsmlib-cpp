@@ -4,4 +4,4 @@ set (FSM_EXAMPLE_SOURCES
         sut_wrapper.c
 )
 
-add_library (fsm-example ${FSM_EXAMPLE_SOURCES})
+add_library (fsm-example OBJECT ${FSM_EXAMPLE_SOURCES})

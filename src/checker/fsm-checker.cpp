@@ -62,7 +62,7 @@ static bool isDeterministic = true;
  */
 static void printUsage(char* name) {
     cerr << "usage: " << name
-    << "sutmodelfile testsuite"
+    << " sutmodelfile testsuite"
     << endl;
 }
 
@@ -116,6 +116,7 @@ static void readSUTModel() {
             
             if ( jReader.parse(document.str(),root) ) {
                 dfsmSut = make_shared<Dfsm>(root);
+                pl = dfsmSut->getPresentationLayer();
             }
             else {
                 cerr << "Could not parse JSON model - exit." << endl;
@@ -222,7 +223,10 @@ static void executeTestCase(const char* tcId, char* line) {
         printf(" PASS\n");
     }
     else {
-        printf(" FAIL\n");
+        cout << " FAIL - observed ";
+        IOTrace iot = dfsmSut->applyDet(inTrace);
+        cout << iot.getOutputTrace() << endl;
+        
     }
     
 }
@@ -253,7 +257,7 @@ static void executeTestSuite(const char* fname) {
         }
         
     }
-    
+    fclose(f);
     
     
 }

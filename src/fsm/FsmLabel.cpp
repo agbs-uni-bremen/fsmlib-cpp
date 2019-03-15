@@ -5,9 +5,11 @@
  */
 #include "fsm/FsmLabel.h"
 
+const int FsmLabel::EPSILON = -1;
+
 FsmLabel::FsmLabel(const int input,
                    const int output,
-                   const std::shared_ptr<FsmPresentationLayer> presentationLayer)
+                   const std::shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: input(input), output(output), presentationLayer(presentationLayer)
 {
 
@@ -27,6 +29,11 @@ int FsmLabel::getInput() const
 int FsmLabel::getOutput() const
 {
 	return output;
+}
+
+std::shared_ptr<IOTrace> FsmLabel::toIOTrace() const
+{
+    return std::make_shared<IOTrace>(input, output, presentationLayer);
 }
 
 bool operator==(FsmLabel const & label1, FsmLabel const & label2)

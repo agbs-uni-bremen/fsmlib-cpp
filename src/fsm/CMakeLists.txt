@@ -28,6 +28,8 @@ set (FSM_FSM_SOURCES
 	IOTrace.h
         SegmentedTrace.cpp
 	SegmentedTrace.h
+        IOTraceContainer.cpp
+        IOTraceContainer.h
 	OFSMTable.cpp
 	OFSMTable.h
 	OFSMTableRow.cpp
@@ -38,9 +40,13 @@ set (FSM_FSM_SOURCES
 	PkTable.h
 	PkTableRow.cpp
 	PkTableRow.h
+        RDistinguishability.cpp
+        RDistinguishability.h
 	Trace.cpp
 	Trace.h
+        VPrimeLazy.cpp
+        VPrimeLazy.h
 	typedef.inc
 )
 
-add_library (fsm-fsm ${FSM_FSM_SOURCES})
+add_library (fsm-fsm OBJECT ${FSM_FSM_SOURCES})

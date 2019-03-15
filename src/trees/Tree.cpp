@@ -3,6 +3,7 @@
  * 
  * Licensed under the EUPL V.1.1
  */
+#include "fsm/FsmLabel.h"
 #include "trees/Tree.h"
 
 using namespace std;
@@ -20,7 +21,7 @@ vector<shared_ptr<TreeNode const>> Tree::calcLeaves() const
     return result;
 }
 
-void Tree::remove(const shared_ptr<TreeNode> thisNode, const shared_ptr<TreeNode> otherNode)
+void Tree::remove(const shared_ptr<TreeNode>& thisNode, const shared_ptr<TreeNode>& otherNode)
 {
 	thisNode->deleteNode();
 
@@ -29,12 +30,12 @@ void Tree::remove(const shared_ptr<TreeNode> thisNode, const shared_ptr<TreeNode
 		shared_ptr<TreeEdge> eOther = otherNode->hasEdge(e);
 		if (eOther != nullptr)
 		{
-			remove(e->getTarget(), eOther->getTarget());
+            remove(e->getTarget(), eOther->getTarget());
 		}
 	}
 }
 
-void Tree::printChildren(ostream & out, const shared_ptr<TreeNode> top, const shared_ptr<int> idNode) const
+void Tree::printChildren(ostream & out, const shared_ptr<TreeNode>& top, const shared_ptr<int>& idNode) const
 {
 	int idNodeBase = *idNode;
 	for (shared_ptr<TreeEdge> edge : *top->getChildren())
@@ -58,13 +59,25 @@ bool Tree::inPrefixRelation(vector<int> aPath, vector<int> bPath)
     return true;
 }
 
-Tree::Tree(const shared_ptr<TreeNode> root, const shared_ptr<FsmPresentationLayer> presentationLayer)
+Tree::Tree(const shared_ptr<TreeNode>& root, const shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: root(root), presentationLayer(presentationLayer)
 {
 
 }
 
-vector<shared_ptr<TreeNode>> Tree::getLeaves()
+Tree::Tree(const Tree* other): presentationLayer(other->presentationLayer)
+{
+    if (other->root != nullptr)
+    {
+        root = other->root->Clone();
+    }
+    if (other->leaves.size() > 0)
+    {
+        calcLeaves();
+    }
+}
+
+std::vector<std::shared_ptr<TreeNode>> Tree::getLeaves()
 {
 	calcLeaves();
 	return leaves;
@@ -75,7 +88,7 @@ shared_ptr<TreeNode> Tree::getRoot() const
 	return root;
 }
 
-shared_ptr<Tree> Tree::getSubTree(const shared_ptr<InputTrace> alpha)
+shared_ptr<Tree> Tree::getSubTree(const shared_ptr<InputTrace>& alpha)
 {
     shared_ptr<TreeNode> afterAlpha = root->after(alpha->cbegin(), alpha->cend());
     shared_ptr<TreeNode> cpyNode = afterAlpha->clone();
@@ -115,7 +128,7 @@ IOListContainer Tree::getIOListsWithPrefixes()
     return IOListContainer(ioll, presentationLayer);
 }
 
-void Tree::remove(const shared_ptr<Tree> otherTree)
+void Tree::remove(const shared_ptr<Tree>& otherTree)
 {
 	remove(getRoot(), otherTree->getRoot());
 }
@@ -135,6 +148,28 @@ IOListContainer Tree::getTestCases()
 	return getIOLists();
 }
 
+IOListContainer Tree::getDeterministicTestCases()
+{
+	std::shared_ptr<std::vector<std::vector<int>>> ioll = std::make_shared<std::vector<std::vector<int>>>();
+	std::shared_ptr<TreeNode> currentNode = root;
+    ioll->push_back({FsmLabel::EPSILON});
+	std::shared_ptr<std::vector<std::shared_ptr<TreeEdge>>> edges = currentNode->getChildren();
+
+	for (size_t i=0; i < edges->size(); ++i)
+	{
+		std::shared_ptr<TreeEdge> edge = (*edges)[i];
+		std::shared_ptr<TreeNode> node = edge->getTarget();
+        const vector<int>& path = node->getPath();
+        if (!IOListContainer::contains(ioll, path))
+        {
+            ioll->push_back(path);
+        }
+		std::shared_ptr<std::vector<std::shared_ptr<TreeEdge>>> newEdges = node->getChildren();
+		std::copy (newEdges->begin(), newEdges->end(), std::back_inserter(*edges));
+	}
+	return IOListContainer(ioll, presentationLayer);
+}
+
 void Tree::add(const IOListContainer & tcl)
 {
 	root->add(tcl);
@@ -150,7 +185,7 @@ void Tree::addToRoot(const vector<int> &lst)
     root->addToThisNode(lst);
 }
 
-void Tree::unionTree(const shared_ptr<Tree> otherTree)
+void Tree::unionTree(const shared_ptr<Tree>& otherTree)
 {
 	addToRoot(otherTree->getIOLists());
 }
@@ -166,12 +201,26 @@ void Tree::addAfter(const InputTrace & tr, const IOListContainer & cnt)
 	n->addToThisNode(cnt);
 }
 
+bool Tree::isDefined(int y) const
+{
+    return root->isDefined(y);
+}
 
 size_t Tree::size() {
     
     size_t theSize = 0;
     root->calcSize(theSize);
     return theSize;
+}
+
+Tree* Tree::_clone() const
+{
+    return new Tree( this );
+}
+
+std::shared_ptr<Tree> Tree::Clone() const
+{
+    return std::shared_ptr<Tree>(_clone());
 }
 
 shared_ptr<Tree> Tree::getPrefixRelationTree(const shared_ptr<Tree> & b)
@@ -215,8 +264,6 @@ shared_ptr<Tree> Tree::getPrefixRelationTree(const shared_ptr<Tree> & b)
 
 }
 
-
-
 int Tree::tentativeAddToRoot(const std::vector<int>& alpha) {
     return root->tentativeAddToThisNode(alpha.cbegin(), alpha.cend());
 }
@@ -240,12 +287,35 @@ int Tree::tentativeAddToRoot(SegmentedTrace& alpha) const {
 
 }
 
+ostream & operator<<(ostream & out, Tree & t)
+{
+    out << t.str();
+    return out;
+}
 
+string Tree::str()
+{
+    string str;
+    calcLeaves();
 
+    for (size_t k = 0; k < leaves.size(); ++k)
+    {
+        shared_ptr<TreeNode> leave = leaves.at(k);
+        shared_ptr<TreeNode> l = static_pointer_cast<TreeNode>(leave);
+        vector<int> path = l->getPath();
+        for (size_t i = 0; i < path.size(); ++i)
+        {
+            if ( i > 0 )
+            {
+                str += ".";
+            }
 
-
-
-
-
-
-
+            str += "(" + presentationLayer->getInId(path.at(i)) + ")";
+        }
+        if (k != leaves.size() - 1)
+        {
+            str += ", ";
+        }
+    }
+    return str;
+}

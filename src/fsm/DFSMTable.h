@@ -48,7 +48,7 @@ public:
      * @param n The id of the row to change
      * @param r The row to insert
      */
-    void setRow(const int n, const std::shared_ptr<DFSMTableRow> r);
+    void setRow(const int n, const std::shared_ptr<DFSMTableRow>& r);
     
     std::shared_ptr<DFSMTableRow> getRow(int n) { return rows[n]; }
     

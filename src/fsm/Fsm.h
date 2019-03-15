@@ -15,8 +15,11 @@
 #include <unordered_set>
 #include <vector>
 #include <deque>
+#include <map>
 
 #include "fsm/FsmVisitor.h"
+#include "fsm/FsmLabel.h"
+#include "fsm/InputTrace.h"
 
 
 class Dfsm;
@@ -27,11 +30,41 @@ class InputTrace;
 class FsmPresentationLayer;
 class OFSMTable;
 class IOListContainer;
+class IOTreeContainer;
 class TestSuite;
+class OutputTrace;
+class InputOutputTree;
+class IOTrace;
+class IOTraceContainer;
 
 enum Minimal
 {
     True, False, Maybe
+};
+
+
+class too_many_transition_faults : public std::runtime_error
+{
+public:
+    too_many_transition_faults(const std::string& msg);
+};
+
+class too_many_output_faults : public std::runtime_error
+{
+public:
+    too_many_output_faults(const std::string& msg);
+};
+
+class unexpected_reduction : public std::runtime_error
+{
+public:
+    unexpected_reduction(const std::string& msg);
+};
+
+class reduction_not_possible : public std::runtime_error
+{
+public:
+    reduction_not_possible(const std::string& msg);
 };
 
 class Fsm
@@ -41,7 +74,7 @@ protected:
     /**
      *  Default constructors without effect - needed by sub-classes
      */
-    Fsm(const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    Fsm(const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
     Fsm();
 
     /** Name of the FSM -- appears in nodes when printing the FSM as a dot graph */
@@ -65,24 +98,32 @@ protected:
     int initStateIdx;
 
     std::shared_ptr<Tree> characterisationSet;
+    std::vector<std::shared_ptr<FsmNode>> dReachableStates;
     Minimal minimal;
-
+    bool complete;
 
     std::vector<std::shared_ptr<OFSMTable>> ofsmTableLst;
     std::vector<std::shared_ptr<Tree>> stateIdentificationSets;
     std::shared_ptr<FsmPresentationLayer> presentationLayer;
-    std::shared_ptr<FsmNode> newNode(const int id, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p,
-                                     std::shared_ptr<FsmPresentationLayer> pl);
-    bool contains(const std::deque<std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>>& lst, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p);
-    bool contains(const std::vector<std::shared_ptr<FsmNode>>& lst, const std::shared_ptr<FsmNode> n);
-    std::shared_ptr<FsmNode> findp(const std::vector<std::shared_ptr<FsmNode>>& lst, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>> p);
+    std::shared_ptr<FsmNode> newNode(const int id, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>& p,
+                                     const std::shared_ptr<FsmPresentationLayer>& pl);
+    bool contains(const std::deque<std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>>& lst, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>& p);
+    bool contains(const std::vector<std::shared_ptr<FsmNode>>& lst, const std::shared_ptr<FsmNode>& n);
+    bool contains(const std::vector<std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>>& lst, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>& p);
+
+    std::shared_ptr<FsmNode> findp(const std::vector<std::shared_ptr<FsmNode>>& lst, const std::shared_ptr<std::pair<std::shared_ptr<FsmNode>, std::shared_ptr<FsmNode>>>& p);
+
     void parseLine(const std::string & line);
     void readFsm(const std::string & fname);
 
     void parseLineInitial (const std::string & line);
     void readFsmInitial (const std::string & fname);
-
-
+    /**
+     * Reads a dot file and creates an FSM according to the dot definitions.
+     * @param fname The path to the dot file.
+     */
+    void readFsmFromDot (const std::string & fname, const std::string name = "");
+    
     std::string labelString(std::unordered_set<std::shared_ptr<FsmNode>>& lbl) const;
 
     /**
@@ -102,6 +143,43 @@ protected:
      *   Calculate OFSM tables and store them in ofsmTableLst
      */
     void calcOFSMTables();
+    
+    void addRandomTransitions(const float& maxDegreeOfNonDeterminism,
+                              const bool& onlyNonDeterministic,
+                              const bool& observable,
+                              const float& factor,
+                              std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>());
+    bool meetDegreeOfCompleteness(const float& degreeOfCompleteness,
+                                  const float& maxDegreeOfNonDeterminism,
+                                  const bool& observable,
+                                  std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>());
+    bool doesMeetDegreeOfCompleteness(const float& degreeOfCompleteness, std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    void meetNumberOfStates(const int& maxState, const float& maxDegreeOfNonDeterminism, const bool& observable,
+                            std::vector<std::shared_ptr<FsmNode>>& createdNodes);
+    std::shared_ptr<FsmLabel> createRandomLabel(
+            const std::shared_ptr<FsmNode>& srcNode,
+            const float& maxDegreeOfNonDeterminism,
+            const bool& onlyNonDeterministic,
+            const bool& observable) const;
+
+    void selectRandomNodeAndCreateLabel(
+            const std::vector<std::shared_ptr<FsmNode>> srcNodePool,
+            const float& maxDegreeOfNonDeterminism,
+            const bool& onlyNonDeterministic,
+            const bool& observable,
+            std::shared_ptr<FsmNode>& node,
+            std::shared_ptr<FsmLabel>& label) const;
+
+    bool moreTransitionsPossible(const float& maxDegreeOfNonDeterminism,
+                                 const bool& onlyNonDeterministic,
+                                 std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+
+    int getNumberOfPossibleTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    int getNumberOfNotDefinedDeterministicTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    int getNumberOfNonDeterministicTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    int getNumberOfTotalTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+
+    std::vector<std::shared_ptr<FsmTransition>> getNonDeterministicTransitions() const;
 
 public:
 
@@ -112,6 +190,10 @@ public:
      */
     Fsm(const Fsm& other);
 
+    Fsm(const Fsm& other,
+        const std::string& fsmName,
+        const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
+    
     /**
      *  Constructor creating an FSM from file - used only internally
      */
@@ -120,8 +202,8 @@ public:
         const int maxNodes,
         const int maxInput,
         const int maxOutput,
-        const std::shared_ptr<FsmPresentationLayer> presentationLayer);
-
+        const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
+    
     /**
      *  Constructor creating an FSM specified in a file.
      *  @param fname Filename of a text file (typically with extension *.fsm),
@@ -148,7 +230,15 @@ public:
      *
      */
     Fsm(const std::string& fname,
-        const std::shared_ptr<FsmPresentationLayer> presentationLayer,
+        const std::shared_ptr<FsmPresentationLayer>& presentationLayer,
+        const std::string& fsmName);
+
+    /**
+     * Constructs an FSM based on the specification from a dot file.
+     * @param dotFileName The path to the dot file.
+     * @param fsmName Name of the FSM.
+     */
+    Fsm(const std::string& dotFileName,
         const std::string& fsmName);
 
 
@@ -164,10 +254,17 @@ public:
     Fsm(const std::string & fsmName,
         const int maxInput,
         const int maxOutput,
-        const std::vector<std::shared_ptr<FsmNode>> lst,
-        const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+        const std::vector<std::shared_ptr<FsmNode>>& lst,
+        const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
 
-
+    Fsm(const std::string & fsmName,
+        const int maxInput,
+        const int maxOutput,
+        const std::vector<std::shared_ptr<FsmNode>>& lst,
+        const int initStateIdx,
+        const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
+    
+    
     /**
      *  Create a completely specified FSM at random. Every state in the FSM
      *  will be reachable, but the FSM may be nondeterministic, non-observable,
@@ -188,6 +285,7 @@ public:
      *               value needs to be supplied by the user, because
      *               otherwise the constructor will always produce the same FSM.
      *   @param maxState  Maximal value of the states in range 0..maxState
+     *   @param observable  When `true`, an observable FSM will be created.
      *   @return an FSM created at random according to these specifications.
      */
     static std::shared_ptr<Fsm>
@@ -195,10 +293,23 @@ public:
                     const int maxInput,
                     const int maxOutput,
                     const int maxState,
-                    const std::shared_ptr<FsmPresentationLayer>
-                    presentationLayer,
+                    const std::shared_ptr<FsmPresentationLayer>& presentationLayer,
+                    const bool observable = false,
                     const unsigned seed = 0);
 
+
+    static std::shared_ptr<Fsm>
+    createRandomFsm(const std::string & fsmName,
+                    const int& maxInput,
+                    const int& maxOutput,
+                    const int& maxState,
+                    const std::shared_ptr<FsmPresentationLayer>& presentationLayer,
+                    const float& degreeOfCompleteness,
+                    const float& maxDegreeOfNonDeterminism,
+                    const bool& forceNonDeterminism,
+                    const bool& minimal,
+                    const bool& observable,
+                    const unsigned& seed = 0);
 
     /**
      *  Create a mutant of the FSM, producing output faults
@@ -208,10 +319,19 @@ public:
      *  specified, the same will hold for the mutant.
      */
     std::shared_ptr<Fsm> createMutant(const std::string & fsmName,
-                                      const size_t numOutputFaults,
-                                      const size_t numTransitionFaults);
+                                      const int numOutputFaults,
+                                      const int numTransitionFaults,
+                                      const bool keepObservability = false,
+                                      const unsigned seed = 0,
+                                      const std::shared_ptr<FsmPresentationLayer>& pLayer = nullptr);
 
-
+    std::shared_ptr<Fsm> createReduction(const std::string& fsmName,
+                                         const bool& force,
+                                         int& removedTransitions,
+                                         const unsigned seed = 0,
+                                         const std::shared_ptr<FsmPresentationLayer>& pLayer = nullptr) const;
+    
+    
     /**
      * Write FSM to text file using the standard format in each line
      * which is also used for instantiating an FSM from file:
@@ -225,6 +345,8 @@ public:
      * \item post-state is a number in range 0..(number of states -1)
      */
     void dumpFsm(std::ofstream & outputFile) const;
+    std::vector<std::shared_ptr<FsmNode>> getDReachableStates() { return dReachableStates; }
+    std::vector<std::shared_ptr<FsmNode>> calcDReachableStates(InputTraceSet& detStateCover);
     std::shared_ptr<FsmNode> getInitialState() const;
 
     /**
@@ -236,17 +358,22 @@ public:
     int getMaxInput() const;
     int getMaxOutput() const;
     std::vector<std::shared_ptr<FsmNode>> getNodes() const;
+    std::shared_ptr<FsmNode> getNode(int id) const;
     std::shared_ptr<FsmPresentationLayer> getPresentationLayer() const;
     int getInitStateIdx() const;
     void resetColor();
     void toDot(const std::string & fname);
+    
+    float getDegreeOfCompleteness(const int& minus = 0, std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    float getDegreeOfNonDeterminism(const int& diff = 0, std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
+    int getNumberOfDifferentInputTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
 
     /**
      Create a new FSM that represents the intersection of this and the other FSM
      @param f the other FSM
      @return a new FSM which equals the intersection of this and f
      */
-    Fsm intersect(const Fsm & f);
+    Fsm intersect(const Fsm & f, std::string name = "");
 
     /**
      * Generate the state cover of an arbitrary FSM
@@ -277,17 +404,26 @@ public:
     OutputTree apply(const InputTrace & itrc, bool markAsVisited = false);
 
     /**
+     * Calculates each output that can be generated by a given input trace and the corresponding target nodes.
+     * @param input The given input trace.
+     * @param producedOutputs The calculated outputs that can be produced by the given input trace.
+     * @param reachedNodes The calculated nodes that can be reached by the given input trace.
+     */
+    void apply(const InputTrace& input, std::vector<std::shared_ptr<OutputTrace>>& producedOutputs, std::vector<std::shared_ptr<FsmNode>>& reachedNodes) const;
+    
+    /**
      *  Transform an FSM to its observable equivalent.
      */
-    Fsm transformToObservableFSM() const;
-
+    Fsm transformToObservableFSM(const std::string& nameSuffix = "_O") const;
+    
     /**
      Check this FSM with respect to observability
      @return true if and only if the FSM is observable
      */
     bool isObservable() const;
     Minimal isMinimal() const;
-
+    bool isComplete() const;
+    
     /**
      *   Check for unreachable states and remove them from the
      *   FSM
@@ -306,18 +442,21 @@ public:
      \pre This method can only be applied to an observable OFSM
      @return minimal observable FSM which is equivalent to this FSM
      */
-    Fsm minimiseObservableFSM();
-
+    Fsm minimiseObservableFSM(const std::string& nameSuffix = "_MIN", bool prependFsmName = true);
+    
     /**
      Create the minimal observable FSM which is equivalent to this FSM.
      If this FSM is not observable, an observable equivalent is created
      first. The observable FSM is then minimised.
      @return minimal observable FSM which is equivalent to this FSM
      */
-    Fsm minimise();
-    bool isCharSet(const std::shared_ptr<Tree> w) const;
-    void minimiseCharSet(const std::shared_ptr<Tree> w);
+    Fsm minimise(const std::string& nameSuffixMin = "_MIN",
+                 const std::string& nameSuffixObs = "_0",
+                 bool prependFsmName = true);
 
+    bool isCharSet(const std::shared_ptr<Tree>& w) const;
+    void minimiseCharSet(const std::shared_ptr<Tree>& w);
+    
     /**
      Calculate the characterisation set W of a (possibly nondeterministic) FSM.
      In addition, calculate the state identification
@@ -333,6 +472,289 @@ public:
     IOListContainer getCharacterisationSet();
 
     /**
+     * Returns all outputs that may occur on <b>both</b> given states when applying the
+     * given input.
+     * @param q1 First state.
+     * @param q2 Second state.
+     * @param x The input that will be applied to both states.
+     * @return All outputs that may occur on <b>both</b> states with the given input.
+     */
+    std::vector<std::shared_ptr<OutputTrace>> getOutputIntersection(std::shared_ptr<FsmNode> q1, std::shared_ptr<FsmNode> q2, int x) const;
+
+    /**
+     * Calculates for every state the r(1)-distinguishable states.
+     */
+    void calcROneDistinguishableStates();
+
+    /**
+     * Calculates for every state the r-distinguishable states.
+     */
+    void calcRDistinguishableStates();
+
+    /**
+     * Calculates the state characterisation set for a given state, based on the
+     * previsously calculated r-distinguishability.
+     *
+     * The state characterisation set distinguishes all r-distinguishable states
+     * from the given state, if the given state is r-distinguishable.
+     *
+     * @param node The given state
+     * @return The state characterisation set for the given state in the form of
+     * a list of input sequences.
+     */
+    IOListContainer getRStateCharacterisationSet(std::shared_ptr<FsmNode> node) const;
+
+    /**
+     * Calculates the adaptive state characterisation set for a given state, based on the
+     * previsously calculated r-distinguishability.
+     *
+     * The adaptive state characterisation set distinguishes all r-distinguishable states
+     * from the given state, if the given state is r-distinguishable.
+     *
+     * @param node The given state
+     * @return The adaptive state characterisation set for the given state in the form of
+     * a list of input sequences.
+     */
+    IOTreeContainer getAdaptiveRStateCharacterisationSet(std::shared_ptr<FsmNode> node) const;
+
+    /**
+     * Calculates the state characterisation set that r-distinguishes all r-distinguishable
+     * states.
+     * @return The state characterisation set
+     */
+    IOListContainer getRCharacterisationSet() const;
+
+    /**
+     * Calculates the adaptive state characterisation set that r-distinguishes all
+     * r-distinguishable states.
+     * @return The adaptive state characterisation set
+     */
+    IOTreeContainer getAdaptiveRCharacterisationSet() const;
+
+
+    void addPossibleIOTraces(std::shared_ptr<FsmNode> node,
+                             std::shared_ptr<InputOutputTree> tree,
+                             IOTraceContainer& iOTraceContainer,
+                             const bool cleanTrailingEmptyTraces = true) const;
+
+
+    void addPossibleIOTraces(std::shared_ptr<FsmNode> node,
+                             const IOTreeContainer& treeContainer,
+                             IOTraceContainer& iOTraceContainer,
+                             const bool cleanTrailingEmptyTraces = true) const;
+
+    bool hasFailure() const;
+
+    /**
+     * Returns a set of input/output sequences that can be produced by this
+     * FSM when applying each element of the given adaptive test cases to
+     * the state that gets reached by applying the given trace `trace`
+     * to this FSM.
+     * @param adaptiveTestCases The given adaptive test cases
+     * @param trace The given trace
+     * @return A set of all input/output traces that can be produced
+     */
+    IOTraceContainer bOmega(const IOTreeContainer& adaptiveTestCases, const IOTrace& trace) const;
+
+    /**
+     * Returns a set of input/output sequences that can be produced by this
+     * FSM when applying each element of the given adaptive test cases to
+     * each state that can be reached by applying each input trace from the given
+     * input traces `inputTraces` to this FSM.
+     * @param adaptiveTestCases The given adaptive test cases
+     * @param inputTraces The given input traces
+     * @return A set of all input/output traces that can be produced
+     */
+    void bOmega(const IOTreeContainer& adaptiveTestCases,
+                const InputTraceSet& inputTraces,
+                std::unordered_set<IOTraceContainer>& result) const;
+
+    /**
+     * Calculates all prefixes of `base.suffix`, that reach the given node and that
+     * extend `base`.
+     * @param node The given node
+     * @param base Given base input output trace
+     * @param suffix Given suffix input output trace
+     * @return List of input output traces
+     */
+    IOTraceContainer r(std::shared_ptr<FsmNode> node,
+                       const IOTrace& base,
+                       const IOTrace& suffix) const;
+
+    /**
+     * Calculates all prefixes of `base.suffix`, that reach the given node and that
+     * extend `base` plus the input output sequence from `vDoublePrime` that reaches
+     * the given node (if there is such a sequence).
+     * @param node The given node
+     * @param base Given base input output trace
+     * @param suffix Given suffix input output trace
+     * @return List of input output traces
+     */
+    IOTraceContainer rPlus(std::shared_ptr<FsmNode> node,
+                           const IOTrace& prefix,
+                           const IOTrace& suffix,
+                           const IOTraceContainer& vDoublePrime,
+                           const bool onlyPlusPortion = false) const;
+
+    /**
+     * Calculates the lower bound that may be placed on the number of states
+     * of the FSM if there has been no repetition in the states of the product
+     * machine for a given input/output sequence.
+     *
+     * Let x/y be the given input/output sequence, being observed when applying
+     * a determinisitc state cover input sequence.
+     * @param base Input/output sequence with the input sequence being an element
+     * of the deterministic state cover and the output sequence being a possible
+     * output to said input sequence. `base` is a prefix of x/y.
+     * @param suffix Suffix x/y with base.suffix = x/y
+     * @param states A maximum set of r-distinguishable states, that has been used
+     * during the calculation of `base` and `suffix`.
+     * @param adaptiveTestCases The corresponding adaptive test cases.
+     * @param vDoublePrime A set of input/output sequences that represents one
+     * possible combination of all input traces from the deterministic state cover
+     * and theirs corresponding output sequences.
+     * @param dReachableStates All d-reachable states.
+     * @return The lower bound that may be placed on the number of states
+     * of the FSM if there has been no repetition in the states of the product
+     * machine for a given input/output sequence.
+     */
+    static size_t lowerBound(const IOTrace& base,
+                             const IOTrace& suffix,
+                             const std::vector<std::shared_ptr<FsmNode>>& states,
+                             const IOTreeContainer& adaptiveTestCases,
+                             std::unordered_set<IOTraceContainer> bOmegaT,
+                             const IOTraceContainer& vDoublePrime,
+                             const std::vector<std::shared_ptr<FsmNode>>& dReachableStates,
+                             const Fsm& spec,
+                             const Fsm& iut);
+
+    static bool exceedsBound(const size_t m,
+                             const IOTrace& base,
+                             const IOTrace& suffix,
+                             const std::vector<std::shared_ptr<FsmNode>>& states,
+                             const IOTreeContainer& adaptiveTestCases,
+                             std::unordered_set<IOTraceContainer> bOmegaT,
+                             const IOTraceContainer& vDoublePrime,
+                             const std::vector<std::shared_ptr<FsmNode>>& dReachableStates,
+                             const Fsm& spec,
+                             const Fsm& iut);
+
+    /**
+     * Calculates a test suite that determines if a given IUT is a reduction of the given
+     * specification..
+     *
+     * It is assumed that the IUT behaves like some unknown element of a fault domain
+     * of completely specified observable FSMs with the same input and output alphabets
+     * as the specification.
+     * @param spec The given specification
+     * @param iut The given IUT
+     * @param observedTraces Return parameter for the observed traces during the test
+     * suite creation.
+     * @param observedTraces Return parameter for the trace that caused a failure during the test
+     * suite creation.
+     * @return `true`, if no failure has been observed during the creation of the test suite,
+     * `false`, otherwise.
+     */
+    static bool adaptiveStateCounting(Fsm& spec, Fsm& iut, const size_t m,
+                                      IOTraceContainer& observedTraces,
+                                      std::shared_ptr<IOTrace>& failTrace,
+                                      int& iterations);
+
+    /**
+     * Determines if the given adaptive test cases distinguish all states from
+     * {@code nodesA} from all states from {@code nodeB}.
+     * @param nodesA First set of states
+     * @param nodesB Second set of states
+     * @param adaptiveTestCases The adaptive test cases that will be used
+     * @return {@code} true, if {@code adaptiveTestCases} distuinguishes all states
+     * from {@code nodesA} from all states from {@code nodesB}; {@code false}, otherwise
+     */
+    bool rDistinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
+                                std::vector<std::shared_ptr<FsmNode>>& nodesB,
+                                const IOTreeContainer& adaptiveTestCases) const;
+
+    /**
+     * Determines if the given adaptive test cases distinguish all states from
+     * {@code nodesA} from all states from `nodeB`.
+     * @param nodesA First set of states
+     * @param nodesB Second set of states
+     * @param adaptiveTestCases The adaptive test cases that will be used
+     * @return `true`, if 'adaptiveTestCases` distuinguishes all states
+     * from `nodesA` from all states from `nodesB`; `false`, otherwise
+     */
+    bool distinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
+                                std::vector<std::shared_ptr<FsmNode>>& nodesB,
+                                const IOTreeContainer& adaptiveTestCases) const;
+
+    /**
+     * Determines if the given adaptive test cases distinguish state {@code nodesA}
+     * from state {@code nodeB}.
+     * @param nodeA First state
+     * @param nodesB Second state
+     * @param adaptiveTestCases The adaptive test cases that will be used
+     * @return {@code} true, if {@code adaptiveTestCases} distuinguishes state
+     * {@code nodeA} from state {@code nodeB}; {@code false}, otherwise
+     */
+    bool rDistinguishes(std::shared_ptr<FsmNode> nodeA,
+                      std::shared_ptr<FsmNode> nodeB,
+                      const IOTreeContainer& adaptiveTestCases) const;
+
+
+    bool rDistinguishes(std::shared_ptr<FsmNode> nodeA,
+                      std::shared_ptr<FsmNode> nodeB,
+                      const IOListContainer& testCases) const;
+
+
+    /**
+     * Determines if the given adaptive test cases distinguish state `nodesA`
+     * from state `nodeB`.
+     * @param nodeA First state
+     * @param nodesB Second state
+     * @param adaptiveTestCases The adaptive test cases that will be used
+     * @return `true`, if `adaptiveTestCases` distuinguishes state
+     * `nodeA` from state `nodeB`; `false`, otherwise
+     */
+    bool distinguishes(std::shared_ptr<FsmNode> nodeA,
+                      std::shared_ptr<FsmNode> nodeB,
+                      const IOTreeContainer& adaptiveTestCases) const;
+
+    /**
+     * Determines if the given adaptive test case distinguish state {@code nodesA}
+     * from state {@code nodeB}.
+     * @param nodeA First state
+     * @param nodesB Second state
+     * @param adaptiveTestCase The adaptive test case that will be used
+     * @return {@code} true, if {@code adaptiveTestCase} distuinguishes state
+     * {@code nodeA} from state {@code nodeB}; {@code false}, otherwise
+     */
+    bool rDistinguishes(std::shared_ptr<FsmNode> nodeA,
+                      std::shared_ptr<FsmNode> nodeB,
+                      std::shared_ptr<InputOutputTree> adaptiveTestCase) const;
+
+    bool rDistinguishes(std::shared_ptr<FsmNode> nodeA,
+                        std::shared_ptr<FsmNode> nodeB,
+                        const std::vector<int>& list) const;
+
+    /**
+     * Determines if the given adaptive test case distinguishes state `nodesA`
+     * from state `nodeB`.
+     * @param nodeA First state
+     * @param nodesB Second state
+     * @param adaptiveTestCase The adaptive test case that will be used
+     * @return `true`, if `adaptiveTestCase` distuinguishes state
+     * `nodeA` from state `nodeB`; `false`, otherwise
+     */
+    bool distinguishes(std::shared_ptr<FsmNode> nodeA,
+                      std::shared_ptr<FsmNode> nodeB,
+                      std::shared_ptr<InputOutputTree> adaptiveTestCase) const;
+
+    /**
+     * Calculates a set of maximal sets of r-distinguishable states.
+     * @return A set of maximal sets of r-distinguishable states
+     */
+    std::vector<std::vector<std::shared_ptr<FsmNode>>> getMaximalSetsOfRDistinguishableStates() const;
+    
+    /**
      * Calculate the state identification sets. The sets are stored
      * in list stateIdentificationSets, ordered by the FSM state numbers.
      * \pre The FSM must be observable and minimal, and the characterisation
@@ -342,8 +764,8 @@ public:
     void calcStateIdentificationSets();
     void calcStateIdentificationSetsFast();
 
-    void appendStateIdentificationSets(const std::shared_ptr<Tree> Wp2) const;
-
+    void appendStateIdentificationSets(const std::shared_ptr<Tree>& Wp2) const;
+    
     /**
      * Perform test generation by means of the W Method, as applicable
      * to nondeterministc FSMs that do not need to be completely specified.
@@ -454,11 +876,11 @@ public:
      * @return true if FSM is deterministic
      */
     bool isDeterministic() const;
-
-
-    void setPresentationLayer(const std::shared_ptr<FsmPresentationLayer> ppresentationLayer);
-
-
+    
+    
+    void setPresentationLayer(const std::shared_ptr<FsmPresentationLayer>& ppresentationLayer);
+    
+    
     /** Return the number of states in this FSM */
     size_t size() const { return nodes.size(); }
 

@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "fsm/FsmVisitor.h"
+#include "fsm/IOTrace.h"
 #include "interface/FsmPresentationLayer.h"
 
 class FsmLabel
@@ -29,6 +30,8 @@ private:
 	*/
 	std::shared_ptr<FsmPresentationLayer> presentationLayer;
 public:
+    const static int EPSILON;
+
 	/**
 	 * Create a FsmLabel
 	 * @param input The input of this label
@@ -38,7 +41,7 @@ public:
 	 */
 	FsmLabel(const int input,
              const int output,
-             const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+             const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
     
     /**
      * Copy constructor
@@ -56,6 +59,8 @@ public:
 	@return The output of this label
 	*/
 	int getOutput() const;
+
+    std::shared_ptr<IOTrace> toIOTrace() const;
 
 	/**
 	Check wheter or not, the 2 label are the same
