@@ -1,34 +1,35 @@
-﻿#include <iostream>
-#include <fstream>
+﻿//#include <iostream>
+//#include <fstream>
 #include <memory>
-#include <stdlib.h>
-#include <interface/FsmPresentationLayer.h>
+//#include <stdlib.h>
+//#include <interface/FsmPresentationLayer.h>
 #include <fsm/Dfsm.h>
 #include <fsm/Fsm.h>
 #include <fsm/FsmNode.h>
-#include <fsm/IOTrace.h>
-#include <fsm/FsmPrintVisitor.h>
-#include <fsm/FsmSimVisitor.h>
-#include <fsm/FsmOraVisitor.h>
-#include <trees/IOListContainer.h>
+//#include <fsm/IOTrace.h>
+//#include <fsm/FsmPrintVisitor.h>
+//#include <fsm/FsmSimVisitor.h>
+//#include <fsm/FsmOraVisitor.h>
+//#include <trees/IOListContainer.h>
 #include <trees/OutputTree.h>
-#include <trees/TestSuite.h>
-#include "json/json.h"
-
-#include "sets/HittingSet.h"
-#include "sets/HsTreeNode.h"
-#include <algorithm>
-#include <cmath>
-#include "fsm/PkTableRow.h"
-#include "fsm/PkTable.h"
-#include "fsm/DFSMTable.h"
-#include "fsm/DFSMTableRow.h"
-#include "fsm/OFSMTableRow.h"
-#include "fsm/OFSMTable.h"
+#include <trees/Tree.h>
+//#include <trees/TestSuite.h>
+//#include "json/json.h"
+//
+//#include "sets/HittingSet.h"
+//#include "sets/HsTreeNode.h"
+//#include <algorithm>
+//#include <cmath>
+//#include "fsm/PkTableRow.h"
+//#include "fsm/PkTable.h"
+//#include "fsm/DFSMTable.h"
+//#include "fsm/DFSMTableRow.h"
+//#include "fsm/OFSMTableRow.h"
+//#include "fsm/OFSMTable.h"
 #include "fsm/FsmTransition.h"
-#include "fsm/FsmLabel.h"
+//#include "fsm/FsmLabel.h"
 
-#include <tuple>
+//#include <tuple>
 
 #include "Tests.h"
 
@@ -36,7 +37,7 @@
 
 
 using namespace std;
-using namespace Json;
+//using namespace Json;
 
 
 // Selects two nodes of m randomly and changes the transitions of one of those nodes in a way that makes both equivalent.
@@ -336,62 +337,9 @@ bool isInitialConnected(const Fsm &fsm) {
 	return reachable == nodeSet;
 }
 
-/*
-	Checks if unreachableNodesAfter contains all elements from unreachableNodesBefore and unreachable but no other element.
-*/
-bool checkUnreachableNodesList(const vector<shared_ptr<FsmNode>> &unreachableNodesBefore, const vector<shared_ptr<FsmNode>> &unreachableNodesAfter,
-	unordered_set<shared_ptr<FsmNode>> &unreachable) {
-	// check the size
-	if (unreachableNodesAfter.size() != unreachableNodesBefore.size() + unreachable.size()) return false;
+// =====================================================================================================================================
 
-	// check if each node in unreachableNodesBefore is in unreachableNodesAfter	
-	for (auto n : unreachableNodesBefore) {
-		bool found = false;
-		for (auto n2 : unreachableNodesAfter) {
-			if (n == n2) {
-				found = true;
-				break;
-			}
-		}
-		if (not found) return false;
-	}
-
-	// check if each node in unreachable is in unreachableNodesAfter
-	for (auto n : unreachable) {
-		bool found = false;
-		for (auto n2 : unreachableNodesAfter) {
-			if (n == n2) {
-				found = true;
-				break;
-			}
-		}
-		if (not found) return false;
-	}
-
-	// check if each node of unreachableNodesAfter is in unreachableNodesBefore or unreachable
-	for (auto n : unreachableNodesAfter) {
-		bool found = false;
-		for (auto n2 : unreachableNodesBefore) {
-			if (n == n2) {
-				found = true;
-				break;
-			}
-		}
-		if (not found) {
-			for (auto n2 : unreachable) {
-				if (n == n2) {
-					found = true;
-					break;
-				}
-			}
-		}
-		if (not found) return false;
-	}
-	return true;
-}
-
-// ====================================================================================================
-// Prüfverfahren "Spracherhaltende FSM-Transformationen"
+// Test functions defined for implemented FSM transformations
 
 /**
  * Test function: Fsm::removeUnreachableNodes()
@@ -836,11 +784,11 @@ TestResult minimise_Fsm_TS() {
 	}
 	return result;
 }
-// ====================================================================================================
 
 
-// ====================================================================================================
-// Prüfverfahren "Konstruktion des Produkts"
+// =====================================================================================================================================
+
+// Test functions defined for Fsm::intersect
 
 typedef std::unordered_set<std::shared_ptr<FsmNode>> reachedStates_t;
 typedef std::tuple<reachedStates_t, reachedStates_t, reachedStates_t> reachedStatesTuple_t;
@@ -908,6 +856,8 @@ bool languageIntersectionCheck(const Fsm &m1, const Fsm &m2, const Fsm &intersec
 	}
 	return true;
 }
+
+// Test function for intersect
 
 /**
  * Test function for Fsm::intersect(const Fsm & f).
@@ -1042,10 +992,9 @@ TestResult intersect_TS() {
 }
 
 
-// ====================================================================================================
+// =====================================================================================================================================
 
-// ====================================================================================================
-// Prüfverfahren "Berechnung von Distinguishing Traces"
+// Test functions for the calculation of distinguishing traces
 
 set<vector<int>> calcCompleteOutputTraces(const shared_ptr<FsmNode> startNode, const vector<int> inputTrc) {	
 	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl{ {startNode, vector<int>()} };
@@ -1822,7 +1771,9 @@ TestResult calcStateIdentificationSetsFast_TS() {
 	return result;
 }
 
-// ====================================================================================================
+// =====================================================================================================================================
+
+// Test functions defined for implemented testing theories.
 
 /**
  * Calculate and return the maxOutput of the Fsms m and mutants.
@@ -2175,6 +2126,7 @@ TestResult wMethod_Fsm_TS() {
 		testTestTheory(*m, *createMutants(nullOutput, m), nullOutput, tsGenerator, "TC-Rand-(MSU)-"+ to_string(i)) 
 			? ++result.pass : result.fails.push_back("TC-Rand-(MSU)-" + to_string(i));
 	}
+
 	srand(94563);
 	for (int i = 0; i < 2000; ++i) {
 		auto m = Fsm::createRandomFsmRepeatable("M", (rand() % 4) + 1, (rand() % 6) + 1, (rand() % 6) + 1, pl);
@@ -2203,9 +2155,21 @@ TestResult wMethod_Fsm_TS() {
 	for (int i = 0; i < 2000; ++i) {
 		auto m = makeStatesEquivalent(*makeStatesPartial(Fsm::createRandomFsmRepeatable("M", (rand() % 4) + 1, (rand() % 6) + 1, (rand() % 6) + 1, pl)));
 		const size_t nullOutput = m->getMaxOutput() + 1;
+	srand(2022);
+	for (int i = 0; i < 2000; ++i) {
+		auto m = makeStatesEquivalent(*makeStatesPartial(Fsm::createRandomFsmRepeatable("M", (rand() % 4) + 1, (rand() % 6) + 1, (rand() % 6) + 1, pl)));
+		const size_t nullOutput = m->getMaxOutput() + 1;
 
 		testTestTheory(*m, *createMutants(nullOutput, m), nullOutput, tsGenerator, "TC-Rand-(MSE,MSP)-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-Rand-(MSE,MSP)-" + to_string(i));
+	}
+	srand(52151);
+	for (int i = 0; i < 2000; ++i) {
+		auto m = makeStatesPartial(makeStatesUnreachable(*Fsm::createRandomFsmRepeatable("M", (rand() % 4) + 1, (rand() % 6) + 1, (rand() % 6) + 1, pl)));
+		const size_t nullOutput = m->getMaxOutput() + 1;
+
+		testTestTheory(*m, *createMutants(nullOutput, m), nullOutput, tsGenerator, "TC-Rand-(MSU)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSU,MSP)-" + to_string(i));
 	}
 
 	srand(990137);

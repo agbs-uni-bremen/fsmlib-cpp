@@ -5004,7 +5004,7 @@ int main(int argc, char** argv)
 
 	// Calculation of Distinguishing Traces Test:
 	//getCharacterisationSet_Dfsm_TS().printResults();
-	getCharacterisationSet_Fsm_TS().printResults();
+	//getCharacterisationSet_Fsm_TS().printResults();
 	//calcDistinguishingTrace_PkTables_TS().printResults();
 	//calcDistinguishingTrace_OFSMTables_TS();
 	//calcStateIdentificationSets_TS().printResults();
@@ -5012,7 +5012,7 @@ int main(int argc, char** argv)
 
 	// Complete Test Theories Test:
 	//tMethod_TS().printResults();
-	//wMethod_Fsm_TS();
+	wMethod_Fsm_TS().printResults();
 	//wMethod_Dfsm_TS();
 	//wMethodOnMinimisedFsm_TS().printResults();
 	//wMethodOnMinimisedDfsm_TS();
