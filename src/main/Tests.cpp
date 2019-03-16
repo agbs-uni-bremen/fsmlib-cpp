@@ -996,40 +996,44 @@ TestResult intersect_TS() {
 
 // Test functions for the calculation of distinguishing traces
 
-set<vector<int>> calcCompleteOutputTraces(const shared_ptr<FsmNode> startNode, const vector<int> inputTrc) {	
-	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl{ {startNode, vector<int>()} };
-	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl_next;
-
-	for (int x : inputTrc) {
-		for (auto reachedNode : wl) {
-			for (auto transition : std::get<0>(reachedNode)->getTransitions()) {
-				if (transition->getLabel()->getInput() != x) continue; 
-				vector<int> outputTrc = get<1>(reachedNode);
-				outputTrc.push_back(transition->getLabel()->getOutput());
-				wl_next.insert({ transition->getTarget(), outputTrc });
-			}
-		}
-		wl = wl_next;
-		wl_next = set<std::tuple<shared_ptr<FsmNode>, vector<int>>>();
-	}
-
-	set<vector<int>> outputTrcs;
-	for (auto reachedNode : wl) {
-		outputTrcs.insert(std::get<1>(reachedNode));
-	}
-
-	return outputTrcs;
-}
+/*
+	Applies inputTrc to startNode and produces the set of outputtraces. Only complete output traces are contained in this
+	set (each output trace has the same length as inputTrc).
+*/
+//set<vector<int>> calcCompleteOutputTraces(const shared_ptr<FsmNode> startNode, const vector<int> inputTrc) {	
+//	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl{ {startNode, vector<int>()} };
+//	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl_next;
+//
+//	for (int x : inputTrc) {
+//		for (auto reachedNode : wl) {
+//			for (auto transition : std::get<0>(reachedNode)->getTransitions()) {
+//				if (transition->getLabel()->getInput() != x) continue; 
+//				vector<int> outputTrc = get<1>(reachedNode);
+//				outputTrc.push_back(transition->getLabel()->getOutput());
+//				wl_next.insert({ transition->getTarget(), outputTrc });
+//			}
+//		}
+//		wl = wl_next;
+//		wl_next = set<std::tuple<shared_ptr<FsmNode>, vector<int>>>();
+//	}
+//
+//	set<vector<int>> outputTrcs;
+//	for (auto reachedNode : wl) {
+//		outputTrcs.insert(std::get<1>(reachedNode));
+//	}
+//
+//	return outputTrcs;
+//}
 
 /*
 	Second Version of Algorithm. Applies inputTrc to startNode and produces set of outputtraces. If some FsmNode is reached with a prefix
-	of inputTrc in which the next input of inputTrc is undefined, the corresponding output trace will be expanded by an 'NULL' output
+	of inputTrc in which the next input of inputTrc is undefined, the corresponding output trace will be expanded by an 'NULL'/-1 output
 	(not contained in the output alphabet) and algorithm stays in this FsmNode. Then the next input is applied.
 */
-set<vector<int>> calcCompleteOutputTraces2(const shared_ptr<FsmNode> startNode, const vector<int> inputTrc, const int maxOutput) {
+set<vector<int>> calcCompleteOutputTraces(const shared_ptr<FsmNode> startNode, const vector<int> inputTrc) {
 	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl{ {startNode, vector<int>()} };
 	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl_next;
-	const int nullOutput = maxOutput + 1;
+	const int nullOutput = -1;
 
 	for (int x : inputTrc) {
 		for (auto reachedNode : wl) {
@@ -1061,22 +1065,59 @@ set<vector<int>> calcCompleteOutputTraces2(const shared_ptr<FsmNode> startNode, 
 }
 
 /*
+	Second Version of Algorithm. Applies inputTrc to startNode and produces set of outputtraces. If some FsmNode is reached with a prefix
+	of inputTrc in which the next input of inputTrc is undefined, the corresponding output trace will be expanded by an 'NULL' output
+	(not contained in the output alphabet) and algorithm stays in this FsmNode. Then the next input is applied.
+*/
+//set<vector<int>> calcCompleteOutputTraces2(const shared_ptr<FsmNode> startNode, const vector<int> inputTrc, const int maxOutput) {
+//	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl{ {startNode, vector<int>()} };
+//	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl_next;
+//	const int nullOutput = maxOutput + 1;
+//
+//	for (int x : inputTrc) {
+//		for (auto reachedNode : wl) {
+//			bool defined = false;
+//			for (auto transition : std::get<0>(reachedNode)->getTransitions()) {
+//				if (transition->getLabel()->getInput() != x) continue;
+//				defined = true;
+//				vector<int> outputTrc = get<1>(reachedNode);
+//				outputTrc.push_back(transition->getLabel()->getOutput());
+//				wl_next.insert({ transition->getTarget(), outputTrc });
+//			}
+//			if (not defined) {
+//				vector<int> outputTrc = get<1>(reachedNode);
+//				outputTrc.push_back(nullOutput);
+//				wl_next.insert({ std::get<0>(reachedNode), outputTrc });
+//			}
+//		}
+//		wl = wl_next;
+//		wl_next = set<std::tuple<shared_ptr<FsmNode>, vector<int>>>();
+//	}
+//
+//	set<vector<int>> outputTrcs;
+//	for (auto reachedNode : wl) {
+//		//for (auto i : std::get<1>(reachedNode)) cout << i << ",";
+//		//cout << "\n";
+//		outputTrcs.insert(std::get<1>(reachedNode));
+//	}
+//	return outputTrcs;
+//}
+
+/*
 	Checks if given inTrc is a Distinguishing Trace for q1 and q2.
 	Returns true iff inTrc produces some outTrc of the same length
 	which is only contained in the language of one of these FsmNodes.
 */
-bool isDistTrc(const shared_ptr<FsmNode> q1, const shared_ptr<FsmNode> q2, const vector<int> &inTrc, const int maxOutput) {
-	//return calcCompleteOutputTraces(q1, inTrc) != calcCompleteOutputTraces(q2, inTrc);
-	return calcCompleteOutputTraces2(q1, inTrc, maxOutput) != calcCompleteOutputTraces2(q2, inTrc, maxOutput);
+bool isDistTrc(const shared_ptr<FsmNode> q1, const shared_ptr<FsmNode> q2, const vector<int> &inTrc) {
+	return calcCompleteOutputTraces(q1, inTrc) != calcCompleteOutputTraces(q2, inTrc);	
 }
 
 /*
 	Returns true iff w contains a Distinguishing Trace for q1 and q2.
 */
-bool containsDistTrcForPair(const shared_ptr<FsmNode> q1, const shared_ptr<FsmNode> q2, const IOListContainer &w, const int maxOutput) {
+bool containsDistTrcForPair(const shared_ptr<FsmNode> q1, const shared_ptr<FsmNode> q2, const IOListContainer &w) {
 	for (auto inTrc : *w.getIOLists()) {
-		/*if (isDistTrc(q1, q2, inTrc)) return true;*/
-		if (isDistTrc(q1, q2, inTrc, maxOutput)) return true;
+		if (isDistTrc(q1, q2, inTrc)) return true;
 	}
 	return false;
 }
@@ -1088,7 +1129,7 @@ bool containsDistTrcForPair(const shared_ptr<FsmNode> q1, const shared_ptr<FsmNo
 bool isCharaterisationSet(const Fsm &m, const IOListContainer w) {
 	for (size_t q1Idx = 0; q1Idx < m.size(); ++q1Idx) {
 		for (size_t q2Idx = q1Idx + 1; q2Idx < m.size(); ++q2Idx) {
-			if (not containsDistTrcForPair(m.getNodes().at(q1Idx), m.getNodes().at(q2Idx), w, m.getMaxOutput())) return false;
+			if (not containsDistTrcForPair(m.getNodes().at(q1Idx), m.getNodes().at(q2Idx), w)) return false;
 		}
 	}
 	return true;
@@ -1126,7 +1167,7 @@ bool isStateIdentificationSet(const Fsm &m, const shared_ptr<FsmNode> qi, const 
 	for (auto q : m.getNodes()) {
 		if (q == qi) continue;
 
-		if (not containsDistTrcForPair(q, qi, wi->getIOLists(), m.getMaxOutput())) return false;
+		if (not containsDistTrcForPair(q, qi, wi->getIOLists())) return false;
 	}
 
 	return true;
@@ -1139,6 +1180,10 @@ bool isStateIdentificationSet(const Fsm &m, const shared_ptr<FsmNode> qi, const 
 	Returns true iff there is no subset of wi that is a State Identification Set of qi in m.
 */
 bool isMinimalStateIdentificationSet(const Fsm &m, const shared_ptr<FsmNode> qi, const std::shared_ptr<Tree> wi, const std::shared_ptr<Tree> w) {
+	// border case: accept a state identification set with only one element as minimal
+	if (wi->getIOLists().getIOLists()->size() == 1) {
+		return true;
+	}
 	auto pl = make_shared<FsmPresentationLayer>();
 	for (size_t i = 0; i < wi->getIOLists().getIOLists()->size(); ++i) {
 		IOListContainer iolc(pl);
@@ -1245,7 +1290,7 @@ bool testCalcDistinguishingTrace1(Dfsm &m, const string &tcID) {
 			if (invariantViolation) return pass;
 
 			// check definition of 'Distinguishing Trace' for inTrc
-			fsmlib_assert(tcID, isDistTrc(q1, q2, inTrc.get(), m.getMaxOutput()), pass, "Calculated Trace is a Distinguishing Trace for q1 and q2.");
+			fsmlib_assert(tcID, isDistTrc(q1, q2, inTrc.get()), pass, "Calculated Trace is a Distinguishing Trace for q1 and q2.");
 
 			// check if structure of m has changed
 			fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), pass, "M was not changed by algorithm");
@@ -1268,7 +1313,7 @@ bool testCalcDistinguishingTrace2(Fsm &m, const string &tcID) {
 
 	// calculate the needed parameters from m
 	m.calcOFSMTables();
-	const auto tables = m.ofsmTableLst;
+	const auto tables = m.ofsmTableLst;	
 
 	// test each pair of different nodes
 	for (size_t q1Idx = 0; q1Idx < m.size(); ++q1Idx) {
@@ -1287,7 +1332,7 @@ bool testCalcDistinguishingTrace2(Fsm &m, const string &tcID) {
 			if (invariantViolation) return pass;
 
 			// check definition of 'Distinguishing Trace' for inTrc
-			fsmlib_assert(tcID, isDistTrc(q1, q2, inTrc.get(), m.getMaxOutput()), pass, "Calculated Trace is a Distinguishing Trace for q1 and q2.");
+			fsmlib_assert(tcID, isDistTrc(q1, q2, inTrc.get()), pass, "Calculated Trace is a Distinguishing Trace for q1 and q2.");			
 
 			// check if structure of m has changed
 			fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), pass, "M was not changed by algorithm");
@@ -1366,7 +1411,7 @@ bool testCalcStateIdentificationSetsFast(Fsm &m, const string &tcID) {
 	// Check Definition of State Identification Set for each element in stateIdSets
 	fsmlib_assert(tcID, stateIdSets.size() == m.getNodes().size(), "Number of calculated State Identification Sets matches the number of states of M.");
 	for (size_t i = 0; i < stateIdSets.size(); ++i) {
-		fsmlib_assert(tcID, isStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), pass, "M.stateIdentificationSets[i] is a State Identification Set for M.nodes[i].");
+		fsmlib_assert(tcID, isStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), pass, "M.stateIdentificationSets[i] is a State Identification Set for M.nodes[i].");		
 	}
 
 	// check if structure of m has changed
@@ -1655,10 +1700,11 @@ TestResult calcStateIdentificationSets_TS() {
 
 
 /**
- * Transform m to a complete Fsm by adding self loops in states for undefined inputs producing some nullouput not contained in the
- * regular output alphabet.
+ * Create a complete Fsm from m by adding self loops in states for undefined inputs producing some nullouput not contained in the
+ * regular output alphabet. (nullOutput is expected to be greater than m.getMaxOutput())
  */
 shared_ptr<Fsm> transformToComplete(const shared_ptr<const Fsm> m, const size_t nullOutput) {
+	if (nullOutput <= m->getMaxOutput()) cout << "null contained in regular alphabet" << endl;
 	vector<shared_ptr<FsmNode> > lst;
 	for (int n = 0; n <= m->getMaxState(); n++) {
 		lst.push_back(make_shared<FsmNode>(n, m->getName(), m->getPresentationLayer()));
@@ -1691,6 +1737,7 @@ shared_ptr<Fsm> transformToComplete(const shared_ptr<const Fsm> m, const size_t 
 		}
 	}
 	if (partial) {
+		cout << "is partial" << endl;
 		auto completeM = make_shared<Fsm>(m->getName(), m->getMaxInput(), nullOutput, lst, m->getPresentationLayer());
 		completeM->initStateIdx = m->initStateIdx;
 		return completeM;
@@ -1710,17 +1757,17 @@ TestResult calcStateIdentificationSetsFast_TS() {
 	cout << "============================= Start Test of Fsm::calcStateIdentificationSetsFast =============================" << endl;
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;	
-	srand(1376);
-	for (int i = 0; i < 2500; ++i) {
-		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 6, make_shared<FsmPresentationLayer>());
-		auto minFsm = fsm->minimise();
-		if (minFsm.size() > 50) {
-			cout << "M is too big. Stop Test Case." << endl;
-			continue;
-		}
-		testCalcStateIdentificationSetsFast(minFsm, "TC-Rand-" + to_string(i))
-			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
-	}
+	//srand(1376);
+	//for (int i = 0; i < 2500; ++i) {
+	//	auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 6, make_shared<FsmPresentationLayer>());
+	//	auto minFsm = fsm->minimise();
+	//	if (minFsm.size() > 50) {
+	//		cout << "M is too big. Stop Test Case." << endl;
+	//		continue;
+	//	}
+	//	testCalcStateIdentificationSetsFast(minFsm, "TC-Rand-" + to_string(i))
+	//		? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
+	//}
 	srand(711100);
 	for (int i = 0; i < 2500; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4 + 1, rand() % 4 + 1, rand() % 6, make_shared<FsmPresentationLayer>());
@@ -1730,8 +1777,8 @@ TestResult calcStateIdentificationSetsFast_TS() {
 			cout << "M is too big. Stop Test Case." << endl;
 			continue;
 		}
-		testCalcStateIdentificationSetsFast(minFsm, "TC-Rand-(MSP)" + to_string(i))
-			? ++result.pass : result.fails.push_back("TC-Rand-(MSP)" + to_string(i));
+		testCalcStateIdentificationSetsFast(minFsm, "TC-Rand-(MSP)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSP)-" + to_string(i));
 	}
 	srand(266306);
 	for (int i = 0; i < 2500; ++i) {
@@ -1914,11 +1961,11 @@ int calcNumAddStatesAndFilterMutants(const vector<shared_ptr<const Fsm>>& mutant
 
 // Calculates and compares outputs generated by completeM and mutant for the given test suite. Return true iff there is some test case producing different
 // output traces.
-bool compareOutputs(const shared_ptr<IOListContainer> ts, const shared_ptr<Fsm> completeM, const size_t nullOutput, const shared_ptr<const Fsm> mutant) {
+bool compareOutputs(const shared_ptr<IOListContainer> ts, const shared_ptr<Fsm> completeM, const shared_ptr<const Fsm> mutant) {
 	bool diff = false;
 	for (const auto &tc : *ts->getIOLists()) {
-		if (calcCompleteOutputTraces2(completeM->getInitialState(), tc, nullOutput)
-			!= calcCompleteOutputTraces2(mutant->getInitialState(), tc, nullOutput)) {
+		if (calcCompleteOutputTraces(completeM->getInitialState(), tc)
+			!= calcCompleteOutputTraces(mutant->getInitialState(), tc)) {
 			diff = true;
 			break;
 		}
@@ -1973,7 +2020,7 @@ bool testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 
 	// Check completeness of test suite with help of the mutants
 	for (const auto mutant : filteredMutants) {
-		bool diff = compareOutputs(ts, completeM, nullOutput, mutant);
+		bool diff = compareOutputs(ts, completeM, mutant);
 		bool eq = ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState());
 		fsmlib_assert(tcID, eq != diff, pass, "M and mutant are i/o-equivalent iff mutant passed test suite.");
 		if (eq == diff) {
@@ -2028,7 +2075,7 @@ bool testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 	//cout << "filteredMutants.size: " << filteredMutants.size() << endl;
 
 	for (const auto mutant : filteredMutants) {
-		bool diff = compareOutputs(ts, completeM, nullOutput, mutant);
+		bool diff = compareOutputs(ts, completeM, mutant);
 		bool eq = ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState());
 		fsmlib_assert(tcID, eq != diff, pass, "M and mutant are i/o-equivalent iff mutant passed test suite.");
 		if (eq == diff) {
@@ -2151,10 +2198,6 @@ TestResult wMethod_Fsm_TS() {
 		testTestTheory(*m, *createMutants(nullOutput, m), nullOutput, tsGenerator, "TC-Rand-(MSP)-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-Rand-(MSP)-" + to_string(i));
 	}
-	srand(2022);
-	for (int i = 0; i < 2000; ++i) {
-		auto m = makeStatesEquivalent(*makeStatesPartial(Fsm::createRandomFsmRepeatable("M", (rand() % 4) + 1, (rand() % 6) + 1, (rand() % 6) + 1, pl)));
-		const size_t nullOutput = m->getMaxOutput() + 1;
 	srand(2022);
 	for (int i = 0; i < 2000; ++i) {
 		auto m = makeStatesEquivalent(*makeStatesPartial(Fsm::createRandomFsmRepeatable("M", (rand() % 4) + 1, (rand() % 6) + 1, (rand() % 6) + 1, pl)));
@@ -2850,8 +2893,8 @@ bool testTMethod(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, const s
 	for (const auto mutant : mutants) {
 		bool diff = false;
 		for (const auto &tc : *ts.getIOLists()) {
-			if (calcCompleteOutputTraces2(m.getInitialState(), tc, m.getMaxOutput())
-				!= calcCompleteOutputTraces2(mutant->getInitialState(), tc, mutant->getMaxOutput())) {
+			if (calcCompleteOutputTraces(m.getInitialState(), tc)
+				!= calcCompleteOutputTraces(mutant->getInitialState(), tc)) {
 				diff = true;
 				break;
 			}
@@ -2928,52 +2971,3 @@ TestResult tMethod_TS() {
 }
 
 // ====================================================================================================
-
-
-
-
-
-void randomFSMTestData() {
-	const int seed = time(NULL);//1234;
-	srand(seed);
-	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-
-	size_t obsC = 0, icC = 0, reducedC = 0, minimalC = 0, normC = 0, complC = 0, obsAndMiZero = 0, size1C = 0;
-	for (int i = 0; i < 10; ++i) {
-		cout << "i:" << i << endl;
-		int size = (rand() % 6) + 1; // = 6; 
-		int mI = rand() % 4 + 1; //rand() % 4;
-		int mO = (rand() % 6) + 1;
-		auto m = Fsm::createRandomFsmRepeatable("M", mI, mO, size, pl);
-		cout << "before_mI: " << m->getMaxInput() << endl;
-		cout << "before_mO: " << m->getMaxOutput() << endl;
-		cout << "before_size: " << m->getNodes().size() << endl;
-
-		//m = makeStatesPartial(makeStatesEquivalent(*m));
-		m = makeStatesEquivalent(*makeStatesPartial(m));
-		cout << "Fsm Inv: " << m->checkInvariant() << endl;
-		cout << *m << endl;
-
-		cout << "mI: " << m->getMaxInput() << endl;
-		cout << "mO: " << m->getMaxOutput() << endl;
-		cout << "size: " << m->getNodes().size() << endl;
-		if (m->isObservable()) ++obsC;
-		if (isInitialConnected(*m)) ++icC;
-		if (not hasEquivalentStates(*m)) ++reducedC;
-		if (isInitialConnected(*m) && not hasEquivalentStates(*m)) ++minimalC;
-		if (m->isObservable() && isInitialConnected(*m) && not hasEquivalentStates(*m)) ++normC;
-		if (m->isCompletelyDefined()) ++complC;
-		if (m->isObservable() and m->getMaxInput() == 0) ++obsAndMiZero;
-		if (m->getNodes().size() == 1) ++size1C;
-
-		cout << "=====================================================" << endl;
-	}
-	cout << "obsC: " << obsC << endl;
-	cout << "icC: " << icC << endl;
-	cout << "reducedC: " << reducedC << endl;
-	cout << "minimalC: " << minimalC << endl;
-	cout << "normC: " << normC << endl;
-	cout << "complC: " << complC << endl;
-	cout << "obsAndMiZero: " << obsAndMiZero << endl;
-	cout << "size1C: " << size1C << endl;
-}
