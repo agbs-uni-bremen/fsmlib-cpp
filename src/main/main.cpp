@@ -4975,13 +4975,23 @@ void test16() {
 
 
 
-
 int main(int argc, char** argv)
 {
+
+
 	std::cout << "test start" << std::endl;
 	cout << argc << endl;
 	cout << argv[0] << endl;
-	//cout << argv[1] << endl;
+	//if (argc == 2) {
+	//	string input(argv[1]);
+	//	cout << (input == "hello") << endl;
+	//	switch(input):
+
+	//	exit(0);
+	//}
+
+	
+	
 	//if (argv[1] == "tMethod") exit(0);
 	//if (*argv[1] == '1')exit(0);
 	//randomFSMTestData();
@@ -4992,8 +5002,8 @@ int main(int argc, char** argv)
 	vector<TestResult> results;
 
 	// FSM Transformation Tests:
-
-	//removeUnreachableNodes_TS().printResults();
+	//if(argc == 2 and input == "1") //removeUnreachableNodes_TS().printResults();
+	
 	//transformToObservableFSM_TS().printResults();
 	//minimise_Dfsm_TS().printResults();
 	//results.push_back(minimiseObservableFSM_TS());
@@ -5006,14 +5016,14 @@ int main(int argc, char** argv)
 	//getCharacterisationSet_Dfsm_TS().printResults();
 	//getCharacterisationSet_Fsm_TS().printResults();
 	//calcDistinguishingTrace_PkTables_TS().printResults();
-	//calcDistinguishingTrace_OFSMTables_TS();
+	//calcDistinguishingTrace_OFSMTables_TS().printResults();
 	//calcStateIdentificationSets_TS().printResults();
 	//calcStateIdentificationSetsFast_TS().printResults();
 
 	// Complete Test Theories Test:
 	//tMethod_TS().printResults();
-	wMethod_Fsm_TS().printResults();
-	//wMethod_Dfsm_TS();
+	//wMethod_Fsm_TS().printResults();
+	wMethod_Dfsm_TS().printResults();
 	//wMethodOnMinimisedFsm_TS().printResults();
 	//wMethodOnMinimisedDfsm_TS();
 	//wpMethod_Fsm_TS().printResults();

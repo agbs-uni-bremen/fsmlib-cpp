@@ -470,18 +470,6 @@ public:
      */
 	friend bool testCalcDistinguishingTrace1(Dfsm &m, const std::string &tcID);
 
-	/**
-	 * Test function for Fsm::calcStateIdentificationSets().
-	 * Needs access to stateIdentificationSets of this class.
-	 */
-	//friend void testCalcStateIdentificationSets(Dfsm &m, const std::string &tcID);
-
-	/**
-     * Test function for Fsm::calcStateIdentificationSetsFast().
-     * Needs access to stateIdentificationSets of this class.
-     */
-	//friend void testCalcStateIdentificationSetsFast(Dfsm &m, const std::string &tcID);
-
 	//---------------------------------------------------------------------------------------
     
 };

@@ -1763,7 +1763,6 @@ vector< shared_ptr< vector<int> > > Dfsm::getDistTraces(FsmNode& s1,
 //--------------------------------------------------------------------------------------------
 
 bool Dfsm::checkInvariant() const {
-	cout << "Dfsm_inv" << endl;
 	return Fsm::checkInvariant() and isDeterministic();
 }
 
