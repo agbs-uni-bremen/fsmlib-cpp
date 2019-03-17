@@ -51,9 +51,6 @@ shared_ptr<Fsm> makeStatesEquivalent(const Fsm &m) {
 	unsigned int first = rand() % m.getNodes().size();
 	unsigned int second = rand() % m.getNodes().size();
 	if (first == second) second = (second + 1) % m.getNodes().size();
-	cout << "first: " << first << endl;
-	cout << "second: " << second << endl;
-
 
 	// Now add transitions that correspond exactly to the transitions in m,
 	for (int n = 0; n <= m.getMaxState(); n++) {
@@ -83,8 +80,6 @@ shared_ptr<Fsm> makeStatesEquivalent(const Fsm &m) {
 			if (tr->getLabel()->getOutput() > mO) mO = tr->getLabel()->getOutput();
 		}
 	}
-	cout << "mI: " << mI << endl;
-	cout << "mO: " << mO << endl;
 	return make_shared<Fsm>(m.getName(), mI, mO, lst, m.getPresentationLayer());
 }
 
@@ -98,7 +93,6 @@ shared_ptr<Fsm> makeStatesUnreachable(const Fsm &m) {
 	}
 
 	int nodeIdx = rand() % m.getNodes().size();
-	cout << "n: " << nodeIdx << endl;
 
 	// Now add transitions that correspond exactly to the transitions in m, but ignore transitions
 	// to node at nodeIdx
@@ -122,8 +116,6 @@ shared_ptr<Fsm> makeStatesUnreachable(const Fsm &m) {
 			if (tr->getLabel()->getOutput() > mO) mO = tr->getLabel()->getOutput();
 		}
 	}
-	cout << "mI: " << mI << endl;
-	cout << "mO: " << mO << endl;
 	return make_shared<Fsm>(m.getName(), mI, mO, lst, m.getPresentationLayer());
 }
 
@@ -141,7 +133,6 @@ shared_ptr<Fsm> makeStatesPartial(const shared_ptr<Fsm> m) {
 		auto theNewFsmNodeSrc = lst[n];
 		auto theOldFsmNodeSrc = m->getNodes()[n];
 		int ignoreInput = rand() % (m->getMaxInput() + 1);
-		cout << "ignoreInput: " << ignoreInput << endl;
 		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
 			if (tr->getLabel()->getInput() == ignoreInput) continue;
 			int tgtId = tr->getTarget()->getId();
@@ -159,8 +150,6 @@ shared_ptr<Fsm> makeStatesPartial(const shared_ptr<Fsm> m) {
 			if (tr->getLabel()->getOutput() > mO) mO = tr->getLabel()->getOutput();
 		}
 	}
-	cout << "mI: " << mI << endl;
-	cout << "mO: " << mO << endl;
 	return make_shared<Fsm>(m->getName(), mI, mO, lst, m->getPresentationLayer());
 }
 
@@ -950,7 +939,6 @@ TestResult intersect_TS() {
 	srand(158487);
 	for (int i = 0; i < 2500; ++i) {
 		auto m1 = Dfsm("M1", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, pl, true);
-		if (i == 45) cout << m1 << endl;
 		const auto m2 = m1.createMutantRepeatable("M2", rand() % 5, rand() % 5);
 		testIntersection(m1, *m2, "TC-Rand-(3)-" + to_string(i)) ? ++result.pass : result.fails.push_back("TC-Rand-(3)-" + to_string(i));
 	}
@@ -1057,8 +1045,6 @@ set<vector<int>> calcCompleteOutputTraces(const shared_ptr<FsmNode> startNode, c
 
 	set<vector<int>> outputTrcs;
 	for (auto reachedNode : wl) {
-		//for (auto i : std::get<1>(reachedNode)) cout << i << ",";
-		//cout << "\n";
 		outputTrcs.insert(std::get<1>(reachedNode));
 	}
 	return outputTrcs;
@@ -1342,8 +1328,8 @@ bool testCalcDistinguishingTrace2(Fsm &m, const string &tcID) {
 }
 
 /**
- * Test function for Fsm::calcStateIdentificationSets(). Test in context of Dfsm.
- * m is expected to be a minimal Dfsm.
+ * Test function for Fsm::calcStateIdentificationSets(). 
+ * m is expected to be a minimal Fsm.
  */
 bool testCalcStateIdentificationSets(Fsm &m, const string &tcID) {
 	bool pass = true;
@@ -1372,7 +1358,7 @@ bool testCalcStateIdentificationSets(Fsm &m, const string &tcID) {
 	fsmlib_assert(tcID, stateIdSets.size() == m.getNodes().size(), pass, "Number of calculated State Identification Sets matches the number of states of M.");
 	for (size_t i = 0; i < stateIdSets.size(); ++i) {
 		fsmlib_assert(tcID, isStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), pass, "M.stateIdentificationSets[i] is a State Identification Set for M.nodes[i].");
-		fsmlib_assert(tcID, isMinimalStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), pass, "M.stateIdentificationSets[i] is a minimal State Identification Set for M.nodes[i].");
+		fsmlib_assert(tcID, isMinimalStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), pass, "M.stateIdentificationSets[i] is minimal.");
 	}
 
 	// check if structure of m has changed
@@ -1386,7 +1372,6 @@ bool testCalcStateIdentificationSets(Fsm &m, const string &tcID) {
 
 /**
  * Test function for Fsm::calcStateIdentificationSetsFast().
- * m is expected to be a minimal and complete Dfsm.
  */
 bool testCalcStateIdentificationSetsFast(Fsm &m, const string &tcID) {
 	bool pass = true;
@@ -1411,7 +1396,7 @@ bool testCalcStateIdentificationSetsFast(Fsm &m, const string &tcID) {
 	// Check Definition of State Identification Set for each element in stateIdSets
 	fsmlib_assert(tcID, stateIdSets.size() == m.getNodes().size(), "Number of calculated State Identification Sets matches the number of states of M.");
 	for (size_t i = 0; i < stateIdSets.size(); ++i) {
-		fsmlib_assert(tcID, isStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), pass, "M.stateIdentificationSets[i] is a State Identification Set for M.nodes[i].");		
+		fsmlib_assert(tcID, isStateIdentificationSet(m, m.getNodes().at(i), stateIdSets.at(i), m.characterisationSet), pass, "M.stateIdentificationSets[i] is a State Identification Set for M.nodes[i].");			
 	}
 
 	// check if structure of m has changed
@@ -1704,7 +1689,6 @@ TestResult calcStateIdentificationSets_TS() {
  * regular output alphabet. (nullOutput is expected to be greater than m.getMaxOutput())
  */
 shared_ptr<Fsm> transformToComplete(const shared_ptr<const Fsm> m, const size_t nullOutput) {
-	if (nullOutput <= m->getMaxOutput()) cout << "null contained in regular alphabet" << endl;
 	vector<shared_ptr<FsmNode> > lst;
 	for (int n = 0; n <= m->getMaxState(); n++) {
 		lst.push_back(make_shared<FsmNode>(n, m->getName(), m->getPresentationLayer()));
@@ -1737,7 +1721,6 @@ shared_ptr<Fsm> transformToComplete(const shared_ptr<const Fsm> m, const size_t 
 		}
 	}
 	if (partial) {
-		cout << "is partial" << endl;
 		auto completeM = make_shared<Fsm>(m->getName(), m->getMaxInput(), nullOutput, lst, m->getPresentationLayer());
 		completeM->initStateIdx = m->initStateIdx;
 		return completeM;
@@ -1757,17 +1740,17 @@ TestResult calcStateIdentificationSetsFast_TS() {
 	cout << "============================= Start Test of Fsm::calcStateIdentificationSetsFast =============================" << endl;
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;	
-	//srand(1376);
-	//for (int i = 0; i < 2500; ++i) {
-	//	auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 6, make_shared<FsmPresentationLayer>());
-	//	auto minFsm = fsm->minimise();
-	//	if (minFsm.size() > 50) {
-	//		cout << "M is too big. Stop Test Case." << endl;
-	//		continue;
-	//	}
-	//	testCalcStateIdentificationSetsFast(minFsm, "TC-Rand-" + to_string(i))
-	//		? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
-	//}
+	srand(1376);
+	for (int i = 0; i < 2500; ++i) {
+		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 6, make_shared<FsmPresentationLayer>());
+		auto minFsm = fsm->minimise();
+		if (minFsm.size() > 50) {
+			cout << "M is too big. Stop Test Case." << endl;
+			continue;
+		}
+		testCalcStateIdentificationSetsFast(minFsm, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
+	}
 	srand(711100);
 	for (int i = 0; i < 2500; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4 + 1, rand() % 4 + 1, rand() % 6, make_shared<FsmPresentationLayer>());
@@ -1784,7 +1767,6 @@ TestResult calcStateIdentificationSetsFast_TS() {
 	for (int i = 0; i < 2500; ++i) {
 		auto m = Dfsm("M", rand() % 15 + 1, rand() % 4, rand() % 4 + 1, make_shared<FsmPresentationLayer>(), true);
 		auto minM = m.minimise();
-		cout << "minFsm size: " << minM.size() << endl;
 		testCalcStateIdentificationSetsFast(minM, "TC-Rand-(Dfsm)-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-Rand-(Dfsm)-" + to_string(i));
 	}
@@ -1843,12 +1825,10 @@ class WMethodGenerator : public TestSuiteGenerator {
 public:
 	virtual shared_ptr<IOListContainer> generateTestSuite(Fsm &m, const unsigned int numAddStates)
 	{
-		cout << "WMethodGenerator fsm variant" << endl;
 		return make_shared<IOListContainer>(m.wMethod(numAddStates));
 	}
 	virtual shared_ptr<IOListContainer> generateTestSuite(Dfsm &m, const unsigned int numAddStates)
 	{
-		cout << "WMethodGenerator dfsm variant" << endl;
 		return make_shared<IOListContainer>(m.wMethod(numAddStates));
 	}
 };
@@ -1857,12 +1837,10 @@ class WMethodOnMinimisedFsmGenerator : public TestSuiteGenerator {
 public:
 	virtual shared_ptr<IOListContainer> generateTestSuite(Fsm &m, const unsigned int numAddStates)
 	{
-		cout << "WMethodOnMinimisedFsmGenerator fsm variant" << endl;
 		return make_shared<IOListContainer>(m.wMethodOnMinimisedFsm(numAddStates));
 	}
 	virtual shared_ptr<IOListContainer> generateTestSuite(Dfsm &m, const unsigned int numAddStates)
 	{
-		cout << "WMethodOnMinimisedFsmGenerator dfsm variant" << endl;
 		return make_shared<IOListContainer>(m.wMethodOnMinimisedFsm(numAddStates));
 	}
 };
@@ -1871,12 +1849,10 @@ class WMethodOnMinimisedDfsmGenerator : public TestSuiteGenerator {
 public:
 	virtual shared_ptr<IOListContainer> generateTestSuite(Fsm &m, const unsigned int numAddStates)
 	{
-		cout << "WMethodOnMinimisedDfsmGenerator fsm variant" << endl;
 		return nullptr;
 	}
 	virtual shared_ptr<IOListContainer> generateTestSuite(Dfsm &m, const unsigned int numAddStates)
 	{
-		cout << "WMethodOnMinimisedDfsmGenerator dfsm variant" << endl;
 		return make_shared<IOListContainer>(m.wMethodOnMinimisedDfsm(numAddStates));
 	}
 };
@@ -1885,12 +1861,10 @@ class WpMethodGenerator : public TestSuiteGenerator {
 public:
 	virtual shared_ptr<IOListContainer> generateTestSuite(Fsm &m, const unsigned int numAddStates)
 	{
-		cout << "WpMethodGenerator fsm variant" << endl;
 		return make_shared<IOListContainer>(m.wpMethod(numAddStates));
 	}
 	virtual shared_ptr<IOListContainer> generateTestSuite(Dfsm &m, const unsigned int numAddStates)
 	{
-		cout << "WpMethodGenerator dfsm variant" << endl;
 		return make_shared<IOListContainer>(m.wpMethod(numAddStates));
 	}
 };
@@ -1899,12 +1873,10 @@ class WpMethodOnMinimisedDfsmGenerator : public TestSuiteGenerator {
 public:
 	virtual shared_ptr<IOListContainer> generateTestSuite(Fsm &m, const unsigned int numAddStates)
 	{
-		cout << "WpMethodOnMinimisedDfsmGenerator fsm variant" << endl;
 		return nullptr;
 	}
 	virtual shared_ptr<IOListContainer> generateTestSuite(Dfsm &m, const unsigned int numAddStates)
 	{
-		cout << "WpMethodOnMinimisedDfsmGenerator dfsm variant" << endl;
 		return make_shared<IOListContainer>(m.wpMethodOnMinimisedDfsm(numAddStates));
 	}
 };
@@ -1913,12 +1885,10 @@ class HsiMethodGenerator : public TestSuiteGenerator {
 public:
 	virtual shared_ptr<IOListContainer> generateTestSuite(Fsm &m, const unsigned int numAddStates)
 	{
-		cout << "HsiMethodGenerator fsm variant" << endl;
 		return make_shared<IOListContainer>(m.hsiMethod(numAddStates));
 	}
 	virtual shared_ptr<IOListContainer> generateTestSuite(Dfsm &m, const unsigned int numAddStates)
 	{
-		cout << "HsiMethodGenerator dfsm variant" << endl;
 		return make_shared<IOListContainer>(m.hsiMethod(numAddStates));
 	}
 };
@@ -1927,12 +1897,10 @@ class HMethodOnMinimisedDfsmGenerator : public TestSuiteGenerator {
 public:
 	virtual shared_ptr<IOListContainer> generateTestSuite(Fsm &m, const unsigned int numAddStates)
 	{
-		cout << "HMethodOnMinimisedDfsmGenerator fsm variant" << endl;
 		return nullptr;
 	}
 	virtual shared_ptr<IOListContainer> generateTestSuite(Dfsm &m, const unsigned int numAddStates)
 	{
-		cout << "HMethodOnMinimisedDfsmGenerator dfsm variant" << endl;
 		return make_shared<IOListContainer>(m.hMethodOnMinimisedDfsm(numAddStates));
 	}
 };
@@ -1945,7 +1913,6 @@ int calcNumAddStatesAndFilterMutants(const vector<shared_ptr<const Fsm>>& mutant
 	for (const auto mutant : mutants) {
 		if (mutant->size() > minComplM.size()) {
 			int sizeDiff = mutant->size() - minComplM.size();
-			cout << "sizeDiff: " << sizeDiff << endl;
 			if (sizeDiff > maxAddStates) continue;
 			filteredMutants.push_back(mutant);
 			if (sizeDiff > numAddStates) {
@@ -1988,6 +1955,7 @@ bool testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 		cout << "FSM too big. Stop Test Case." << endl;
 		return pass;
 	}
+
 	// calculate numAddStates 
 	vector<shared_ptr<const Fsm>> filteredMutants;
 	int numAddStates = calcNumAddStatesAndFilterMutants(mutants, minComplM, filteredMutants);
@@ -2001,18 +1969,10 @@ bool testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return pass;
 
-	cout << "ts.size: " << ts->size() << endl;
-	cout << "ts[0].size: " << ts->getIOLists()->at(0).size() << endl;
 	size_t maxLength = 0;
 	for (auto tc : *ts->getIOLists()) { if (tc.size() > maxLength) maxLength = tc.size(); }
-	cout << "maxLength: " << maxLength << endl;
-	cout << "m.size: " << m.size() << endl;
-	cout << "completeM.size: " << completeM->size() << endl;
-	cout << "minComplM.size: " << minComplM.size() << endl;
-	cout << "filteredMutants.size: " << filteredMutants.size() << endl;
-	cout << "numAddStates: " << numAddStates << endl;
 
-	// stop test case is testcases are too long or test suite contains too many test cases
+	// stop test case if test cases are too long or test suite contains too many test cases
 	if (maxLength > 12 or ts->size() > 2000) {
 		cout << "Test Suite too big or test cases too long. Stop test case." << endl;
 		return pass;
@@ -2064,15 +2024,8 @@ bool testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 	// stop test execution at this point if invariant of m does not hold anymore
 	if (invariantViolation) return pass;
 
-	cout << "ts.size: " << ts->size() << endl;
-	cout << "ts[0].size: " << ts->getIOLists()->at(0).size() << endl;
 	size_t maxLength = 0;
 	for (auto tc : *ts->getIOLists()) { if (tc.size() > maxLength) maxLength = tc.size(); }
-	//cout << "maxLength: " << maxLength << endl;
-	//cout << "m.size: " << m.size() << endl;
-	//cout << "completeM.size: " << completeM->size() << endl;
-	//cout << "minComplM.size: " << minComplM.size() << endl;
-	//cout << "filteredMutants.size: " << filteredMutants.size() << endl;
 
 	for (const auto mutant : filteredMutants) {
 		bool diff = compareOutputs(ts, completeM, mutant);
@@ -2086,8 +2039,7 @@ bool testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 		}
 	}
 
-	// check if structure of m has changed
-	//fsmlib_assert(tcID, checkForEqualStructure(m, copyOfM), "M was not changed by algorithm");
+	// check if language of m has changed
 	fsmlib_assert(tcID, ioEquivalenceCheck(m.getInitialState(), copyOfM.getInitialState()), pass, "Language of M has not changed");
 	return pass;
 }
@@ -2266,7 +2218,7 @@ TestResult wMethod_Dfsm_TS() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(412725);
-	for (int i = 0; i < 10000; ++i) {
+	for (int i = 0; i < 100; ++i) {
 		Dfsm m("M", rand() % 15 + 1, rand() % 6, (rand() % 6) + 1, pl, true);
 		const size_t nullOutput = m.getMaxOutput() + 1;
 		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
@@ -2326,7 +2278,6 @@ TestResult wMethodOnMinimisedFsm_TS() {
 	srand(50301);
 	for (int i = 0; i < 2500; ++i) {
 		auto m = Fsm::createRandomFsmRepeatable("M", rand() % 6, (rand() % 6) + 1, rand() % 6 + 1, pl)->minimise();
-		cout << "pre: m.size: " << m.size() << endl;
 		// filter fsm that have too many states
 		if (m.size() > 20) {
 			cout << "FSM too big. Stop Test Case." << endl;
@@ -2908,7 +2859,7 @@ bool testTMethod(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, const s
 }
 
 /*
- *	Random Test Suite for test of Dfsm::tMethod().
+ *	Test Suite of Dfsm::tMethod().
  */
 TestResult tMethod_TS() {
 	TestResult result("Dfsm::tMethod");
