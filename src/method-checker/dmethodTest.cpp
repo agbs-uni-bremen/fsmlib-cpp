@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
     shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(3,5,3);
 
-    shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("Dfsm",30,5,5,pl);
+    shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("Dfsm",20,4,7,pl);
 
     dfsm->minimise();
 

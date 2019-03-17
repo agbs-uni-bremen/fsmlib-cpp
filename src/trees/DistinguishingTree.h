@@ -61,7 +61,7 @@ public:
      *
      * @return the distinguishing sequence if one exists, otherwise an empty sequence
      */
-    std::vector<int> getDistinguishingSequence();
+    const std::vector<int>& getDistinguishingSequence();
 
     /**
 	* Creates a new distinguishing tree from a DFSM, if it is completely specified. A distinguishing sequence

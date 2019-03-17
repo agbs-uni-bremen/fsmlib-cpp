@@ -92,6 +92,7 @@ DistinguishingTree::DistinguishingTree(const std::shared_ptr <Dfsm> &dfsm)
              */
             if(isTerminal) {
                 distinguishingSequence = nextInputTrace;
+                return;
             }
 
             auto newEdge = make_shared<DistinguishingTreeEdge>(x,newNode);
@@ -158,6 +159,6 @@ int DistinguishingTree::createHashForCurrentUncertainty(const multiset<set<int>>
     return hash_fn(stringHash);
 }
 
-std::vector<int> DistinguishingTree::getDistinguishingSequence() {
+const std::vector<int>& DistinguishingTree::getDistinguishingSequence() {
     return distinguishingSequence;
 }
