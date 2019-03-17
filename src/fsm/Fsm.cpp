@@ -1538,94 +1538,9 @@ shared_ptr<Fsm> Fsm::createMutant(const std::string & fsmName,
 /*
   Original
 */
-//std::shared_ptr<Fsm> Fsm::createMutantRepeatable(const std::string & fsmName,
-//	const size_t numOutputFaults,
-//	const size_t numTransitionFaults) {
-//	// Create new nodes for the mutant.
-//	vector<shared_ptr<FsmNode> > lst;
-//	for (int n = 0; n <= maxState; n++) {
-//		lst.push_back(make_shared<FsmNode>(n, fsmName, presentationLayer));
-//	}
-//
-//	// Now add transitions that correspond exactly to the transitions in
-//	// this FSM
-//	for (int n = 0; n <= maxState; n++) {
-//		auto theNewFsmNodeSrc = lst[n];
-//		auto theOldFsmNodeSrc = nodes[n];
-//		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
-//			int tgtId = tr->getTarget()->getId();
-//			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
-//			shared_ptr<FsmTransition> newTr =
-//				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
-//			theNewFsmNodeSrc->addTransition(newTr);
-//		}
-//	}
-//
-//	// Now add transition faults to the new machine
-//	for (size_t tf = 0; tf < numTransitionFaults; tf++) {
-//		int srcNodeId = rand() % (maxState + 1);
-//		int newTgtNodeId = rand() % (maxState + 1);
-//		int trNo = rand() % lst[srcNodeId]->getTransitions().size();
-//		auto tr = lst[srcNodeId]->getTransitions()[trNo];
-//		if (tr->getTarget()->getId() == newTgtNodeId) {
-//			newTgtNodeId = (newTgtNodeId + 1) % (maxState + 1);
-//		}
-//		lst[srcNodeId]->getTransitions()[trNo]->setTarget(lst[newTgtNodeId]);
-//	}
-//
-//	// Now add output faults to the new machine
-//	for (size_t of = 0; of < numOutputFaults; of++) {
-//
-//		int srcNodeId = rand() % (maxState + 1);
-//		int trNo = rand() % lst[srcNodeId]->getTransitions().size();
-//		auto tr = lst[srcNodeId]->getTransitions()[trNo];
-//		int theInput = tr->getLabel()->getInput();
-//		int newOutVal = rand() % (maxOutput + 1);
-//		int originalNewOutVal = rand() % (maxOutput + 1);
-//		bool newOutValOk;
-//
-//		// We don't want to modify this transition in such a way
-//		// that another one with the same label and the same
-//		// source/target nodes already exists.
-//		do {
-//
-//			newOutValOk = true;
-//
-//			for (auto trOther : lst[srcNodeId]->getTransitions()) {
-//				if (tr == trOther) continue;
-//				if (trOther->getTarget()->getId() != tr->getTarget()->getId())
-//					continue;
-//				if (trOther->getLabel()->getInput() != theInput) continue;
-//				if (trOther->getLabel()->getOutput() == newOutVal) {
-//					newOutValOk = false;
-//				}
-//			}
-//
-//			if (not newOutValOk) {
-//				newOutVal = (newOutVal + 1) % (maxOutput + 1);
-//			}
-//
-//		} while ((not newOutValOk) and (originalNewOutVal != newOutVal));
-//
-//		if (newOutValOk) {
-//
-//			auto newLbl = make_shared<FsmLabel>(tr->getLabel()->getInput(),
-//
-//				newOutVal,
-//				presentationLayer);
-//
-//			tr->setLabel(newLbl);
-//		}
-//	}
-//	return make_shared<Fsm>(fsmName, maxInput, maxOutput, lst, presentationLayer);
-//}
-
-/*
-	Corrected
-*/
 std::shared_ptr<Fsm> Fsm::createMutantRepeatable(const std::string & fsmName,
-	                                             const size_t numOutputFaults,
-	                                             const size_t numTransitionFaults) {
+	const size_t numOutputFaults,
+	const size_t numTransitionFaults) {
 	// Create new nodes for the mutant.
 	vector<shared_ptr<FsmNode> > lst;
 	for (int n = 0; n <= maxState; n++) {
@@ -1650,7 +1565,6 @@ std::shared_ptr<Fsm> Fsm::createMutantRepeatable(const std::string & fsmName,
 	for (size_t tf = 0; tf < numTransitionFaults; tf++) {
 		int srcNodeId = rand() % (maxState + 1);
 		int newTgtNodeId = rand() % (maxState + 1);
-		if (lst[srcNodeId]->getTransitions().empty()) continue; // Fix possible divide by zero error
 		int trNo = rand() % lst[srcNodeId]->getTransitions().size();
 		auto tr = lst[srcNodeId]->getTransitions()[trNo];
 		if (tr->getTarget()->getId() == newTgtNodeId) {
@@ -1663,7 +1577,6 @@ std::shared_ptr<Fsm> Fsm::createMutantRepeatable(const std::string & fsmName,
 	for (size_t of = 0; of < numOutputFaults; of++) {
 
 		int srcNodeId = rand() % (maxState + 1);
-		if (lst[srcNodeId]->getTransitions().empty()) continue; // Fix possible divide by zero error
 		int trNo = rand() % lst[srcNodeId]->getTransitions().size();
 		auto tr = lst[srcNodeId]->getTransitions()[trNo];
 		int theInput = tr->getLabel()->getInput();
@@ -1706,6 +1619,93 @@ std::shared_ptr<Fsm> Fsm::createMutantRepeatable(const std::string & fsmName,
 	}
 	return make_shared<Fsm>(fsmName, maxInput, maxOutput, lst, presentationLayer);
 }
+
+/*
+	Corrected
+*/
+//std::shared_ptr<Fsm> Fsm::createMutantRepeatable(const std::string & fsmName,
+//	                                             const size_t numOutputFaults,
+//	                                             const size_t numTransitionFaults) {
+//	// Create new nodes for the mutant.
+//	vector<shared_ptr<FsmNode> > lst;
+//	for (int n = 0; n <= maxState; n++) {
+//		lst.push_back(make_shared<FsmNode>(n, fsmName, presentationLayer));
+//	}
+//
+//	// Now add transitions that correspond exactly to the transitions in
+//	// this FSM
+//	for (int n = 0; n <= maxState; n++) {
+//		auto theNewFsmNodeSrc = lst[n];
+//		auto theOldFsmNodeSrc = nodes[n];
+//		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
+//			int tgtId = tr->getTarget()->getId();
+//			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
+//			shared_ptr<FsmTransition> newTr =
+//				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
+//			theNewFsmNodeSrc->addTransition(newTr);
+//		}
+//	}
+//
+//	// Now add transition faults to the new machine
+//	for (size_t tf = 0; tf < numTransitionFaults; tf++) {
+//		int srcNodeId = rand() % (maxState + 1);
+//		int newTgtNodeId = rand() % (maxState + 1);
+//		if (lst[srcNodeId]->getTransitions().empty()) continue; // Fix possible divide by zero error
+//		int trNo = rand() % lst[srcNodeId]->getTransitions().size();
+//		auto tr = lst[srcNodeId]->getTransitions()[trNo];
+//		if (tr->getTarget()->getId() == newTgtNodeId) {
+//			newTgtNodeId = (newTgtNodeId + 1) % (maxState + 1);
+//		}
+//		lst[srcNodeId]->getTransitions()[trNo]->setTarget(lst[newTgtNodeId]);
+//	}
+//
+//	// Now add output faults to the new machine
+//	for (size_t of = 0; of < numOutputFaults; of++) {
+//
+//		int srcNodeId = rand() % (maxState + 1);
+//		if (lst[srcNodeId]->getTransitions().empty()) continue; // Fix possible divide by zero error
+//		int trNo = rand() % lst[srcNodeId]->getTransitions().size();
+//		auto tr = lst[srcNodeId]->getTransitions()[trNo];
+//		int theInput = tr->getLabel()->getInput();
+//		int newOutVal = rand() % (maxOutput + 1);
+//		int originalNewOutVal = rand() % (maxOutput + 1);
+//		bool newOutValOk;
+//
+//		// We don't want to modify this transition in such a way
+//		// that another one with the same label and the same
+//		// source/target nodes already exists.
+//		do {
+//
+//			newOutValOk = true;
+//
+//			for (auto trOther : lst[srcNodeId]->getTransitions()) {
+//				if (tr == trOther) continue;
+//				if (trOther->getTarget()->getId() != tr->getTarget()->getId())
+//					continue;
+//				if (trOther->getLabel()->getInput() != theInput) continue;
+//				if (trOther->getLabel()->getOutput() == newOutVal) {
+//					newOutValOk = false;
+//				}
+//			}
+//
+//			if (not newOutValOk) {
+//				newOutVal = (newOutVal + 1) % (maxOutput + 1);
+//			}
+//
+//		} while ((not newOutValOk) and (originalNewOutVal != newOutVal));
+//
+//		if (newOutValOk) {
+//
+//			auto newLbl = make_shared<FsmLabel>(tr->getLabel()->getInput(),
+//
+//				newOutVal,
+//				presentationLayer);
+//
+//			tr->setLabel(newLbl);
+//		}
+//	}
+//	return make_shared<Fsm>(fsmName, maxInput, maxOutput, lst, presentationLayer);
+//}
 
 
 

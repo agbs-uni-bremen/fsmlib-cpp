@@ -2032,6 +2032,7 @@ bool testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 		bool eq = ioEquivalenceCheck(completeM->getInitialState(), mutant->getInitialState());
 		fsmlib_assert(tcID, eq != diff, pass, "M and mutant are i/o-equivalent iff mutant passed test suite.");
 		if (eq == diff) {
+			cout << eq << endl;
 			cout << *completeM << endl;
 			cout << *mutant << endl;
 			cout << "TS: " << *ts << endl;
@@ -2163,7 +2164,7 @@ TestResult wMethod_Fsm_TS() {
 		auto m = makeStatesPartial(makeStatesUnreachable(*Fsm::createRandomFsmRepeatable("M", (rand() % 4) + 1, (rand() % 6) + 1, (rand() % 6) + 1, pl)));
 		const size_t nullOutput = m->getMaxOutput() + 1;
 
-		testTestTheory(*m, *createMutants(nullOutput, m), nullOutput, tsGenerator, "TC-Rand-(MSU)-" + to_string(i))
+		testTestTheory(*m, *createMutants(nullOutput, m), nullOutput, tsGenerator, "TC-Rand-(MSU,MSP)-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-Rand-(MSU,MSP)-" + to_string(i));
 	}
 
@@ -2218,7 +2219,7 @@ TestResult wMethod_Dfsm_TS() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
 	srand(412725);
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 10000; ++i) {
 		Dfsm m("M", rand() % 15 + 1, rand() % 6, (rand() % 6) + 1, pl, true);
 		const size_t nullOutput = m.getMaxOutput() + 1;
 		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
