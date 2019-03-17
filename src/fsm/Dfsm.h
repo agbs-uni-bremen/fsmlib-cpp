@@ -27,7 +27,7 @@ class IOTrace;
 class SegmentedTrace;
 class TreeNode;
 
-class Dfsm : public Fsm
+class Dfsm : public Fsm, public std::enable_shared_from_this< Dfsm >
 {
 private:
 	//TODO
@@ -438,6 +438,13 @@ public:
      */
     std::vector< std::shared_ptr< std::vector<int> > > getDistTraces(FsmNode& s1,
                                                                      FsmNode& s2);
+
+    /**
+     * Creates a distinguishing sequencce for this DFSM (if it exists, otherwise the result is an empty sequence),
+     * that can distinguish every state from every other state.
+     * A required condition for the existence of a distinguishing sequencce is, that the DFSM is minimal.
+     */
+     std::vector<int> createDistinguishingSequence();
 
 	 /**
      *  Create a mutant of the FSM, producing output faults

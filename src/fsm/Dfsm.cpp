@@ -11,6 +11,7 @@
 #include "fsm/InputTrace.h"
 #include "fsm/IOTrace.h"
 #include "trees/Tree.h"
+#include "trees/DistinguishingTree.h"
 
 using namespace std;
 
@@ -1742,6 +1743,11 @@ vector< shared_ptr< vector<int> > > Dfsm::getDistTraces(FsmNode& s1,
 
     return distTraces[s1.getId()][s2.getId()];
 
+}
+
+vector<int> Dfsm::createDistinguishingSequence() {
+    auto distinguishingTree = make_shared<DistinguishingTree>(shared_from_this());
+    return distinguishingTree->getDistinguishingSequence();
 }
 
 shared_ptr<Dfsm> Dfsm::createMutant(const std::string & fsmName,

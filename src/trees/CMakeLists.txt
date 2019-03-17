@@ -3,20 +3,26 @@ set (FSM_TREES_SOURCES
         AdaptiveTreeNode.h
         InputOutputTree.cpp
         InputOutputTree.h
-	IOListContainer.cpp
-	IOListContainer.h
+		IOListContainer.cpp
+		IOListContainer.h
         IOTreeContainer.cpp
         IOTreeContainer.h
-	OutputTree.cpp
-	OutputTree.h
-	TestSuite.cpp
-	TestSuite.h
-	Tree.cpp
-	Tree.h
-	TreeEdge.cpp
-	TreeEdge.h
-	TreeNode.cpp
-	TreeNode.h
+		OutputTree.cpp
+		OutputTree.h
+		TestSuite.cpp
+		TestSuite.h
+		Tree.cpp
+		Tree.h
+		TreeEdge.cpp
+		TreeEdge.h
+		TreeNode.cpp
+		TreeNode.h
+		DistinguishingTree.h
+		DistinguishingTree.cpp
+		DistinguishingTreeEdge.cpp
+		DistinguishingTreeEdge.h
+		DistinguishingTreeNode.cpp
+		DistinguishingTreeNode.h
 )
 
 add_library (fsm-trees OBJECT ${FSM_TREES_SOURCES})

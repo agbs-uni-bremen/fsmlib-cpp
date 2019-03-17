@@ -49,7 +49,7 @@ void runTestClass(shared_ptr<Dfsm> dfsm ,int numOutputFaults,int numTransitionFa
   int count_wMethod_pass = 0;
   int count_wpMethod_pass = 0;
   int count_hMethod_pass = 0;
-  for(int i=0; i < 1000;i++) {
+  for(int i=0; i < 100;i++) {
     shared_ptr<Dfsm> mutant = dfsm->createMutant("Mutant",numOutputFaults,numTransitionFaults);
 
     bool result = dfsm->equivalenceCheck(*mutant);
@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
 {
     shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(3,5,3);
 
-    shared_ptr<Dfsm> dfsm{new Dfsm("Dfsm",100,6,6,pl)};
+    shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("Dfsm",30,3,3,pl);
 
     dfsm->minimise();
 

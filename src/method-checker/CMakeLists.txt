@@ -9,25 +9,31 @@ set (TEST_MAIN_SOURCES
 )
 
 add_executable (method-checker ${METHOD_CHECKER_MAIN_SOURCES}
-    $<TARGET_OBJECTS:fsm-fsm>
-    $<TARGET_OBJECTS:fsm-interface>
-    $<TARGET_OBJECTS:fsm-sets>
-    $<TARGET_OBJECTS:fsm-trees>
-)
+    	$<TARGET_OBJECTS:fsm-fsm>
+    	$<TARGET_OBJECTS:fsm-interface>
+    	$<TARGET_OBJECTS:fsm-sets>
+    	$<TARGET_OBJECTS:fsm-trees>
+		$<TARGET_OBJECTS:fsm-utils>
+		$<TARGET_OBJECTS:fsm-cloneable>
+		)
 
 add_executable (equivalence-test ${EQUIVALENCE_TEST_MAIN_SOURCES}
-    $<TARGET_OBJECTS:fsm-fsm>
-    $<TARGET_OBJECTS:fsm-interface>
-    $<TARGET_OBJECTS:fsm-sets>
-    $<TARGET_OBJECTS:fsm-trees>   
-)
+		$<TARGET_OBJECTS:fsm-fsm>
+    	$<TARGET_OBJECTS:fsm-interface>
+    	$<TARGET_OBJECTS:fsm-sets>
+    	$<TARGET_OBJECTS:fsm-trees>
+		$<TARGET_OBJECTS:fsm-utils>
+		$<TARGET_OBJECTS:fsm-cloneable>
+		)
 
 add_executable (dmethod-test ${TEST_MAIN_SOURCES}
-    $<TARGET_OBJECTS:fsm-fsm>
-    $<TARGET_OBJECTS:fsm-interface>
-    $<TARGET_OBJECTS:fsm-sets>
-    $<TARGET_OBJECTS:fsm-trees>      
-)
+    	$<TARGET_OBJECTS:fsm-fsm>
+		$<TARGET_OBJECTS:fsm-interface>
+    	$<TARGET_OBJECTS:fsm-sets>
+    	$<TARGET_OBJECTS:fsm-trees>
+		$<TARGET_OBJECTS:fsm-utils>
+		$<TARGET_OBJECTS:fsm-cloneable>
+		)
 
 target_link_libraries (method-checker jsoncpp)
 

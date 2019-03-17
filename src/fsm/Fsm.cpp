@@ -4870,7 +4870,7 @@ bool Fsm::distinguishable(const FsmNode& s1, const FsmNode& s2) {
 
 }
 
-bool Fsm::equivalenceCheck(const Fsm& fsm) {
+bool Fsm::equivalenceCheck(const Fsm& fsm) const {
     //Get Initial FSMNodes of both Dfsms
     shared_ptr< FsmNode > is_this = getInitialState();
     shared_ptr< FsmNode > is_other = fsm.getInitialState();

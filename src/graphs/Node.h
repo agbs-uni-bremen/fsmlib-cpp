@@ -4,7 +4,7 @@
  * Licensed under the EUPL V.1.1
  */
 
-#ifndef FSM_NODE_H
-#define FSM_NODE_H
+#ifndef FSM_GRAPHS_NODE_H_
+#define FSM_GRAPHS_NODE_H_
 
-#endif //FSM_NODE_H
+#endif //FSM_GRAPHS_NODE_H_

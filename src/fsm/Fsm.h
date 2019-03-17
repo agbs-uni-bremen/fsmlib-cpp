@@ -662,11 +662,11 @@ public:
 
     /**
      * Determines if the given adaptive test cases distinguish all states from
-     * {@code nodesA} from all states from {@code nodeB}.
+     * {@code nodesA} from all states from {@code nodesB}.
      * @param nodesA First set of states
      * @param nodesB Second set of states
      * @param adaptiveTestCases The adaptive test cases that will be used
-     * @return {@code} true, if {@code adaptiveTestCases} distuinguishes all states
+     * @return {@code true}, if {@code adaptiveTestCases} distuinguishes all states
      * from {@code nodesA} from all states from {@code nodesB}; {@code false}, otherwise
      */
     bool rDistinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
@@ -687,13 +687,13 @@ public:
                                 const IOTreeContainer& adaptiveTestCases) const;
 
     /**
-     * Determines if the given adaptive test cases distinguish state {@code nodesA}
-     * from state {@code nodeB}.
+     * Determines if the given adaptive test cases distinguish state {@code nodeA}
+     * from state {@code nodeSB}.
      * @param nodeA First state
      * @param nodesB Second state
      * @param adaptiveTestCases The adaptive test cases that will be used
-     * @return {@code} true, if {@code adaptiveTestCases} distuinguishes state
-     * {@code nodeA} from state {@code nodeB}; {@code false}, otherwise
+     * @return {@code true}, if {@code adaptiveTestCases} distinguishes state
+     * {@code nodeA} from state {@code nodesB}; {@code false}, otherwise
      */
     bool rDistinguishes(std::shared_ptr<FsmNode> nodeA,
                       std::shared_ptr<FsmNode> nodeB,
@@ -719,13 +719,13 @@ public:
                       const IOTreeContainer& adaptiveTestCases) const;
 
     /**
-     * Determines if the given adaptive test case distinguish state {@code nodesA}
-     * from state {@code nodeB}.
+     * Determines if the given adaptive test case distinguish state {@code nodeA}
+     * from state {@code nodesB}.
      * @param nodeA First state
      * @param nodesB Second state
      * @param adaptiveTestCase The adaptive test case that will be used
-     * @return {@code} true, if {@code adaptiveTestCase} distuinguishes state
-     * {@code nodeA} from state {@code nodeB}; {@code false}, otherwise
+     * @return {@code true}, if {@code adaptiveTestCase} distuinguishes state
+     * {@code nodeA} from state {@code nodesB}; {@code false}, otherwise
      */
     bool rDistinguishes(std::shared_ptr<FsmNode> nodeA,
                       std::shared_ptr<FsmNode> nodeB,
@@ -903,9 +903,12 @@ public:
     virtual bool distinguishable(const FsmNode& s1, const FsmNode& s2);
 
     /**
-    * Return true if and only if the two FSMs are equal
-    */
-    bool equivalenceCheck(const Fsm& fsm);
+     * Checks whether this instance is IO-equivalent to another FSM by using
+     * an algorithm, that inspects the product automaton of both.
+     * @param fsm The FSM to which this instance is being compared
+     * @return true if both FSM are equivalent, otherwise false.
+     */
+    bool equivalenceCheck(const Fsm& fsm) const;
 
 };
 #endif //FSM_FSM_FSM_H_
