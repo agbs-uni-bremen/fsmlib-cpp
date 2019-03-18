@@ -11,14 +11,14 @@
 
 using namespace std;
 
-PkTable::PkTable(const int numStates, const int maxInput, const shared_ptr<FsmPresentationLayer> presentationLayer)
-	: s2c(numStates), maxInput(maxInput), presentationLayer(presentationLayer)
+PkTable::PkTable(const int numStates, const int maxInput, const shared_ptr<FsmPresentationLayer> presentationLayer, const int initStateIdx)
+	: s2c(numStates), maxInput(maxInput), presentationLayer(presentationLayer), initStateIdx(initStateIdx)
 {
 	rows.insert(rows.end(), numStates, nullptr);
 }
 
-PkTable::PkTable(const int numStates, const int maxInput, const vector<shared_ptr<PkTableRow>> rows, const shared_ptr<FsmPresentationLayer> presentationLayer)
-	: rows(rows), s2c(numStates), maxInput(maxInput), presentationLayer(presentationLayer)
+PkTable::PkTable(const int numStates, const int maxInput, const vector<shared_ptr<PkTableRow>> rows, const shared_ptr<FsmPresentationLayer> presentationLayer, const int initStateIdx)
+	: rows(rows), s2c(numStates), maxInput(maxInput), presentationLayer(presentationLayer), initStateIdx(initStateIdx)
 {
 
 }
@@ -53,7 +53,7 @@ int PkTable::maxClassId() const
 
 shared_ptr<PkTable> PkTable::getPkPlusOneTable() const
 {
-    shared_ptr<PkTable> pkp1 = make_shared<PkTable>(rows.size(), maxInput, rows, presentationLayer);
+    shared_ptr<PkTable> pkp1 = make_shared<PkTable>(rows.size(), maxInput, rows, presentationLayer, initStateIdx);
     
     int thisClass = 0;
     int thisNewClassId = maxClassId() + 1;
@@ -252,7 +252,7 @@ Dfsm PkTable::toFsm(string name, const int maxOutput)
 		}
 	}
 
-	return Dfsm(minFsmName, maxInput, maxOutput, nodeLst, minPl);
+	return Dfsm(minFsmName, maxInput, maxOutput, nodeLst, minPl, s2c.at(initStateIdx));
 }
 
 string PkTable::getMembers(const int c) const

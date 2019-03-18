@@ -34,14 +34,20 @@ private:
      * The presentation layer used by the FSMTable
      */
     std::shared_ptr<FsmPresentationLayer> presentationLayer;
+
+	/**
+	 * The initStateIdx of the Dfsm.
+	 */
+	int initStateIdx;
 public:
     /**
      * Create a DFSMTable
      * @param numStates Size of the DFSMTable
      * @param maxInput Maximum Input of the FSM
      * @param presentationLayer The presentation layer used by the DFSM
+	 * @param initStateIdx The id of the initial state of the DFSM
      */
-    DFSMTable(const int numStates, const int maxInput, std::shared_ptr<FsmPresentationLayer> presentationLayer);
+    DFSMTable(const int numStates, const int maxInput, std::shared_ptr<FsmPresentationLayer> presentationLayer, int initStateIdx);
     
     /**
      * Modify a row of the DFSMTable

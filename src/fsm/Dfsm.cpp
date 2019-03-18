@@ -467,7 +467,7 @@ vector<shared_ptr<PkTable> > Dfsm::getPktblLst() const
 shared_ptr<DFSMTable> Dfsm::toDFSMTable() const
 {
     shared_ptr<DFSMTable> tbl
-            = make_shared<DFSMTable>(nodes.size(), maxInput, presentationLayer);
+            = make_shared<DFSMTable>(nodes.size(), maxInput, presentationLayer, initStateIdx);
     
     for (unsigned int i = 0; i < nodes.size(); ++ i)
     {
@@ -550,8 +550,8 @@ Dfsm::Dfsm(const string & fsmName, const int maxNodes, const int maxInput, const
 	maxState = nodes.size() - 1;
 }
 
-Dfsm::Dfsm(const string & fsmName, const int maxInput, const int maxOutput, const vector<shared_ptr<FsmNode>> lst, const shared_ptr<FsmPresentationLayer> presentationLayer)
-: Fsm(fsmName, maxInput, maxOutput, lst, presentationLayer)
+Dfsm::Dfsm(const string & fsmName, const int maxInput, const int maxOutput, const vector<shared_ptr<FsmNode>> lst, const shared_ptr<FsmPresentationLayer> presentationLayer, const int initStateIdx)
+: Fsm(fsmName, maxInput, maxOutput, lst, presentationLayer, initStateIdx)
 {
     dfsmTable = nullptr;
 }

@@ -10,8 +10,9 @@
 
 DFSMTable::DFSMTable(const int numStates,
                      const int maxInput,
-                     std::shared_ptr<FsmPresentationLayer> presentationLayer)
-	: maxInput(maxInput), presentationLayer(presentationLayer)
+                     std::shared_ptr<FsmPresentationLayer> presentationLayer,
+	                 const int initStateIdx)
+	: maxInput(maxInput), presentationLayer(presentationLayer), initStateIdx(initStateIdx)
 {
 	rows.insert(rows.end(), numStates, nullptr);
 }
@@ -24,7 +25,7 @@ void DFSMTable::setRow(const int n, const std::shared_ptr<DFSMTableRow> r)
 std::shared_ptr<PkTable> DFSMTable::getP1Table() const
 {
 	std::shared_ptr<PkTable> p1 =
-         std::make_shared<PkTable>(rows.size(), maxInput, presentationLayer);
+         std::make_shared<PkTable>(rows.size(), maxInput, presentationLayer, initStateIdx);
 
 	int thisClass = 0;
 

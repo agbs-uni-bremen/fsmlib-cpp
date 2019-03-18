@@ -4992,9 +4992,9 @@ int main(int argc, char** argv)
 	
 	//removeUnreachableNodes_TS().printResults();
 	//transformToObservableFSM_TS().printResults();
-	//minimise_Dfsm_TS().printResults();
+	minimise_Dfsm_TS().printResults();
 	//minimiseObservableFSM_TS().printResults();
-	minimise_Fsm_TS().printResults();
+	//minimise_Fsm_TS().printResults();
 
 	// Intersection Test:
 	//intersect_TS().printResults();
