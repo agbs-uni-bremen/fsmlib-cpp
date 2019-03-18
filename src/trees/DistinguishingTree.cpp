@@ -4,18 +4,22 @@
  * Licensed under the EUPL V.1.1
  */
 
-#include <set>
+
 #include <queue>
 #include <unordered_map>
-#include <string>
 #include <functional>
 #include "trees/DistinguishingTree.h"
+#include "utils/Logger.hpp"
 
 using namespace std;
 
 DistinguishingTree::DistinguishingTree(const std::shared_ptr <Dfsm> &dfsm)
         : distinguishingSequence(vector<int>())
 {
+    //Logging
+    LogCoordinator& logger = LogCoordinator::getStandardLogger();
+    logger.setDefaultStream(cout);
+
     root = make_shared<DistinguishingTreeNode>();
 
     //A distinguishing tree can only be derived for truly completely specified, deterministic FSM
@@ -46,8 +50,12 @@ DistinguishingTree::DistinguishingTree(const std::shared_ptr <Dfsm> &dfsm)
 
     //Algorithm to create the distinguishing tree and derive a distinguishing sequence for the dfsm
     while(!workingList.empty()) {
+        LOG("VERBOSE_2") << " Next One please! " << std::endl;
         auto currentNode = workingList.front();
         workingList.pop();
+        LOG("VERBOSE_2") << uncToString(currentNode->getCurrentUncertainty()) << std::endl;
+        LOG("VERBOSE_2") << traceToString(currentNode->getInputTrace()) << std::endl;
+
 
         for(int x=0; x<=dfsm->getMaxInput(); ++x) {
             auto newNode = make_shared<DistinguishingTreeNode>();
@@ -55,6 +63,7 @@ DistinguishingTree::DistinguishingTree(const std::shared_ptr <Dfsm> &dfsm)
 
             //create the next current Uncertainty from the current node with regard to x
             bool isTerminal = false;
+            LOG("VERBOSE_2") << "compute next unc" << std::endl;
             computeNextCurrentUncertainty(currentNode->getCurrentUncertainty(),x,nextCurrentUncertainty,isTerminal);
 
             //the input 'x' wasnt valid for the current node, try the next one
@@ -115,7 +124,7 @@ void DistinguishingTree::computeNextCurrentUncertainty(const multiset<set<int>> 
     for(auto& block:currentUncertainty) {
         //Partition the block of target states after reading x respecting the produced output
         unordered_map< int, shared_ptr<set<int>> > blockPartition;
-
+        LOG("VERBOSE_2") << "starting new block" << std::endl;
         for(int id:block) {
             auto producedOutputs = vector<int>();
             /**
@@ -124,6 +133,7 @@ void DistinguishingTree::computeNextCurrentUncertainty(const multiset<set<int>> 
              **/
             auto targetStates = idToFsmNode[id]->after(x,producedOutputs);
             int output = producedOutputs.front();
+            LOG("VERBOSE_2") << id << " going to " << targetStates.front()->getId() << " with output " << output  << std::endl;
             auto bit = blockPartition.find(output);
             if(bit == blockPartition.end()) {
                 auto partition = make_shared<set<int>>();
@@ -150,13 +160,36 @@ void DistinguishingTree::computeNextCurrentUncertainty(const multiset<set<int>> 
 int DistinguishingTree::createHashForCurrentUncertainty(const multiset<set<int>>& currentUncertainty) {
     string stringHash = "";
     hash<string> hash_fn;
-    for(auto block:currentUncertainty) {
+    for(auto& block:currentUncertainty) {
         for(int id:block) {
             stringHash += to_string(id) + ",";
         }
         stringHash += "|";
     }
     return hash_fn(stringHash);
+}
+
+string DistinguishingTree::uncToString(const multiset<set<int>>& currentUncertainty) {
+    string serialized = "{";
+    for(auto& block:currentUncertainty) {
+        serialized += " {";
+        for(int id:block) {
+            serialized += to_string(id) + ",";
+        }
+        serialized += "} ";
+    }
+    serialized += "}";
+
+    return serialized;
+}
+
+string DistinguishingTree::traceToString(const vector<int> &trace) {
+    string serialized = "";
+    for(auto io:trace) {
+        serialized += to_string(io) + ".";
+
+    }
+    return serialized;
 }
 
 const std::vector<int>& DistinguishingTree::getDistinguishingSequence() {

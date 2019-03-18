@@ -687,6 +687,17 @@ public:
                                 const IOTreeContainer& adaptiveTestCases) const;
 
     /**
+     * Determines if the given test case distinguishes all distinct states from
+     * `nodesA`.
+     * @param nodesA set of states that are being compared pairwise
+     * @param testCase The test case that will be used
+     * @return `true`, if 'testCase` distuinguishes all states
+     * from `nodesA` from all states from `nodesB`; `false`, otherwise
+     */
+    bool distinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
+                                const InputTrace& testCase) const;
+
+    /**
      * Determines if the given adaptive test cases distinguish state {@code nodeA}
      * from state {@code nodeSB}.
      * @param nodeA First state
@@ -741,12 +752,25 @@ public:
      * @param nodeA First state
      * @param nodesB Second state
      * @param adaptiveTestCase The adaptive test case that will be used
-     * @return `true`, if `adaptiveTestCase` distuinguishes state
+     * @return `true`, if `adaptiveTestCase` distinguishes state
      * `nodeA` from state `nodeB`; `false`, otherwise
      */
     bool distinguishes(std::shared_ptr<FsmNode> nodeA,
                       std::shared_ptr<FsmNode> nodeB,
                       std::shared_ptr<InputOutputTree> adaptiveTestCase) const;
+
+    /**
+     * Determines if the given test case distinguishes state `nodeA`
+     * from state `nodeB`.
+     * @param nodeA First state
+     * @param nodeB Second state
+     * @param testCase The test case that will be used
+     * @return `true`, if `testCase` distinguishes state
+     * `nodeA` from state `nodeB`; `false`, otherwise
+     */
+    bool distinguishes(std::shared_ptr<FsmNode> nodeA,
+                       std::shared_ptr<FsmNode> nodeB,
+                       const InputTrace& testCase) const;
 
     /**
      * Calculates a set of maximal sets of r-distinguishable states.

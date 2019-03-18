@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <set>
+#include <string>
 #include "trees/DistinguishingTreeNode.h"
 #include "fsm/Dfsm.h"
 
@@ -53,6 +54,10 @@ private:
     * @param isTerminal flag that is set to true, if the next input symbol is valid for 'currentUncertainty' and 'nextCurrentUncertainty' consists of singletons only
     */
     void computeNextCurrentUncertainty(const multiset<set<int>>& currentUncertainty,int x,multiset<set<int>>& nextCurrentUncertainty, bool& isTerminal);
+
+    string uncToString(const multiset<set<int>>& currentUncertainty);
+
+    string traceToString(const vector<int>& trace);
 
 public:
 

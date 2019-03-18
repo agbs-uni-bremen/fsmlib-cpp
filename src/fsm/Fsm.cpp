@@ -30,6 +30,8 @@
 #include "trees/InputOutputTree.h"
 #include "trees/AdaptiveTreeNode.h"
 #include "utils/Logger.hpp"
+#include "Fsm.h"
+
 
 using namespace std;
 using namespace std::chrono;
@@ -2838,6 +2840,29 @@ bool Fsm::distinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
     return true;
 }
 
+bool Fsm::distinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
+                            const InputTrace& testCase) const
+{
+    for (size_t i = 0; i < nodesA.size(); ++i)
+    {
+        shared_ptr<FsmNode> nodeA = nodesA.at(i);
+        for (size_t j = i + 1; j < nodesA.size(); ++j)
+        {
+            shared_ptr<FsmNode> nodeB = nodesA.at(j);
+            if (nodeA == nodeB)
+            {
+                return false;
+            }
+            if (!distinguishes(nodeA, nodeB, testCase))
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
 bool Fsm::rDistinguishes(shared_ptr<FsmNode> nodeA,
                          shared_ptr<FsmNode> nodeB,
                          const IOTreeContainer& adaptiveTestCases) const
@@ -2940,6 +2965,19 @@ bool Fsm::distinguishes(shared_ptr<FsmNode> nodeA,
     addPossibleIOTraces(nodeB, adaptiveTestCase, containerB);
 
     return containerA != containerB;
+}
+
+bool Fsm::distinguishes(std::shared_ptr<FsmNode> nodeA, std::shared_ptr<FsmNode> nodeB,
+                        const InputTrace& testCase) const
+{
+    //InputTrace
+    vector<shared_ptr<OutputTrace>> nodeAOutputs;
+    nodeA->getPossibleOutputs(testCase,nodeAOutputs);
+
+    vector<shared_ptr<OutputTrace>> nodeBOutputs;
+    nodeB->getPossibleOutputs(testCase,nodeBOutputs);
+
+    return nodeAOutputs != nodeBOutputs;
 }
 
 
@@ -4918,3 +4956,5 @@ bool Fsm::equivalenceCheck(const Fsm& fsm) const {
     }
     return true;
 }
+
+

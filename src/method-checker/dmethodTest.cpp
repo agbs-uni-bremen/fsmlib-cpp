@@ -45,12 +45,18 @@ int main(int argc, char* argv[])
 
     shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(3,5,3);
 
-    shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("Dfsm",20,4,7,pl);
+    shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("Dfsm",60,3,13,pl);
 
     dfsm->minimise();
 
-    vector<int> distinguishingSequence = dfsm->createDistinguishingSequence();
+    dfsm->toDot("dfsm_min");
 
-    cout << "ds-length: " << distinguishingSequence.size() << endl;
+    vector<int> distinguishingSequence = dfsm->createDistinguishingSequence();
+    InputTrace ds(distinguishingSequence,dfsm->getPresentationLayer());
+
+    cout << "ds-length: " << ds.size() << endl;
+    auto nodesA = dfsm->getNodes();
+    auto& nodesB = nodesA;
+    cout << "is ds:" << dfsm->distinguishesAllStates(nodesB,ds) << endl;
 }
 

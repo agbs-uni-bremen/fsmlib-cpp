@@ -280,21 +280,21 @@ throw ss.str();
     }
     producedOutputTraces = newlyProducedOutputTraces;
 
-    LOG("VERBOSE_3") << "getPossibleOutputs(): " << getName() << ", " << inputTrace << ", " << producedOutputTraces.size() << ", " << reachedNodes.size() << std::endl;
+    //LOG("VERBOSE_3") << "getPossibleOutputs(): " << getName() << ", " << inputTrace << ", " << producedOutputTraces.size() << ", " << reachedNodes.size() << std::endl;
     stringstream ss;
     ss << "  reached nodes: ";
     for (auto n : reachedNodes)
     {
         ss << n->getName() << ", ";
     }
-    LOG("VERBOSE_3") << ss.str() << std::endl;
+    //LOG("VERBOSE_3") << ss.str() << std::endl;
     ss.str(std::string());
     ss << "  outputs: ";
     for (auto n : producedOutputTraces)
     {
         ss << *n << ", ";
     }
-    LOG("VERBOSE_3") << ss.str() << std::endl;
+    //LOG("VERBOSE_3") << ss.str() << std::endl;
 }
 
 void FsmNode::getPossibleOutputs(const InputTrace& input, vector<shared_ptr<OutputTrace>>& producedOutputs) const
