@@ -505,6 +505,29 @@ Dfsm::Dfsm(const string& fname,
     dfsmTable = nullptr;
 }
 
+// Original
+//Dfsm::Dfsm(const string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer, const bool repeatable)
+//	: Fsm(presentationLayer)
+//{
+//	dfsmTable = nullptr;
+//	name = fsmName;
+//	nodes.insert(nodes.end(), maxNodes, nullptr);
+//	initStateIdx = 0;
+//	this->maxInput = maxInput;
+//	this->maxOutput = maxOutput;
+//	currentParsedNode = nullptr;
+//	if (not repeatable) {
+//		createAtRandom();
+//	}
+//	else {
+//		createAtRandomRepeatable();
+//	}
+//	ofstream out(getName() + ".txt");
+//	dumpFsm(out);
+//	out.close();
+//}
+
+// Corrected
 Dfsm::Dfsm(const string & fsmName, const int maxNodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer, const bool repeatable)
 : Fsm(presentationLayer)
 {
