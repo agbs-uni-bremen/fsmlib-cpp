@@ -524,6 +524,7 @@ Dfsm::Dfsm(const string & fsmName, const int maxNodes, const int maxInput, const
     ofstream out(getName() + ".txt");
     dumpFsm(out);
     out.close();
+	maxState = nodes.size() - 1;
 }
 
 Dfsm::Dfsm(const string & fsmName, const int maxInput, const int maxOutput, const vector<shared_ptr<FsmNode>> lst, const shared_ptr<FsmPresentationLayer> presentationLayer)
