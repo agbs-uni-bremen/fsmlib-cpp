@@ -165,7 +165,8 @@ public:
         const int maxInput,
         const int maxOutput,
         const std::vector<std::shared_ptr<FsmNode>> lst,
-        const std::shared_ptr<FsmPresentationLayer> presentationLayer);
+        const std::shared_ptr<FsmPresentationLayer> presentationLayer,
+		const int initStateIdx = 0);
     
     
     /**

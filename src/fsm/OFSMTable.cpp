@@ -13,7 +13,7 @@ using namespace std;
 
 shared_ptr<OFSMTable> OFSMTable::nextAfterZero()
 {
-	shared_ptr<OFSMTable> next = make_shared<OFSMTable>(numStates, maxInput, maxOutput, rows, presentationLayer);
+	shared_ptr<OFSMTable> next = make_shared<OFSMTable>(numStates, maxInput, maxOutput, rows, presentationLayer, initStateIdx);
 	next->tblId = 1;
 
 	int thisClass = 0;
@@ -54,8 +54,8 @@ shared_ptr<OFSMTable> OFSMTable::nextAfterZero()
 	return next;
 }
 
-OFSMTable::OFSMTable(const vector<shared_ptr<FsmNode>>& nodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer)
-	: numStates(static_cast<int> (nodes.size())), maxInput(maxInput), maxOutput(maxOutput), tblId(0), s2c(numStates), presentationLayer(presentationLayer)
+OFSMTable::OFSMTable(const vector<shared_ptr<FsmNode>>& nodes, const int maxInput, const int maxOutput, const shared_ptr<FsmPresentationLayer> presentationLayer, size_t initStateIdx)
+	: numStates(static_cast<int> (nodes.size())), maxInput(maxInput), maxOutput(maxOutput), tblId(0), s2c(numStates), presentationLayer(presentationLayer), initStateIdx(initStateIdx)
 {
 	for (int n = 0; n < numStates; ++ n)
 	{
@@ -76,8 +76,8 @@ OFSMTable::OFSMTable(const vector<shared_ptr<FsmNode>>& nodes, const int maxInpu
 	}
 }
 
-OFSMTable::OFSMTable(const int numStates, const int maxInput, const int maxOutput, const vector<shared_ptr<OFSMTableRow>>& rows, const shared_ptr<FsmPresentationLayer> presentationLayer)
-	: numStates(numStates), maxInput(maxInput), maxOutput(maxOutput), tblId(0), s2c(numStates), rows(rows), presentationLayer(presentationLayer)
+OFSMTable::OFSMTable(const int numStates, const int maxInput, const int maxOutput, const vector<shared_ptr<OFSMTableRow>>& rows, const shared_ptr<FsmPresentationLayer> presentationLayer, size_t initStateIdx)
+	: numStates(numStates), maxInput(maxInput), maxOutput(maxOutput), tblId(0), s2c(numStates), rows(rows), presentationLayer(presentationLayer), initStateIdx(initStateIdx)
 {
 
 }
@@ -122,7 +122,7 @@ shared_ptr<OFSMTable> OFSMTable::next()
 		return nextAfterZero();
 	}
 
-	shared_ptr<OFSMTable> next = make_shared<OFSMTable>(numStates, maxInput, maxOutput, rows, presentationLayer);
+	shared_ptr<OFSMTable> next = make_shared<OFSMTable>(numStates, maxInput, maxOutput, rows, presentationLayer, initStateIdx);
 	next->tblId = tblId + 1;
 
 	int thisClass = 0;
@@ -342,7 +342,11 @@ Fsm OFSMTable::toFsm(const string & name) const
 			}
 		}
 	}
-	return Fsm(minFsmName, maxInput, maxOutput, nodeLst, minPl);
+	// Original:
+	//return Fsm(minFsmName, maxInput, maxOutput, nodeLst, minPl);
+
+	// Corrected
+	return Fsm(minFsmName, maxInput, maxOutput, nodeLst, minPl, s2c.at(initStateIdx));
 }
 
 ostream & operator<<(ostream & out, const OFSMTable & ofsmTable)

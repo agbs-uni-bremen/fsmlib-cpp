@@ -737,34 +737,34 @@ TestResult minimise_Fsm_TS() {
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
-	//srand(8368);
-	//for (int i = 0; i < 3334; ++i) {
-	//	auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, pl);
-	//	testMinimise_Fsm(*fsm, "TC-Rand-" + to_string(i))
-	//		? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
-	//}
-	//srand(4438);
-	//for (int i = 0; i < 3333; ++i) {
-	//	auto fsm = makeStatesUnreachable(*Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, pl));
-	//	testMinimise_Fsm(*fsm, "TC-Rand-(MSU)-" + to_string(i))
-	//		? ++result.pass : result.fails.push_back("TC-Rand-(MSU)-" + to_string(i));
-	//}
-	//srand(6492);
-	//for (int i = 0; i < 3333; ++i) {
-	//	auto fsm = makeStatesEquivalent(*Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, pl));
-	//	testMinimise_Fsm(*fsm, "TC-Rand-(MSE)-" + to_string(i))
-	//		? ++result.pass : result.fails.push_back("TC-Rand-(MSE)-" + to_string(i));
-	//}
+	srand(8368);
+	for (int i = 0; i < 3334; ++i) {
+		auto fsm = Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, pl);
+		testMinimise_Fsm(*fsm, "TC-Rand-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
+	}
+	srand(4438);
+	for (int i = 0; i < 3333; ++i) {
+		auto fsm = makeStatesUnreachable(*Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, pl));
+		testMinimise_Fsm(*fsm, "TC-Rand-(MSU)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSU)-" + to_string(i));
+	}
+	srand(6492);
+	for (int i = 0; i < 3333; ++i) {
+		auto fsm = makeStatesEquivalent(*Fsm::createRandomFsmRepeatable("M1", rand() % 4, rand() % 4 + 1, rand() % 10, pl));
+		testMinimise_Fsm(*fsm, "TC-Rand-(MSE)-" + to_string(i))
+			? ++result.pass : result.fails.push_back("TC-Rand-(MSE)-" + to_string(i));
+	}
 
-	//cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
-	//shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
-	//testMinimise_Fsm(*csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
-	//cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
-	//shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
-	//testMinimise_Fsm(*fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
-	//cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
-	//shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC");
-	//testMinimise_Fsm(*gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
+	cout << "------------------------------- Start CSM Tests -------------------------------" << endl;
+	shared_ptr<Fsm> csm = make_shared<Fsm>("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
+	testMinimise_Fsm(*csm, "TC-CSM-0") ? ++result.pass : result.fails.push_back("TC-CSM-0");
+	cout << "------------------------------- Start FSBC Tests -------------------------------" << endl;
+	shared_ptr<Fsm> fsb = make_shared<Fsm>("../../../resources/TestSuites/examples/fsb.fsm", pl, "FSB");
+	testMinimise_Fsm(*fsb, "TC-FSBC-0") ? ++result.pass : result.fails.push_back("TC-FSBC-0");
+	cout << "------------------------------- Start GDC Tests -------------------------------" << endl;
+	shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/TestSuites/examples/gdc.fsm", pl, "GDC");
+	testMinimise_Fsm(*gdc, "TC-GDC-0") ? ++result.pass : result.fails.push_back("TC-GDC-0");
 
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	vector<FsmTransformationTestCase<Fsm>> testSuite;

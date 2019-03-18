@@ -331,14 +331,15 @@ Fsm::Fsm(const string & fsmName,
          const int maxInput,
          const int maxOutput,
          const vector<shared_ptr<FsmNode>> lst,
-         const shared_ptr<FsmPresentationLayer> presentationLayer)
+         const shared_ptr<FsmPresentationLayer> presentationLayer,
+	     const int initStateIdx)
 :
 name(fsmName),
 currentParsedNode(nullptr),
 maxInput(maxInput),
 maxOutput(maxOutput),
 maxState((int)(lst.size()-1)),
-initStateIdx(0),
+initStateIdx(initStateIdx),
 characterisationSet(nullptr),
 minimal(Maybe),
 presentationLayer(presentationLayer)
@@ -801,7 +802,7 @@ void Fsm::calcOFSMTables() {
     
     // Create the initial OFSMTable representing the FSM,
     //  where all FSM states belong to the same class
-    shared_ptr<OFSMTable> tbl = make_shared<OFSMTable>(nodes, maxInput, maxOutput, presentationLayer);
+    shared_ptr<OFSMTable> tbl = make_shared<OFSMTable>(nodes, maxInput, maxOutput, presentationLayer, initStateIdx);
     
     // Create all possible OFSMTables, each new one from its
     // predecessor, and add them to the ofsmTableLst
@@ -1718,7 +1719,7 @@ Fsm::getEquivalentInputsFromPrimeMachine() {
         make_shared<OFSMTable>(nodes,
                                maxInput,
                                maxOutput,
-                               presentationLayer);
+                               presentationLayer, initStateIdx);
     
     // mark all inputs as non-equivalent
     vector<bool> equivalentToSmallerInput;
