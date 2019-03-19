@@ -1,18 +1,18 @@
-﻿//#include <iostream>
-//#include <fstream>
+﻿#include <iostream>
+#include <fstream>
 #include <memory>
-//#include <stdlib.h>
-//#include <interface/FsmPresentationLayer.h>
+#include <stdlib.h>
+#include <interface/FsmPresentationLayer.h>
 #include <fsm/Dfsm.h>
 #include <fsm/Fsm.h>
 #include <fsm/FsmNode.h>
-//#include <fsm/IOTrace.h>
-//#include <fsm/FsmPrintVisitor.h>
-//#include <fsm/FsmSimVisitor.h>
-//#include <fsm/FsmOraVisitor.h>
-//#include <trees/IOListContainer.h>
-#include <trees/OutputTree.h>
+#include <trees/IOListContainer.h>
 #include <trees/Tree.h>
+#include "fsm/FsmTransition.h"
+#include "fsm/FsmLabel.h"
+#include <tuple>
+#include "Tests.h"
+
 //#include <trees/TestSuite.h>
 //#include "json/json.h"
 //
@@ -26,19 +26,8 @@
 //#include "fsm/DFSMTableRow.h"
 //#include "fsm/OFSMTableRow.h"
 //#include "fsm/OFSMTable.h"
-#include "fsm/FsmTransition.h"
-//#include "fsm/FsmLabel.h"
-
-//#include <tuple>
-
-#include "Tests.h"
-
-#include <typeinfo>
-
 
 using namespace std;
-//using namespace Json;
-
 
 // Selects two nodes of m randomly and changes the transitions of one of those nodes in a way that makes both equivalent.
 // It is expected that srand() was called before.
@@ -1689,49 +1678,49 @@ TestResult calcStateIdentificationSets_TS() {
  * Create a complete Fsm from m by adding self loops in states for undefined inputs producing some nullouput not contained in the
  * regular output alphabet. (nullOutput is expected to be greater than m.getMaxOutput())
  */
-shared_ptr<Fsm> transformToComplete(const shared_ptr<const Fsm> m, const size_t nullOutput) {
-	vector<shared_ptr<FsmNode> > lst;
-	for (int n = 0; n <= m->getMaxState(); n++) {
-		lst.push_back(make_shared<FsmNode>(n, m->getName(), m->getPresentationLayer()));
-	}
-
-	bool partial = false;
-
-	// Now add transitions that correspond exactly to the transitions in
-	// this FSM
-	for (int n = 0; n <= m->getMaxState(); n++) {
-		auto theNewFsmNodeSrc = lst[n];
-		auto theOldFsmNodeSrc = m->getNodes()[n];
-		set<int> definedInputs;
-		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
-			definedInputs.insert(tr->getLabel()->getInput());
-			int tgtId = tr->getTarget()->getId();
-			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
-			shared_ptr<FsmTransition> newTr =
-				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
-			theNewFsmNodeSrc->addTransition(newTr);
-		}
-		// add self loops with nullOutputs for undefined inputs
-		for (int input = 0; input <= m->getMaxInput(); ++input) {
-			if (definedInputs.count(input) == 0) {
-				partial = true;
-				shared_ptr<FsmTransition> newTr =
-					make_shared<FsmTransition>(theNewFsmNodeSrc, lst[n], make_shared<FsmLabel>(input, nullOutput, m->getPresentationLayer()));
-				theNewFsmNodeSrc->addTransition(newTr);
-			}
-		}
-	}
-	if (partial) {
-		auto completeM = make_shared<Fsm>(m->getName(), m->getMaxInput(), nullOutput, lst, m->getPresentationLayer());
-		completeM->initStateIdx = m->initStateIdx;
-		return completeM;
-	}
-	else {
-		auto completeM = make_shared<Fsm>(m->getName(), m->getMaxInput(), m->getMaxOutput(), lst, m->getPresentationLayer());
-		completeM->initStateIdx = m->initStateIdx;
-		return completeM;
-	}
-}
+//shared_ptr<Fsm> transformToComplete(const shared_ptr<const Fsm> m, const size_t nullOutput) {
+//	vector<shared_ptr<FsmNode> > lst;
+//	for (int n = 0; n <= m->getMaxState(); n++) {
+//		lst.push_back(make_shared<FsmNode>(n, m->getName(), m->getPresentationLayer()));
+//	}
+//
+//	bool partial = false;
+//
+//	// Now add transitions that correspond exactly to the transitions in
+//	// this FSM
+//	for (int n = 0; n <= m->getMaxState(); n++) {
+//		auto theNewFsmNodeSrc = lst[n];
+//		auto theOldFsmNodeSrc = m->getNodes()[n];
+//		set<int> definedInputs;
+//		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
+//			definedInputs.insert(tr->getLabel()->getInput());
+//			int tgtId = tr->getTarget()->getId();
+//			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
+//			shared_ptr<FsmTransition> newTr =
+//				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
+//			theNewFsmNodeSrc->addTransition(newTr);
+//		}
+//		// add self loops with nullOutputs for undefined inputs
+//		for (int input = 0; input <= m->getMaxInput(); ++input) {
+//			if (definedInputs.count(input) == 0) {
+//				partial = true;
+//				shared_ptr<FsmTransition> newTr =
+//					make_shared<FsmTransition>(theNewFsmNodeSrc, lst[n], make_shared<FsmLabel>(input, nullOutput, m->getPresentationLayer()));
+//				theNewFsmNodeSrc->addTransition(newTr);
+//			}
+//		}
+//	}
+//	if (partial) {
+//		auto completeM = make_shared<Fsm>(m->getName(), m->getMaxInput(), nullOutput, lst, m->getPresentationLayer());
+//		completeM->initStateIdx = m->initStateIdx;
+//		return completeM;
+//	}
+//	else {
+//		auto completeM = make_shared<Fsm>(m->getName(), m->getMaxInput(), m->getMaxOutput(), lst, m->getPresentationLayer());
+//		completeM->initStateIdx = m->initStateIdx;
+//		return completeM;
+//	}
+//}
 
 /*
  *	Random Test Suite for test of Fsm::calcStateIdentificationSetsFast().
@@ -1950,7 +1939,7 @@ bool testTestTheory(Fsm & m, const vector<shared_ptr<const Fsm>>& mutants, const
 	                const shared_ptr<TestSuiteGenerator> tsGen, const string &tcID) {
 	bool pass = true;
 	const Fsm copyOfM = Fsm(m);		
-	auto completeM = transformToComplete(make_shared<Fsm>(m), nullOutput);
+	auto completeM = m.complete(nullOutput); //transformToComplete(make_shared<Fsm>(m), nullOutput);
 	auto minComplM = completeM->minimise();
 	if (minComplM.size() > 30) {
 		cout << "FSM too big. Stop Test Case." << endl;
@@ -2006,7 +1995,7 @@ bool testTestTheory(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, cons
 	                const shared_ptr<TestSuiteGenerator> tsGen, const string &tcID) {
 	bool pass = true;
 	const Dfsm copyOfM = Dfsm(m);
-	auto completeM = transformToComplete(make_shared<Dfsm>(m), nullOutput);
+	auto completeM = m.complete(nullOutput); //transformToComplete(make_shared<Dfsm>(m), nullOutput);
 	auto minComplM = completeM->minimise();
 	if (minComplM.size() > 30) {
 		cout << "FSM too big. Stop Test Case." << endl;
@@ -2090,7 +2079,7 @@ shared_ptr<vector<shared_ptr<const Fsm>>> createMutants(const size_t nullOutput,
 		size_t numTrFaults = rand() % 3;
 		if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
 		auto minMut = m->createMutantRepeatable("Mutant_" + to_string(j), numOutFaults, numTrFaults)->minimise();
-		mutants.push_back(transformToComplete(make_shared<Fsm>(minMut), nullOutput));
+		mutants.push_back(m->complete(nullOutput)); //transformToComplete(make_shared<Fsm>(minMut), nullOutput)
 	}
 	return make_shared< vector<shared_ptr<const Fsm>>>(mutants);
 }
@@ -2106,7 +2095,7 @@ void executeTestTheoryTC(TestTheoryTestCase & tc, shared_ptr<TestSuiteGenerator>
 	size_t nullOutput = getMaxOutput(*ref, partialMutants) + 1;
 
 	vector<shared_ptr<const Fsm>> completeMutants;
-	for (auto m : partialMutants) completeMutants.push_back(transformToComplete(m, nullOutput));
+	for (auto m : partialMutants) completeMutants.push_back(m->complete(nullOutput));
 	testTestTheory(*ref, completeMutants, nullOutput, tsGenerator, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 }
 

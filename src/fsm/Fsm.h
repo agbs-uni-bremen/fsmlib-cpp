@@ -558,11 +558,17 @@ public:
      */
 	friend bool testCalcStateIdentificationSetsFast(Fsm &m, const std::string &tcID);
 
+	///**
+ //    * Transform m to a complete Fsm by adding self loops in states for undefined inputs producing some nullouput not contained in the
+ //    * regular output alphabet.
+ //    */
+	//friend std::shared_ptr<Fsm> transformToComplete(const std::shared_ptr<const Fsm> m, const size_t nullOutput);
+
 	/**
      * Transform m to a complete Fsm by adding self loops in states for undefined inputs producing some nullouput not contained in the
      * regular output alphabet.
      */
-	friend std::shared_ptr<Fsm> transformToComplete(const std::shared_ptr<const Fsm> m, const size_t nullOutput);
+	std::shared_ptr<Fsm> Fsm::complete(const int nullOutput) const;
 
 
 private:
@@ -575,6 +581,7 @@ private:
 	 * Checks the transitions and return false iff any transitions hurts the invariant of Fsm.
      */
 	bool checkAllTransitions() const;
+	
 	//--------------------------------------------
 
 };

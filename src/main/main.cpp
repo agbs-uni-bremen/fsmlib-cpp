@@ -5005,14 +5005,14 @@ int main(int argc, char** argv)
 
 	// Complete Test Theories Test:
 	//tMethod_TS().printResults();
-	//wMethod_Fsm_TS().printResults();
-	//wMethod_Dfsm_TS().printResults();
+	wMethod_Fsm_TS().printResults();
+	wMethod_Dfsm_TS().printResults();
 	//wMethodOnMinimisedFsm_TS().printResults();
 	//wMethodOnMinimisedDfsm_TS().printResults();
 	//wpMethod_Fsm_TS().printResults();
 	//wpMethod_Dfsm_TS().printResults();
 	//wpMethodOnMinimisedDfsm_TS().printResults();
-	hsiMethod_Fsm_TS().printResults();
+	//hsiMethod_Fsm_TS().printResults();
 	//hsiMethod_Dfsm_TS().printResults();
 	//hMethodOnMinimisedDfsm_TS().printResults();
 

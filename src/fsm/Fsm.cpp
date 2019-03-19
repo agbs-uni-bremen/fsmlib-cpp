@@ -1155,13 +1155,21 @@ void Fsm::appendStateIdentificationSets(const shared_ptr<Tree> Wp2) const
     }
 }
 
+// Original:
+//IOListContainer Fsm::wMethod(const unsigned int numAddStates) {
+//
+//    Fsm fo = transformToObservableFSM();
+//    Fsm fom = fo.minimise();
+//
+//    return fom.wMethodOnMinimisedFsm(numAddStates);
+//}
 
+// Corrected:
 IOListContainer Fsm::wMethod(const unsigned int numAddStates) {
-    
-    Fsm fo = transformToObservableFSM();
-    Fsm fom = fo.minimise();
-
-    return fom.wMethodOnMinimisedFsm(numAddStates);
+	shared_ptr<Fsm> cM = complete(maxOutput + 1);
+	Fsm fo = cM->transformToObservableFSM();
+	Fsm fom = fo.minimise();
+	return fom.wMethodOnMinimisedFsm(numAddStates);
 }
 
 
@@ -1932,5 +1940,49 @@ bool Fsm::checkInvariant() const {
 	if (maxState != nodes.size() - 1) return false;
 	if (not(0 <= initStateIdx and initStateIdx <= maxState)) return false;
 	return true;
+}
+
+shared_ptr<Fsm> Fsm::complete(const int nullOutput) const{
+	vector<shared_ptr<FsmNode> > lst;
+	for (int n = 0; n <= getMaxState(); n++) {
+		lst.push_back(make_shared<FsmNode>(n, getName(), getPresentationLayer()));
+	}
+
+	bool partial = false;
+
+	// Now add transitions that correspond exactly to the transitions in
+	// this FSM
+	for (int n = 0; n <= getMaxState(); n++) {
+		auto theNewFsmNodeSrc = lst[n];
+		auto theOldFsmNodeSrc = getNodes()[n];
+		set<int> definedInputs;
+		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
+			definedInputs.insert(tr->getLabel()->getInput());
+			int tgtId = tr->getTarget()->getId();
+			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
+			shared_ptr<FsmTransition> newTr =
+				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
+			theNewFsmNodeSrc->addTransition(newTr);
+		}
+		// add self loops with nullOutputs for undefined inputs
+		for (int input = 0; input <= getMaxInput(); ++input) {
+			if (definedInputs.count(input) == 0) {
+				partial = true;
+				shared_ptr<FsmTransition> newTr =
+					make_shared<FsmTransition>(theNewFsmNodeSrc, lst[n], make_shared<FsmLabel>(input, nullOutput, getPresentationLayer()));
+				theNewFsmNodeSrc->addTransition(newTr);
+			}
+		}
+	}
+	if (partial) {
+		auto completeM = make_shared<Fsm>(getName(), getMaxInput(), nullOutput, lst, getPresentationLayer());
+		completeM->initStateIdx = initStateIdx;
+		return completeM;
+	}
+	else {
+		auto completeM = make_shared<Fsm>(getName(), getMaxInput(), getMaxOutput(), lst, getPresentationLayer());
+		completeM->initStateIdx = initStateIdx;
+		return completeM;
+	}
 }
 
