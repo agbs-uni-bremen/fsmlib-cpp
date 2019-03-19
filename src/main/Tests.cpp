@@ -2702,7 +2702,7 @@ TestResult hsiMethod_Dfsm_TS() {
 	shared_ptr<HsiMethodGenerator> tsGenerator = make_shared<HsiMethodGenerator>();
 	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 	cout << "------------------------------- Start Random Tests -------------------------------" << endl;
-	srand(907);
+	srand(907); //srand(807);
 	for (int i = 0; i < 5000; ++i) {
 		Dfsm m("M", rand() % 15 + 1, rand() % 6, (rand() % 6) + 1, pl, true);
 
@@ -2710,6 +2710,7 @@ TestResult hsiMethod_Dfsm_TS() {
 
 		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
+		if (not result.fails.empty()) return result;
 	}
 	srand(6144);
 	for (int i = 0; i < 5000; ++i) {

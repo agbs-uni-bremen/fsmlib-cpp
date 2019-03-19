@@ -4972,12 +4972,8 @@ void test16() {
 //	cout << "size1C: " << size1C << endl;
 //}
 
-
-
-
 int main(int argc, char** argv)
 {
-
 
 	std::cout << "test start" << std::endl;
 	cout << argc << endl;
@@ -4992,14 +4988,14 @@ int main(int argc, char** argv)
 	
 	//removeUnreachableNodes_TS().printResults();
 	//transformToObservableFSM_TS().printResults();
-	minimise_Dfsm_TS().printResults();
+	//minimise_Dfsm_TS().printResults();
 	//minimiseObservableFSM_TS().printResults();
 	//minimise_Fsm_TS().printResults();
 
 	// Intersection Test:
 	//intersect_TS().printResults();
 
-	//// Calculation of Distinguishing Traces Test:
+	// Calculation of Distinguishing Traces Test:
 	//getCharacterisationSet_Dfsm_TS().printResults();
 	//getCharacterisationSet_Fsm_TS().printResults();
 	//calcDistinguishingTrace_PkTables_TS().printResults();
@@ -5007,7 +5003,7 @@ int main(int argc, char** argv)
 	//calcStateIdentificationSets_TS().printResults();
 	//calcStateIdentificationSetsFast_TS().printResults();
 
-	//// Complete Test Theories Test:
+	// Complete Test Theories Test:
 	//tMethod_TS().printResults();
 	//wMethod_Fsm_TS().printResults();
 	//wMethod_Dfsm_TS().printResults();
@@ -5016,7 +5012,7 @@ int main(int argc, char** argv)
 	//wpMethod_Fsm_TS().printResults();
 	//wpMethod_Dfsm_TS().printResults();
 	//wpMethodOnMinimisedDfsm_TS().printResults();
-	//hsiMethod_Fsm_TS().printResults();
+	hsiMethod_Fsm_TS().printResults();
 	//hsiMethod_Dfsm_TS().printResults();
 	//hMethodOnMinimisedDfsm_TS().printResults();
 

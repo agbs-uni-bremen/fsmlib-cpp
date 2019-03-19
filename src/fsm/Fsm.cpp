@@ -1282,7 +1282,10 @@ IOListContainer Fsm::hsiMethod(const unsigned int numAddStates)
     }
 
     /* Append harmonised state identification sets */
-    IOListContainer cnt = hsi->getIOLists();
+	// Original:
+    //IOListContainer cnt = hsi->getIOLists();
+	// Corrected
+	IOListContainer cnt = hsi->getIOListsWithPrefixes();
     for (auto lli : *cnt.getIOLists())
     {
         InputTrace itrc = InputTrace(lli, presentationLayer);

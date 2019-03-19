@@ -117,55 +117,118 @@ shared_ptr<FsmNode> FsmNode::apply(const int e, OutputTrace & o)
     return nullptr;
 }
 
+// Original
+//OutputTree FsmNode::apply(const InputTrace& itrc, bool markAsVisited)
+//{
+//    deque<shared_ptr<TreeNode>> tnl;
+//    unordered_map<shared_ptr<TreeNode>, shared_ptr<FsmNode>> t2f;
+//    
+//    shared_ptr<TreeNode> root = make_shared<TreeNode>();
+//    OutputTree ot = OutputTree(root, itrc, presentationLayer);
+//    
+//    if (itrc.get().size() == 0)
+//    {
+//        return ot;
+//    }
+//    
+//    t2f[root] = shared_from_this();
+//    
+//    for (auto it = itrc.cbegin(); it != itrc.cend(); ++ it)
+//    {
+//        int x = *it;
+//        
+//        vector< shared_ptr<TreeNode> > vaux = ot.getLeaves();
+//        
+//        for ( auto n : vaux ) {
+//            tnl.push_back(n);
+//        }
+//        
+//        while (!tnl.empty())
+//        {
+//            shared_ptr<TreeNode> thisTreeNode = tnl.front();
+//            tnl.pop_front();
+//            
+//            shared_ptr<FsmNode> thisState = t2f.at(thisTreeNode);
+//            if ( markAsVisited ) thisState->setVisited();
+//            
+//            for (shared_ptr<FsmTransition> tr : thisState->getTransitions())
+//            {
+//                if (tr->getLabel()->getInput() == x)
+//                {
+//                    int y = tr->getLabel()->getOutput();
+//                    shared_ptr<FsmNode> tgtState = tr->getTarget();
+//                    shared_ptr<TreeNode> tgtNode = make_shared<TreeNode>();
+//                    shared_ptr<TreeEdge> te = make_shared<TreeEdge>(y, tgtNode);
+//                    thisTreeNode->add(te);
+//                    t2f[tgtNode] = tgtState;
+//                    if ( markAsVisited ) tgtState->setVisited();
+//                }
+//            }
+//        }
+//    }
+//    return ot;
+//}
+
+//Corrected
 OutputTree FsmNode::apply(const InputTrace& itrc, bool markAsVisited)
 {
-    deque<shared_ptr<TreeNode>> tnl;
-    unordered_map<shared_ptr<TreeNode>, shared_ptr<FsmNode>> t2f;
-    
-    shared_ptr<TreeNode> root = make_shared<TreeNode>();
-    OutputTree ot = OutputTree(root, itrc, presentationLayer);
-    
-    if (itrc.get().size() == 0)
-    {
-        return ot;
-    }
-    
-    t2f[root] = shared_from_this();
-    
-    for (auto it = itrc.cbegin(); it != itrc.cend(); ++ it)
-    {
-        int x = *it;
-        
-        vector< shared_ptr<TreeNode> > vaux = ot.getLeaves();
-        
-        for ( auto n : vaux ) {
-            tnl.push_back(n);
-        }
-        
-        while (!tnl.empty())
-        {
-            shared_ptr<TreeNode> thisTreeNode = tnl.front();
-            tnl.pop_front();
-            
-            shared_ptr<FsmNode> thisState = t2f.at(thisTreeNode);
-            if ( markAsVisited ) thisState->setVisited();
-            
-            for (shared_ptr<FsmTransition> tr : thisState->getTransitions())
-            {
-                if (tr->getLabel()->getInput() == x)
-                {
-                    int y = tr->getLabel()->getOutput();
-                    shared_ptr<FsmNode> tgtState = tr->getTarget();
-                    shared_ptr<TreeNode> tgtNode = make_shared<TreeNode>();
-                    shared_ptr<TreeEdge> te = make_shared<TreeEdge>(y, tgtNode);
-                    thisTreeNode->add(te);
-                    t2f[tgtNode] = tgtState;
-                    if ( markAsVisited ) tgtState->setVisited();
-                }
-            }
-        }
-    }
-    return ot;
+	deque<shared_ptr<TreeNode>> tnl;
+	unordered_map<shared_ptr<TreeNode>, shared_ptr<FsmNode>> t2f;
+
+	shared_ptr<TreeNode> root = make_shared<TreeNode>();
+	OutputTree ot = OutputTree(root, itrc, presentationLayer);
+
+	if (itrc.get().size() == 0)
+	{
+		return ot;
+	}
+
+	t2f[root] = shared_from_this();
+
+	for (auto it = itrc.cbegin(); it != itrc.cend(); ++it)
+	{
+		int x = *it;
+
+		vector< shared_ptr<TreeNode> > vaux = ot.getLeaves();
+
+		for (auto n : vaux) {
+			tnl.push_back(n);
+		}
+
+		while (!tnl.empty())
+		{
+			shared_ptr<TreeNode> thisTreeNode = tnl.front();
+			tnl.pop_front();
+
+			shared_ptr<FsmNode> thisState = t2f.at(thisTreeNode);
+			if (markAsVisited) thisState->setVisited();
+
+			bool defined = false;
+			for (shared_ptr<FsmTransition> tr : thisState->getTransitions())
+			{
+				if (tr->getLabel()->getInput() == x)
+				{
+					defined = true;
+					int y = tr->getLabel()->getOutput();
+					shared_ptr<FsmNode> tgtState = tr->getTarget();
+					shared_ptr<TreeNode> tgtNode = make_shared<TreeNode>();
+					shared_ptr<TreeEdge> te = make_shared<TreeEdge>(y, tgtNode);
+					thisTreeNode->add(te);
+					t2f[tgtNode] = tgtState;
+					if (markAsVisited) tgtState->setVisited();
+				}
+			}
+			if (not defined) {
+				int y = -1;
+				shared_ptr<FsmNode> tgtState = thisState;
+				shared_ptr<TreeNode> tgtNode = make_shared<TreeNode>();
+				shared_ptr<TreeEdge> te = make_shared<TreeEdge>(y, tgtNode);
+				thisTreeNode->add(te);
+				t2f[tgtNode] = tgtState;
+			}
+		}
+	}
+	return ot;
 }
 
 unordered_set<shared_ptr<FsmNode>> FsmNode::after(const vector<int>& itrc)
