@@ -588,7 +588,6 @@ TestResult removeUnreachableNodes_TS() {
 	vector<FsmTransformationTestCase<Fsm>> testSuite;
 	parseFsmTransformationTSFile<Fsm>("../../../resources/TestSuites/FSM-Transformations/Fsm_removeUnreachableNodes.testsuite", testSuite);
 	for (auto tc : testSuite) {
-		//if (tc.id != "TC018") continue;
 		testRemoveUnreachableNodes(*tc.m, "TC-Part-" + tc.id) ? ++result.pass : result.fails.push_back("TC-Part-" + tc.id);
 	}
 	return result;
@@ -1899,8 +1898,7 @@ public:
 int calcNumAddStatesAndFilterMutants(const vector<shared_ptr<const Fsm>>& mutants, const Fsm& minComplM, vector<shared_ptr<const Fsm>> &filteredMutants) {
 	const int maxAddStates = 2;
 	int numAddStates = 0;
-
-	for (const auto mutant : mutants) {
+	for (const auto mutant : mutants) {		
 		if (mutant->size() > minComplM.size()) {
 			int sizeDiff = mutant->size() - minComplM.size();
 			if (sizeDiff > maxAddStates) continue;
@@ -2079,7 +2077,7 @@ shared_ptr<vector<shared_ptr<const Fsm>>> createMutants(const size_t nullOutput,
 		size_t numTrFaults = rand() % 3;
 		if (numOutFaults == 0 and numTrFaults == 0) ++numTrFaults;  // ignore the case where both values equal 0
 		auto minMut = m->createMutantRepeatable("Mutant_" + to_string(j), numOutFaults, numTrFaults)->minimise();
-		mutants.push_back(m->complete(nullOutput)); //transformToComplete(make_shared<Fsm>(minMut), nullOutput)
+		mutants.push_back(minMut.complete(nullOutput)); //transformToComplete(make_shared<Fsm>(minMut), nullOutput)
 	}
 	return make_shared< vector<shared_ptr<const Fsm>>>(mutants);
 }
@@ -2699,7 +2697,6 @@ TestResult hsiMethod_Dfsm_TS() {
 
 		testTestTheory(m, *createMutants(nullOutput, make_shared<Dfsm>(m)), nullOutput, tsGenerator, "TC-Rand-" + to_string(i))
 			? ++result.pass : result.fails.push_back("TC-Rand-" + to_string(i));
-		if (not result.fails.empty()) return result;
 	}
 	srand(6144);
 	for (int i = 0; i < 5000; ++i) {

@@ -4986,35 +4986,35 @@ int main(int argc, char** argv)
 	// FSM Transformation Tests:
 	//if(argc == 2 and input == "1") //
 	
-	//removeUnreachableNodes_TS().printResults();
-	//transformToObservableFSM_TS().printResults();
-	//minimise_Dfsm_TS().printResults();
-	//minimiseObservableFSM_TS().printResults();
-	//minimise_Fsm_TS().printResults();
+	removeUnreachableNodes_TS().printResults();
+	transformToObservableFSM_TS().printResults();
+	minimise_Dfsm_TS().printResults();
+	minimiseObservableFSM_TS().printResults();
+	minimise_Fsm_TS().printResults();
 
 	// Intersection Test:
-	//intersect_TS().printResults();
+	intersect_TS().printResults();
 
 	// Calculation of Distinguishing Traces Test:
-	//getCharacterisationSet_Dfsm_TS().printResults();
-	//getCharacterisationSet_Fsm_TS().printResults();
-	//calcDistinguishingTrace_PkTables_TS().printResults();
-	//calcDistinguishingTrace_OFSMTables_TS().printResults();
-	//calcStateIdentificationSets_TS().printResults();
-	//calcStateIdentificationSetsFast_TS().printResults();
+	getCharacterisationSet_Dfsm_TS().printResults();
+	getCharacterisationSet_Fsm_TS().printResults();
+	calcDistinguishingTrace_PkTables_TS().printResults();
+	calcDistinguishingTrace_OFSMTables_TS().printResults();
+	calcStateIdentificationSets_TS().printResults();
+	calcStateIdentificationSetsFast_TS().printResults();
 
 	// Complete Test Theories Test:
-	//tMethod_TS().printResults();
+	tMethod_TS().printResults();
 	wMethod_Fsm_TS().printResults();
 	wMethod_Dfsm_TS().printResults();
-	//wMethodOnMinimisedFsm_TS().printResults();
-	//wMethodOnMinimisedDfsm_TS().printResults();
-	//wpMethod_Fsm_TS().printResults();
-	//wpMethod_Dfsm_TS().printResults();
-	//wpMethodOnMinimisedDfsm_TS().printResults();
-	//hsiMethod_Fsm_TS().printResults();
-	//hsiMethod_Dfsm_TS().printResults();
-	//hMethodOnMinimisedDfsm_TS().printResults();
+	wMethodOnMinimisedFsm_TS().printResults();
+	wMethodOnMinimisedDfsm_TS().printResults();
+	wpMethod_Fsm_TS().printResults();
+	wpMethod_Dfsm_TS().printResults();
+	wpMethodOnMinimisedDfsm_TS().printResults();
+	hsiMethod_Fsm_TS().printResults();
+	hsiMethod_Dfsm_TS().printResults();
+	hMethodOnMinimisedDfsm_TS().printResults();
 
 	for (auto &result : results) result.printResults();
 
