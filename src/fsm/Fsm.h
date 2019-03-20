@@ -568,7 +568,7 @@ public:
      * Transform m to a complete Fsm by adding self loops in states for undefined inputs producing some nullouput not contained in the
      * regular output alphabet.
      */
-	std::shared_ptr<Fsm> Fsm::complete(const int nullOutput) const;
+	std::shared_ptr<Fsm> complete(const int nullOutput) const;
 
 
 private:
