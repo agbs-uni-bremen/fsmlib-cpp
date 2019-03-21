@@ -59,6 +59,8 @@ private:
 
     string traceToString(const vector<int>& trace);
 
+    string blockToString(const set<int>& block);
+
 public:
 
     /**

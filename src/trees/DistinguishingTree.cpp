@@ -63,7 +63,7 @@ DistinguishingTree::DistinguishingTree(const std::shared_ptr <Dfsm> &dfsm)
 
             //create the next current Uncertainty from the current node with regard to x
             bool isTerminal = false;
-            LOG("VERBOSE_2") << "compute next unc" << std::endl;
+            LOG("VERBOSE_2") << "compute next unc for input " << x << std::endl;
             computeNextCurrentUncertainty(currentNode->getCurrentUncertainty(),x,nextCurrentUncertainty,isTerminal);
 
             //the input 'x' wasnt valid for the current node, try the next one
@@ -85,6 +85,7 @@ DistinguishingTree::DistinguishingTree(const std::shared_ptr <Dfsm> &dfsm)
                     }
                 }
                 if(alreadyExists) {
+                    LOG("VERBOSE_2") << " next unc " << uncToString(nextCurrentUncertainty) << " already exists" << std::endl;
                     continue;
                 } else {
                     uncIt->second.push_back(&nextCurrentUncertainty);
@@ -124,7 +125,6 @@ void DistinguishingTree::computeNextCurrentUncertainty(const multiset<set<int>> 
     for(auto& block:currentUncertainty) {
         //Partition the block of target states after reading x respecting the produced output
         unordered_map< int, shared_ptr<set<int>> > blockPartition;
-        LOG("VERBOSE_2") << "starting new block" << std::endl;
         for(int id:block) {
             auto producedOutputs = vector<int>();
             /**
@@ -133,7 +133,6 @@ void DistinguishingTree::computeNextCurrentUncertainty(const multiset<set<int>> 
              **/
             auto targetStates = idToFsmNode[id]->after(x,producedOutputs);
             int output = producedOutputs.front();
-            LOG("VERBOSE_2") << id << " going to " << targetStates.front()->getId() << " with output " << output  << std::endl;
             auto bit = blockPartition.find(output);
             if(bit == blockPartition.end()) {
                 auto partition = make_shared<set<int>>();
@@ -143,6 +142,7 @@ void DistinguishingTree::computeNextCurrentUncertainty(const multiset<set<int>> 
                 auto it = bit->second->insert(targetStates.front()->getId());
                 //the targetstate already exists inside that partition, which means that 'x' is not valid for 'currentUncertainty'
                 if(!it.second) {
+                    LOG("VERBOSE_2") << "block " << blockToString(block) << " is not valid for " << x << std::endl;
                     isTerminal = false;
                     return;
                 }
@@ -189,6 +189,17 @@ string DistinguishingTree::traceToString(const vector<int> &trace) {
         serialized += to_string(io) + ".";
 
     }
+
+    return serialized;
+}
+
+string DistinguishingTree::blockToString(const set<int> &block) {
+    string serialized="(";
+    for(auto id:block) {
+        serialized += to_string(id) + ",";
+    }
+    serialized += ")";
+
     return serialized;
 }
 

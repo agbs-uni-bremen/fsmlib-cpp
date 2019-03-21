@@ -1824,7 +1824,6 @@ shared_ptr<Dfsm> Dfsm::createMutant(const std::string & fsmName,
         if ( newOutValOk ) {
 
             auto newLbl = make_shared<FsmLabel>(tr->getLabel()->getInput(),
-
                                                 newOutVal,
                                                 presentationLayer);
 
