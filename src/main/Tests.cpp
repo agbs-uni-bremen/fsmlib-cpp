@@ -2171,9 +2171,6 @@ int getMaxOutput(const Fsm & m, const vector<shared_ptr<const Fsm>>& mutants) {
 		if (maxOutput < mut->getMaxOutput()) {
 			maxOutput = mut->getMaxOutput();
 		} 
-		else {
-			maxOutput;
-		}
 	}
 	return maxOutput;
 }
