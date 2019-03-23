@@ -1323,6 +1323,9 @@ bool isPrefixOfElement(const vector<int> &trc, const std::shared_ptr<const Tree>
 	Returns true iff wi is a State Identification Set for qi in m with Characterisation Set w.
 */
 bool isStateIdentificationSet(const Fsm &m, const shared_ptr<FsmNode> qi, const std::shared_ptr<Tree> wi, const std::shared_ptr<Tree> w) {
+	cout << "M: " << m << endl;
+	cout << "wi: " << wi->getIOLists() << endl;
+	cout << "w: " << w->getIOLists() << endl;
 	if (*wi->getIOLists().getIOLists() == *w->getIOLists().getIOLists()) return true;
 	for (auto trc : *wi->getIOLists().getIOLists()) {
 		if (not isPrefixOfElement(trc, w)) return false;
