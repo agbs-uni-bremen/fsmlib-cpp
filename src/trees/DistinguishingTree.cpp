@@ -50,11 +50,11 @@ DistinguishingTree::DistinguishingTree(const std::shared_ptr <Dfsm> &dfsm)
 
     //Algorithm to create the distinguishing tree and derive a distinguishing sequence for the dfsm
     while(!workingList.empty()) {
-        LOG("VERBOSE_2") << " Next One please! " << std::endl;
+        //LOG("VERBOSE_2") << " Next One please! " << std::endl;
         auto currentNode = workingList.front();
         workingList.pop();
-        LOG("VERBOSE_2") << uncToString(currentNode->getCurrentUncertainty()) << std::endl;
-        LOG("VERBOSE_2") << traceToString(currentNode->getInputTrace()) << std::endl;
+        //LOG("VERBOSE_2") << uncToString(currentNode->getCurrentUncertainty()) << std::endl;
+        //LOG("VERBOSE_2") << traceToString(currentNode->getInputTrace()) << std::endl;
 
 
         for(int x=0; x<=dfsm->getMaxInput(); ++x) {
@@ -62,12 +62,13 @@ DistinguishingTree::DistinguishingTree(const std::shared_ptr <Dfsm> &dfsm)
             auto &nextCurrentUncertainty = newNode->getCurrentUncertainty();
 
             //create the next current Uncertainty from the current node with regard to x
+            bool isValid = false;
             bool isTerminal = false;
-            LOG("VERBOSE_2") << "compute next unc for input " << x << std::endl;
-            computeNextCurrentUncertainty(currentNode->getCurrentUncertainty(),x,nextCurrentUncertainty,isTerminal);
+            //LOG("VERBOSE_2") << "compute next unc for input " << x << std::endl;
+            computeNextCurrentUncertainty(currentNode->getCurrentUncertainty(),x,nextCurrentUncertainty,isValid,isTerminal);
 
             //the input 'x' wasnt valid for the current node, try the next one
-            if(nextCurrentUncertainty.empty()) {
+            if(!isValid) {
                 continue;
             }
 
@@ -85,7 +86,7 @@ DistinguishingTree::DistinguishingTree(const std::shared_ptr <Dfsm> &dfsm)
                     }
                 }
                 if(alreadyExists) {
-                    LOG("VERBOSE_2") << " next unc " << uncToString(nextCurrentUncertainty) << " already exists" << std::endl;
+                   // LOG("VERBOSE_2") << " next unc " << uncToString(nextCurrentUncertainty) << " already exists" << std::endl;
                     continue;
                 } else {
                     uncIt->second.push_back(&nextCurrentUncertainty);
@@ -116,10 +117,12 @@ DistinguishingTree::DistinguishingTree(const std::shared_ptr <Dfsm> &dfsm)
 }
 
 void DistinguishingTree::computeNextCurrentUncertainty(const multiset<set<int>> &currentUncertainty, int x,
-                                                       multiset<set<int>> &nextCurrentUncertainty, bool& isTerminal) {
+                                                       multiset<set<int>> &nextCurrentUncertainty, bool& isValid,
+                                                       bool& isTerminal) {
     //clear the 'nextCurrentUncertainty' for good measure. Might be unnecessary since it is always empty in the context the function is used.
     nextCurrentUncertainty.clear();
 
+    isValid = true;
     isTerminal = true;
 
     for(auto& block:currentUncertainty) {
@@ -142,7 +145,9 @@ void DistinguishingTree::computeNextCurrentUncertainty(const multiset<set<int>> 
                 auto it = bit->second->insert(targetStates.front()->getId());
                 //the targetstate already exists inside that partition, which means that 'x' is not valid for 'currentUncertainty'
                 if(!it.second) {
-                    LOG("VERBOSE_2") << "block " << blockToString(block) << " is not valid for " << x << std::endl;
+                    //LOG("VERBOSE_2") << "block " << blockToString(block) << " is not valid for " << x << std::endl;
+                    //LOG("VERBOSE_2") << "nextunc is " << uncToString(nextCurrentUncertainty) << std::endl;
+                    isValid = false;
                     isTerminal = false;
                     return;
                 }

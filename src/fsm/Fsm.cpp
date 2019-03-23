@@ -2853,10 +2853,14 @@ bool Fsm::distinguishesAllStates(std::vector<std::shared_ptr<FsmNode>>& nodesA,
             {
                 return false;
             }
+            //LOG("DEBUG") << "distinguish nodes " << nodeA->getId() << " and " << nodeB->getId() << std::endl;
             if (!distinguishes(nodeA, nodeB, testCase))
             {
+                //LOG("DEBUG") << "NOT DISTINGUISHED" << std::endl;
+
                 return false;
             }
+            //LOG("DEBUG") << "nodes " << nodeA->getId() << " and " << nodeB->getId() << " are succfuly dist." << std::endl;
         }
     }
     return true;
@@ -2977,7 +2981,37 @@ bool Fsm::distinguishes(std::shared_ptr<FsmNode> nodeA, std::shared_ptr<FsmNode>
     vector<shared_ptr<OutputTrace>> nodeBOutputs;
     nodeB->getPossibleOutputs(testCase,nodeBOutputs);
 
-    return nodeAOutputs != nodeBOutputs;
+    if(nodeAOutputs.size() != nodeBOutputs.size()) {
+        return true;
+    }
+
+    bool hasSameOutput = false;
+    for(auto& outputA:nodeAOutputs) {
+        hasSameOutput = false;
+        for(auto& outputB:nodeBOutputs) {
+            if(*outputA == *outputB) {
+                hasSameOutput = true;
+                break;
+            }
+        }
+        if(!hasSameOutput) {
+            return true;
+        }
+    }
+    for(auto& outputB:nodeBOutputs) {
+        hasSameOutput = false;
+        for(auto& outputA:nodeAOutputs) {
+            if(*outputA == *outputB) {
+                hasSameOutput = true;
+                break;
+            }
+        }
+        if(!hasSameOutput) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 

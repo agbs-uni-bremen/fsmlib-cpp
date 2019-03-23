@@ -47,13 +47,13 @@ private:
 
     /**
     * Create the next current uncertainty based on the given current uncertainty and input.
-    * If the input is not valid for 'currentUncertainty' , 'nextCurrentUncertainty' is empty afterwards.
     * @param currentUncertainty the 'current' current uncertainty
     * @param x the next input symbol to apply
     * @param nextCurrentUncertainty reference to the next current uncertainty to be updated
+    * @param isValid flag that is set to true, if the next input symbol is valid for 'currentUncertainty'
     * @param isTerminal flag that is set to true, if the next input symbol is valid for 'currentUncertainty' and 'nextCurrentUncertainty' consists of singletons only
     */
-    void computeNextCurrentUncertainty(const multiset<set<int>>& currentUncertainty,int x,multiset<set<int>>& nextCurrentUncertainty, bool& isTerminal);
+    void computeNextCurrentUncertainty(const multiset<set<int>>& currentUncertainty,int x,multiset<set<int>>& nextCurrentUncertainty, bool& isValid, bool& isTerminal);
 
     string uncToString(const multiset<set<int>>& currentUncertainty);
 

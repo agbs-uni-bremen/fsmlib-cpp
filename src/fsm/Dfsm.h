@@ -260,6 +260,40 @@ public:
 	*/
 	bool pass(const IOTrace & io);
 
+	/**
+	* Perform test generation by means of the D-Method.
+    * The DFSM this method is applied to is regarded as the reference
+    * model. If an implementation DFSM passes this test suite, this proves
+    * language equivalence (I/O-equivalence) between reference DFSM and
+    * implementation DFSM, provided that the implementation DFSM in minimised
+    * form does not have more than numAddStates additional states, when compared
+    * to the minimised reference DFSM. If this assumption does not hold,
+    * the test suite may not uncover certain errors in the implementation DFSM.
+    * Furthermore, there must exist a distinguishing sequence for the reference model,
+    * otherwise the D-Method cannot be applied and the returned test suite is empty.
+    *
+    * The reference DFSM will first be minimised, and then the
+    * proper D-Method is applied to the minimised DFSM.
+	* @param numAddStates The maximal number of additional states,
+    *                     which the implementation DFSM in minimised
+    *                     for may have, when compared to the reference
+    *                     model in minimised form.
+	* @return A test suite
+    *
+    * @note The size of the test suite to be produced grows exponentially
+    *        with numAddStates
+    *
+    * @note If it is already known that the reference DFSM is minimal,
+    *       then method dMethodOnMinimisedDfsm() should rather be used,
+    *       since it avoids unnecessary minisation steps.
+	*/
+	IOListContainer dMethod(const unsigned int numAddStates);
+
+	/**
+     *  Apply the D-Method on a DFSM that is already minimised
+     */
+	IOListContainer dMethodOnMinimisedDfsm(const unsigned int numAddStates);
+
    /**
 	* Perform test generation by means of the W-Method.
     * The DFSM this method is applied to is regarded as the reference
@@ -444,7 +478,7 @@ public:
      * that can distinguish every state from every other state.
      * A required condition for the existence of a distinguishing sequencce is, that the DFSM is minimal.
      */
-     std::vector<int> createDistinguishingSequence();
+    std::vector<int> createDistinguishingSequence();
 
 	 /**
      *  Create a mutant of the FSM, producing output faults

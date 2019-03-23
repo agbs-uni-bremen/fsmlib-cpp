@@ -1195,6 +1195,39 @@ bool Dfsm::pass(const IOTrace & io)
     return myIO.getOutputTrace() == io.getOutputTrace();
 }
 
+IOListContainer Dfsm::dMethod(const unsigned int numAddStates) {
+
+    Dfsm dfsmMin = minimise();
+    return dfsmMin.dMethodOnMinimisedDfsm(numAddStates);
+
+}
+
+IOListContainer Dfsm::dMethodOnMinimisedDfsm(const unsigned int numAddStates)
+{
+    shared_ptr<Tree> iTree = getTransitionCover();
+
+    if (numAddStates > 0)
+    {
+        IOListContainer inputEnum = IOListContainer(maxInput,
+                                                    1,
+                                                    (int)numAddStates,
+                                                    presentationLayer);
+        iTree->add(inputEnum);
+    }
+
+    vector<int> distinguishingSequence = createDistinguishingSequence();
+    if(distinguishingSequence.size() == 0) {
+        return IOListContainer(presentationLayer);
+    }
+
+    auto iolst = make_shared<vector<vector<int>>>();
+    iolst->push_back(distinguishingSequence);
+    IOListContainer w(iolst,presentationLayer);
+    //IOListContainer w = getCharacterisationSet();
+
+    iTree->add(w);
+    return iTree->getIOLists();
+}
 
 
 IOListContainer Dfsm::wMethod(const unsigned int numAddStates) {
@@ -1795,7 +1828,6 @@ shared_ptr<Dfsm> Dfsm::createMutant(const std::string & fsmName,
         auto tr = lst[srcNodeId]->getTransitions()[trNo];
         int theInput = tr->getLabel()->getInput();
         int newOutVal = rand() % (maxOutput+1);
-        int originalNewOutVal = rand() % (maxOutput+1);
         bool newOutValOk;
 
         // We don't want to modify this transition in such a way
@@ -1819,7 +1851,7 @@ shared_ptr<Dfsm> Dfsm::createMutant(const std::string & fsmName,
                 newOutVal = (newOutVal+1) % (maxOutput+1);
             }
 
-        } while ( (not newOutValOk) and (originalNewOutVal != newOutVal) );
+        } while (not newOutValOk);
 
         if ( newOutValOk ) {
 
