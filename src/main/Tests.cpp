@@ -1301,17 +1301,41 @@ bool isCharaterisationSet(const Fsm &m, const IOListContainer w) {
 /*
 	Checks if trc is a non empty prefix of some element contained in w.
 */
-bool isPrefixOfElement(const vector<int> &trc, const std::shared_ptr<const Tree> w) {
-	//w->addToRoot() may be faster
-	if (trc.size() == 0) return false;
+//bool isPrefixOfElement(const vector<int> &trc, const std::shared_ptr<const Tree> w) {
+//	if (trc.size() == 0) return false;
+//
+//	vector<vector<int>> trcsOfW = *w->getIOLists().getIOLists();
+//	for (auto elem : trcsOfW) {
+//		if (elem.size() < trc.size()) continue;
+//
+//		for (size_t i = 0; i < trc.size(); ++i) {
+//			if (trc.at(i) != elem.at(i)) continue;
+//		}
+//		return true;
+//	}
+//	return false;
+//}
 
-	for (auto elem : *w->getIOLists().getIOLists()) {
+/*
+	Checks if trc is a non empty prefix of some element contained in w.
+*/
+bool isPrefixOfElement(const vector<int> &trc, const std::shared_ptr<const Tree> w) {
+//	if (trc.size() == 0) return false;
+
+	vector<vector<int>> trcsOfW = *w->getIOLists().getIOLists();
+	for (auto elem : trcsOfW) {
 		if (elem.size() < trc.size()) continue;
 
+		bool isPrefix = true;
 		for (size_t i = 0; i < trc.size(); ++i) {
-			if (trc.at(i) != elem.at(i)) continue;
+			if (trc.at(i) != elem.at(i)) {
+				isPrefix = false;
+				break;
+			}
 		}
-		return true;
+		if (isPrefix) {
+			return true;
+		}
 	}
 	return false;
 }
@@ -1322,18 +1346,14 @@ bool isPrefixOfElement(const vector<int> &trc, const std::shared_ptr<const Tree>
 
 	Returns true iff wi is a State Identification Set for qi in m with Characterisation Set w.
 */
-bool isStateIdentificationSet(const Fsm &m, const shared_ptr<FsmNode> qi, const std::shared_ptr<Tree> wi, const std::shared_ptr<Tree> w) {
-	cout << "M: " << m << endl;
-	cout << "wi: " << wi->getIOLists() << endl;
-	cout << "w: " << w->getIOLists() << endl;
-	if (*wi->getIOLists().getIOLists() == *w->getIOLists().getIOLists()) return true;
-	for (auto trc : *wi->getIOLists().getIOLists()) {
+bool isStateIdentificationSet(const Fsm &m, const shared_ptr<FsmNode> qi, const std::shared_ptr<Tree> wi, const std::shared_ptr<Tree> w) {	
+	vector<vector<int>> trcsOfWi = *wi->getIOLists().getIOLists();
+	for (auto trc : trcsOfWi) {
 		if (not isPrefixOfElement(trc, w)) return false;
 	}
 
 	for (auto q : m.getNodes()) {
 		if (q == qi) continue;
-
 		if (not containsDistTrcForPair(q, qi, wi->getIOLists())) return false;
 	}
 

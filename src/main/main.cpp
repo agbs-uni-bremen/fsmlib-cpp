@@ -5001,7 +5001,7 @@ int main(int argc, char** argv)
 	//calcDistinguishingTrace_PkTables_TS().printResults();
 	//calcDistinguishingTrace_OFSMTables_TS().printResults();
 	calcStateIdentificationSets_TS().printResults();
-	//calcStateIdentificationSetsFast_TS().printResults();
+	calcStateIdentificationSetsFast_TS().printResults();
 
 	// Complete Test Theories Test:
 	//tMethod_TS().printResults();
