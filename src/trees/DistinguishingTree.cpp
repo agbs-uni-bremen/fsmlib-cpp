@@ -16,9 +16,6 @@ using namespace std;
 DistinguishingTree::DistinguishingTree(const std::shared_ptr <Dfsm> &dfsm)
         : distinguishingSequence(vector<int>())
 {
-    //Logging
-    LogCoordinator& logger = LogCoordinator::getStandardLogger();
-    logger.setDefaultStream(cout);
 
     root = make_shared<DistinguishingTreeNode>();
 

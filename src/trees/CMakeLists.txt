@@ -23,7 +23,12 @@ set (FSM_TREES_SOURCES
 		DistinguishingTreeEdge.h
 		DistinguishingTreeNode.cpp
 		DistinguishingTreeNode.h
-)
+        SplittingTree.cpp
+		SplittingTree.h
+		SplittingTreeNode.cpp
+		SplittingTreeNode.h
+		SplittingTreeEdge.cpp
+		SplittingTreeEdge.h)
 
 add_library (fsm-trees OBJECT ${FSM_TREES_SOURCES})
 

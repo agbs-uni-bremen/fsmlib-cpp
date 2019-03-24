@@ -86,6 +86,10 @@ void checkDsLength()
 int main(int argc, char* argv[])
 {
 
+    //Logging
+    //LogCoordinator& logger = LogCoordinator::getStandardLogger();
+    //logger.setDefaultStream(cout);
+
     srand(getRandomSeed());
 
     shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(6,30,6);

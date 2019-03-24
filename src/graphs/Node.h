@@ -7,4 +7,16 @@
 #ifndef FSM_GRAPHS_NODE_H_
 #define FSM_GRAPHS_NODE_H_
 
+#include <vector>
+#include <utility>
+#include "graphs/Edge.h"
+
+using namespace std;
+
+class Node {
+protected:
+
+public:
+
+};
 #endif //FSM_GRAPHS_NODE_H_

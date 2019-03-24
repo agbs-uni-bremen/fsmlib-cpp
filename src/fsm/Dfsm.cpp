@@ -12,6 +12,8 @@
 #include "fsm/IOTrace.h"
 #include "trees/Tree.h"
 #include "trees/DistinguishingTree.h"
+#include "Dfsm.h"
+
 
 using namespace std;
 
@@ -1223,7 +1225,6 @@ IOListContainer Dfsm::dMethodOnMinimisedDfsm(const unsigned int numAddStates)
     auto iolst = make_shared<vector<vector<int>>>();
     iolst->push_back(distinguishingSequence);
     IOListContainer w(iolst,presentationLayer);
-    //IOListContainer w = getCharacterisationSet();
 
     iTree->add(w);
     return iTree->getIOLists();
@@ -1782,6 +1783,12 @@ vector<int> Dfsm::createDistinguishingSequence() {
     auto distinguishingTree = make_shared<DistinguishingTree>(shared_from_this());
     return distinguishingTree->getDistinguishingSequence();
 }
+
+
+std::shared_ptr<InputOutputTree> Dfsm::createAdaptiveDistinguishingSequence() {
+    return shared_ptr<InputOutputTree>();
+}
+
 
 shared_ptr<Dfsm> Dfsm::createMutant(const std::string & fsmName,
                                   const size_t numOutputFaults,

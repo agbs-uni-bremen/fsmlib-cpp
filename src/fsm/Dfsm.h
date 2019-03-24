@@ -480,6 +480,13 @@ public:
      */
     std::vector<int> createDistinguishingSequence();
 
+	/**
+    * Creates an adaptive distinguishing sequencce for this DFSM (if it exists, otherwise the result is an empty tree),
+    * that can distinguish every state from every other state.
+    * A required condition for the existence of a adaptive distinguishing sequencce is, that the DFSM is minimal.
+    */
+	std::shared_ptr<InputOutputTree> createAdaptiveDistinguishingSequence();
+
 	 /**
      *  Create a mutant of the FSM, producing output faults
      *  and/or transition faults only.

@@ -31,7 +31,8 @@ protected:
 public:
     /**
     * Create a new distinguishing tree edge
-    * @param input the
+    * @param input the associated input
+    * @param target the target node of this edge
     */
     DistinguishingTreeEdge(const int input,const shared_ptr<DistinguishingTreeNode>& target);
 
