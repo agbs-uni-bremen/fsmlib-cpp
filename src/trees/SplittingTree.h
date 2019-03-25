@@ -33,6 +33,19 @@ private:
     */
     shared_ptr<InputOutputTree> adaptiveDistinguishingSequence;
 
+    /**
+    * A mapping of the FsmNode ids to the actual FsmNode object. It is used to help speed up the access
+    */
+    vector<shared_ptr<FsmNode>> idToFsmNode;
+
+    /**
+    * checks if an input is a-valid for the underlying block of the node
+    * @param blockNode the node, whose underlying block is to checked against x for a-validity
+    * @param x the input that is checked for a-validity against `blockNode`
+    * @param newPartitions it is the partition of the block induced by the outputs of `x`, while reading `x` in the states of `blockNode`, if `x` is a-valid for `blockNode`
+    * @return true, if `x` is a-valid, otherwise false
+    */
+    bool isAValid(shared_ptr<SplittingTreeNode> blockNode,const int x,vector<set<int>>& partitionedBlock);
 
 public:
 

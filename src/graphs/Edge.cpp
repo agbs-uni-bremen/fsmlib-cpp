@@ -6,3 +6,8 @@
 
 #include "graphs/Edge.h"
 
+Edge::Edge(const vector<int> &trace, const shared_ptr<Node> &target)
+    : trace(trace),target(target)
+{
+    target->addInEdge(shared_from_this());
+}

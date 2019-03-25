@@ -15,7 +15,7 @@
 using namespace std;
 
 
-class Edge {
+class Edge: public enable_shared_from_this<Edge> {
 protected:
 
     /**
