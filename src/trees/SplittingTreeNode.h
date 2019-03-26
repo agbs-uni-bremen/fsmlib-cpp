@@ -10,6 +10,7 @@
 #include <memory>
 #include <vector>
 #include <set>
+#include <unordered_map>
 
 #include "trees/SplittingTreeEdge.h"
 
@@ -33,7 +34,7 @@ protected:
     /**
     * An auxilliary mapping of the states in 'block' to the target states, that are reached after reading 'trace'
     */
-    vector<int> blockToTarget;
+    shared_ptr<unordered_map< int, int>> blockToTarget;
 
     /**
     * The parent of this node. It is nullptr if this is a root node.
@@ -53,6 +54,12 @@ public:
     SplittingTreeNode();
 
     /**
+    * Create a new distinguishing tree node
+    * @param block the block of a partition, that is associated with this subtree
+    */
+    SplittingTreeNode(const set<int>& block);
+
+    /**
     * Add an edge to this nodes children
     * @param edge The edge to be added
     */
@@ -68,6 +75,16 @@ public:
     * Returns the associated block of this node.
     */
     set<int>& getBlock();
+
+    /**
+    * Sets the input trace associated with this node
+    */
+    void setTrace(const vector<int>& trace);
+
+    /**
+    * Sets the auxilliary mapping of states of `block`
+    */
+    void setBlockToTarget(const shared_ptr<unordered_map<int,int>>& blockToTarget);
 
 
 };

@@ -135,9 +135,9 @@ void DistinguishingTree::computeNextCurrentUncertainty(const multiset<set<int>> 
             int output = producedOutputs.front();
             auto bit = blockPartition.find(output);
             if(bit == blockPartition.end()) {
-                auto partition = make_shared<set<int>>();
-                blockPartition.insert({output,partition});
-                partition->insert(targetStates.front()->getId());
+                auto partitionBlock = make_shared<set<int>>();
+                blockPartition.insert({output,partitionBlock});
+                partitionBlock->insert(targetStates.front()->getId());
             } else {
                 auto it = bit->second->insert(targetStates.front()->getId());
                 //the targetstate already exists inside that partition, which means that 'x' is not valid for 'currentUncertainty'

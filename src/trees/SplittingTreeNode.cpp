@@ -11,6 +11,12 @@ SplittingTreeNode::SplittingTreeNode()
 {
 
 }
+
+SplittingTreeNode::SplittingTreeNode(const set<int>& block)
+    : block(block)
+{
+
+}
 void SplittingTreeNode::setParent(const weak_ptr<SplittingTreeNode>& parent) {
     this->parent = parent;
 }
@@ -22,4 +28,8 @@ void SplittingTreeNode::add(const shared_ptr<SplittingTreeEdge> &edge) {
 
 set<int> &SplittingTreeNode::getBlock() {
     return block;
+}
+
+void SplittingTreeNode::setTrace(const vector<int> &trace) {
+    this->trace = trace;
 }
