@@ -12,6 +12,8 @@
 
 using namespace std;
 
+class Edge;
+
 class Node {
 protected:
 

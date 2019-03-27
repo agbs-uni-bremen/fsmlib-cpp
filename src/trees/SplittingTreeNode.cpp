@@ -7,13 +7,13 @@
 #include "SplittingTreeNode.h"
 
 SplittingTreeNode::SplittingTreeNode()
-    :parent(weak_ptr<SplittingTreeNode>())
+    :parent(weak_ptr<SplittingTreeNode>()),isAValid(false),isBValid(false)
 {
 
 }
 
 SplittingTreeNode::SplittingTreeNode(const set<int>& block)
-    : block(block)
+    : block(block),parent(weak_ptr<SplittingTreeNode>()),isAValid(false),isBValid(false)
 {
 
 }
@@ -33,3 +33,28 @@ set<int> &SplittingTreeNode::getBlock() {
 void SplittingTreeNode::setTrace(const vector<int> &trace) {
     this->trace = trace;
 }
+
+vector<int> &SplittingTreeNode::getTrace() {
+    return trace;
+}
+
+bool &SplittingTreeNode::getIsAValid() {
+    return isAValid;
+}
+
+bool &SplittingTreeNode::getIsBValid() {
+    return isBValid;
+}
+
+void SplittingTreeNode::setBlockToTarget(const shared_ptr<unordered_map<int, int>> &blockToTarget) {
+    this->blockToTarget = blockToTarget;
+}
+
+weak_ptr<SplittingTreeNode> &SplittingTreeNode::getParent() {
+    return parent;
+}
+
+vector<shared_ptr<SplittingTreeEdge>> &SplittingTreeNode::getChildren() {
+    return children;
+}
+

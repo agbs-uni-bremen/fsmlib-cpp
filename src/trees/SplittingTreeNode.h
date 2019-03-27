@@ -46,6 +46,16 @@ protected:
 	*/
     vector<shared_ptr<SplittingTreeEdge>> children;
 
+    /**
+    * Auxilliary flag that is set if the node is marked a-valid
+    */
+    bool isAValid;
+
+    /**
+    * Auxilliary flag that is set if the node is marked b-valid
+    */
+    bool isBValid;
+
 public:
 
     /**
@@ -66,6 +76,11 @@ public:
     void add(const shared_ptr<SplittingTreeEdge>& edge);
 
     /**
+    * gets the parent of this node
+    */
+    weak_ptr<SplittingTreeNode>& getParent();
+
+    /**
     * Set the parent of this node
     * @param parent the new parent of this node
     */
@@ -73,8 +88,14 @@ public:
 
     /**
     * Returns the associated block of this node.
+    * @return the block associated with this node
     */
     set<int>& getBlock();
+
+    /**
+    * Gets the input Trace associated with this node
+    */
+    vector<int>& getTrace();
 
     /**
     * Sets the input trace associated with this node
@@ -86,6 +107,23 @@ public:
     */
     void setBlockToTarget(const shared_ptr<unordered_map<int,int>>& blockToTarget);
 
+    /**
+    * Gets the isAValid flag
+    * @return the isAValid flag
+    */
+    bool& getIsAValid();
+
+    /**
+    * Gets the isBValid flag
+    * @return the isBValid flag
+    */
+    bool& getIsBValid();
+
+    /**
+    * Gets the children of this node
+    * @return the outgoing edges of this node
+    */
+    vector<shared_ptr<SplittingTreeEdge>>& getChildren();
 
 };
 

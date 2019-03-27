@@ -16,3 +16,7 @@ SplittingTreeEdge::SplittingTreeEdge(const int output, const shared_ptr<Splittin
 shared_ptr<SplittingTreeNode> SplittingTreeEdge::getTarget() {
     return target;
 }
+
+int SplittingTreeEdge::getOutput() {
+    return output;
+}

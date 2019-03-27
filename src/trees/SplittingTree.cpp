@@ -5,8 +5,10 @@
  */
 
 #include "trees/SplittingTree.h"
+#include "graphs/PartitionGraph.h"
 #include <queue>
-#include <pair>
+#include <cassert>
+#include <utility>
 
 SplittingTree::SplittingTree(const shared_ptr<Dfsm> &dfsm)
     :adaptiveDistinguishingSequence(shared_ptr<InputOutputTree>())
@@ -41,11 +43,12 @@ SplittingTree::SplittingTree(const shared_ptr<Dfsm> &dfsm)
         vector<shared_ptr<SplittingTreeNode>> newLeaves;
         vector<shared_ptr<SplittingTreeNode>> newIncompleteLeaves;
         vector<shared_ptr<SplittingTreeNode>> cValidNodes;
+        auto implicationGraph = make_shared<PartitionGraph>();
 
         for(auto& currentLeaf:incompleteLeaves) {
             unordered_map< int, shared_ptr<unordered_map< int, int>> > validInputs;
-            bool isAValid = false;
-            bool isBValid = false;
+            bool& isAValid = currentLeaf->getIsAValid();
+            bool& isBValid = currentLeaf->getIsBValid();
             //check if there is an a-valid input for currentLeaf
             for(int x=0; x<=dfsm->getMaxInput(); ++x) {
                 unordered_map< int, shared_ptr<set<int>> > blockPartition;
@@ -76,6 +79,7 @@ SplittingTree::SplittingTree(const shared_ptr<Dfsm> &dfsm)
 
             //check if there is a b-valid input for currentLeaf with respect to the partition represented by `leaves`
             pair<int, shared_ptr<unordered_map<int,int>>> bValidInput;
+            shared_ptr<SplittingTreeNode> bValidTargetNode;
             for(auto& validInput:validInputs) {
                 for(auto& leaf:leaves) {
                     auto block = leaf->getBlock();
@@ -88,14 +92,62 @@ SplittingTree::SplittingTree(const shared_ptr<Dfsm> &dfsm)
                         if(containsTarget && missedOneTarget) {
                             isBValid = true;
                             bValidInput = validInput;
+                            bValidTargetNode = leaf;
                             break;
                         }
                     }
-                    if(isBValid) break;
-
+                    if(isBValid || containsTarget) break;
                 }
                 if(isBValid) break;
             }
+            if(isBValid) {
+                //Traverse up the tree until u get a node, that includes all target states of `bValidInput`
+                do {
+                    assert(!bValidTargetNode->getParent().expired());
+                    bValidTargetNode = bValidTargetNode->getParent().lock();
+
+                    bool missedOne = false;
+                    auto block = bValidTargetNode->getBlock();
+                    for(auto& idToTarget:*bValidInput.second) {
+                        auto it = block.find(idToTarget.second);
+                        missedOne |= it == block.end();
+                        if(missedOne) break;
+                    }
+                    if(missedOne) continue;
+                    break;
+                } while(true);
+
+                //Set the trace of the current leaf to x.(bValidTargetNode->trace)
+                auto inputTrace = currentLeaf->getTrace();
+                inputTrace.push_back(bValidInput.first);
+                for(int input:bValidTargetNode->getTrace()) {
+                    inputTrace.push_back(input);
+                }
+                currentLeaf->setBlockToTarget(bValidInput.second);
+
+                for(auto& child:bValidTargetNode->getChildren()) {
+                    auto newNode = make_shared<SplittingTreeNode>();
+                    auto newBlock = newNode->getBlock();
+                    auto childBlock = child->getTarget()->getBlock();
+                    for(auto& idToTarget:*bValidInput.second) {
+                        auto it = childBlock.find(idToTarget.second);
+                        if(it != childBlock.end())
+                            newBlock.insert(idToTarget.first);
+                    }
+                    auto newEdge = make_shared<SplittingTreeEdge>(child->getOutput(),newNode);
+                    currentLeaf->add(newEdge);
+
+                    newLeaves.push_back(newNode);
+                    if(newBlock.size() > 1){
+                        newIncompleteLeaves.push_back(newNode);
+                    }
+                }
+
+            } else {
+                cValidNodes.push_back(currentLeaf);
+            }
+        }
+        for(auto& currentLeaf:cValidNodes) {
 
         }
 

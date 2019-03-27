@@ -41,6 +41,12 @@ public:
     */
     shared_ptr<SplittingTreeNode> getTarget();
 
+    /**
+    * Gets the output of this edge
+    * @return the output of this edge
+    */
+    int getOutput();
+
 };
 
 
