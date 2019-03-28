@@ -4,11 +4,13 @@
  * Licensed under the EUPL V.1.1
  */
 #include "graphs/Node.h"
+#include "Node.h"
+
 
 using namespace std;
 
 Node::Node(const int id)
-    : id(id)
+    : id(id),visited(false)
 {
 
 }
@@ -23,4 +25,16 @@ void Node::addEdge(const shared_ptr<Edge> &edge) {
 
 int Node::getId() {
     return id;
+}
+
+void Node::setVisited(bool visited) {
+    this->visited = visited;
+}
+
+bool Node::isVisited() {
+    return visited;
+}
+
+vector<shared_ptr<Edge>> &Node::getEdges() {
+    return edges;
 }

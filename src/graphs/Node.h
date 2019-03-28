@@ -33,6 +33,11 @@ protected:
     */
     vector<shared_ptr<Edge>> edges;
 
+    /**
+    * visited flag for breadth-first search
+    */
+    bool visited = false;
+
 public:
 
     /**
@@ -58,6 +63,24 @@ public:
     * @return the id of this node
     */
     int getId();
+
+    /**
+    * Sets the visited flag
+    * @param visited new visited flag value
+    */
+    void setVisited(bool visited);
+
+    /**
+    * Checks if this node has been visited
+    * @return true if this node has been visited, else false
+    */
+    bool isVisited();
+
+    /**
+    * gets the outgoing edges of this node.
+    * @return the outgoing edges of this node
+    */
+    vector<shared_ptr<Edge>>& getEdges();
 
 };
 #endif //FSM_GRAPHS_NODE_H_

@@ -15,3 +15,4 @@ PartitionGraphNode::PartitionGraphNode(const int id, const shared_ptr<SplittingT
 shared_ptr<SplittingTreeNode>& PartitionGraphNode::getBlock(){
     return block;
 }
+

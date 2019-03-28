@@ -33,6 +33,16 @@ public:
     * @param x the label of the new edge
     */
     void addEdge(shared_ptr<SplittingTreeNode>& nodeA, shared_ptr<SplittingTreeNode>& nodeB,int x);
+
+    /**
+    * Check if there is a path of c-valid inputs from `node` to a splitting tree node, that is either marked a-valid or b-valid.
+    * If thats the case, a pointer to the target splitting tree node is returned, otherwise a nullptr.
+    * If there are multiple options for a path, the one, which results into the shortest input trace for `node`, is chosen.
+    * @param node the starting node of the path to search for
+    * @param cTrace the trace of c-valid inputs that labels the path from `node` to the a- or b-valid marked target node
+    */
+    shared_ptr<SplittingTreeNode> findPathToAOrBValidNode(shared_ptr<SplittingTreeNode>& node, vector<int>& cTrace);
+
 };
 
 

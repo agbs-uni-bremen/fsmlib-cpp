@@ -18,6 +18,7 @@ protected:
     * The block of a partition this node represents in form of an underlying splitting tree node, this node manages.
     */
     shared_ptr<SplittingTreeNode> block;
+
 public:
 
     /**
@@ -32,6 +33,7 @@ public:
     * @return the block this node represents
     */
     shared_ptr<SplittingTreeNode>& getBlock();
+
 };
 
 #endif //FSM_GRAPHS_PARTITIONGRAPHNODE_H_

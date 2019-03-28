@@ -38,18 +38,18 @@ DistinguishingTree::DistinguishingTree(const std::shared_ptr <Dfsm> &dfsm)
     initialCurrentUncertainty.insert(initialBlock);
 
     //Working list
-    queue<shared_ptr<DistinguishingTreeNode>> workingList;
-    workingList.push(root);
+    queue<shared_ptr<DistinguishingTreeNode>> workingQueue;
+    workingQueue.push(root);
 
     // The hash table that is used to check if a current uncertainty already exists
     unordered_map< int, vector <multiset<set<int>>*> > uncTable;
     uncTable.insert({createHashForCurrentUncertainty(initialCurrentUncertainty),vector<multiset<set<int>>*> {&initialCurrentUncertainty}});
 
     //Algorithm to create the distinguishing tree and derive a distinguishing sequence for the dfsm
-    while(!workingList.empty()) {
+    while(!workingQueue.empty()) {
         //LOG("VERBOSE_2") << " Next One please! " << std::endl;
-        auto currentNode = workingList.front();
-        workingList.pop();
+        auto currentNode = workingQueue.front();
+        workingQueue.pop();
         //LOG("VERBOSE_2") << uncToString(currentNode->getCurrentUncertainty()) << std::endl;
         //LOG("VERBOSE_2") << traceToString(currentNode->getInputTrace()) << std::endl;
 
@@ -106,7 +106,7 @@ DistinguishingTree::DistinguishingTree(const std::shared_ptr <Dfsm> &dfsm)
             auto newEdge = make_shared<DistinguishingTreeEdge>(x,newNode);
             currentNode->add(newEdge);
 
-            workingList.push(newNode);
+            workingQueue.push(newNode);
 
         }
     }

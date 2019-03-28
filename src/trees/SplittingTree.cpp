@@ -96,14 +96,18 @@ SplittingTree::SplittingTree(const shared_ptr<Dfsm> &dfsm)
                             break;
                         }
                     }
-                    if(isBValid || containsTarget) break;
+                    if(isBValid) break;
+                    if(containsTarget) {
+                        implicationGraph->addEdge(currentLeaf,leaf,validInput.first);
+                        break;
+                    }
                 }
                 if(isBValid) break;
             }
             if(isBValid) {
                 //Traverse up the tree until u get a node, that includes all target states of `bValidInput`
                 do {
-                    assert(!bValidTargetNode->getParent().expired());
+                    assert(bValidTargetNode->getParent().lock());
                     bValidTargetNode = bValidTargetNode->getParent().lock();
 
                     bool missedOne = false;

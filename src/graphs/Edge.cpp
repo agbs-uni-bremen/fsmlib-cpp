@@ -5,13 +5,28 @@
  */
 
 #include "graphs/Edge.h"
+#include "Edge.h"
+
+#include <cassert>
 
 Edge::Edge(const vector<int> &trace, const weak_ptr<Node> &source, const weak_ptr<Node> &target)
     : trace(trace), source(source), target(target)
 {
-    if(!source.expired())
-        source.lock()->addEdge(shared_from_this());
+    assert(source.lock());
+    assert(target.lock());
 
-    if(!target.expired())
-        target.lock()->addInEdge(shared_from_this());
+    source.lock()->addEdge(shared_from_this());
+    target.lock()->addInEdge(shared_from_this());
+}
+
+weak_ptr<Node> Edge::getSource() {
+    return source;
+}
+
+weak_ptr<Node> Edge::getTarget() {
+    return target;
+}
+
+vector<int> &Edge::getTrace() {
+    return trace;
 }
