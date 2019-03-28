@@ -109,7 +109,6 @@ public:
     */
     shared_ptr<unordered_map<int,int>>& getBlockToTarget();
 
-
     /**
     * Sets the auxilliary mapping of states of `block`
     */

@@ -46,6 +46,10 @@ bool &SplittingTreeNode::getIsBValid() {
     return isBValid;
 }
 
+shared_ptr<unordered_map<int, int>> &SplittingTreeNode::getBlockToTarget() {
+    return blockToTarget;
+}
+
 void SplittingTreeNode::setBlockToTarget(const shared_ptr<unordered_map<int, int>> &blockToTarget) {
     this->blockToTarget = blockToTarget;
 }

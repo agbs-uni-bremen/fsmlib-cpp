@@ -12,4 +12,4 @@ set (FSM_GRAPHS_SOURCES
         PartitionGraphEdge.cpp
         PartitionGraphEdge.h)
 
-add_library (fsm-graphs ${FSM_GRAPHS_SOURCES})
+add_library (fsm-graphs OBJECT ${FSM_GRAPHS_SOURCES})
