@@ -7,6 +7,7 @@
 
 #include "graphs/PartitionGraph.h"
 #include "graphs/PartitionGraphNode.h"
+#include "graphs/PartitionGraphEdge.h"
 #include <queue>
 #include <cassert>
 #include <utility>
@@ -17,13 +18,13 @@ PartitionGraph::PartitionGraph()
 
 }
 
-void PartitionGraph::addEdge(shared_ptr<SplittingTreeNode> &nodeA, shared_ptr<SplittingTreeNode> &nodeB, int x) {
+void PartitionGraph::addEdge(shared_ptr<SplittingTreeNode> &nodeA, shared_ptr<SplittingTreeNode> &nodeB, int x,shared_ptr<unordered_map< int, int>>& blockToTarget) {
 
     shared_ptr<PartitionGraphNode> partitionNodeA,
                                 partitionNodeB;
 
     for(auto& node:nodes){
-        auto castedNode = dynamic_pointer_cast<PartitionGraphNode>(node);
+        auto castedNode = static_pointer_cast<PartitionGraphNode>(node);
         if(castedNode->getBlock() == nodeA) {
             partitionNodeA = castedNode;
         } else if(castedNode->getBlock() == nodeB) {
@@ -49,18 +50,18 @@ void PartitionGraph::addEdge(shared_ptr<SplittingTreeNode> &nodeA, shared_ptr<Sp
     }
 
 
-    auto edge = make_shared<Edge>(vector<int>{x},partitionNodeA,partitionNodeB);
+    auto edge = make_shared<PartitionGraphEdge>(vector<int>{x},partitionNodeA,partitionNodeB,blockToTarget);
 
 }
 
-shared_ptr<SplittingTreeNode> PartitionGraph::findPathToAOrBValidNode(shared_ptr<SplittingTreeNode> &node, vector<int>& cTrace) {
+shared_ptr<SplittingTreeNode> PartitionGraph::findPathToAOrBValidNode(shared_ptr<SplittingTreeNode> &sNode, vector<int>& cTrace,shared_ptr<unordered_map< int, int>>& blockToTarget) {
 
     shared_ptr<PartitionGraphNode> partitionNode;
 
-    for(auto& node:nodes) {
-        auto castedNode = dynamic_pointer_cast<PartitionGraphNode>(node);
+    for(auto& n:nodes) {
+        auto castedNode = static_pointer_cast<PartitionGraphNode>(n);
         castedNode->setVisited(false);
-        if(castedNode->getBlock() == node)
+        if(castedNode->getBlock() == sNode)
             partitionNode = castedNode;
     }
     if(!partitionNode)
@@ -70,34 +71,46 @@ shared_ptr<SplittingTreeNode> PartitionGraph::findPathToAOrBValidNode(shared_ptr
     //length of current path P to targetNode, such that |label(P).(targetNode.trace)| is minimal
     int minLength = 0;
 
-    queue< shared_ptr< pair< vector<int>,shared_ptr<PartitionGraphNode> > > > workingQueue;
-    workingQueue.push(make_shared<pair<vector<int>,shared_ptr<PartitionGraphNode>>>(vector<int>(),partitionNode));
+    queue< shared_ptr< tuple< vector<int>,shared_ptr<PartitionGraphNode>,shared_ptr<unordered_map< int, int>> > > > workingQueue;
+    workingQueue.push(make_shared<tuple<vector<int>,shared_ptr<PartitionGraphNode>,shared_ptr<unordered_map< int, int>>>>(vector<int>(),partitionNode, blockToTarget));
     partitionNode->setVisited(true);
 
     while(!workingQueue.empty()) {
         auto currentNode = workingQueue.front();
         workingQueue.pop();
 
-        for(auto& edge:currentNode->second->getEdges()) {
+        for(auto& edge: get<1>(*currentNode)->getEdges()) {
             assert(edge->getTarget().lock());
+            auto castedEdge = static_pointer_cast<PartitionGraphEdge>(edge);
 
-            auto currentTargetNode = dynamic_pointer_cast<PartitionGraphNode>(edge->getTarget().lock());
+            auto currentTargetNode = static_pointer_cast<PartitionGraphNode>(edge->getTarget().lock());
             auto& currentTargetBlock = currentTargetNode->getBlock();
             if(!currentTargetNode->isVisited()) {
-                auto tempTrace = currentNode->first;
-                tempTrace.push_back(edge->getTrace().front());
+                auto currentTrace = get<0>(*currentNode);
+                currentTrace.push_back(edge->getTrace().front());
+
+                auto currentBlockToTarget = get<2>(*currentNode);
+                if(currentBlockToTarget->size() == 0) {
+                    currentBlockToTarget = castedEdge->getBlockToTarget();
+                } else {
+                    for(auto& idToTarget:*currentBlockToTarget) {
+
+                    }
+                }
+
                 if(currentTargetBlock->getIsAValid() || currentTargetBlock->getIsBValid()) {
-                    if(!targetNode || (tempTrace.size() + currentTargetBlock->getTrace().size() < minLength)) {
+                    if(!targetNode || (currentTrace.size() + currentTargetBlock->getTrace().size() < minLength)) {
                         targetNode = currentTargetBlock;
-                        cTrace = tempTrace;
+                        cTrace = currentTrace;
                         minLength = cTrace.size() + currentTargetBlock->getTrace().size();
                     }
                 } else {
                     currentTargetNode->setVisited(true);
-                    workingQueue.push(make_shared<pair<vector<int>,shared_ptr<PartitionGraphNode>>>(tempTrace,currentTargetNode));
+                    //workingQueue.push(make_shared<tuple<vector<int>,shared_ptr<PartitionGraphNode>>>(currentTrace,currentTargetNode));
                 }
             }
         }
     }
 
+    return targetNode;
 }

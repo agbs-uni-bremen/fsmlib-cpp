@@ -94,6 +94,7 @@ public:
 
     /**
     * Gets the input Trace associated with this node
+    * @return the input trace associated with this node
     */
     vector<int>& getTrace();
 
@@ -101,6 +102,13 @@ public:
     * Sets the input trace associated with this node
     */
     void setTrace(const vector<int>& trace);
+
+    /**
+    * Gets the auxilliary mapping of states of `block`
+    * @return the auxilliary mapping of states of `block`
+    */
+    shared_ptr<unordered_map<int,int>>& getBlockToTarget();
+
 
     /**
     * Sets the auxilliary mapping of states of `block`

@@ -98,7 +98,7 @@ SplittingTree::SplittingTree(const shared_ptr<Dfsm> &dfsm)
                     }
                     if(isBValid) break;
                     if(containsTarget) {
-                        implicationGraph->addEdge(currentLeaf,leaf,validInput.first);
+                        implicationGraph->addEdge(currentLeaf,leaf,validInput.first,validInput.second);
                         break;
                     }
                 }
@@ -152,7 +152,17 @@ SplittingTree::SplittingTree(const shared_ptr<Dfsm> &dfsm)
             }
         }
         for(auto& currentLeaf:cValidNodes) {
-
+            auto& cTrace = currentLeaf->getTrace();
+            auto& blockToTarget = currentLeaf->getBlockToTarget();
+            auto cValidTargetNode = implicationGraph->findPathToAOrBValidNode(currentLeaf,cTrace,blockToTarget);
+            if(cValidTargetNode) {
+                for(int input:cValidTargetNode->getTrace()) {
+                    cTrace.push_back(input);
+                }
+            } else {
+                //There exists no ads
+                return;
+            }
         }
 
     }
