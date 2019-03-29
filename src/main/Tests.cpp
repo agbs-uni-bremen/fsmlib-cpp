@@ -29,6 +29,50 @@
 
 using namespace std;
 
+// Creates and returns some non observable Fsm. These are needed by the tests of some functions to achieve
+// full branch coverage.
+shared_ptr<Fsm> createNonObservableTC() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+	shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+	shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+	shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl));
+	shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(0, 0, pl));
+	shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(n1, n2, make_shared<FsmLabel>(0, 0, pl));
+	n0->addTransition(tr0);
+	n0->addTransition(tr1);
+	n1->addTransition(tr2);
+	//vector<shared_ptr<FsmNode>> lst{ n };
+	Fsm m("M", 0, 0, { n0,n1,n2 }, pl);
+	return make_shared<Fsm>(m);
+}
+
+// Creates and returns some Fsm with equivalent states. These are needed by the tests of some functions to achieve
+// full branch coverage.
+shared_ptr<Fsm> createNonMinimisedTC() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+	shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+	shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+	shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(n0, n0, make_shared<FsmLabel>(0, 0, pl));
+	shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(n1, n1, make_shared<FsmLabel>(0, 0, pl));
+	shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(1, 1, pl));
+	shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(n1, n2, make_shared<FsmLabel>(1, 1, pl));
+	shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(n2, n2, make_shared<FsmLabel>(2, 2, pl));
+	shared_ptr<FsmTransition> tr5 = make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(1, 0, pl));
+	shared_ptr<FsmTransition> tr6 = make_shared<FsmTransition>(n1, n1, make_shared<FsmLabel>(1, 0, pl));
+	n0->addTransition(tr0);
+	n0->addTransition(tr2);
+	n0->addTransition(tr5);
+	n1->addTransition(tr1);
+	n1->addTransition(tr3);
+	n1->addTransition(tr6);
+	n2->addTransition(tr4);
+	//vector<shared_ptr<FsmNode>> lst{ n };
+	Fsm m("M", 2, 2, { n0,n1,n2 }, pl);
+	return make_shared<Fsm>(m);
+}
+
 // Selects two nodes of m randomly and changes the transitions of one of those nodes in a way that makes both equivalent.
 // It is expected that srand() was called before.
 shared_ptr<Fsm> makeStatesEquivalent(const Fsm &m) {
@@ -1782,6 +1826,12 @@ TestResult getCharacterisationSet_Fsm_TS() {
 			result.fails.push_back("TC-Part-" + tc.id);
 		}
 	}
+
+	// Additional test case to achieve full branch coverage
+	//cout << "------------------------------- Start Additional Tests (Branch Coverage) -------------------------------" << endl;
+	//shared_ptr<Fsm> m = createNonObservableTC();
+	//m->getCharacterisationSet();
+
 	return result;
 }
 
@@ -2026,6 +2076,20 @@ TestResult calcStateIdentificationSets_TS() {
 			result.fails.push_back("TC-Part-" + tc.id);
 		}
 	}
+
+	// Additional test case to achieve full branch coverage
+	//{
+	//	cout << "------------------------------- Start Additional Tests (Branch Coverage) -------------------------------" << endl;
+	//	// 1) nonobservable-branch
+	//	shared_ptr<Fsm> m = createNonObservableTC();
+	//	m->calcStateIdentificationSets();
+
+	//	// 2) observable but no characterisation set-branch
+	//	Dfsm csm("../../../resources/TestSuites/examples/csm.fsm", pl, "CSM");
+	//	csm.calcStateIdentificationSets();
+	//}
+	
+
 	return result;
 }
 
@@ -2179,6 +2243,26 @@ TestResult calcStateIdentificationSetsFast_TS() {
 			result.fails.push_back("TC-Part-" + tc.id);
 		}
 	}
+
+	// Additional test case to achieve full branch coverage
+	//{
+	//	cout << "------------------------------- Start Additional Tests (Branch Coverage) -------------------------------" << endl;
+	//	// 1) nonobservable-branch
+	//	shared_ptr<Fsm> m1 = createNonObservableTC();
+	//	m1->calcStateIdentificationSetsFast();
+
+	//	// 2) observable but no characterisation set-branch
+	//	Dfsm csm("../../../resources/TestSuites/examples/csm.fsm", make_shared<FsmPresentationLayer>(), "CSM");
+	//	csm.calcStateIdentificationSetsFast();
+
+	//	// 3) observable and characterisation calculated but nonminimal-branch
+	//	shared_ptr<Fsm> m2 = createNonMinimisedTC();
+	//	cout << *m2 << endl;
+	//	m2->getCharacterisationSet();
+	//	cout << *m2 << endl;
+	//	m2->calcStateIdentificationSetsFast();
+	//}
+
 	return result;
 }
 
