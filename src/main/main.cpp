@@ -5001,7 +5001,7 @@ int main(int argc, char** argv)
 	//calcDistinguishingTrace_PkTables_TS().printResults();
 	//calcDistinguishingTrace_OFSMTables_TS().printResults();
 	//calcStateIdentificationSets_TS().printResults();
-	calcStateIdentificationSetsFast_TS().printResults();
+	//calcStateIdentificationSetsFast_TS().printResults();
 
 	// Complete Test Theories Test:
 	//tMethod_TS().printResults();
@@ -5012,7 +5012,7 @@ int main(int argc, char** argv)
 	//wpMethod_Fsm_TS().printResults();
 	//wpMethod_Dfsm_TS().printResults();
 	//wpMethodOnMinimisedDfsm_TS().printResults();
-	//hsiMethod_Fsm_TS().printResults();
+	hsiMethod_Fsm_TS().printResults();
 	//hsiMethod_Dfsm_TS().printResults();
 	//hMethodOnMinimisedDfsm_TS().printResults();
 

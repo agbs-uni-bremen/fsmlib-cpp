@@ -73,6 +73,29 @@ shared_ptr<Fsm> createNonMinimisedTC() {
 	return make_shared<Fsm>(m);
 }
 
+// Creates and returns some Dfsm with equivalent states. These are needed by the tests of some functions to achieve
+// full branch coverage.
+shared_ptr<Dfsm> createNonMinimisedDeterministicTC() {
+	shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+	shared_ptr<FsmNode> n0 = make_shared<FsmNode>(0, pl);
+	shared_ptr<FsmNode> n1 = make_shared<FsmNode>(1, pl);
+	shared_ptr<FsmNode> n2 = make_shared<FsmNode>(2, pl);
+	shared_ptr<FsmTransition> tr0 = make_shared<FsmTransition>(n0, n1, make_shared<FsmLabel>(0, 0, pl));
+	shared_ptr<FsmTransition> tr1 = make_shared<FsmTransition>(n0, n2, make_shared<FsmLabel>(1, 1, pl));
+	shared_ptr<FsmTransition> tr2 = make_shared<FsmTransition>(n1, n1, make_shared<FsmLabel>(0, 1, pl));
+	shared_ptr<FsmTransition> tr3 = make_shared<FsmTransition>(n1, n1, make_shared<FsmLabel>(1, 0, pl));
+	shared_ptr<FsmTransition> tr4 = make_shared<FsmTransition>(n2, n2, make_shared<FsmLabel>(0, 1, pl));
+	shared_ptr<FsmTransition> tr5 = make_shared<FsmTransition>(n2, n2, make_shared<FsmLabel>(1, 0, pl));
+	n0->addTransition(tr0);
+	n0->addTransition(tr1);
+	n1->addTransition(tr2);
+	n1->addTransition(tr3);
+	n2->addTransition(tr4);
+	n2->addTransition(tr5);
+	Dfsm m("M", 1, 1, { n0,n1,n2 }, pl);
+	return make_shared<Dfsm>(m);
+}
+
 // Selects two nodes of m randomly and changes the transitions of one of those nodes in a way that makes both equivalent.
 // It is expected that srand() was called before.
 shared_ptr<Fsm> makeStatesEquivalent(const Fsm &m) {
@@ -1896,6 +1919,11 @@ TestResult calcDistinguishingTrace_PkTables_TS() {
 			result.fails.push_back("TC-Part-" + tc.id);
 		}
 	}
+
+	// Additional test case to achieve full branch coverage
+	//cout << "------------------------------- Start Additional Tests (Branch Coverage) -------------------------------" << endl;
+	//testCalcDistinguishingTrace1(*createNonMinimisedDeterministicTC(), "TC-Coverage-1");
+
 	return result;
 }
 
@@ -1972,6 +2000,11 @@ TestResult calcDistinguishingTrace_OFSMTables_TS() {
 			result.fails.push_back("TC-Part-" + tc.id);
 		}
 	}
+
+	// Additional test case to achieve full branch coverage
+	//cout << "------------------------------- Start Additional Tests (Branch Coverage) -------------------------------" << endl;
+	//testCalcDistinguishingTrace2(*createNonMinimisedDeterministicTC(), "TC-Coverage-1");
+
 	return result;
 }
 
@@ -3334,6 +3367,17 @@ TestResult hsiMethod_Fsm_TS() {
 	for (auto tc : *testSuite) {
 		executeTestTheoryTC<Fsm>(tc, tsGenerator, result);
 	}
+
+	// Additional test case to achieve full branch coverage
+	//cout << "------------------------------- Start Additional Tests (Branch Coverage) -------------------------------" << endl;
+	//// 1) nonobservable - branch
+	//shared_ptr<Fsm> nonObs = createNonObservableTC();
+	//nonObs->hsiMethod(0);
+
+	//// 2) observable but not minimal - branch
+	//shared_ptr<Fsm> m = createNonMinimisedTC();
+	//m->hsiMethod(0);
+
 	return result;
 }
 
