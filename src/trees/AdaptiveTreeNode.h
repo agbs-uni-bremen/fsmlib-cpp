@@ -2,6 +2,7 @@
 #define ADAPTIVETREENODE_H
 
 #include "trees/TreeNode.h"
+#include <unordered_map>
 
 /**
  * Represents a tree node in an adaptive test case.
@@ -15,6 +16,13 @@ private:
      * The associated input.
      */
     int input;
+
+    /**
+    * An auxilliary mapping of the possible initial states, that can be assumed at this point in the adaptive experiment,
+    * this node represents a subtree of, to the possible current states. This datastructure is used in the course of the creation
+    * of an adaptive distinguishing sequence, which is represented by an InputOutputTree
+    */
+    std::shared_ptr<std::unordered_map<int, int>> initialToCurrentSet;
 protected:
     /**
      * Constructs a new adaptive tree node by cloning a given one.
@@ -22,6 +30,7 @@ protected:
      */
     AdaptiveTreeNode(const AdaptiveTreeNode* other);
 public:
+
     /**
      * Constructs a new adaptive tree node with the given associated input.
      * @param input The given input.
@@ -40,6 +49,12 @@ public:
     int getInput();
 
     /**
+     * Sets the associated input.
+     * @param input The associated input.
+     */
+    void setInput(int input);
+
+    /**
      * Calculates the input sequence that reaches this node.
      * @return The input sequence that reaches this node.
      */
@@ -50,6 +65,12 @@ public:
      * @return The output sequence that reaches this node.
      */
     std::vector<int> getOutputPath();
+
+    /**
+    * Gets the auxilliary mapping of possible initial states to possible current states
+    * @return the auxilliary mapping of possible initial states to possible current states
+    */
+    std::shared_ptr<std::unordered_map<int, int>>& getInitialToCurrentSet();
 
     /**
      * Determines wether this tree (node) is a super tree (node) of a given tree (node).

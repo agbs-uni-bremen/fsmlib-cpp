@@ -8,6 +8,7 @@
 #include "graphs/PartitionGraph.h"
 #include "graphs/PartitionGraphNode.h"
 #include "graphs/PartitionGraphEdge.h"
+#include "trees/SplittingTree.h"
 #include <queue>
 #include <cassert>
 #include <utility>
@@ -94,11 +95,7 @@ shared_ptr<SplittingTreeNode> PartitionGraph::findPathToAOrBValidNode(shared_ptr
                 if(currentBlockToTarget->size() == 0) {
                     nextBlockToTarget = edgeBlockToTarget;
                 } else {
-                    for(auto& idToTarget:*currentBlockToTarget) {
-                        auto it = edgeBlockToTarget->find(idToTarget.second);
-                        assert(it != edgeBlockToTarget->end());
-                        nextBlockToTarget->insert({idToTarget.first,it->second});
-                    }
+                    nextBlockToTarget = SplittingTree::composeBlockToTarget(currentBlockToTarget,edgeBlockToTarget);
                 }
 
                 if(currentTargetBlock->getIsAValid() || currentTargetBlock->getIsBValid()) {

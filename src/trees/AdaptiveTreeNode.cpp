@@ -161,3 +161,11 @@ bool operator!=(AdaptiveTreeNode const & node1, AdaptiveTreeNode const & node2)
 {
     return !(node1 == node2);
 }
+
+std::shared_ptr<std::unordered_map<int, int>> &AdaptiveTreeNode::getInitialToCurrentSet() {
+    return initialToCurrentSet;
+}
+
+void AdaptiveTreeNode::setInput(int input) {
+    this->input = input;
+}

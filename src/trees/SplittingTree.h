@@ -11,6 +11,7 @@
 #include <memory>
 #include "fsm/Dfsm.h"
 #include "trees/SplittingTreeNode.h"
+#include "AdaptiveTreeNode.h"
 
 using namespace std;
 
@@ -51,6 +52,16 @@ private:
                      unordered_map<int, shared_ptr<set<int>>> &blockPartition,
                      shared_ptr<unordered_map<int, int>> &blockToTarget, bool &isValid);
 
+    /**
+    * find the corresponding splitting tree node to an adaptive tree node, that contains all
+    * the current set of the adaptive tree node
+    * @param rootNode the root node of the splitting tree to search in
+    * @param adaptiveTreeNode the adaptive tree node, for which the corresponding splitting tree node is searched
+    * @return the corresponding splitting tree node of `adaptiveTreeNode`
+    */
+    shared_ptr<SplittingTreeNode>& findDeepestNode(shared_ptr<SplittingTreeNode> &rootNode,shared_ptr<AdaptiveTreeNode> &adaptiveTreeNode);
+
+
 public:
 
     /**
@@ -59,5 +70,13 @@ public:
 	* @param dfsm  DFSM, for which the distinguishing tree is being created
 	*/
     SplittingTree(const shared_ptr<Dfsm>& dfsm);
+
+    /**
+    * An auxilliary function to compose auxilliary dfsm state mappings, in course of the creation of the splitting tree
+    * @param firstMap the first mapping
+    * @param secondMap the second mapping, which is composed to `firstMap`
+    * @return the composition mapping of `firstMap` and `secondMap`
+    */
+    static shared_ptr<unordered_map<int, int>> composeBlockToTarget(shared_ptr<unordered_map<int, int>>& firstMap,shared_ptr<unordered_map<int, int>>& secondMap);
 };
 #endif //FSM_TREES_SPLITTINGTREE_H_

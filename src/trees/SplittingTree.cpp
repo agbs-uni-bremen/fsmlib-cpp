@@ -6,6 +6,8 @@
 
 #include "trees/SplittingTree.h"
 #include "graphs/PartitionGraph.h"
+#include "SplittingTree.h"
+
 #include <queue>
 #include <cassert>
 #include <utility>
@@ -16,7 +18,7 @@ SplittingTree::SplittingTree(const shared_ptr<Dfsm> &dfsm)
 
     root = make_shared<SplittingTreeNode>();
 
-    //A distinguishing tree can only be derived for truly completely specified, deterministic FSM
+    //A splitting tree can only be derived for truly completely specified, deterministic FSM
     if(!dfsm->isCompletelyDefined() || !dfsm->isDeterministic()) {
         return;
     }
@@ -24,28 +26,32 @@ SplittingTree::SplittingTree(const shared_ptr<Dfsm> &dfsm)
     //Mapping from id to FsmNode to speed up the access
     idToFsmNode = vector<shared_ptr<FsmNode>>(dfsm->getMaxNodes(),nullptr);
 
-    //Initialize the root node
-    auto rootBlock = root->getBlock();
+    //Initialize the root node of the splitting tree and the adaptive distinguishing sequence
+    auto adaptiveRootNode = make_shared<AdaptiveTreeNode>();
+    auto& rootBlock = root->getBlock();
+    auto& rootInitialToCurrentSet = adaptiveRootNode->getInitialToCurrentSet();
+    rootInitialToCurrentSet = make_shared<unordered_map< int, int>>();
 
     for(auto &node:dfsm->getNodes()) {
         rootBlock.insert(node->getId());
+        rootInitialToCurrentSet->insert({node->getId(),node->getId()});
         idToFsmNode[node->getId()] = node;
     }
 
     vector<shared_ptr<SplittingTreeNode>> leaves;
-    vector<shared_ptr<SplittingTreeNode>> incompleteLeaves;
+    vector<shared_ptr<SplittingTreeNode>> largestLeaves;
     leaves.push_back(root);
-    incompleteLeaves.push_back(root);
+    largestLeaves.push_back(root);
 
-    bool isDiscretePartition = false;
-
-    while(!isDiscretePartition) {
+    unsigned long maxBlockSize = rootBlock.size();
+    //create the splitting tree
+    while(!largestLeaves.empty()) {
         vector<shared_ptr<SplittingTreeNode>> newLeaves;
-        vector<shared_ptr<SplittingTreeNode>> newIncompleteLeaves;
         vector<shared_ptr<SplittingTreeNode>> cValidNodes;
         auto implicationGraph = make_shared<PartitionGraph>();
+        unsigned long maxLeafBlockSize = 0;
 
-        for(auto& currentLeaf:incompleteLeaves) {
+        for(auto& currentLeaf:largestLeaves) {
             unordered_map< int, shared_ptr<unordered_map< int, int>> > validInputs;
             bool& isAValid = currentLeaf->getIsAValid();
             bool& isBValid = currentLeaf->getIsBValid();
@@ -64,9 +70,7 @@ SplittingTree::SplittingTree(const shared_ptr<Dfsm> &dfsm)
                         currentLeaf->add(newEdge);
 
                         newLeaves.push_back(newNode);
-                        if(partitionBlock.second->size() > 1) {
-                            newIncompleteLeaves.push_back(newNode);
-                        }
+                        maxLeafBlockSize = partitionBlock.second->size() > maxLeafBlockSize?partitionBlock.second->size():maxLeafBlockSize;
                     }
                     break;
                 } else if(isValid) {
@@ -75,7 +79,7 @@ SplittingTree::SplittingTree(const shared_ptr<Dfsm> &dfsm)
             }
             if(isAValid) continue;
             //if there are no valid inputs there is no ads at this point
-            if(validInputs.size() == 0) return;
+            if(validInputs.empty()) return;
 
             //check if there is a b-valid input for currentLeaf with respect to the partition represented by `leaves`
             pair<int, shared_ptr<unordered_map<int,int>>> bValidInput;
@@ -127,12 +131,13 @@ SplittingTree::SplittingTree(const shared_ptr<Dfsm> &dfsm)
                 for(int input:bValidTargetNode->getTrace()) {
                     inputTrace.push_back(input);
                 }
-                currentLeaf->setBlockToTarget(bValidInput.second);
+                auto& currentBlockToTarget = currentLeaf->getBlockToTarget();
+                currentBlockToTarget = composeBlockToTarget(bValidInput.second,bValidTargetNode->getBlockToTarget());
 
                 for(auto& child:bValidTargetNode->getChildren()) {
                     auto newNode = make_shared<SplittingTreeNode>();
-                    auto newBlock = newNode->getBlock();
-                    auto childBlock = child->getTarget()->getBlock();
+                    auto& newBlock = newNode->getBlock();
+                    auto& childBlock = child->getTarget()->getBlock();
                     for(auto& idToTarget:*bValidInput.second) {
                         auto it = childBlock.find(idToTarget.second);
                         if(it != childBlock.end())
@@ -142,9 +147,7 @@ SplittingTree::SplittingTree(const shared_ptr<Dfsm> &dfsm)
                     currentLeaf->add(newEdge);
 
                     newLeaves.push_back(newNode);
-                    if(newBlock.size() > 1){
-                        newIncompleteLeaves.push_back(newNode);
-                    }
+                    maxLeafBlockSize = newBlock.size() > maxLeafBlockSize?newBlock.size():maxLeafBlockSize;
                 }
 
             } else {
@@ -153,21 +156,105 @@ SplittingTree::SplittingTree(const shared_ptr<Dfsm> &dfsm)
         }
         for(auto& currentLeaf:cValidNodes) {
             auto& cTrace = currentLeaf->getTrace();
-            auto& blockToTarget = currentLeaf->getBlockToTarget();
-            auto cValidTargetNode = implicationGraph->findPathToAOrBValidNode(currentLeaf,cTrace,blockToTarget);
+            auto& currentBlockToTarget = currentLeaf->getBlockToTarget();
+            auto cValidTargetNode = implicationGraph->findPathToAOrBValidNode(currentLeaf,cTrace,currentBlockToTarget);
             if(cValidTargetNode) {
                 for(int input:cValidTargetNode->getTrace()) {
                     cTrace.push_back(input);
                 }
+                for(auto& child:cValidTargetNode->getChildren()) {
+                    auto newNode = make_shared<SplittingTreeNode>();
+                    auto& newBlock = newNode->getBlock();
+                    auto& childBlock = child->getTarget()->getBlock();
+                    for(auto& idToTarget:*currentBlockToTarget) {
+                        auto it = childBlock.find(idToTarget.second);
+                        if(it != childBlock.end())
+                            newBlock.insert(idToTarget.first);
+                    }
+                    auto newEdge = make_shared<SplittingTreeEdge>(child->getOutput(),newNode);
+                    currentLeaf->add(newEdge);
+
+                    newLeaves.push_back(newNode);
+                    maxLeafBlockSize = newBlock.size() > maxLeafBlockSize?newBlock.size():maxLeafBlockSize;
+                }
+                currentBlockToTarget = composeBlockToTarget(currentBlockToTarget,cValidTargetNode->getBlockToTarget());
             } else {
                 //There exists no ads
                 return;
             }
         }
-
+        for(auto& leaf:leaves) {
+            unsigned long blockSize = leaf->getBlock().size();
+            if(blockSize < maxBlockSize) {
+                newLeaves.push_back(leaf);
+                maxLeafBlockSize = blockSize > maxLeafBlockSize?blockSize:maxLeafBlockSize;
+            }
+        }
+        largestLeaves.clear();
+        leaves.clear();
+        for(auto& newLeaf:newLeaves) {
+            if(newLeaf->getBlock().size() == maxLeafBlockSize) {
+                largestLeaves.push_back(newLeaf);
+            }
+            leaves.push_back(newLeaf);
+        }
     }
 
+    queue<shared_ptr<AdaptiveTreeNode>> indistinctLeaves;
+    indistinctLeaves.push(adaptiveRootNode);
 
+    //generate the adaptive distinguishing sequence from the splitting tree
+    while(!indistinctLeaves.empty()) {
+        auto& currentLeaf = indistinctLeaves.front();
+        indistinctLeaves.pop();
+
+        //find the deepest node in the splitting tree that contains every state of the current set of `currentLeaf`
+        auto& v = findDeepestNode(root,currentLeaf);
+        auto& trace = v->getTrace();
+        //start the single path chain
+        shared_ptr<AdaptiveTreeNode> u = currentLeaf;
+        //representive state of the current set of `u`, get the first one
+        int q = u->getInitialToCurrentSet()->begin()->second;
+        for(int i=0;i<trace.size()-1;++i) {
+            u->setInput(trace[i]);
+            vector<int> outputs;
+            auto targetStates = idToFsmNode[q]->after(trace[i],outputs);
+            q = targetStates.front()->getId();
+            int output = outputs.front();
+            auto w = make_shared<AdaptiveTreeNode>();
+            auto edge = make_shared<TreeEdge>(output,w);
+            u->add(edge);
+            u = w;
+        }
+        u->setInput(trace[trace.size()-1]);
+        for(auto& edge:v->getChildren()) {
+            auto childNode = edge->getTarget();
+            auto& childNodeBlock = childNode->getBlock();
+            auto& vGetBlockToTarget = v->getBlockToTarget();
+
+            auto w = make_shared<AdaptiveTreeNode>();
+            auto& initialToCurrentSet = w->getInitialToCurrentSet();
+
+            bool containsTarget = false;
+            for(auto& idToTarget:*u->getInitialToCurrentSet()) {
+                auto it = childNodeBlock.find(idToTarget.second);
+                if(it != childNodeBlock.end()) {
+                    containsTarget = true;
+                    auto vit = vGetBlockToTarget->find(idToTarget.second);
+                    initialToCurrentSet->insert({idToTarget.first,vit->second});
+                }
+            }
+            if(!containsTarget)
+                continue;
+
+            auto adaptiveEdge = make_shared<TreeEdge>(edge->getOutput(),w);
+            u->add(adaptiveEdge);
+            if(initialToCurrentSet.size() > 1)
+                indistinctLeaves.push(w);
+        }
+    }
+
+    adaptiveDistinguishingSequence = make_shared<InputOutputTree>(adaptiveRootNode,dfsm->getPresentationLayer());
 
 }
 
@@ -215,3 +302,45 @@ bool SplittingTree::checkAValid(shared_ptr<SplittingTreeNode> &blockNode, const 
     return blockPartition.size() > 1;
 
 }
+
+shared_ptr<unordered_map<int, int>> SplittingTree::composeBlockToTarget(shared_ptr<unordered_map<int, int>> &firstMap,
+                                                                        shared_ptr<unordered_map<int, int>> &secondMap)
+{
+    auto nextBlockToTarget = make_shared<unordered_map< int, int>>();
+    for(auto& idToTarget:*firstMap) {
+        auto it = secondMap->find(idToTarget.second);
+        assert(it != secondMap->end());
+        nextBlockToTarget->insert({idToTarget.first,it->second});
+    }
+    return nextBlockToTarget;
+}
+
+shared_ptr<SplittingTreeNode> &SplittingTree::findDeepestNode(shared_ptr<SplittingTreeNode> &rootNode,
+                                                              shared_ptr<AdaptiveTreeNode> &adaptiveTreeNode)
+{
+    shared_ptr<SplittingTreeNode> currentNode = rootNode;
+    while(true) {
+
+        bool foundDeeperNode = false;
+        for(auto& edge:currentNode->getChildren()) {
+            auto targetNode = edge->getTarget();
+            auto& targetNodeBlock = currentNode->getBlockToTarget();
+            bool containsAllTarget = true;
+            for(auto& idToTarget:*adaptiveTreeNode->getInitialToCurrentSet()) {
+                auto it = targetNodeBlock->find(idToTarget.second);
+                containsAllTarget &= it != targetNodeBlock->end();
+            }
+            if(containsAllTarget) {
+                currentNode = targetNode;
+                foundDeeperNode = true;
+                break;
+            }
+        }
+        if(foundDeeperNode) continue;
+
+        break;
+    }
+
+    return currentNode;
+}
+
