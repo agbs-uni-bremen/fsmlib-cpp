@@ -50,7 +50,10 @@ void PartitionGraph::addEdge(shared_ptr<SplittingTreeNode> &nodeA, shared_ptr<Sp
         }
     }
 
+    //shared_ptr<PartitionGraphEdge>* edge = new shared_ptr<PartitionGraphEdge>(new PartitionGraphEdge(vector<int>{x},partitionNodeA,partitionNodeB,blockToTarget));
     auto edge = make_shared<PartitionGraphEdge>(vector<int>{x},partitionNodeA,partitionNodeB,blockToTarget);
+    partitionNodeA->addEdge(edge);
+    partitionNodeB->addInEdge(edge);
 
 }
 

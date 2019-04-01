@@ -6,14 +6,14 @@
 
 #include "SplittingTreeNode.h"
 
-SplittingTreeNode::SplittingTreeNode()
-    :parent(weak_ptr<SplittingTreeNode>()),isAValid(false),isBValid(false)
+SplittingTreeNode::SplittingTreeNode(int id)
+    :parent(weak_ptr<SplittingTreeNode>()),isAValid(false),isBValid(false),blockToTarget(make_shared<unordered_map<int,int>>()),id(id)
 {
 
 }
 
-SplittingTreeNode::SplittingTreeNode(const set<int>& block)
-    : block(block),parent(weak_ptr<SplittingTreeNode>()),isAValid(false),isBValid(false)
+SplittingTreeNode::SplittingTreeNode(int id,const set<int>& block)
+    : block(block),parent(weak_ptr<SplittingTreeNode>()),isAValid(false),isBValid(false),blockToTarget(make_shared<unordered_map<int,int>>()),id(id)
 {
 
 }
@@ -60,5 +60,9 @@ weak_ptr<SplittingTreeNode> &SplittingTreeNode::getParent() {
 
 vector<shared_ptr<SplittingTreeEdge>> &SplittingTreeNode::getChildren() {
     return children;
+}
+
+int SplittingTreeNode::getId() {
+    return id;
 }
 

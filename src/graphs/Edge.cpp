@@ -12,11 +12,12 @@
 Edge::Edge(const vector<int> &trace, const weak_ptr<Node> &source, const weak_ptr<Node> &target)
     : trace(trace), source(source), target(target)
 {
-    assert(source.lock());
-    assert(target.lock());
+    //causes bad_weak_ptr exception if shared_from_this is called for an instance, that has no shared_ptr pointing to it yet
+    //assert(!source.expired());
+   // assert(!target.expired());
 
-    source.lock()->addEdge(shared_from_this());
-    target.lock()->addInEdge(shared_from_this());
+    //source.lock()->addEdge(shared_from_this());
+    //target.lock()->addInEdge(shared_from_this());
 }
 
 weak_ptr<Node> Edge::getSource() {

@@ -12,6 +12,7 @@
 #include "fsm/IOTrace.h"
 #include "trees/Tree.h"
 #include "trees/DistinguishingTree.h"
+#include "trees/SplittingTree.h"
 #include "Dfsm.h"
 
 
@@ -1786,7 +1787,9 @@ vector<int> Dfsm::createDistinguishingSequence() {
 
 
 std::shared_ptr<InputOutputTree> Dfsm::createAdaptiveDistinguishingSequence() {
-    return shared_ptr<InputOutputTree>();
+    auto splittingTree = make_shared<SplittingTree>(shared_from_this());
+    splittingTree->build();
+    return splittingTree->getAdaptiveDistinguishingSequence();
 }
 
 

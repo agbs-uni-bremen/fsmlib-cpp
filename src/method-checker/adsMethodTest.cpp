@@ -11,6 +11,8 @@
 #include "fsm/IOTrace.h"
 #include "interface/FsmPresentationLayer.h"
 #include "trees/IOListContainer.h"
+#include "trees/InputOutputTree.h"
+#include "trees/SplittingTree.h"
 
 using namespace std;
 
@@ -47,6 +49,29 @@ shared_ptr<FsmPresentationLayer> createPresentationLayer(const size_t maxInput, 
     return pl;
 }
 
+void testCustomAds() {
+    shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(1,6,1);
+    shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("../../../resources/lee94.fsm",pl,"lee94");
+
+    auto splittingTree = make_shared<SplittingTree>(dfsm);
+    splittingTree->build();
+
+    //auto adaptiveDistinguishingSequence = dfsm->createAdaptiveDistinguishingSequence();
+    splittingTree->toDot("splitting_tree_lee");
+    auto adaptiveDistinguishingSequence = splittingTree->getAdaptiveDistinguishingSequence();
+    if(!adaptiveDistinguishingSequence) {
+        cout << "ads does not exist" << endl;
+    } else {
+        cout << *adaptiveDistinguishingSequence << endl;
+    }
+
+
+}
+
+void testRandomAds() {
+
+}
+
 int main(int argc, char* argv[])
 {
 
@@ -56,9 +81,12 @@ int main(int argc, char* argv[])
 
     srand(getRandomSeed());
 
-    shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(6,30,6);
-    auto dfsm = make_shared<Dfsm>("Dfsm", 30, 6, 6, pl);
-    shared_ptr<Dfsm> dfsmMin = make_shared<Dfsm>(dfsm->minimise());
+    testCustomAds();
+
+    //shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(6,30,6);
+    //auto dfsm = make_shared<Dfsm>("Dfsm", 30, 6, 6, pl);
+    //shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("../../../resources/lee94.fsm",pl,"lee94");
+    //shared_ptr<Dfsm> dfsmMin = make_shared<Dfsm>(dfsm->minimise());
     //dfsmMin->toDot("dfsm_min_fc");
     //IOListContainer ts = dfsmMin->dMethodOnMinimisedDfsm(0);
 

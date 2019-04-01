@@ -40,6 +40,11 @@ private:
     vector<shared_ptr<FsmNode>> idToFsmNode;
 
     /**
+    * Reference to the dfsm, the splitting tree is build for
+    */
+    shared_ptr<Dfsm> dfsm;
+
+    /**
     * checks if an input is a-valid for the underlying block of the node
     * @param blockNode the node, whose underlying block is to be checked against x for a-validity
     * @param x the input that is checked for a-validity against `blockNode`
@@ -49,7 +54,7 @@ private:
     * @return true, if `x` is a-valid, otherwise false
     */
     bool checkAValid(shared_ptr<SplittingTreeNode> &blockNode, const int x,
-                     unordered_map<int, shared_ptr<set<int>>> &blockPartition,
+                     map<int, shared_ptr<set<int>>> &blockPartition,
                      shared_ptr<unordered_map<int, int>> &blockToTarget, bool &isValid);
 
     /**
@@ -59,15 +64,15 @@ private:
     * @param adaptiveTreeNode the adaptive tree node, for which the corresponding splitting tree node is searched
     * @return the corresponding splitting tree node of `adaptiveTreeNode`
     */
-    shared_ptr<SplittingTreeNode>& findDeepestNode(shared_ptr<SplittingTreeNode> &rootNode,shared_ptr<AdaptiveTreeNode> &adaptiveTreeNode);
+    shared_ptr<SplittingTreeNode> findDeepestNode(shared_ptr<SplittingTreeNode> &rootNode,shared_ptr<AdaptiveTreeNode> &adaptiveTreeNode);
 
 
 public:
 
     /**
-	* Creates a new distinguishing tree from a DFSM, if it is completely specified. A distinguishing sequence
+	* Creates a new instance of a distinguishing tree from a DFSM, if it is completely specified. A distinguishing sequence
     * is derived from it, if one exists.
-	* @param dfsm  DFSM, for which the distinguishing tree is being created
+	* @param dfsm  DFSM, for which the distinguishing tree has to be created
 	*/
     SplittingTree(const shared_ptr<Dfsm>& dfsm);
 
@@ -78,5 +83,30 @@ public:
     * @return the composition mapping of `firstMap` and `secondMap`
     */
     static shared_ptr<unordered_map<int, int>> composeBlockToTarget(shared_ptr<unordered_map<int, int>>& firstMap,shared_ptr<unordered_map<int, int>>& secondMap);
+
+    /**
+    * Gets the adaptive distinguishing sequence, derived from the splitting tree. if none exists the smart pointer to it is empty.
+    * @return the adaptive distinguishing sequence
+    */
+    shared_ptr<InputOutputTree>& getAdaptiveDistinguishingSequence();
+
+    /**
+    * builds the splitting tree and tries to derive an adaptive distinguishing sequence if one exists
+    */
+    void build();
+
+    /**
+    * gets the root node of this splitting tree
+    * @return the root node of this splitting tree
+    */
+    const shared_ptr<SplittingTreeNode>& getRoot() const;
+
+    /**
+    * Prints the splitting tree in .dot format into the given filename (in the current path)
+    * @param fname the filename (without extension) to print the tree into
+    */
+    void toDot(const string& fname);
+
+    friend ostream & operator<<(ostream & out, const SplittingTree & splittingTree);
 };
 #endif //FSM_TREES_SPLITTINGTREE_H_

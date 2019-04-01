@@ -22,6 +22,11 @@ class SplittingTreeNode: public enable_shared_from_this<SplittingTreeNode>  {
 protected:
 
     /**
+    * node id
+    */
+    int id;
+
+    /**
     * The block of the partition of states of a dfsm, that is induced by this subtree.
     */
     set<int> block;
@@ -60,14 +65,16 @@ public:
 
     /**
     * Create a new distinguishing tree node
+    * @param id the id of the new node
     */
-    SplittingTreeNode();
+    SplittingTreeNode(int id);
 
     /**
     * Create a new distinguishing tree node
+    * @param id the id of the new node
     * @param block the block of a partition, that is associated with this subtree
     */
-    SplittingTreeNode(const set<int>& block);
+    SplittingTreeNode(int id,const set<int>& block);
 
     /**
     * Add an edge to this nodes children
@@ -131,6 +138,12 @@ public:
     * @return the outgoing edges of this node
     */
     vector<shared_ptr<SplittingTreeEdge>>& getChildren();
+
+    /**
+    * gets the node id
+    * @return the node id
+    */
+    int getId();
 
 };
 
