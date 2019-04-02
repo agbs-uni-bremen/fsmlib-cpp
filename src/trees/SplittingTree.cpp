@@ -302,7 +302,7 @@ void SplittingTree::build() {
 
     //generate the adaptive distinguishing sequence from the splitting tree
     while(!indistinctLeaves.empty()) {
-        auto& currentLeaf = indistinctLeaves.front();
+        auto currentLeaf = indistinctLeaves.front();
         indistinctLeaves.pop();
 
         //find the deepest node in the splitting tree that contains every state of the current set of `currentLeaf`

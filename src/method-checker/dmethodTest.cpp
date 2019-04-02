@@ -52,7 +52,7 @@ void checkDsLength()
 {
     //shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(1,6,1);
 
-    //shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("../../../resources/lee94.fsm",pl,"lee94");
+    //shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("../../../resources/lee94_no_pds.fsm",pl,"lee94");
     shared_ptr<FsmPresentationLayer> pl;
     shared_ptr<Dfsm> dfsm;
     vector<int> distinguishingSequence;
@@ -83,17 +83,13 @@ void checkDsLength()
     }*/
 }
 
-int main(int argc, char* argv[])
+void testRandomFaultCoverage(const int numStates,const int numInput,const int numOutput)
 {
-
-    //Logging
-    //LogCoordinator& logger = LogCoordinator::getStandardLogger();
-    //logger.setDefaultStream(cout);
 
     srand(getRandomSeed());
 
-    shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(6,30,6);
-    auto dfsm = make_shared<Dfsm>("Dfsm", 30, 6, 6, pl);
+    shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(numInput,numStates,numOutput);
+    auto dfsm = make_shared<Dfsm>("Dfsm", numStates, numInput, numOutput, pl);
     shared_ptr<Dfsm> dfsmMin = make_shared<Dfsm>(dfsm->minimise());
     dfsmMin->toDot("dfsm_min_fc");
     IOListContainer ts = dfsmMin->dMethodOnMinimisedDfsm(0);
@@ -107,8 +103,8 @@ int main(int argc, char* argv[])
     }
 
     unsigned int count_equals=0,
-                count_dMethod_pass=0,
-                count_mutants=1000;
+            count_dMethod_pass=0,
+            count_mutants=1000;
     if(dTestsuite.size() > 0) {
         for (int i = 0; i < count_mutants; i++) {
             unsigned int numOutputFaults = rand() % ((dfsmMin->getMaxInput() + 1) * dfsmMin->getMaxNodes()),
@@ -151,7 +147,44 @@ int main(int argc, char* argv[])
     cout << "Number of equal Mutants: " << count_equals << endl;
     cout << "Number of mutants passing D-Method Testsuite: " << count_dMethod_pass << endl;
     cout << "Testsuite size: " << dTestsuite.size() << endl;
+}
 
+void testRandomApplicability(const int numStates,const int numInput,const int numOutput)
+{
+
+    int numberOfTests = 100;
+    int numberOfDfsmWithPds = 0;
+    float ratio = (float) numOutput/ (float) numStates;
+    cout << "test " << numberOfTests << " dfsm for the existence of an ads" << endl;
+    cout << "number of states: " << numStates << endl;
+    cout << "number of inputs: " << numInput << endl;
+    cout << "number of outputs: " << numOutput << endl;
+    cout << "ratio (|outputs|/|states|): " << ratio << endl;
+
+    for(int i=0;i<100;++i) {
+        shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(numInput,numStates,numOutput);
+        auto dfsm = make_shared<Dfsm>("Dfsm", numStates, numInput, numOutput, pl);
+        shared_ptr<Dfsm> dfsmMin = make_shared<Dfsm>(dfsm->minimise());
+
+        auto distinguishingSequence = dfsmMin->createDistinguishingSequence();
+
+        if(!distinguishingSequence.empty()) {
+            numberOfDfsmWithPds++;
+        }
+
+    }
+    cout << "number of dfsm with pds: " << numberOfDfsmWithPds << endl;
+}
+
+int main(int argc, char* argv[])
+{
+
+    //Logging
+    //LogCoordinator& logger = LogCoordinator::getStandardLogger();
+    //logger.setDefaultStream(cout);
+
+    //testRandomFaultCoverage(30,6,6);
+    testRandomApplicability(30,7,7);
 
 }
 
