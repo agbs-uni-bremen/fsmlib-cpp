@@ -51,7 +51,15 @@ public:
      * Calculates all output traces, that are being represented by the tree.
      * @return All output traces.
      */
-    IOListContainer getOutputLists();    
+    IOListContainer getOutputLists();
+
+    /**
+    * Returns a list of input traces mapped to fsm node ids of a dfsm via vector indices, if this tree represents an
+    * adaptive distinguishing sequence for said dfsm. the list of input traces forms a set of (singleton) harmonized
+    * state identifiers for the dfsm.
+    * @return a list of input traces indexed by fsm node ids of the dfsm, this tree represents an adaptive distinguishing sequence for or an empty smart pointer if thats not the case
+    */
+    std::shared_ptr<std::vector<std::vector<int>>> getHSI();
 
     std::shared_ptr<InputOutputTree> Clone() const;
 

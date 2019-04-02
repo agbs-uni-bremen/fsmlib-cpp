@@ -62,7 +62,17 @@ void testCustomAds()
     if(!adaptiveDistinguishingSequence) {
         cout << "ads does not exist" << endl;
     } else {
-        cout << "algorithm delivers ads" << endl;
+        cout << "algorithm delivers ads with following hsi:" << endl;
+        //cout << *adaptiveDistinguishingSequence << endl;
+        auto ioll = adaptiveDistinguishingSequence->getHSI();
+        for(auto& ioLst:*ioll) {
+            string iolst_str = "";
+            for(int input:ioLst) {
+                iolst_str += to_string(input) + ".";
+            }
+            iolst_str = iolst_str.substr(0,iolst_str.size()-1);
+            cout << iolst_str << endl;
+        }
     }
 
     auto adsList = make_shared<vector<shared_ptr<InputOutputTree>>>();
@@ -78,8 +88,12 @@ void testCustomAds()
 
     auto otherNodesA = dfsmOther->getNodes();
     auto& otherNodesB = otherNodesA;
-    cout << "is not ads of lee94_no_ads? -> " << !dfsmOther->distinguishesAllStates(otherNodesB,otherNodesB,adaptiveTestCases) << endl;
+    cout << "is not ads of lee94_no_ads? -> " << !dfsmOther->distinguishesAllStates(otherNodesB,otherNodesB,adaptiveTestCases)
+    << endl << endl;
 
+    cout << "affirm that there is no ads for lee_94_no_ads.fsm -> " << !dfsmOther->createAdaptiveDistinguishingSequence() << endl << endl;
+
+    cout << "affirm that there is no pds for lee_94_no_pds.fsm -> " << (dfsmOther->createDistinguishingSequence().size() == 0) << endl << endl;
 }
 
 void testRandomAds(const int numStates,const int numInput,const int numOutput)
@@ -94,7 +108,7 @@ void testRandomAds(const int numStates,const int numInput,const int numOutput)
     cout << "number of outputs: " << numOutput << endl;
     cout << "ratio (|outputs|/|states|): " << ratio << endl;
 
-    for(int i=0;i<100;++i) {
+    for(int i=0;i<numberOfTests;++i) {
         shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(numInput,numStates,numOutput);
         auto dfsm = make_shared<Dfsm>("Dfsm", numStates, numInput, numOutput, pl);
         shared_ptr<Dfsm> dfsmMin = make_shared<Dfsm>(dfsm->minimise());
@@ -128,7 +142,7 @@ void testRandomAds(const int numStates,const int numInput,const int numOutput)
     }
     cout << "number of correct ads: " << numberOfCorrectAds << endl;
     float percent = ((float) numberOfCorrectAds / (float) numberOfTests) * 100;
-    cout << "percentage of correct ads: " << percent << endl;
+    cout << "percentage of correct ads: " << percent << endl << endl;
 
 
 }
@@ -139,10 +153,11 @@ void testRandomApplicability(const int numStates,const int numInput,const int nu
     int numberOfTests = 100;
     int numberOfDfsmWithAds = 0;
     int numberOfDfsmWithPds = 0;
-    int totalAvgLengthPds = 0;
-    int totalMinLengthAds = 0;
-    int totalMaxLengthAds = 0;
-    int totalAvgLengthAds = 0;
+
+    unsigned long totalMinLengthAds = 0,
+        totalMaxLengthAds = 0;
+    long double totalAvgLengthPds = 0,
+        totalAvgLengthAds = 0;
 
     float ratio = (float) numOutput/ (float) numStates;
     cout << "test " << numberOfTests << " dfsm for the existence of an ads" << endl;
@@ -151,11 +166,12 @@ void testRandomApplicability(const int numStates,const int numInput,const int nu
     cout << "number of outputs: " << numOutput << endl;
     cout << "ratio (|outputs|/|states|): " << ratio << endl;
 
-    for(int i=0;i<100;++i) {
-        int lengthPds = 0,
+    bool adsLongerThanPds = false;
+    for(int i=0;i<numberOfTests;++i) {
+        unsigned long lengthPds = 0,
             minLengthAds = 0,
-            maxLengthAds = 0,
-            avgLengthAds = 0;
+            maxLengthAds = 0;
+        long double avgLengthAds = 0;
 
         shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(numInput,numStates,numOutput);
         auto dfsm = make_shared<Dfsm>("Dfsm", numStates, numInput, numOutput, pl);
@@ -173,14 +189,48 @@ void testRandomApplicability(const int numStates,const int numInput,const int nu
 
             auto inputLists = adaptiveDistinguishingSequence->getInputLists();
             auto ioLsts = inputLists.getIOLists();
-            for(auto ioLst:*ioLsts) {
-
+            avgLengthAds = 0;
+            maxLengthAds = 0;
+            minLengthAds = 0;
+            for(auto& ioLst:*ioLsts) {
+                assert(ioLst.size() >0);
+                if(minLengthAds > 0 )
+                    minLengthAds = ioLst.size() < minLengthAds?ioLst.size():minLengthAds;
+                else
+                    minLengthAds = ioLst.size();
+                maxLengthAds = ioLst.size() > maxLengthAds?ioLst.size():maxLengthAds;
+                avgLengthAds += ioLst.size();
+                assert(minLengthAds>0);
             }
+            avgLengthAds = avgLengthAds / (long double) ioLsts->size();
+
+            //if(avgLengthAds > lengthPds) {
+             //   cout << "pds with size " << lengthPds << " smaller than ads with avg length " << avgLengthAds << endl;
+           // }
+            adsLongerThanPds |= avgLengthAds > lengthPds;
+
+            totalAvgLengthPds += lengthPds;
+            totalAvgLengthAds += avgLengthAds;
+
+            totalMaxLengthAds = maxLengthAds > totalMaxLengthAds?maxLengthAds:totalMaxLengthAds;
+            if(totalMinLengthAds > 0)
+                totalMinLengthAds = minLengthAds < totalMinLengthAds?minLengthAds:totalMinLengthAds;
+            else
+                totalMinLengthAds = minLengthAds;
         }
 
     }
+    totalAvgLengthPds = totalAvgLengthPds / (long double) numberOfDfsmWithPds;
+    totalAvgLengthAds = totalAvgLengthAds / (long double) numberOfDfsmWithAds;
+
+    cout << "is there an ads with avg length greater than a pds? -> " << adsLongerThanPds << endl;
+    cout << "average length pds : " << totalAvgLengthPds << endl;
+    cout << "average length ads : " << totalAvgLengthAds << endl;
+    cout << "min length ads: " << totalMinLengthAds << endl;
+    cout << "max length ads: " << totalMaxLengthAds << endl;
+
     cout << "number of dfsm with ads: " << numberOfDfsmWithAds << endl;
-    cout << "number of dfsm with pds: " << numberOfDfsmWithPds << endl;
+    cout << "number of dfsm with pds: " << numberOfDfsmWithPds << endl << endl;
 }
 
 int main(int argc, char* argv[])
@@ -190,6 +240,7 @@ int main(int argc, char* argv[])
 
     testCustomAds();
     //testRandomAds(30, 4, 4);
+    /*
     testRandomApplicability(30,2,2);
     testRandomApplicability(30,4,4);
     testRandomApplicability(30,6,6);
@@ -199,6 +250,6 @@ int main(int argc, char* argv[])
     testRandomApplicability(50,6,6);
     testRandomApplicability(50,10,10);
     testRandomApplicability(50,17,17);
-
+*/
 
 }

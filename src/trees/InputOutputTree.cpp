@@ -115,3 +115,22 @@ string InputOutputTree::str()
     }
     return str;
 }
+
+std::shared_ptr<std::vector<std::vector<int>>> InputOutputTree::getHSI() {
+
+    calcLeaves();
+    std::shared_ptr<std::vector<std::vector<int>>> ioll = std::make_shared<std::vector<std::vector<int>>>(leaves.size(),std::vector<int>());
+
+    for (std::shared_ptr<TreeNode> n : leaves)
+    {
+        std::shared_ptr<AdaptiveTreeNode> an = static_pointer_cast<AdaptiveTreeNode>(n);
+        //the input field of a leaf of an ads is used to store the id of the dfsm state it is associated with
+        int state = an->getInput();
+        if(state >= leaves.size() || !ioll->at(state).empty()) {
+            return shared_ptr<vector<vector<int>>>();
+        }
+        (*ioll)[state] = an->getInputPath();
+    }
+
+    return ioll;
+}

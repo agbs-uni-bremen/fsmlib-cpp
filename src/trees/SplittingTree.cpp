@@ -347,8 +347,12 @@ void SplittingTree::build() {
 
             auto adaptiveEdge = make_shared<TreeEdge>(edge->getOutput(),w);
             u->add(adaptiveEdge);
-            if(initialToCurrentSet->size() > 1)
+            if(initialToCurrentSet->size() > 1) {
                 indistinctLeaves.push(w);
+            } else {
+                //Use input field to store the dfsm state id this leaf is associated with
+                w->setInput(initialToCurrentSet->begin()->first);
+            }
         }
     }
 
