@@ -278,7 +278,10 @@ public:
     *                     which the implementation DFSM in minimised
     *                     for may have, when compared to the reference
     *                     model in minimised form.
-	* @return A test suite
+    * @param useAdaptiveDistinguishingSequence  If set to true, an adaptive distinguishing sequence (ads)
+    * 											instead of a (preset) distinguishing sequence (pds) is used for test generation.
+    * 											Like pds ads do not exist for every dfsm, but still are more common.
+ 	* @return A test suite
     *
     * @note The size of the test suite to be produced grows exponentially
     *        with numAddStates
@@ -287,12 +290,12 @@ public:
     *       then method dMethodOnMinimisedDfsm() should rather be used,
     *       since it avoids unnecessary minisation steps.
 	*/
-	IOListContainer dMethod(const unsigned int numAddStates);
+	IOListContainer dMethod(const unsigned int numAddStates, bool useAdaptiveDistinguishingSequence);
 
 	/**
      *  Apply the D-Method on a DFSM that is already minimised
      */
-	IOListContainer dMethodOnMinimisedDfsm(const unsigned int numAddStates);
+	IOListContainer dMethodOnMinimisedDfsm(const unsigned int numAddStates, bool useAdaptiveDistinguishingSequence);
 
    /**
 	* Perform test generation by means of the W-Method.
@@ -476,7 +479,7 @@ public:
     /**
      * Creates a distinguishing sequencce for this DFSM (if it exists, otherwise the result is an empty sequence),
      * that can distinguish every state from every other state.
-     * A required condition for the existence of a distinguishing sequencce is, that the DFSM is minimal.
+     * A required condition for the existence of a distinguishing sequence is, that the DFSM is minimal.
      */
     std::vector<int> createDistinguishingSequence();
 

@@ -4,6 +4,8 @@
  * Licensed under the EUPL V.1.1
  */
 #include "trees/IOListContainer.h"
+#include "IOListContainer.h"
+
 
 bool IOListContainer::isLastLst(const int maxInput, const std::vector<int>& lst) const
 {
@@ -221,4 +223,12 @@ std::ostream & operator<<(std::ostream & out, const IOListContainer & ot)
 	}
 	out << " }";
 	return out;
+}
+
+int IOListContainer::getFlatSize() const {
+    int sum = 0;
+    for(auto& l:*iolLst) {
+       sum += static_cast<int>(l.size());
+    }
+    return sum;
 }

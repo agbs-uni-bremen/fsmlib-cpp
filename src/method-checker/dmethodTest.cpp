@@ -92,7 +92,7 @@ void testRandomFaultCoverage(const int numStates,const int numInput,const int nu
     auto dfsm = make_shared<Dfsm>("Dfsm", numStates, numInput, numOutput, pl);
     shared_ptr<Dfsm> dfsmMin = make_shared<Dfsm>(dfsm->minimise());
     dfsmMin->toDot("dfsm_min_fc");
-    IOListContainer ts = dfsmMin->dMethodOnMinimisedDfsm(0);
+    IOListContainer ts = dfsmMin->dMethodOnMinimisedDfsm(0, false);
 
 
     vector<IOTrace> dTestsuite;
@@ -146,7 +146,7 @@ void testRandomFaultCoverage(const int numStates,const int numInput,const int nu
     cout << "Number of mutants: " << count_mutants << endl;
     cout << "Number of equal Mutants: " << count_equals << endl;
     cout << "Number of mutants passing D-Method Testsuite: " << count_dMethod_pass << endl;
-    cout << "Testsuite size: " << dTestsuite.size() << endl;
+    cout << "Testsuite size: " << ts.getFlatSize() << endl;
 }
 
 void testRandomApplicability(const int numStates,const int numInput,const int numOutput)
@@ -183,8 +183,8 @@ int main(int argc, char* argv[])
     //LogCoordinator& logger = LogCoordinator::getStandardLogger();
     //logger.setDefaultStream(cout);
 
-    //testRandomFaultCoverage(30,6,6);
-    testRandomApplicability(30,7,7);
+    testRandomFaultCoverage(30,6,6);
+    //testRandomApplicability(30,7,7);
 
 }
 

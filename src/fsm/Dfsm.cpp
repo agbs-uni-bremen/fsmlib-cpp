@@ -3,6 +3,7 @@
  *
  * Licensed under the EUPL V.1.1
  */
+#include <cassert>
 #include "fsm/Dfsm.h"
 #include "fsm/FsmNode.h"
 #include "fsm/FsmTransition.h"
@@ -13,6 +14,7 @@
 #include "trees/Tree.h"
 #include "trees/DistinguishingTree.h"
 #include "trees/SplittingTree.h"
+#include "trees/InputOutputTree.h"
 #include "Dfsm.h"
 
 
@@ -1198,14 +1200,14 @@ bool Dfsm::pass(const IOTrace & io)
     return myIO.getOutputTrace() == io.getOutputTrace();
 }
 
-IOListContainer Dfsm::dMethod(const unsigned int numAddStates) {
+IOListContainer Dfsm::dMethod(const unsigned int numAddStates, bool useAdaptiveDistinguishingSequence) {
 
     Dfsm dfsmMin = minimise();
-    return dfsmMin.dMethodOnMinimisedDfsm(numAddStates);
+    return dfsmMin.dMethodOnMinimisedDfsm(numAddStates, false);
 
 }
 
-IOListContainer Dfsm::dMethodOnMinimisedDfsm(const unsigned int numAddStates)
+IOListContainer Dfsm::dMethodOnMinimisedDfsm(const unsigned int numAddStates, bool useAdaptiveDistinguishingSequence)
 {
     shared_ptr<Tree> iTree = getTransitionCover();
 
@@ -1217,17 +1219,43 @@ IOListContainer Dfsm::dMethodOnMinimisedDfsm(const unsigned int numAddStates)
                                                     presentationLayer);
         iTree->add(inputEnum);
     }
+    if(!useAdaptiveDistinguishingSequence) {
+        vector<int> distinguishingSequence = createDistinguishingSequence();
+        if (distinguishingSequence.empty()) {
+            return IOListContainer(presentationLayer);
+        }
 
-    vector<int> distinguishingSequence = createDistinguishingSequence();
-    if(distinguishingSequence.size() == 0) {
-        return IOListContainer(presentationLayer);
+        auto iolst = make_shared<vector<vector<int>>>();
+        iolst->push_back(distinguishingSequence);
+        IOListContainer w(iolst, presentationLayer);
+
+        iTree->add(w);
+    }else {
+        shared_ptr<InputOutputTree> adaptiveDistinguishingSequence = createAdaptiveDistinguishingSequence();
+        if(!adaptiveDistinguishingSequence) {
+            return IOListContainer(presentationLayer);
+        }
+
+        auto hsi = adaptiveDistinguishingSequence->getHSI();
+
+        IOListContainer cnt = iTree->getIOLists();
+        for (vector<int> lli : *cnt.getIOLists())
+        {
+            InputTrace itrc = InputTrace(lli, presentationLayer);
+
+            unordered_set<shared_ptr<FsmNode>> tgtNodes = getInitialState()->after(itrc);
+            //Since the dfsm must be deterministic and completely specified at this point, there ist exactly one target node
+            assert(tgtNodes.size() == 1);
+            int targetId = (*tgtNodes.begin())->getId();
+
+            auto tgtHsi = hsi->at(targetId);
+            auto iolst = make_shared<vector<vector<int>>>();
+            iolst->push_back(tgtHsi);
+            IOListContainer h(iolst, presentationLayer);
+
+            iTree->addAfter(itrc,h);
+        }
     }
-
-    auto iolst = make_shared<vector<vector<int>>>();
-    iolst->push_back(distinguishingSequence);
-    IOListContainer w(iolst,presentationLayer);
-
-    iTree->add(w);
     return iTree->getIOLists();
 }
 

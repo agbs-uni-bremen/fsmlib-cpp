@@ -233,13 +233,81 @@ void testRandomApplicability(const int numStates,const int numInput,const int nu
     cout << "number of dfsm with pds: " << numberOfDfsmWithPds << endl << endl;
 }
 
+void testRandomFaultCoverage(const int numStates,const int numInput,const int numOutput)
+{
+
+    srand(getRandomSeed());
+
+    shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(numInput,numStates,numOutput);
+    auto dfsm = make_shared<Dfsm>("Dfsm", numStates, numInput, numOutput, pl);
+    shared_ptr<Dfsm> dfsmMin = make_shared<Dfsm>(dfsm->minimise());
+    dfsmMin->toDot("dfsm_min_fc");
+    IOListContainer ts = dfsmMin->dMethodOnMinimisedDfsm(0, true);
+
+
+    vector<IOTrace> dTestsuite;
+    for(vector<int> v: *ts.getIOLists()) {
+        InputTrace i(v,pl);
+        IOTrace io = dfsmMin->applyDet(i);
+        dTestsuite.push_back(io);
+    }
+
+    unsigned int count_equals=0,
+            count_dMethod_pass=0,
+            count_mutants=1000;
+    if(dTestsuite.size() > 0) {
+        for (int i = 0; i < count_mutants; i++) {
+            unsigned int numOutputFaults = rand() % ((dfsmMin->getMaxInput() + 1) * dfsmMin->getMaxNodes()),
+                    numTransitionFaults = rand() % ((dfsmMin->getMaxInput() + 1) * dfsmMin->getMaxNodes());
+
+            shared_ptr<Dfsm> mutant = dfsmMin->createMutant("Mutant", numOutputFaults, numTransitionFaults);
+
+
+            bool result = dfsmMin->equivalenceCheck(*mutant);
+            if (result) count_equals++;
+
+            result = true;
+            for (IOTrace io: dTestsuite) {
+                result &= mutant->pass(io);
+            }
+            if (result) count_dMethod_pass++;
+        }
+        /*cout << "Printing the d-testsuite:" << endl;
+        for(IOTrace io:dTestsuite) {
+            cout << io << endl;
+        }
+        cout << "the ds:" << endl;
+        auto ds = dfsmMin->createDistinguishingSequence();
+        for(auto i:ds) {
+            cout << i << ".";
+        }
+        cout << endl;
+        InputTrace dstrace(ds,dfsm->getPresentationLayer());
+        for(auto& node: dfsmMin->getNodes()) {
+            vector<shared_ptr<OutputTrace>> outputs;
+            node->getPossibleOutputs(dstrace,outputs);
+            cout << "output for node " << node->getId() << endl;
+            for(auto& output:outputs) {
+                cout << *output << endl;
+            }
+        }*/
+    }
+    cout << "|Fault coverage test|" << endl;
+    cout << "Number of mutants: " << count_mutants << endl;
+    cout << "Number of equal Mutants: " << count_equals << endl;
+    cout << "Number of mutants passing D-Method(ADS) Testsuite: " << count_dMethod_pass << endl;
+    cout << "Testsuite size: " << ts.getFlatSize() << endl;
+}
+
 int main(int argc, char* argv[])
 {
 
     srand(getRandomSeed());
 
-    testCustomAds();
-    //testRandomAds(30, 4, 4);
+    //testCustomAds();
+    //testRandomAds(15, 3, 3);
+    testRandomFaultCoverage(30, 6, 6);
+
     /*
     testRandomApplicability(30,2,2);
     testRandomApplicability(30,4,4);

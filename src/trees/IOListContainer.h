@@ -93,6 +93,12 @@ public:
      */
     int size() const;
 
+    /**
+    * Returns the total count of elements over all traces
+    * @return total count of elements over all traces
+    */
+    int getFlatSize() const;
+
     static bool contains(const std::shared_ptr<std::vector<std::vector<int>>>& ioll, const std::vector<int>& trace);
     
     /**
