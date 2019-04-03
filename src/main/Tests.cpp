@@ -689,6 +689,7 @@ TestResult removeUnreachableNodes_TS() {
 			result.fails.push_back("TC-Part-" + tc.id);
 		}
 	}
+	result.printResults();
 	return result;
 }
 
@@ -759,6 +760,7 @@ TestResult transformToObservableFSM_TS() {
 			result.fails.push_back("TC-Part-" + tc.id);
 		}
 	}
+	result.printResults();
 	return result;
 }
 
@@ -818,6 +820,7 @@ TestResult minimise_Dfsm_TS() {
 			result.fails.push_back("TC-Part-" + tc.id);
 		}
 	}
+	result.printResults();
 	return result;
 }
 
@@ -899,6 +902,7 @@ TestResult minimiseObservableFSM_TS() {
 			result.fails.push_back("TC-Part-" + tc.id);
 		}
 	}
+	result.printResults();
 	return result;
 }
 
@@ -978,6 +982,7 @@ TestResult minimise_Fsm_TS() {
 			result.fails.push_back("TC-Part-" + tc.id);
 		}
 	}
+	result.printResults();
 	return result;
 }
 
@@ -1220,6 +1225,7 @@ TestResult intersect_TS() {
 			result.fails.push_back("TC-Part-" + tc.id);
 		}
 	}
+	result.printResults();
 	return result;
 }
 
@@ -1774,6 +1780,7 @@ TestResult getCharacterisationSet_Dfsm_TS() {
 			result.fails.push_back("TC-Part-" + tc.id);
 		}
 	}
+	result.printResults();
 	return result;
 }
 
@@ -1855,6 +1862,7 @@ TestResult getCharacterisationSet_Fsm_TS() {
 	//shared_ptr<Fsm> m = createNonObservableTC();
 	//m->getCharacterisationSet();
 
+	result.printResults();
 	return result;
 }
 
@@ -1924,6 +1932,7 @@ TestResult calcDistinguishingTrace_PkTables_TS() {
 	//cout << "------------------------------- Start Additional Tests (Branch Coverage) -------------------------------" << endl;
 	//testCalcDistinguishingTrace1(*createNonMinimisedDeterministicTC(), "TC-Coverage-1");
 
+	result.printResults();
 	return result;
 }
 
@@ -2005,6 +2014,7 @@ TestResult calcDistinguishingTrace_OFSMTables_TS() {
 	//cout << "------------------------------- Start Additional Tests (Branch Coverage) -------------------------------" << endl;
 	//testCalcDistinguishingTrace2(*createNonMinimisedDeterministicTC(), "TC-Coverage-1");
 
+	result.printResults();
 	return result;
 }
 
@@ -2122,7 +2132,7 @@ TestResult calcStateIdentificationSets_TS() {
 	//	csm.calcStateIdentificationSets();
 	//}
 	
-
+	result.printResults();
 	return result;
 }
 
@@ -2290,12 +2300,11 @@ TestResult calcStateIdentificationSetsFast_TS() {
 
 	//	// 3) observable and characterisation calculated but nonminimal-branch
 	//	shared_ptr<Fsm> m2 = createNonMinimisedTC();
-	//	cout << *m2 << endl;
 	//	m2->getCharacterisationSet();
-	//	cout << *m2 << endl;
 	//	m2->calcStateIdentificationSetsFast();
 	//}
 
+	result.printResults();
 	return result;
 }
 
@@ -2744,13 +2753,12 @@ TestResult wMethod_Fsm_TS() {
 		}
 	}
 
-	result.printResults();
-
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Fsm_wMethod.testsuite");
 	for (auto tc : *testSuite) {
 		executeTestTheoryTC<Fsm>(tc, tsGenerator, result);
 	}
+	result.printResults();
 	return result;
 }
 
@@ -2819,12 +2827,12 @@ TestResult wMethod_Dfsm_TS() {
 			result.fails.push_back("TC-GDC-0");
 		}
 	}
-	result.printResults();
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Dfsm_wMethod.testsuite");
 	for (auto tc : *testSuite) {
 		executeTestTheoryTC<Dfsm>(tc, tsGenerator, result);
 	}
+	result.printResults();
 	return result;
 }
 
@@ -2940,12 +2948,12 @@ TestResult wMethodOnMinimisedFsm_TS() {
 			result.fails.push_back("TC-CSM-0");
 		}
 	}
-	result.printResults();
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Fsm_wMethodOnMinimisedFsm.testsuite");
 	for (auto tc : *testSuite) {
 		executeTestTheoryTC<Fsm>(tc, tsGenerator, result);
 	}
+	result.printResults();
 	return result;
 }
 
@@ -3014,12 +3022,12 @@ TestResult wMethodOnMinimisedDfsm_TS() {
 			result.fails.push_back("TC-GDC-0");
 		}
 	}
-	result.printResults();
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Dfsm_wMethodOnMinimisedDfsm.testsuite");
 	for (auto tc : *testSuite) {
 		executeTestTheoryTC<Dfsm>(tc, tsGenerator, result);
 	}
+	result.printResults();
 	return result;
 }
 
@@ -3111,12 +3119,12 @@ TestResult wpMethod_Fsm_TS() {
 			result.fails.push_back("TC-GDC-0");
 		}
 	}
-	result.printResults();
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Fsm_wpMethod.testsuite");
 	for (auto tc : *testSuite) {
 		executeTestTheoryTC<Fsm>(tc, tsGenerator, result);
 	}
+	result.printResults();
 	return result;
 }
 
@@ -3187,12 +3195,12 @@ TestResult wpMethod_Dfsm_TS() {
 			result.fails.push_back("TC-GDC-0");
 		}
 	}
-	result.printResults();
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Dfsm_wpMethod.testsuite");
 	for (auto tc : *testSuite) {
 		executeTestTheoryTC<Dfsm>(tc, tsGenerator, result);
 	}
+	result.printResults();
 	return result;
 }
 
@@ -3264,12 +3272,12 @@ TestResult wpMethodOnMinimisedDfsm_TS() {
 			result.fails.push_back("TC-GDC-0");
 		}
 	}
-	result.printResults();
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Dfsm_wpMethodOnMinimisedDfsm.testsuite");
 	for (auto tc : *testSuite) {
 		executeTestTheoryTC<Dfsm>(tc, tsGenerator, result);
 	}
+	result.printResults();
 	return result;
 }
 
@@ -3361,7 +3369,6 @@ TestResult hsiMethod_Fsm_TS() {
 			result.fails.push_back("TC-GDC-0");
 		}
 	}
-	result.printResults();
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Fsm_hsiMethod.testsuite");
 	for (auto tc : *testSuite) {
@@ -3378,6 +3385,7 @@ TestResult hsiMethod_Fsm_TS() {
 	//shared_ptr<Fsm> m = createNonMinimisedTC();
 	//m->hsiMethod(0);
 
+	result.printResults();
 	return result;
 }
 
@@ -3461,12 +3469,12 @@ TestResult hsiMethod_Dfsm_TS() {
 			result.fails.push_back("TC-GDC-0");
 		}
 	}
-	result.printResults();
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Dfsm_hsiMethod.testsuite");
 	for (auto tc : *testSuite) {
 		executeTestTheoryTC<Dfsm>(tc, tsGenerator, result);
 	}
+	result.printResults();
 	return result;
 }
 
@@ -3540,12 +3548,12 @@ TestResult hMethodOnMinimisedDfsm_TS() {
 			result.fails.push_back("TC-GDC-0");
 		}
 	}
-	result.printResults();
 	cout << "------------------------------- Start Partition Tests -------------------------------" << endl;
 	auto testSuite = parseTestTheoryTSFile("../../../resources/TestSuites/TestTheories/Dfsm_hMethodOnMinimisedDfsm.testsuite");
 	for (auto tc : *testSuite) {
 		executeTestTheoryTC<Dfsm>(tc, tsGenerator, result);	
 	}
+	result.printResults();
 	return result;
 }
 
@@ -3669,6 +3677,7 @@ TestResult tMethod_TS() {
 			result.fails.push_back("TC-Part-" + tc.id);
 		}
 	}
+	result.printResults();
 	return result;
 }
 
