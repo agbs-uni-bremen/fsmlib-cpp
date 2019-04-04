@@ -261,14 +261,14 @@ public:
 	bool pass(const IOTrace & io);
 
 	/**
-	* Perform test generation by means of the D-Method, as described in
-	*  		Dorofeeva, Rita ; El-Fakih, Khaled ; Maag, Stephane ; Cavalli, Ana R. ;
-	*		Yevtushenko, Nina: FSM-based conformance testing methods: A survey anno-
-	*		tated with experimental evaluation. In: Information and Software Technology 52
-	*		(2010), Nr. 12, 1286 - 1297. http://dx.doi.org/https://doi.org/10.1016/
-	*		j.infsof.2010.07.001. – DOI https://doi.org/10.1016/j.infsof.2010.07.001. –
-	*		ISSN 0950–5849.
-	*
+	* Perform test generation by means of the D-Method, as described in <br>
+	*  		Dorofeeva, Rita ; El-Fakih, Khaled ; Maag, Stephane ; Cavalli, Ana R. ;<br>
+	*		Yevtushenko, Nina: FSM-based conformance testing methods: A survey anno-<br>
+	*		tated with experimental evaluation. In: Information and Software Technology 52<br>
+	*		(2010), Nr. 12, 1286 - 1297. http://dx.doi.org/https://doi.org/10.1016/<br>
+	*		j.infsof.2010.07.001. – DOI https://doi.org/10.1016/j.infsof.2010.07.001. –<br>
+	*		ISSN 0950–5849.<br>
+	*<br><br>
     * The DFSM this method is applied to is regarded as the reference
     * model. If an implementation DFSM passes this test suite, this proves
     * language equivalence (I/O-equivalence) between reference DFSM and
@@ -278,7 +278,7 @@ public:
     * the test suite may not uncover certain errors in the implementation DFSM.
     * Furthermore, there must exist a distinguishing sequence for the reference model,
     * otherwise the D-Method cannot be applied and the returned test suite is empty.
-    *
+    *<br><br>
     * The reference DFSM will first be minimised, and then the
     * proper D-Method is applied to the minimised DFSM.
 	* @param numAddStates The maximal number of additional states,
@@ -306,23 +306,23 @@ public:
 
 
 	/**
-	* Perform test generation by means of a D-Method variant inspired by Hierons et. al. and guided by the descriptions in,
-	* 	Hierons, R. M. ; Jourdan, G. ; Ural, H. ; Yenigun, H.: Checking Sequence
-	*	Construction Using Adaptive and Preset Distinguishing Sequences. In: 2009
-	*	Seventh IEEE International Conference on Software Engineering and Formal
-	*	Methods, 2009. – ISSN 1551–0255, S. 157–166
-	* and
-	*   Hierons, Robert ; Ural, H: Generating a checking sequence with a minimum
-	*	number of reset transitions. In: Automated Software Engineering 17 (2010),
-	*	09, S. 217–250. http://dx.doi.org/10.1007/s10515-009-0061-0. – DOI
-	*	10.1007/s10515–009–0061–0
+	* Perform test generation by means of a D-Method variant inspired by Hierons et. al. and guided by the descriptions in,<br>
+	* 	Hierons, R. M. ; Jourdan, G. ; Ural, H. ; Yenigun, H.: Checking Sequence <br>
+	*	Construction Using Adaptive and Preset Distinguishing Sequences. In: 2009 <br>
+	*	Seventh IEEE International Conference on Software Engineering and Formal <br>
+	*	Methods, 2009. – ISSN 1551–0255, S. 157–166 <br>
+	* and <br>
+	*   Hierons, Robert ; Ural, H: Generating a checking sequence with a minimum <br>
+	*	number of reset transitions. In: Automated Software Engineering 17 (2010), <br>
+	*	09, S. 217–250. http://dx.doi.org/10.1007/s10515-009-0061-0. – DOI <br>
+	*	10.1007/s10515–009–0061–0 <br>
 	* A thourough explanation of the exact combinations of techniques and algorithms used from both sources
 	* for this custom variant of the D-Method can be found in the Master Thesis "Implementation and Evaluation of the D-Method"
 	* written by Tamim Wahage at the University of Bremen for the Arbeitsgruppe Betriebssysteme,Verteilte Systeme and
 	* examined by Prof. Dr. Jan Peleska, which has yet to be published.
 	* A major difference of this D-Method variant and the variants described in the two first sources, is that a testsuite
 	* with multiple test cases instead of a single checking sequence is created.
-	*
+	* <br><br>
     * The DFSM this method is applied to is regarded as the reference
     * model. If an implementation DFSM passes this test suite, this proves
     * language equivalence (I/O-equivalence) between reference DFSM and
@@ -332,7 +332,7 @@ public:
     * the test suite may not uncover certain errors in the implementation DFSM.
     * Furthermore, there must exist a distinguishing sequence for the reference model,
     * otherwise the D-Method cannot be applied and the returned test suite is empty.
-    *
+    * <br> <br>
     * The reference DFSM will first be minimised, and then the
     * proper D-Method is applied to the minimised DFSM.
     * @param useAdaptiveDistinguishingSequence  If set to true, an adaptive distinguishing sequence (ads)

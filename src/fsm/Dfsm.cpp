@@ -15,6 +15,7 @@
 #include "trees/DistinguishingTree.h"
 #include "trees/SplittingTree.h"
 #include "trees/InputOutputTree.h"
+#include "graphs/Node.h"
 #include "Dfsm.h"
 
 
@@ -1209,6 +1210,12 @@ IOListContainer Dfsm::dMethod(const unsigned int numAddStates, bool useAdaptiveD
 
 IOListContainer Dfsm::dMethodOnMinimisedDfsm(const unsigned int numAddStates, bool useAdaptiveDistinguishingSequence)
 {
+    //check if the node ids respect a proper indexing function, otherwise quit with an empty testsuite
+    if(!validateNodeIds()) {
+        cerr << "D-Method: node ids are not valid" << endl;
+        return IOListContainer(presentationLayer);
+    }
+
     shared_ptr<Tree> iTree = getTransitionCover();
 
     if (numAddStates > 0)
@@ -1269,9 +1276,18 @@ IOListContainer Dfsm::hieronsDMethod(bool useAdaptiveDistinguishingSequence) {
 IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishingSequence) {
     auto hsi = make_shared<vector<vector<int>>>();
 
+    //check if the node ids respect a proper indexing function, otherwise quit with an empty testsuite
+    if(!validateNodeIds()) {
+        cerr << "(Hierons) D-Method: node ids are not valid" << endl;
+        return IOListContainer(presentationLayer);
+    }
+
     /*
-     * use either ads or pds depending on 'useAdaptiveDistinguishingSequence'. if neither exists, an empty testsuite is delivered.
-     * for the sake of less code and at the cost of more space. both ads and pds traces are stored in 'hsi' without loss of generality
+     * use either ads or preset distinguishing sequences (pds) depending on 'useAdaptiveDistinguishingSequence'.
+     * if neither exists, an empty testsuite is delivered.
+     * for the sake of less code and at the cost of more space. both ads and pds traces are stored in 'hsi'
+     * without loss of generality.
+     * 'hsi' maps the same input trace to every node of the dfsm if a pds is used.
      */
     if(useAdaptiveDistinguishingSequence) {
         auto adaptiveDistinguishingSequence = createAdaptiveDistinguishingSequence();
@@ -1285,13 +1301,30 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
         if(distinguishingSequence.empty()) {
             return IOListContainer(presentationLayer);
         } else {
-            for(int i=0;i<getNodes().size();++i) {
+            for(int i=0;i<size();++i) {
                 hsi->push_back(distinguishingSequence);
             }
         }
     }
 
     //generate optimized alpha sequences
+    vector<shared_ptr<Node>> dsGraphNodes(size(),nullptr);
+    for(auto& fsmNode:getNodes()) {
+        auto newDsNode = make_shared<Node>(fsmNode->getId());
+        //it is assumed that fsm node ids respect the node set size and dont exceed that boundary
+        dsGraphNodes[fsmNode->getId()] = newDsNode;
+        //a nonempty hsi must exist for every node at this point
+        auto dsForNode = hsi->at(fsmNode->getId());
+        //since dfsm must be deterministic and completely specified at this point, there must be exactly one target node
+        auto targetNodes = fsmNode->after(dsForNode);
+        shared_ptr<FsmNode> targetNode = *targetNodes.begin();
+        auto& targetDsNode = dsGraphNodes[targetNode->getId()];
+        if(!targetDsNode)
+            targetDsNode = make_shared<Node>(targetNode->getId());
+
+
+
+    }
 
     auto ioll = make_shared<vector<vector<int>>>();
     return IOListContainer(ioll, presentationLayer);

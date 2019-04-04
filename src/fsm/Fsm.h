@@ -934,5 +934,14 @@ public:
      */
     bool equivalenceCheck(const Fsm& fsm) const;
 
+    /**
+     * Check whether the ids of the nodes are
+     * 1. unique
+     * 2. respecting the node set size 'n' and dont exceed that boundary
+     *
+     * so that we have guarenteed a bijective indexing function from {0,...,n-1} to the set of nodes
+     */
+    bool validateNodeIds() const;
+
 };
 #endif //FSM_FSM_FSM_H_
