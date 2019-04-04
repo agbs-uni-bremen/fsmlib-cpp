@@ -59,7 +59,7 @@ public:
     * state identifiers for the dfsm.
     * @return a list of input traces indexed by fsm node ids of the dfsm, this tree represents an adaptive distinguishing sequence for or an empty smart pointer if thats not the case
     */
-    std::shared_ptr<std::vector<std::vector<int>>> getHSI();
+    std::shared_ptr<std::vector<std::vector<int>>> getHsi();
 
     std::shared_ptr<InputOutputTree> Clone() const;
 

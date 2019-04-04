@@ -261,7 +261,14 @@ public:
 	bool pass(const IOTrace & io);
 
 	/**
-	* Perform test generation by means of the D-Method.
+	* Perform test generation by means of the D-Method, as described in
+	*  		Dorofeeva, Rita ; El-Fakih, Khaled ; Maag, Stephane ; Cavalli, Ana R. ;
+	*		Yevtushenko, Nina: FSM-based conformance testing methods: A survey anno-
+	*		tated with experimental evaluation. In: Information and Software Technology 52
+	*		(2010), Nr. 12, 1286 - 1297. http://dx.doi.org/https://doi.org/10.1016/
+	*		j.infsof.2010.07.001. – DOI https://doi.org/10.1016/j.infsof.2010.07.001. –
+	*		ISSN 0950–5849.
+	*
     * The DFSM this method is applied to is regarded as the reference
     * model. If an implementation DFSM passes this test suite, this proves
     * language equivalence (I/O-equivalence) between reference DFSM and
@@ -296,6 +303,56 @@ public:
      *  Apply the D-Method on a DFSM that is already minimised
      */
 	IOListContainer dMethodOnMinimisedDfsm(const unsigned int numAddStates, bool useAdaptiveDistinguishingSequence);
+
+
+	/**
+	* Perform test generation by means of a D-Method variant inspired by Hierons et. al. and guided by the descriptions in,
+	* 	Hierons, R. M. ; Jourdan, G. ; Ural, H. ; Yenigun, H.: Checking Sequence
+	*	Construction Using Adaptive and Preset Distinguishing Sequences. In: 2009
+	*	Seventh IEEE International Conference on Software Engineering and Formal
+	*	Methods, 2009. – ISSN 1551–0255, S. 157–166
+	* and
+	*   Hierons, Robert ; Ural, H: Generating a checking sequence with a minimum
+	*	number of reset transitions. In: Automated Software Engineering 17 (2010),
+	*	09, S. 217–250. http://dx.doi.org/10.1007/s10515-009-0061-0. – DOI
+	*	10.1007/s10515–009–0061–0
+	* A thourough explanation of the exact combinations of techniques and algorithms used from both sources
+	* for this custom variant of the D-Method can be found in the Master Thesis "Implementation and Evaluation of the D-Method"
+	* written by Tamim Wahage at the University of Bremen for the Arbeitsgruppe Betriebssysteme,Verteilte Systeme and
+	* examined by Prof. Dr. Jan Peleska, which has yet to be published.
+	* A major difference of this D-Method variant and the variants described in the two first sources, is that a testsuite
+	* with multiple test cases instead of a single checking sequence is created.
+	*
+    * The DFSM this method is applied to is regarded as the reference
+    * model. If an implementation DFSM passes this test suite, this proves
+    * language equivalence (I/O-equivalence) between reference DFSM and
+    * implementation DFSM, provided that the implementation DFSM in minimised
+    * form does not have more than the same amount of states as the minimised reference DFSM.
+    * If this assumption does not hold,
+    * the test suite may not uncover certain errors in the implementation DFSM.
+    * Furthermore, there must exist a distinguishing sequence for the reference model,
+    * otherwise the D-Method cannot be applied and the returned test suite is empty.
+    *
+    * The reference DFSM will first be minimised, and then the
+    * proper D-Method is applied to the minimised DFSM.
+    * @param useAdaptiveDistinguishingSequence  If set to true, an adaptive distinguishing sequence (ads)
+    * 											instead of a (preset) distinguishing sequence (pds) is used for test generation.
+    * 											Like pds ads do not exist for every dfsm, but still are more common.
+ 	* @return A test suite
+    *
+    * @note this variant of the D-Method can not be used to test implementations with additional states, so there is
+    * 		no parameter to specify the number of additional states.
+    *
+    * @note If it is already known that the reference DFSM is minimal,
+    *       then method hierDMethodOnMinimisedDfsm() should rather be used,
+    *       since it avoids unnecessary minisation steps.
+	*/
+	IOListContainer hieronsDMethod(bool useAdaptiveDistinguishingSequence);
+
+	/**
+	 * Apply the D-Method by Hierons et. al. on a DFSM that is already minimised
+	 */
+	IOListContainer hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishingSequence);
 
    /**
 	* Perform test generation by means of the W-Method.

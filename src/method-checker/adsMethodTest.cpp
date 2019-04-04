@@ -64,7 +64,7 @@ void testCustomAds()
     } else {
         cout << "algorithm delivers ads with following hsi:" << endl;
         //cout << *adaptiveDistinguishingSequence << endl;
-        auto ioll = adaptiveDistinguishingSequence->getHSI();
+        auto ioll = adaptiveDistinguishingSequence->getHsi();
         for(auto& ioLst:*ioll) {
             string iolst_str = "";
             for(int input:ioLst) {

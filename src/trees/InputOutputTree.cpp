@@ -116,7 +116,7 @@ string InputOutputTree::str()
     return str;
 }
 
-std::shared_ptr<std::vector<std::vector<int>>> InputOutputTree::getHSI() {
+std::shared_ptr<std::vector<std::vector<int>>> InputOutputTree::getHsi() {
 
     calcLeaves();
     std::shared_ptr<std::vector<std::vector<int>>> ioll = std::make_shared<std::vector<std::vector<int>>>(leaves.size(),std::vector<int>());

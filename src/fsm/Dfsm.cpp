@@ -1203,7 +1203,7 @@ bool Dfsm::pass(const IOTrace & io)
 IOListContainer Dfsm::dMethod(const unsigned int numAddStates, bool useAdaptiveDistinguishingSequence) {
 
     Dfsm dfsmMin = minimise();
-    return dfsmMin.dMethodOnMinimisedDfsm(numAddStates, false);
+    return dfsmMin.dMethodOnMinimisedDfsm(numAddStates, useAdaptiveDistinguishingSequence);
 
 }
 
@@ -1236,7 +1236,7 @@ IOListContainer Dfsm::dMethodOnMinimisedDfsm(const unsigned int numAddStates, bo
             return IOListContainer(presentationLayer);
         }
 
-        auto hsi = adaptiveDistinguishingSequence->getHSI();
+        auto hsi = adaptiveDistinguishingSequence->getHsi();
 
         IOListContainer cnt = iTree->getIOLists();
         for (vector<int> lli : *cnt.getIOLists())
@@ -1259,6 +1259,43 @@ IOListContainer Dfsm::dMethodOnMinimisedDfsm(const unsigned int numAddStates, bo
     return iTree->getIOLists();
 }
 
+IOListContainer Dfsm::hieronsDMethod(bool useAdaptiveDistinguishingSequence) {
+
+    Dfsm dfsmMin = minimise();
+    return dfsmMin.hieronsDMethodOnMinimisedDfsm(useAdaptiveDistinguishingSequence);
+
+}
+
+IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishingSequence) {
+    auto hsi = make_shared<vector<vector<int>>>();
+
+    /*
+     * use either ads or pds depending on 'useAdaptiveDistinguishingSequence'. if neither exists, an empty testsuite is delivered.
+     * for the sake of less code and at the cost of more space. both ads and pds traces are stored in 'hsi' without loss of generality
+     */
+    if(useAdaptiveDistinguishingSequence) {
+        auto adaptiveDistinguishingSequence = createAdaptiveDistinguishingSequence();
+        if(!adaptiveDistinguishingSequence) {
+            return IOListContainer(presentationLayer);
+        } else {
+            hsi = adaptiveDistinguishingSequence->getHsi();
+        }
+    } else {
+        auto distinguishingSequence = createDistinguishingSequence();
+        if(distinguishingSequence.empty()) {
+            return IOListContainer(presentationLayer);
+        } else {
+            for(int i=0;i<getNodes().size();++i) {
+                hsi->push_back(distinguishingSequence);
+            }
+        }
+    }
+
+    //generate optimized alpha sequences
+
+    auto ioll = make_shared<vector<vector<int>>>();
+    return IOListContainer(ioll, presentationLayer);
+}
 
 IOListContainer Dfsm::wMethod(const unsigned int numAddStates) {
 
@@ -1904,3 +1941,6 @@ shared_ptr<Dfsm> Dfsm::createMutant(const std::string & fsmName,
     return make_shared<Dfsm>(fsmName,maxInput,maxOutput,lst,presentationLayer);
 
 }
+
+
+
