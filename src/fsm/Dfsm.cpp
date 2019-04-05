@@ -1308,26 +1308,66 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
     }
 
     //generate optimized alpha sequences
+    auto optimizedAlphaSequences = createOptimizedAlphaSequences(hsi);
+
+
+    auto ioll = make_shared<vector<vector<int>>>();
+    return IOListContainer(ioll, presentationLayer);
+}
+
+
+shared_ptr<unordered_map<int, vector<int>>> Dfsm::createOptimizedAlphaSequences(const shared_ptr<vector<vector<int>>>& hsi) {
+
+    auto optimizedAlphaSequences = make_shared<unordered_map<int, vector<int>>>();
+
+    //hsi should contain singleton hsis for every state, otherwise optimized alpha sequences can not be created
+    if(hsi->size() != size()) return optimizedAlphaSequences;
+
+    //following two data structures are used to speed up the algorithm
+    //mapping from fsm node id to corresponding ds graph node, that have no unmarked ingoing edge and unmarked outoing edges
+    unordered_map<int, shared_ptr<Node>> S;
+    //mapping from fsm node id to corresponding ds graph node, that have unmarked outoing edges
+    unordered_map<int, shared_ptr<Node>> R;
+
+    //create the ds graph
     vector<shared_ptr<Node>> dsGraphNodes(size(),nullptr);
     for(auto& fsmNode:getNodes()) {
-        auto newDsNode = make_shared<Node>(fsmNode->getId());
-        //it is assumed that fsm node ids respect the node set size and dont exceed that boundary
-        dsGraphNodes[fsmNode->getId()] = newDsNode;
+        //it is assumed that fsm node ids respect the node set size and dont exceed that boundary. Furthermore thay should be unique
+        auto& sourceDsNode = dsGraphNodes[fsmNode->getId()];
+        if(!sourceDsNode) {
+            sourceDsNode = make_shared<Node>(fsmNode->getId());
+            S.insert({fsmNode->getId(),sourceDsNode});
+        }
+
         //a nonempty hsi must exist for every node at this point
         auto dsForNode = hsi->at(fsmNode->getId());
         //since dfsm must be deterministic and completely specified at this point, there must be exactly one target node
         auto targetNodes = fsmNode->after(dsForNode);
         shared_ptr<FsmNode> targetNode = *targetNodes.begin();
         auto& targetDsNode = dsGraphNodes[targetNode->getId()];
-        if(!targetDsNode)
+        if(!targetDsNode) {
             targetDsNode = make_shared<Node>(targetNode->getId());
+        } else {
+            S.erase(targetNode->getId());
+        }
 
+        auto dsEdge = make_shared<Edge>(dsForNode,sourceDsNode,targetDsNode);
+        sourceDsNode->addEdge(dsEdge);
+        targetDsNode->addInEdge(dsEdge);
 
+        R.insert({fsmNode->getId(),sourceDsNode});
+    }
+
+    //every node should have exactly one outgoing edge at this point, provided the fsm node ids are valid according to Fsm::validateNodeIds()
+    for(auto& idToNode:S) {
+        unordered_set<int> visitedNodeIds;
+        visitedNodeIds.insert(idToNode.first);
 
     }
 
-    auto ioll = make_shared<vector<vector<int>>>();
-    return IOListContainer(ioll, presentationLayer);
+    //derive alphasequences from the ds graph
+
+    return optimizedAlphaSequences;
 }
 
 IOListContainer Dfsm::wMethod(const unsigned int numAddStates) {
@@ -1974,6 +2014,8 @@ shared_ptr<Dfsm> Dfsm::createMutant(const std::string & fsmName,
     return make_shared<Dfsm>(fsmName,maxInput,maxOutput,lst,presentationLayer);
 
 }
+
+
 
 
 
