@@ -10,6 +10,9 @@ set (TEST_DMETHOD_SOURCES
 set (TEST_ADSMETHOD_SOURCES
 		adsMethodTest.cpp
 		)
+set (TEST_HIERONSMETHOD_SOURCES
+		hieronsMethodTest.cpp
+		)
 
 add_executable (method-checker ${METHOD_CHECKER_MAIN_SOURCES}
     	$<TARGET_OBJECTS:fsm-fsm>
@@ -51,6 +54,16 @@ add_executable (adsMethod-test ${TEST_ADSMETHOD_SOURCES}
 		$<TARGET_OBJECTS:fsm-cloneable>
 		)
 
+add_executable (hieronsMethod-test ${TEST_HIERONSMETHOD_SOURCES}
+		$<TARGET_OBJECTS:fsm-fsm>
+		$<TARGET_OBJECTS:fsm-interface>
+		$<TARGET_OBJECTS:fsm-sets>
+		$<TARGET_OBJECTS:fsm-trees>
+		$<TARGET_OBJECTS:fsm-graphs>
+		$<TARGET_OBJECTS:fsm-utils>
+		$<TARGET_OBJECTS:fsm-cloneable>
+		)
+
 target_link_libraries (method-checker jsoncpp)
 
 target_link_libraries (equivalence-test jsoncpp)
@@ -58,4 +71,7 @@ target_link_libraries (equivalence-test jsoncpp)
 target_link_libraries (dmethod-test jsoncpp)
 
 target_link_libraries (adsMethod-test jsoncpp)
+
+target_link_libraries (hieronsMethod-test jsoncpp)
+
 

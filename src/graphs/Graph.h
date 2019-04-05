@@ -27,6 +27,14 @@ public:
     * @param nodes the nodes of this graph
     */
     Graph(const vector<shared_ptr<Node>>& nodes);
+
+    /**
+    * Prints the graph in .dot format into the given filename (in the current path)
+    * @param fname the filename (without extension) to print the graph into
+    */
+    void toDot(const string& fname);
+
+    friend ostream & operator<<(ostream & out, const Graph & graph);
 };
 
 #endif //FSM_GRAPHS_GRAPH_H_

@@ -73,13 +73,15 @@ protected:
      * Creates optimized alpha sequences used by the D-Method by Hierons et. al. hieronsDMethodOnMinimisedDfsm(bool).
      * @param hsi the set of singleton Hsi's that is supposed to be derived from an adaptive distinguishing sequence
      *             (or an identicial preset distinguishing sequence copied for each state), where each element is indexed by the respective fsm node id
-     * @return optimized alpha sequences mapped to the id of the node, that is the starting node of the path, whose input portion the respective sequence labels
+     * @return optimized alpha sequences with their respective end node mapped to the id of the node,
+     *              that is the starting node of the path, whose input portion the respective sequence uniquely labels
      *
      * @note the algorithm used assumes that the fsm node ids are valid according to Fsm::validateNodeIds(). Otherwise the resulting mapping of alpha sequences is undefined
      *
      * @note if singleton hsi's do not exist for every state id (when the condition |Q|==|hsi| is not satisfied) an empty mapping of alpha sequences is returned
      */
-    std::shared_ptr<std::unordered_map<int,std::vector<int>>> createOptimizedAlphaSequences(const std::shared_ptr<std::vector<std::vector<int>>>& hsi);
+    std::shared_ptr<std::unordered_map<int, std::pair<std::vector<int>, int>>> createOptimizedAlphaSequences(
+            const std::shared_ptr<std::vector<std::vector<int>>> &hsi);
 
 public:
 	/**

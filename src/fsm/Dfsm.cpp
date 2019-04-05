@@ -16,6 +16,7 @@
 #include "trees/SplittingTree.h"
 #include "trees/InputOutputTree.h"
 #include "graphs/Node.h"
+#include "graphs/Graph.h"
 #include "Dfsm.h"
 
 
@@ -1203,8 +1204,8 @@ bool Dfsm::pass(const IOTrace & io)
 
 IOListContainer Dfsm::dMethod(const unsigned int numAddStates, bool useAdaptiveDistinguishingSequence) {
 
-    Dfsm dfsmMin = minimise();
-    return dfsmMin.dMethodOnMinimisedDfsm(numAddStates, useAdaptiveDistinguishingSequence);
+    auto dfsmMin = make_shared<Dfsm>(minimise());
+    return dfsmMin->dMethodOnMinimisedDfsm(numAddStates, useAdaptiveDistinguishingSequence);
 
 }
 
@@ -1268,8 +1269,8 @@ IOListContainer Dfsm::dMethodOnMinimisedDfsm(const unsigned int numAddStates, bo
 
 IOListContainer Dfsm::hieronsDMethod(bool useAdaptiveDistinguishingSequence) {
 
-    Dfsm dfsmMin = minimise();
-    return dfsmMin.hieronsDMethodOnMinimisedDfsm(useAdaptiveDistinguishingSequence);
+    auto dfsmMin = make_shared<Dfsm>(minimise());
+    return dfsmMin->hieronsDMethodOnMinimisedDfsm(useAdaptiveDistinguishingSequence);
 
 }
 
@@ -1310,15 +1311,30 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
     //generate optimized alpha sequences
     auto optimizedAlphaSequences = createOptimizedAlphaSequences(hsi);
 
+    /*for(auto& idToP:*optimizedAlphaSequences) {
+        int srcId = idToP.first;
+        vector<int>& ak = idToP.second.first;
+        int tgtId = idToP.second.second;
+        cout << "print optimized alpha sequences: " << endl;
+        cout << "start node -> " << srcId << endl;
+        cout << "target node -> " << tgtId << endl;
+        cout << "ak -> ";
+        for(int inp:ak) {
+            cout << to_string(inp) << ".";
+        }
+        cout << endl;
+    }*/
+
 
     auto ioll = make_shared<vector<vector<int>>>();
     return IOListContainer(ioll, presentationLayer);
 }
 
 
-shared_ptr<unordered_map<int, vector<int>>> Dfsm::createOptimizedAlphaSequences(const shared_ptr<vector<vector<int>>>& hsi) {
+shared_ptr<unordered_map<int, pair<vector<int>, int>>> Dfsm::createOptimizedAlphaSequences(
+        const shared_ptr<vector<vector<int>>> &hsi) {
 
-    auto optimizedAlphaSequences = make_shared<unordered_map<int, vector<int>>>();
+    auto optimizedAlphaSequences = make_shared<unordered_map<int, pair<vector<int>,int> >>();
 
     //hsi should contain singleton hsis for every state, otherwise optimized alpha sequences can not be created
     if(hsi->size() != size()) return optimizedAlphaSequences;
@@ -1358,14 +1374,90 @@ shared_ptr<unordered_map<int, vector<int>>> Dfsm::createOptimizedAlphaSequences(
         R.insert({fsmNode->getId(),sourceDsNode});
     }
 
-    //every node should have exactly one outgoing edge at this point, provided the fsm node ids are valid according to Fsm::validateNodeIds()
-    for(auto& idToNode:S) {
-        unordered_set<int> visitedNodeIds;
-        visitedNodeIds.insert(idToNode.first);
+    //derive alphasequences from the ds graph
 
+    //every node should have exactly one outgoing edge at this point, provided the fsm node ids are valid according to Fsm::validateNodeIds()
+    while(!S.empty()) {
+        int srcId = S.begin()->first,
+            tempSrcId = srcId;
+        auto currentNode = S.begin()->second;
+
+        auto alphaIt = optimizedAlphaSequences->insert({srcId,make_pair<vector<int>,int>(vector<int>(),move(tempSrcId))});
+        auto& alphaSequence = alphaIt.first->second.first;
+        auto& endNodeId = alphaIt.first->second.second;
+
+        S.erase(srcId);
+        R.erase(srcId);
+
+        while(true) {
+            //get that single outgoing edge of the current node without ingoing edges
+            auto edge = currentNode->getEdges().front();
+            //due to construction of the graph it is guaranteed that the weak_ptr lock call does get us a managed shared_ptr
+            auto targetNode = edge->getTarget().lock();
+
+            for(int input:edge->getTrace()) {
+                alphaSequence.push_back(input);
+            }
+
+            auto it = R.find(targetNode->getId());
+            if(it != R.end()) {
+                R.erase(targetNode->getId());
+                //should not be in S, but erase it for good measure
+                //S.erase(targetNode->getId());
+                currentNode = targetNode;
+            } else {
+                //Repeat the hsi of the node that has already been visited during the creation of another alpha sequence.
+                auto visitedEdge = targetNode->getEdges().front();
+                //that node is t-recognized
+                endNodeId = visitedEdge->getTarget().lock()->getId();
+                for(int input:visitedEdge->getTrace()) {
+                    alphaSequence.push_back(input);
+                }
+                break;
+            }
+        }
     }
 
-    //derive alphasequences from the ds graph
+    //there should only be cycles left
+    while(!R.empty()) {
+        int srcId = R.begin()->first,
+                tempSrcId = srcId;
+        auto currentNode = R.begin()->second;
+
+        auto alphaIt = optimizedAlphaSequences->insert({srcId,make_pair<vector<int>,int>(vector<int>(),move(tempSrcId))});
+        auto& alphaSequence = alphaIt.first->second.first;
+        auto& endNodeId = alphaIt.first->second.second;
+
+        R.erase(srcId);
+
+        while(true) {
+            //get that single outgoing edge of the current node without ingoing edges
+            auto edge = currentNode->getEdges().front();
+            //due to construction of the graph it is guaranteed that the weak_ptr lock call does get us a managed shared_ptr
+            auto targetNode = edge->getTarget().lock();
+
+            for(int input:edge->getTrace()) {
+                alphaSequence.push_back(input);
+            }
+
+            auto it = R.find(targetNode->getId());
+            if(it != R.end()) {
+                R.erase(targetNode->getId());
+                //should not be in S, but erase it for good measure
+                //S.erase(targetNode->getId());
+                currentNode = targetNode;
+            } else {
+                //Repeat the hsi of the node that has already been visited during the creation of another alpha sequence.
+                auto visitedEdge = targetNode->getEdges().front();
+                //that node is t-recognized
+                endNodeId = visitedEdge->getTarget().lock()->getId();
+                for(int input:visitedEdge->getTrace()) {
+                    alphaSequence.push_back(input);
+                }
+                break;
+            }
+        }
+    }
 
     return optimizedAlphaSequences;
 }
