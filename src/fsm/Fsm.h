@@ -183,6 +183,15 @@ protected:
 
 public:
 
+    /**
+     * Integer value for input labels, that is intepreted as a reset.
+     */
+    static const int RESET_INPUT = -1;
+
+    /**
+     * Integer value for output labels, that is intepreted as a reset null output.
+     */
+    static const int RESET_OUTPUT = -1;
 
     /** Copy constructor
      *  A deep copy is created, so that the new Fsm does not
@@ -938,6 +947,7 @@ public:
      * Check whether the ids of the nodes are
      * 1. unique
      * 2. respecting the node set size 'n' and dont exceed that boundary
+     * 3. matching their ids to the indices of #nodes
      *
      * so that we have guarenteed a bijective indexing function from {0,...,n-1} to the set of nodes
      */

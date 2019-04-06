@@ -28,6 +28,11 @@ protected:
     vector<int> trace;
 
     /**
+     * the cost of this edge
+     */
+    int cost;
+
+    /**
     The source node of this edge
     */
     weak_ptr<Node> source;
@@ -64,6 +69,11 @@ public:
     * @return the input trace of this edge
     */
     vector<int>& getTrace();
+
+    int getCost() const;
+
+    void setCost(int cost);
+
 
 };
 #endif //FSM_GRAPHS_EDGE_H_

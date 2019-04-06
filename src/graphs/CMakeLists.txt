@@ -10,6 +10,10 @@ set (FSM_GRAPHS_SOURCES
         PartitionGraph.cpp
         PartitionGraph.h
         PartitionGraphEdge.cpp
-        PartitionGraphEdge.h)
+        PartitionGraphEdge.h
+        Network.cpp
+        Network.h
+        NetworkEdge.cpp
+        NetworkEdge.h)
 
 add_library (fsm-graphs OBJECT ${FSM_GRAPHS_SOURCES})

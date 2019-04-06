@@ -35,8 +35,8 @@ void PartitionGraph::addEdge(shared_ptr<SplittingTreeNode> &nodeA, shared_ptr<Sp
     }
 
     if(!partitionNodeA) {
-        //create new partition graph node; dont care for id
-        partitionNodeA = make_shared<PartitionGraphNode>(0,nodeA);
+        //create new partition graph node
+        partitionNodeA = make_shared<PartitionGraphNode>(nodeA->getId(),nodeA);
         nodes.push_back(partitionNodeA);
     }
 
@@ -45,7 +45,7 @@ void PartitionGraph::addEdge(shared_ptr<SplittingTreeNode> &nodeA, shared_ptr<Sp
             partitionNodeB = partitionNodeA;
         } else {
             //create new partition graph node; dont care for id
-            partitionNodeB = make_shared<PartitionGraphNode>(0,nodeB);
+            partitionNodeB = make_shared<PartitionGraphNode>(nodeB->getId(),nodeB);
             nodes.push_back(partitionNodeB);
         }
     }

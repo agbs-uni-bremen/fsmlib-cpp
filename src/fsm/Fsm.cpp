@@ -4992,14 +4992,8 @@ bool Fsm::equivalenceCheck(const Fsm& fsm) const {
 }
 
 bool Fsm::validateNodeIds() const {
-    unordered_set<int> nodeIds;
     for(auto& node:nodes) {
-        if(node->getId() >= nodes.size()) return false;
-
-        auto it = nodeIds.insert(node->getId());
-        if(!it.second) {
-            return false;
-        }
+        if(node->getId() < nodes.size() && nodes[node->getId()]->getId() == node->getId()) continue;
     }
     return true;
 }

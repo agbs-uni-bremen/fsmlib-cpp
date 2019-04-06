@@ -17,6 +17,8 @@
 #include "trees/InputOutputTree.h"
 #include "graphs/Node.h"
 #include "graphs/Graph.h"
+#include "graphs/Network.h"
+#include "graphs/NetworkEdge.h"
 #include "Dfsm.h"
 
 
@@ -1325,6 +1327,111 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
         cout << endl;
     }*/
 
+    //compute the indegree for all fsm nodes
+    vector<int> idToIndegree(nodes.size(),0);
+    vector<shared_ptr<FsmNode>> idToFsmNode(nodes.size(),nullptr); //store mapping of id to fsmnode for faster access
+    for(auto& fsmNode:nodes) {
+        idToFsmNode[fsmNode->getId()] = fsmNode;
+        for(auto& tr:fsmNode->getTransitions()) {
+            idToIndegree[tr->getTarget()->getId()]++;
+        }
+    }
+
+    //create the network according to algorithm 6, we double the size of nodes, plus a source and a sink node
+    vector<shared_ptr<Node>> networkGraphNodes((nodes.size()*2)+2,nullptr);
+
+    //create the source and the sink node
+    auto& sourceNode = networkGraphNodes[nodes.size()*2]; //source gets the second to last id
+    sourceNode = make_shared<Node>(nodes.size()*2);
+
+    auto& sinkNode = networkGraphNodes[(nodes.size()*2)+1]; //sink gets the last id
+    sinkNode = make_shared<Node>((nodes.size()*2)+1);
+
+    for(auto& fsmNode:nodes) {
+        int indegree = idToIndegree[fsmNode->getId()],
+            outdegree = fsmNode->getTransitions().size();
+
+        auto& verifiedNode = networkGraphNodes[fsmNode->getId()+nodes.size()];
+        if(!verifiedNode) {
+            verifiedNode = make_shared<Node>(fsmNode->getId()+nodes.size());
+        }
+
+        auto& nonVerifiedNode = networkGraphNodes[fsmNode->getId()];
+        if(!nonVerifiedNode) {
+            nonVerifiedNode = make_shared<Node>(fsmNode->getId());
+        }
+
+        //create the edge to the sink node
+        auto sinkEdge = make_shared<NetworkEdge>(vector<int>(),verifiedNode,sinkNode,outdegree,0);
+        verifiedNode->addEdge(sinkEdge);
+        sinkNode->addInEdge(sinkEdge);
+
+        //create the edge from the source node
+        auto sourceEdge = make_shared<NetworkEdge>(vector<int>(),sourceNode,nonVerifiedNode,indegree,0);
+        sourceNode->addEdge(sourceEdge);
+        nonVerifiedNode->addInEdge(sourceEdge);
+
+        //create an alpha sequence edge for the non verified node (if one exists)
+        if(indegree > 0) {
+            auto it = optimizedAlphaSequences->find(fsmNode->getId());
+            if (it != optimizedAlphaSequences->end()) {
+                auto& alphaSequence = optimizedAlphaSequences->at(fsmNode->getId()).first;
+                int alphaTargetId = optimizedAlphaSequences->at(fsmNode->getId()).second + nodes.size();
+                auto &alphaTargetNode = networkGraphNodes[alphaTargetId];
+                if (!alphaTargetNode) {
+                    alphaTargetNode = make_shared<Node>(alphaTargetId);
+                }
+                auto alphaEdge = make_shared<NetworkEdge>(alphaSequence, nonVerifiedNode, alphaTargetNode,
+                        1, alphaSequence.size());
+                nonVerifiedNode->addEdge(alphaEdge);
+                alphaTargetNode->addInEdge(alphaEdge);
+                alphaEdge->setIsAlpha(true);
+                //decrease effective indegree for additional ds edges
+                indegree--;
+
+            }
+        }
+
+        //create ds edge for the non verified node
+        if(indegree > 0) {
+            auto& ds = hsi->at(fsmNode->getId());
+            //TODO: maybe find a more efficient way to get the target nodes of the hsis on the fly (maybe during creation of the alphasequences)?
+            shared_ptr<FsmNode> dsTargetFsmNode = *fsmNode->after(ds).begin();
+            auto &dsTargetNode = networkGraphNodes[dsTargetFsmNode->getId()];
+            if (!dsTargetNode) {
+                dsTargetNode = make_shared<Node>(dsTargetFsmNode->getId());
+            }
+            auto dsEdge = make_shared<NetworkEdge>(ds,nonVerifiedNode, dsTargetNode, indegree,ds.size());
+            nonVerifiedNode->addEdge(dsEdge);
+            dsTargetNode->addInEdge(dsEdge);
+            dsEdge->setIsDs(true);
+        }
+
+        //copy the fsm node edges to the network
+        for(auto& fsmTr:fsmNode->getTransitions()) {
+            auto& verifiedTargetNode = networkGraphNodes[fsmTr->getTarget()->getId()+nodes.size()];
+            if(!verifiedTargetNode) {
+                verifiedTargetNode = make_shared<Node>(fsmTr->getTarget()->getId()+nodes.size());
+            }
+            //the copied fsm edges possess infinite capacity
+            auto fsmEdge = make_shared<NetworkEdge>(vector<int> {fsmTr->getLabel()->getInput()},verifiedNode,verifiedTargetNode,-1,1);
+            verifiedNode->addEdge(fsmEdge);
+            verifiedTargetNode->addInEdge(fsmEdge);
+        }
+
+        //create the explicit reset edges between verified nodes
+        auto& initialStateNode = networkGraphNodes[initStateIdx];
+        if(!initialStateNode) {
+            initialStateNode = make_shared<Node>(initStateIdx);
+        }
+        //reset edges too possess infinite capacity
+        auto resetEdge = make_shared<NetworkEdge>(vector<int> {Fsm::RESET_INPUT},verifiedNode,initialStateNode,-1,1);
+        verifiedNode->addEdge(resetEdge);
+        initialStateNode->addInEdge(resetEdge);
+    }
+
+    auto network = make_shared<Network>(networkGraphNodes,sourceNode->getId(),sinkNode->getId());
+    network->calculateMinimumCostMaximumFlow();
 
     auto ioll = make_shared<vector<vector<int>>>();
     return IOListContainer(ioll, presentationLayer);
@@ -1347,7 +1454,7 @@ shared_ptr<unordered_map<int, pair<vector<int>, int>>> Dfsm::createOptimizedAlph
 
     //create the ds graph
     vector<shared_ptr<Node>> dsGraphNodes(size(),nullptr);
-    for(auto& fsmNode:getNodes()) {
+    for(auto& fsmNode:nodes) {
         //it is assumed that fsm node ids respect the node set size and dont exceed that boundary. Furthermore thay should be unique
         auto& sourceDsNode = dsGraphNodes[fsmNode->getId()];
         if(!sourceDsNode) {
