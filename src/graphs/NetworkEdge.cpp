@@ -9,7 +9,7 @@
 NetworkEdge::NetworkEdge(const vector<int> &trace, const weak_ptr<Node> &source, const weak_ptr<Node> &target,
                          int capacity,int cost)
                          :Edge(trace,source,target),capacity(capacity),flow(0),isDs(false),isAlpha(false),
-                         isReverse(false),reverseEdge(weak_ptr<NetworkEdge>())
+                         isReverse(false),referenceEdge(weak_ptr<NetworkEdge>())
 {
     this->cost = cost;
 }
@@ -54,10 +54,10 @@ void NetworkEdge::setIsReverse(bool isReverse) {
     NetworkEdge::isReverse = isReverse;
 }
 
-const weak_ptr<NetworkEdge> &NetworkEdge::getReverseEdge() const {
-    return reverseEdge;
+const weak_ptr<NetworkEdge> &NetworkEdge::getReferenceEdge() const {
+    return referenceEdge;
 }
 
-void NetworkEdge::setReverseEdge(const weak_ptr<NetworkEdge> &reverseEdge) {
-    NetworkEdge::reverseEdge = reverseEdge;
+void NetworkEdge::setReferenceEdge(const weak_ptr<NetworkEdge> &reverseEdge) {
+    NetworkEdge::referenceEdge = reverseEdge;
 }

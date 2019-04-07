@@ -1432,6 +1432,7 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
 
     auto network = make_shared<Network>(networkGraphNodes,sourceNode->getId(),sinkNode->getId());
     network->calculateMinimumCostMaximumFlow();
+    network->toDot("mcfp_network");
 
     auto ioll = make_shared<vector<vector<int>>>();
     return IOListContainer(ioll, presentationLayer);

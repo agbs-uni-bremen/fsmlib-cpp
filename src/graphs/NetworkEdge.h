@@ -43,9 +43,10 @@ protected:
     bool isReverse;
 
     /**
-     * the reverse edge, if one exists. for the reverse edge it is the pointer to the original edge and vice versa
+     * the edge this edge refers to in the original network, if this is a residual network, otherwise this pointer is empty.
+     * both reverse and forward edges should refer to the original forward edge.
      */
-    weak_ptr<NetworkEdge> reverseEdge;
+    weak_ptr<NetworkEdge> referenceEdge;
 
 public:
 
@@ -95,8 +96,8 @@ public:
 
     void setIsReverse(bool isReverse);
 
-    const weak_ptr<NetworkEdge> &getReverseEdge() const;
+    const weak_ptr<NetworkEdge> &getReferenceEdge() const;
 
-    void setReverseEdge(const weak_ptr<NetworkEdge> &reverseEdge);
+    void setReferenceEdge(const weak_ptr<NetworkEdge> &reverseEdge);
 };
 #endif // FSM_GRAPHS_NETWORKEDGE_H
