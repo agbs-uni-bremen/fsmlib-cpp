@@ -41,21 +41,23 @@ Network::Network(Network *network)
             if(!correspondingTargetNode) {
                 correspondingTargetNode = make_shared<Node>(targetNode->getId());
             }
+            int flow = castedEdge->getFlow(),
+                capacity = castedEdge->getCapacity();
             //add corresponding residual edge if the capacity is not maxed out by the flow
-            if(castedEdge->getFlow() < castedEdge->getCapacity())  {
+            if(capacity< 0 || flow < capacity)  {
                 //the corresponding edge does not have a trace (trace can be accessed over the reference edge pointer)
                 auto correspondingEdge = make_shared<NetworkEdge>(vector<int>(),correspondingNode,correspondingTargetNode,
-                        castedEdge->getCapacity() - castedEdge->getFlow(),castedEdge->getCost());
+                                                                  (capacity<0)?-1:capacity-flow,castedEdge->getCost());
                 correspondingNode->addEdge(correspondingEdge);
                 correspondingTargetNode->addInEdge(correspondingEdge);
                 //corresponding edges are linked to original network forward edge
                 correspondingEdge->setReferenceEdge(castedEdge);
             }
             //add reverse edges to the residual network
-            if(castedEdge->getFlow() > 0) {
+            if(flow > 0) {
                 //the corresponding reverse edge does not have a trace (trace can be accessed over the reference edge pointer)
                 auto reverseEdge = make_shared<NetworkEdge>(vector<int>(),nodes[targetNode->getId()],
-                        nodes[node->getId()],castedEdge->getFlow(),castedEdge->getCost() * -1);
+                        nodes[node->getId()],flow,castedEdge->getCost() * -1);
                 nodes[targetNode->getId()]->addEdge(reverseEdge);
                 nodes[node->getId()]->addInEdge(reverseEdge);
                 reverseEdge->setIsReverse(true);
@@ -69,16 +71,25 @@ Network::Network(Network *network)
 void Network::calculateMinimumCostMaximumFlow() {
 
     auto shortestPath = residualNetwork->shortestPathByBellmanFord(residualNetwork->nodes[sourceNodeId],residualNetwork->nodes[sinkNodeId]);
-    while(!shortestPath->empty()) {
+    while(shortestPath && !shortestPath->empty()) {
         //find the minimal absolute value by which the flow can be altered along the path
         int minFlow = static_pointer_cast<NetworkEdge>(shortestPath->at(0))->getCapacity();
         for(int i=1;i<shortestPath->size();++i) {
             auto& edge = shortestPath->at(i);
             auto castedEdge = static_pointer_cast<NetworkEdge>(edge);
-            minFlow = (minFlow == 0 || castedEdge->getCapacity() < minFlow)?castedEdge->getCapacity():minFlow;
+            int capacity = castedEdge->getCapacity();
+            minFlow = (capacity > 0 && (capacity < minFlow || minFlow < 0) )?capacity:minFlow;
         }
         //minflow should be greater zero at this point
-
+        if(minFlow < 0) { // this should not happen. if thats the case all edges on the path have infinite capacity
+            /**
+             * this means that the source node does have infinite capacity edges, that can not be maxed out (logically), so
+             * there is no max flow in this graph anyways, and thus no solution to the min cost/max flow problem
+             **/
+            return;
+        } else if(minFlow == 0){ // should not happen either
+            return;
+        }
         //augment the current flow und update the residual network accordingly
         for(auto& edge:*shortestPath) {
             auto castedEdge = static_pointer_cast<NetworkEdge>(edge);
@@ -89,19 +100,38 @@ void Network::calculateMinimumCostMaximumFlow() {
                 //decrease flow of forward arc
                 referenceEdge->setFlow(oldFlow - minFlow);
                 //check if the forward edge has to be added again
-                if(capacity == oldFlow) {
+                if(capacity > 0 && capacity == oldFlow) {
                     auto& node = residualNetwork->nodes[castedEdge->getTarget().lock()->getId()];
                     auto& targetNode = residualNetwork->nodes[castedEdge->getSource().lock()->getId()];
                     auto newForwardEdge = make_shared<NetworkEdge>(vector<int>(),node,
-                            castedEdge->getSource(),minFlow,castedEdge->getCost()*(-1));
+                            targetNode,minFlow,castedEdge->getCost()*(-1));
                     node->addEdge(newForwardEdge);
                     targetNode->addInEdge(newForwardEdge);
+                    newForwardEdge->setReferenceEdge(referenceEdge);
+                } else if(capacity < oldFlow) {
+                    //update the capacity of the forward edge
+                    //find the forward edge
+                    auto& node = residualNetwork->nodes[castedEdge->getTarget().lock()->getId()];
+                    shared_ptr<NetworkEdge> forwardEdge;
+                    for(auto& e:node->getEdges()) {
+                        auto ce = static_pointer_cast<NetworkEdge>(e);
+                        if(!ce->getIsReverse() && ce->getReferenceEdge().lock() == referenceEdge)
+                            forwardEdge = ce;
+                    }
+                    forwardEdge->setCapacity(capacity-oldFlow+minFlow);
                 }
                 //check if the reverse edge has to be deleted
                 if(referenceEdge->getFlow() == 0) {
                     auto& node = residualNetwork->nodes[castedEdge->getSource().lock()->getId()];
                     auto it = find(node->getEdges().begin(),node->getEdges().end(),castedEdge);
                     node->getEdges().erase(it);
+
+                    auto& targetNode = residualNetwork->nodes[castedEdge->getTarget().lock()->getId()];
+                    it = find(targetNode->getEdges().begin(),targetNode->getEdges().end(),castedEdge);
+                    targetNode->getEdges().erase(it);
+                } else if(referenceEdge->getFlow() > 0) {
+                    //update the capacity of the reverse edge
+                    castedEdge->setCapacity(referenceEdge->getFlow());
                 }
             } else {
                 //increase flow of forward arc
@@ -115,12 +145,31 @@ void Network::calculateMinimumCostMaximumFlow() {
                     node->addEdge(newReverseEdge);
                     targetNode->addInEdge(newReverseEdge);
                     newReverseEdge->setIsReverse(true);
+                    newReverseEdge->setReferenceEdge(referenceEdge);
+                } else if(oldFlow > 0) {
+                    //update the capacity of the reverse edge
+                    //find the reverse edge
+                    auto& node = residualNetwork->nodes[castedEdge->getTarget().lock()->getId()];
+                    shared_ptr<NetworkEdge> reverseEdge;
+                    for(auto& e:node->getEdges()) {
+                        auto ce = static_pointer_cast<NetworkEdge>(e);
+                        if(ce->getIsReverse() && ce->getReferenceEdge().lock() == referenceEdge)
+                            reverseEdge = ce;
+                    }
+                    reverseEdge->setCapacity(oldFlow+minFlow);
                 }
                 //check if the forward edge has to be deleted
-                if(referenceEdge->getFlow() == capacity) {
+                if(capacity > 0 && referenceEdge->getFlow() == capacity) {
                     auto& node = residualNetwork->nodes[castedEdge->getSource().lock()->getId()];
                     auto it = find(node->getEdges().begin(),node->getEdges().end(),castedEdge);
                     node->getEdges().erase(it);
+
+                    auto& targetNode = residualNetwork->nodes[castedEdge->getTarget().lock()->getId()];
+                    it = find(targetNode->getEdges().begin(),targetNode->getEdges().end(),castedEdge);
+                    targetNode->getEdges().erase(it);
+                } else if(referenceEdge->getFlow() < capacity) {
+                    //update the capacity of the forward edge
+                    castedEdge->setCapacity(capacity - referenceEdge->getFlow());
                 }
             }
         }

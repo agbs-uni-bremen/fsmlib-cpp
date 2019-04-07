@@ -66,13 +66,13 @@ Graph::shortestPathByBellmanFord(const shared_ptr<Node> &source, const shared_pt
     }
     deque<shared_ptr<Edge>> path;
     auto currentNode = target;
-    path.push_front(pred[target->getId()]);
+    // path.push_front(pred[target->getId()]);
 
     while(currentNode != source) {
         //the source node of the edge must be a managed weak_ptr at this point, provided the graph is well formed
         //regarding the pointers
-        currentNode = pred[currentNode->getId()]->getSource().lock();
         path.push_front(pred[currentNode->getId()]);
+        currentNode = pred[currentNode->getId()]->getSource().lock();
     }
 
     return make_shared<vector<shared_ptr<Edge>>>(path.begin(),path.end());

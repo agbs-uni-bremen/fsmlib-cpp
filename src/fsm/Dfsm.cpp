@@ -1397,9 +1397,9 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
             auto& ds = hsi->at(fsmNode->getId());
             //TODO: maybe find a more efficient way to get the target nodes of the hsis on the fly (maybe during creation of the alphasequences)?
             shared_ptr<FsmNode> dsTargetFsmNode = *fsmNode->after(ds).begin();
-            auto &dsTargetNode = networkGraphNodes[dsTargetFsmNode->getId()];
+            auto &dsTargetNode = networkGraphNodes[dsTargetFsmNode->getId() + nodes.size()];
             if (!dsTargetNode) {
-                dsTargetNode = make_shared<Node>(dsTargetFsmNode->getId());
+                dsTargetNode = make_shared<Node>(dsTargetFsmNode->getId() + nodes.size());
             }
             auto dsEdge = make_shared<NetworkEdge>(ds,nonVerifiedNode, dsTargetNode, indegree,ds.size());
             nonVerifiedNode->addEdge(dsEdge);
@@ -1420,11 +1420,12 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
         }
 
         //create the explicit reset edges between verified nodes
-        auto& initialStateNode = networkGraphNodes[initStateIdx];
+        auto& initialStateNode = networkGraphNodes[initStateIdx+nodes.size()];
         if(!initialStateNode) {
-            initialStateNode = make_shared<Node>(initStateIdx);
+            initialStateNode = make_shared<Node>(initStateIdx+nodes.size());
         }
         //reset edges too possess infinite capacity
+        //TODO: give them reset edges greater costs to minimize the amount of resets in the resulting euler tour
         auto resetEdge = make_shared<NetworkEdge>(vector<int> {Fsm::RESET_INPUT},verifiedNode,initialStateNode,-1,1);
         verifiedNode->addEdge(resetEdge);
         initialStateNode->addInEdge(resetEdge);
@@ -1432,7 +1433,7 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
 
     auto network = make_shared<Network>(networkGraphNodes,sourceNode->getId(),sinkNode->getId());
     network->calculateMinimumCostMaximumFlow();
-    network->toDot("mcfp_network");
+    //network->toDot("mcfp_network");
 
     auto ioll = make_shared<vector<vector<int>>>();
     return IOListContainer(ioll, presentationLayer);
