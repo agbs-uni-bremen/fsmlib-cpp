@@ -4,6 +4,7 @@
  * Licensed under the EUPL V.1.1
  */
 #include <cassert>
+#include <queue>
 #include "fsm/Dfsm.h"
 #include "fsm/FsmNode.h"
 #include "fsm/FsmTransition.h"
@@ -1434,6 +1435,59 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
     auto network = make_shared<Network>(networkGraphNodes,sourceNode->getId(),sinkNode->getId());
     network->calculateMinimumCostMaximumFlow();
     //network->toDot("mcfp_network");
+
+    //save the strongly connected components on the fly, during the creation of the multigraph from the network
+    vector<shared_ptr<unordered_set<int>>> components;
+    shared_ptr<unordered_set<int>> initComponent; //the component that contains the verified init state node (initStateIdx + nodes.size())
+
+    //create the multigraph from the network
+    vector<shared_ptr<Node>> multiGraphNodes((nodes.size()*2),nullptr);
+
+    unordered_set<int> unvisitedNodes;
+    for(int i=0;i<nodes.size()*2;++i) {
+        unvisitedNodes.insert(i);
+    }
+
+    /**
+     * the multigraph created from the network is symmetric since, the flow is conserved. so every weakly connected
+     * subgraph of multigraph is strongly connected. we can use this to easily compute the components, that are
+     * consequently isolated.
+     */
+    while(!unvisitedNodes.empty()) {
+        //pop the next unvisited node
+        int rootNodeId = *unvisitedNodes.begin();
+        unvisitedNodes.erase(rootNodeId);
+        auto& rootNode = multiGraphNodes[rootNodeId];
+        rootNode = make_shared<Node>(rootNodeId); //should not exist yet in the multigraphnodes list
+
+        //the new component
+        auto component = make_shared<unordered_set<int>>();
+        component->insert(rootNodeId);
+        bool containsVerifiedInit = false;
+
+        //queue for bfs
+        queue<shared_ptr<Node>> workingQueue;
+        workingQueue.push(rootNode);
+        //do bfs over ingoing and outgoing edges, since weakly connected nodes form a component in a symmetric graph
+        while(!workingQueue.empty()) {
+            auto currentNode = workingQueue.front();
+            workingQueue.pop();
+
+            auto& correspondingNetworkNode = networkGraphNodes[currentNode->getId()];
+            int indegree = correspondingNetworkNode->getInEdges().size(),
+                outdegree = correspondingNetworkNode->getEdges().size();
+            for(int i=0;i<indegree+outdegree;++i) {
+                shared_ptr<NetworkEdge> currentEdge;
+                if(i<indegree) {
+                    currentEdge = static_pointer_cast<NetworkEdge>(correspondingNetworkNode->getInEdges().at(i).lock());
+                    //targetNode = currentEdge->
+                } else {
+                    currentEdge = static_pointer_cast<NetworkEdge>(correspondingNetworkNode->getEdges().at(i));
+                }
+
+            }
+        }
+    }
 
     auto ioll = make_shared<vector<vector<int>>>();
     return IOListContainer(ioll, presentationLayer);

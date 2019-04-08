@@ -38,3 +38,7 @@ bool Node::isVisited() {
 vector<shared_ptr<Edge>> &Node::getEdges() {
     return edges;
 }
+
+const vector<weak_ptr<Edge>> &Node::getInEdges() const {
+    return inEdges;
+}
