@@ -56,9 +56,23 @@ void test() {
     srand(getRandomSeed());
 
     shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(1,6,1);
-    shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("../../../resources/lee94_no_pds.fsm",pl,"lee94_no_pds");
+    //shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("../../../resources/lee94_no_pds.fsm",pl,"lee94_no_pds");
+    shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("../../../resources/hierons_multicomp.fsm",pl,"hierons_multicomp");
 
     dfsm->hieronsDMethodOnMinimisedDfsm(true);
+}
+void testRandom(const int numStates,const int numInput,const int numOutput)
+{
+    int numberOfTests = 100;
+
+    for(int i=0;i<numberOfTests;++i) {
+        shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(numInput, numStates, numOutput);
+        auto dfsm = make_shared<Dfsm>("Dfsm", numStates, numInput, numOutput, pl);
+        shared_ptr<Dfsm> dfsmMin = make_shared<Dfsm>(dfsm->minimise());
+
+        dfsm->hieronsDMethodOnMinimisedDfsm(true);
+        cout << "next one " << endl;
+    }
 }
 
 int main(int argc, char* argv[])
@@ -67,6 +81,7 @@ int main(int argc, char* argv[])
     srand(getRandomSeed());
 
     test();
+    //testRandom(6,1,1);
     //testCustomAds();
     //testRandomAds(15, 3, 3);
     //testRandomFaultCoverage(30, 6, 6);

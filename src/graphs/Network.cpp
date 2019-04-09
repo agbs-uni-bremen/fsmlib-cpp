@@ -123,12 +123,17 @@ void Network::calculateMinimumCostMaximumFlow() {
                 //check if the reverse edge has to be deleted
                 if(referenceEdge->getFlow() == 0) {
                     auto& node = residualNetwork->nodes[castedEdge->getSource().lock()->getId()];
-                    auto it = find(node->getEdges().begin(),node->getEdges().end(),castedEdge);
-                    node->getEdges().erase(it);
+                    auto& edges = node->getEdges();
+                    edges.erase(remove(edges.begin(),edges.end(),castedEdge),edges.end());
 
                     auto& targetNode = residualNetwork->nodes[castedEdge->getTarget().lock()->getId()];
-                    it = find(targetNode->getEdges().begin(),targetNode->getEdges().end(),castedEdge);
-                    targetNode->getEdges().erase(it);
+                    auto& tgtInEdges = targetNode->getInEdges();
+                    tgtInEdges.erase(remove_if(tgtInEdges.begin(),tgtInEdges.end(),[castedEdge](weak_ptr<Edge> wp){
+                        auto sp = wp.lock();
+                        if(sp)
+                            return castedEdge == sp;
+                        return false;
+                    }),tgtInEdges.end());
                 } else if(referenceEdge->getFlow() > 0) {
                     //update the capacity of the reverse edge
                     castedEdge->setCapacity(referenceEdge->getFlow());
@@ -161,12 +166,17 @@ void Network::calculateMinimumCostMaximumFlow() {
                 //check if the forward edge has to be deleted
                 if(capacity > 0 && referenceEdge->getFlow() == capacity) {
                     auto& node = residualNetwork->nodes[castedEdge->getSource().lock()->getId()];
-                    auto it = find(node->getEdges().begin(),node->getEdges().end(),castedEdge);
-                    node->getEdges().erase(it);
+                    auto& edges = node->getEdges();
+                    edges.erase(remove(edges.begin(),edges.end(),castedEdge),edges.end());
 
                     auto& targetNode = residualNetwork->nodes[castedEdge->getTarget().lock()->getId()];
-                    it = find(targetNode->getEdges().begin(),targetNode->getEdges().end(),castedEdge);
-                    targetNode->getEdges().erase(it);
+                    auto& tgtInEdges = targetNode->getInEdges();
+                    tgtInEdges.erase(remove_if(tgtInEdges.begin(),tgtInEdges.end(),[castedEdge](weak_ptr<Edge> wp){
+                        auto sp = wp.lock();
+                        if(sp)
+                            return castedEdge == sp;
+                        return false;
+                    }),tgtInEdges.end());
                 } else if(referenceEdge->getFlow() < capacity) {
                     //update the capacity of the forward edge
                     castedEdge->setCapacity(capacity - referenceEdge->getFlow());

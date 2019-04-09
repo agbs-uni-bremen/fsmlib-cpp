@@ -116,9 +116,9 @@ void runTestClass(shared_ptr<Dfsm> dfsm ,int numOutputFaults,int numTransitionFa
 int main(int argc, char* argv[])
 {
     while(true) {
-        shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(6, 30, 6);
+        shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(15, 100, 15);
 
-        shared_ptr<Dfsm> temp = make_shared<Dfsm>("Dfsm", 30, 6, 6, pl);
+        shared_ptr<Dfsm> temp = make_shared<Dfsm>("Dfsm", 100, 15, 15, pl);
         shared_ptr<Dfsm> dfsm = make_shared<Dfsm>(temp->minimise());
 
         IOListContainer e = dfsm->dMethodOnMinimisedDfsm(0, false);

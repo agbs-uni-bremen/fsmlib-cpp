@@ -82,7 +82,7 @@ public:
     */
     vector<shared_ptr<Edge>>& getEdges();
 
-    const vector<weak_ptr<Edge>> &getInEdges() const;
+    vector<weak_ptr<Edge>> &getInEdges();
 
 };
 #endif //FSM_GRAPHS_NODE_H_

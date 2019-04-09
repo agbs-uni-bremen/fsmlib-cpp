@@ -1329,14 +1329,12 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
     }*/
 
     //compute the indegree for all fsm nodes
-    //vector<int> idToIndegree(nodes.size(),0);
-    vector<vector<FsmTransition>> idToInTrans(nodes.size(),vector<FsmTransition>());
+    vector<vector<shared_ptr<FsmTransition>>> idToInTrans(nodes.size(),vector<shared_ptr<FsmTransition>>());
     vector<shared_ptr<FsmNode>> idToFsmNode(nodes.size(),nullptr); //store mapping of id to fsmnode for faster access
     for(auto& fsmNode:nodes) {
         idToFsmNode[fsmNode->getId()] = fsmNode;
         for(auto& tr:fsmNode->getTransitions()) {
-            //idToIndegree[tr->getTarget()->getId()]++;
-            idToInTrans[tr->getTarget()->getId()].push_back(*tr);
+            idToInTrans[tr->getTarget()->getId()].push_back(tr);
         }
     }
 
@@ -1434,6 +1432,7 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
         initialStateNode->addInEdge(resetEdge);
     }
 
+    //calculate the min cost/max flow for the network
     auto network = make_shared<Network>(networkGraphNodes,sourceNode->getId(),sinkNode->getId());
     network->calculateMinimumCostMaximumFlow();
     //network->toDot("mcfp_network");
@@ -1443,7 +1442,7 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
     //the component that contains the verified init state node (initStateIdx + nodes.size())
     shared_ptr<unordered_set<int>> initComponent;
 
-    //create the multigraph from the network
+    //create the multigraph from the network and min cost/max flow
     vector<shared_ptr<Node>> multiGraphNodes((nodes.size()*2),nullptr);
 
     unordered_set<int> unvisitedNodes;
@@ -1477,17 +1476,16 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
             workingQueue.pop();
 
             auto& correspondingNetworkNode = networkGraphNodes[currentNode->getId()];
-            int indegree = correspondingNetworkNode->getInEdges().size(),
-                outdegree = correspondingNetworkNode->getEdges().size();
             for(auto& edge:correspondingNetworkNode->getInEdges()) {
                 auto castedEdge = static_pointer_cast<NetworkEdge>(edge.lock());
+                if(castedEdge->getFlow() < 1) continue;
                 auto networkSrcNode = castedEdge->getSource().lock();
                 //is the ingoing edge emanating from the source node?
                 if(networkSrcNode->getId() == sourceNode->getId()) {
                     //get the corresponding ingoing fsm transitions
                     auto& fsmTransitions = idToInTrans[correspondingNetworkNode->getId()];
                     for(auto& tr:fsmTransitions) {
-                        auto verifiedSrcNodeId = tr.getSource()->getId()+nodes.size();
+                        auto verifiedSrcNodeId = tr->getSource()->getId()+nodes.size();
                         auto it = unvisitedNodes.find(verifiedSrcNodeId);
                         if(it != unvisitedNodes.end()) {
                             unvisitedNodes.erase(verifiedSrcNodeId);
@@ -1511,11 +1509,45 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
             }
             for(auto& edge:correspondingNetworkNode->getEdges()) {
                 auto castedEdge = static_pointer_cast<NetworkEdge>(edge);
-                auto networkTgtNode = castedEdge->getSource().lock();
+                if(castedEdge->getFlow() < 1) continue;
+                auto networkTgtNode = castedEdge->getTarget().lock();
                 if(networkTgtNode->getId() == sinkNode->getId()) {
-
+                    auto& fsmTransitions = idToFsmNode[correspondingNetworkNode->getId() - nodes.size()]->getTransitions();
+                    for(auto& tr:fsmTransitions) {
+                        auto nonVerifiedTgtNodeId = tr->getTarget()->getId();
+                        auto it = unvisitedNodes.find(nonVerifiedTgtNodeId);
+                        if(it != unvisitedNodes.end()) {
+                            unvisitedNodes.erase(nonVerifiedTgtNodeId);
+                            multiGraphNodes[nonVerifiedTgtNodeId] = make_shared<Node>(nonVerifiedTgtNodeId);
+                            //containsVerifiedInit |= nonVerifiedTgtNodeId == initStateIdx + nodes.size();
+                            component->insert(nonVerifiedTgtNodeId);
+                            workingQueue.push(multiGraphNodes[nonVerifiedTgtNodeId]);
+                        }
+                        //missuse network edges for the multigraph
+                        auto multiGraphEdge = make_shared<NetworkEdge>(vector<int>{tr->getLabel()->getInput()},
+                                currentNode,multiGraphNodes[nonVerifiedTgtNodeId],0,1);
+                        currentNode->addEdge(multiGraphEdge);
+                        multiGraphNodes[nonVerifiedTgtNodeId]->addInEdge(multiGraphEdge);
+                    }
                 } else {
-
+                    int tgtNodeId = castedEdge->getTarget().lock()->getId();
+                    auto it = unvisitedNodes.find(tgtNodeId);
+                    if(it != unvisitedNodes.end()) {
+                        unvisitedNodes.erase(tgtNodeId);
+                        multiGraphNodes[tgtNodeId] = make_shared<Node>(tgtNodeId);
+                        containsVerifiedInit |= tgtNodeId == initStateIdx + nodes.size();
+                        component->insert(tgtNodeId);
+                        workingQueue.push(multiGraphNodes[tgtNodeId]);
+                    }
+                    for(int i=0;i<castedEdge->getFlow();++i) {
+                        //missuse network edges for the multigraph
+                        auto multiGraphEdge = make_shared<NetworkEdge>(castedEdge->getTrace(),
+                                                                       currentNode,multiGraphNodes[tgtNodeId],0,1);
+                        currentNode->addEdge(multiGraphEdge);
+                        multiGraphNodes[tgtNodeId]->addInEdge(multiGraphEdge);
+                        multiGraphEdge->setIsAlpha(castedEdge->getIsAlpha());
+                        multiGraphEdge->setIsDs(castedEdge->getIsDs());
+                    }
                 }
 
             }
@@ -1525,6 +1557,59 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
             initComponent = component;
         }
     }
+    if(idToInTrans[initStateIdx].empty()) {
+        /**
+         * if the fsm initial node did not have any ingoing transitions, the corresponding non-verified multigraph node
+         * should not have any ingoing or outgoing edges.
+         */
+        auto& nonVerifiedInitNode = multiGraphNodes[initStateIdx];
+        assert(nonVerifiedInitNode->getEdges().empty() && nonVerifiedInitNode->getInEdges().empty());
+        /**
+         * Furthermore there must be an optimized alpha sequence starting at the initial fsm node
+         */
+         auto it = optimizedAlphaSequences->find(initStateIdx);
+         assert(it != optimizedAlphaSequences->end());
+         auto alphaSequence = it->second.first;
+         int alphaTgtNodeId = it->second.second + nodes.size();
+
+         //add the missing alpha edge
+         auto alphaEdge = make_shared<NetworkEdge>(alphaSequence,nonVerifiedInitNode,multiGraphNodes[alphaTgtNodeId],0,alphaSequence.size());
+         nonVerifiedInitNode->addEdge(alphaEdge);
+         multiGraphNodes[alphaTgtNodeId]->addInEdge(alphaEdge);
+         alphaEdge->setIsAlpha(true);
+
+         //add an reset edge to make non-verified initial node reachable + the multigraph stays symmetric
+         auto resetEdge = make_shared<NetworkEdge>(vector<int>{Fsm::RESET_INPUT},multiGraphNodes[alphaTgtNodeId],nonVerifiedInitNode,0,1);
+         multiGraphNodes[alphaTgtNodeId]->addEdge(resetEdge);
+         nonVerifiedInitNode->addInEdge(resetEdge);
+
+         //merge components
+         int initStateId = initStateIdx;
+         components.erase(remove_if(components.begin(),components.end(),[initStateId](shared_ptr<unordered_set<int>> component){
+             return component->count(initStateId);
+         }),components.end());
+
+         for(auto& component:components) {
+             if(component->count(alphaTgtNodeId)) component->insert(initStateIdx);
+         }
+        auto multiGraph = make_shared<Graph>(multiGraphNodes);
+        cout << "multigraph components size: " << components.size() << endl;
+        cout << "first comp. size: " << components.at(0)->size() << endl;
+        this->toDot("multicomp_fsm");
+        multiGraph->toDot("multicomp_multigraph");
+        exit(EXIT_SUCCESS);
+    }
+    auto multiGraph = make_shared<Graph>(multiGraphNodes);
+    if(components.size() > 1) {
+        /*
+        cout << "multigraph components size: " << components.size() << endl;
+        this->toDot("multicomp_fsm");
+        multiGraph->toDot("multicomp_multigraph");
+        exit(EXIT_SUCCESS);
+         */
+    }
+
+    //multiGraph->toDot("multigraph");
 
     auto ioll = make_shared<vector<vector<int>>>();
     return IOListContainer(ioll, presentationLayer);

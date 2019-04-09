@@ -39,6 +39,6 @@ vector<shared_ptr<Edge>> &Node::getEdges() {
     return edges;
 }
 
-const vector<weak_ptr<Edge>> &Node::getInEdges() const {
+vector<weak_ptr<Edge>> &Node::getInEdges() {
     return inEdges;
 }
