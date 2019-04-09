@@ -80,8 +80,8 @@ int main(int argc, char* argv[])
 
     srand(getRandomSeed());
 
-    test();
-    //testRandom(6,1,1);
+    //test();
+    testRandom(6,1,1);
     //testCustomAds();
     //testRandomAds(15, 3, 3);
     //testRandomFaultCoverage(30, 6, 6);

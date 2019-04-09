@@ -1437,12 +1437,44 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
     network->calculateMinimumCostMaximumFlow();
     //network->toDot("mcfp_network");
 
+    //add the missing alpha sequence edge to the network before
+    if(idToInTrans[initStateIdx].empty()) {
+        /**
+         * if the fsm initial node did not have any ingoing transitions, the corresponding non-verified multigraph node
+         * should not have any ingoing or outgoing edges.
+         */
+        auto& nonVerifiedInitNode = networkGraphNodes[initStateIdx];
+
+        /**
+         * Furthermore there must be an optimized alpha sequence starting at the initial fsm node, that has to be added yet
+         */
+        auto it = optimizedAlphaSequences->find(initStateIdx);
+        assert(it != optimizedAlphaSequences->end());
+        auto alphaSequence = it->second.first;
+        int alphaTgtNodeId = it->second.second + nodes.size();
+        auto& alphaTgtNode = networkGraphNodes[alphaTgtNodeId];
+
+        //add the missing alpha edge
+        auto alphaEdge = make_shared<NetworkEdge>(alphaSequence,nonVerifiedInitNode,alphaTgtNode,1,alphaSequence.size());
+        nonVerifiedInitNode->addEdge(alphaEdge);
+        alphaTgtNode->addInEdge(alphaEdge);
+        alphaEdge->setIsAlpha(true);
+        alphaEdge->setFlow(1);
+
+        //add an reset edge to make non-verified initial node reachable + the multigraph stays symmetric
+        auto resetEdge = make_shared<NetworkEdge>(vector<int>{Fsm::RESET_INPUT},alphaTgtNode,nonVerifiedInitNode,1,1);
+        alphaTgtNode->addEdge(resetEdge);
+        nonVerifiedInitNode->addInEdge(resetEdge);
+        resetEdge->setFlow(1);
+    }
+
+    //create the multigraph from the network and min cost/max flow
+
     //save the strongly connected components on the fly, during the creation of the multigraph from the network
     vector<shared_ptr<unordered_set<int>>> components;
     //the component that contains the verified init state node (initStateIdx + nodes.size())
     shared_ptr<unordered_set<int>> initComponent;
 
-    //create the multigraph from the network and min cost/max flow
     vector<shared_ptr<Node>> multiGraphNodes((nodes.size()*2),nullptr);
 
     unordered_set<int> unvisitedNodes;
@@ -1558,46 +1590,42 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
         }
     }
     if(idToInTrans[initStateIdx].empty()) {
-        /**
-         * if the fsm initial node did not have any ingoing transitions, the corresponding non-verified multigraph node
-         * should not have any ingoing or outgoing edges.
-         */
+       /*
         auto& nonVerifiedInitNode = multiGraphNodes[initStateIdx];
         assert(nonVerifiedInitNode->getEdges().empty() && nonVerifiedInitNode->getInEdges().empty());
-        /**
-         * Furthermore there must be an optimized alpha sequence starting at the initial fsm node
-         */
-         auto it = optimizedAlphaSequences->find(initStateIdx);
-         assert(it != optimizedAlphaSequences->end());
-         auto alphaSequence = it->second.first;
-         int alphaTgtNodeId = it->second.second + nodes.size();
 
-         //add the missing alpha edge
-         auto alphaEdge = make_shared<NetworkEdge>(alphaSequence,nonVerifiedInitNode,multiGraphNodes[alphaTgtNodeId],0,alphaSequence.size());
-         nonVerifiedInitNode->addEdge(alphaEdge);
-         multiGraphNodes[alphaTgtNodeId]->addInEdge(alphaEdge);
-         alphaEdge->setIsAlpha(true);
+        auto it = optimizedAlphaSequences->find(initStateIdx);
+        assert(it != optimizedAlphaSequences->end());
+        auto alphaSequence = it->second.first;
+        int alphaTgtNodeId = it->second.second + nodes.size();
 
-         //add an reset edge to make non-verified initial node reachable + the multigraph stays symmetric
-         auto resetEdge = make_shared<NetworkEdge>(vector<int>{Fsm::RESET_INPUT},multiGraphNodes[alphaTgtNodeId],nonVerifiedInitNode,0,1);
-         multiGraphNodes[alphaTgtNodeId]->addEdge(resetEdge);
-         nonVerifiedInitNode->addInEdge(resetEdge);
+        //add the missing alpha edge
+        auto alphaEdge = make_shared<NetworkEdge>(alphaSequence,nonVerifiedInitNode,multiGraphNodes[alphaTgtNodeId],0,alphaSequence.size());
+        nonVerifiedInitNode->addEdge(alphaEdge);
+        multiGraphNodes[alphaTgtNodeId]->addInEdge(alphaEdge);
+        alphaEdge->setIsAlpha(true);
 
-         //merge components
-         int initStateId = initStateIdx;
-         components.erase(remove_if(components.begin(),components.end(),[initStateId](shared_ptr<unordered_set<int>> component){
-             return component->count(initStateId);
-         }),components.end());
+        //add an reset edge to make non-verified initial node reachable + the multigraph stays symmetric
+        auto resetEdge = make_shared<NetworkEdge>(vector<int>{Fsm::RESET_INPUT},multiGraphNodes[alphaTgtNodeId],nonVerifiedInitNode,0,1);
+        multiGraphNodes[alphaTgtNodeId]->addEdge(resetEdge);
+        nonVerifiedInitNode->addInEdge(resetEdge);
 
-         for(auto& component:components) {
-             if(component->count(alphaTgtNodeId)) component->insert(initStateIdx);
-         }
+        //merge components
+        int initStateId = initStateIdx;
+        components.erase(remove_if(components.begin(),components.end(),[initStateId](shared_ptr<unordered_set<int>> component){
+            return component->count(initStateId);
+        }),components.end());
+
+        for(auto& component:components) {
+            if(component->count(alphaTgtNodeId)) component->insert(initStateIdx);
+        }
         auto multiGraph = make_shared<Graph>(multiGraphNodes);
         cout << "multigraph components size: " << components.size() << endl;
         cout << "first comp. size: " << components.at(0)->size() << endl;
         this->toDot("multicomp_fsm");
         multiGraph->toDot("multicomp_multigraph");
         exit(EXIT_SUCCESS);
+        */
     }
     auto multiGraph = make_shared<Graph>(multiGraphNodes);
     if(components.size() > 1) {
@@ -1607,6 +1635,14 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
         multiGraph->toDot("multicomp_multigraph");
         exit(EXIT_SUCCESS);
          */
+        cout << "multicomp multigraph detected! " << endl;
+        this->toDot("multicomp_fsm");
+        multiGraph->toDot("multicomp_multigraph");
+    }
+    while(components.size() > 1) {
+        for(auto& id:*initComponent) {
+
+        }
     }
 
     //multiGraph->toDot("multigraph");
