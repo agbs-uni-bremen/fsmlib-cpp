@@ -42,6 +42,11 @@ protected:
     */
     weak_ptr<Node> target;
 
+    /**
+    * visited flag
+    */
+    bool visited;
+
 public:
 
     /**
@@ -73,6 +78,10 @@ public:
     int getCost() const;
 
     void setCost(int cost);
+
+    bool isVisited() const;
+
+    void setVisited(bool visited);
 
 
 };

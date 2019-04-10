@@ -8,6 +8,8 @@
 #define FSM_GRAPHS_GRAPH_H_
 
 #include <vector>
+#include <deque>
+#include <list>
 #include "graphs/Node.h"
 
 using namespace std;
@@ -50,9 +52,24 @@ public:
      * @param source the source node of the shortest path to search for
      * @param target the target node of the shortest path to search for
      * @result a path from \a source to \a target, if one exists, otherwise an empty path
+     *
      */
-    shared_ptr<vector<shared_ptr<Edge>>> shortestPathByBellmanFord(const shared_ptr<Node>& source,
+    shared_ptr<deque<shared_ptr<Edge>>> shortestPathByBellmanFord(const shared_ptr<Node>& source,
             const shared_ptr<Node>& target);
+
+    /**
+     * create an Euler Tour from the graph, provided that it is symmetric (all nodes possess same in- and outdegree),
+     * otherwise an empty Euler Tour is delivered
+     * @return euler tour for the graph, if it is symmetric, or an empty tour otherwise
+     *
+     * @note the algorithm of *Hierholz* is used for the extraction of the Euler Tour as described in
+     *  > Srivastava, Sudhir:
+     *   > Study of Different algorithm in Euler Graph.
+     *   > In: International Journal on Recent and Innovation Trends in
+     *   > Computing and Communication 4 (2016), Dez, Nr. 12, 309–311.
+     *   > http://www.ijritcc.org/download/browse/Volume_4_Issues/December_16_Volume_4_Issue_12/1501310493_29-07-2017.pdf. – ISSN 2321–8169
+     */
+    shared_ptr<list<shared_ptr<Edge>>> generateEulerTour();
 
     /**
     * Prints the graph in .dot format into the given filename (in the current path)

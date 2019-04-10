@@ -10,7 +10,7 @@
 #include <cassert>
 
 Edge::Edge(const vector<int> &trace, const weak_ptr<Node> &source, const weak_ptr<Node> &target)
-    : trace(trace), source(source), target(target),cost(0)
+    : trace(trace), source(source), target(target),cost(0),visited(false)
 {
     //causes bad_weak_ptr exception if shared_from_this is called for an instance, that has no shared_ptr pointing to it yet
     //assert(!source.expired());
@@ -38,4 +38,12 @@ int Edge::getCost() const {
 
 void Edge::setCost(int cost) {
     Edge::cost = cost;
+}
+
+bool Edge::isVisited() const {
+    return visited;
+}
+
+void Edge::setVisited(bool visited) {
+    Edge::visited = visited;
 }

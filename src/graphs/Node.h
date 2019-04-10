@@ -36,7 +36,7 @@ protected:
     /**
     * visited flag for breadth-first search
     */
-    bool visited = false;
+    bool visited;
 
 public:
 

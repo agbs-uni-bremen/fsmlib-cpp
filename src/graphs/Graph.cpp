@@ -11,6 +11,7 @@
 #include <limits>
 #include <cmath>
 #include <unordered_map>
+#include <unordered_set>
 #include <deque>
 
 Graph::Graph(const vector<shared_ptr<Node>> &nodes)
@@ -19,10 +20,10 @@ Graph::Graph(const vector<shared_ptr<Node>> &nodes)
 
 }
 
-shared_ptr<vector<shared_ptr<Edge>>>
+shared_ptr<deque<shared_ptr<Edge>>>
 Graph::shortestPathByBellmanFord(const shared_ptr<Node> &source, const shared_ptr<Node> &target) {
     if(source->getId() >= nodes.size() || target->getId() >= nodes.size()) {
-        return shared_ptr<vector<shared_ptr<Edge>>>();
+        return shared_ptr<deque<shared_ptr<Edge>>>();
     }
 
     vector<long double> dist;
@@ -49,7 +50,7 @@ Graph::shortestPathByBellmanFord(const shared_ptr<Node> &source, const shared_pt
     }
     //check if the target is even reachable
     if(isinf(dist[target->getId()])) {
-        return shared_ptr<vector<shared_ptr<Edge>>>();
+        return shared_ptr<deque<shared_ptr<Edge>>>();
     }
 
     //check if there are any negative cost cycles
@@ -60,22 +61,115 @@ Graph::shortestPathByBellmanFord(const shared_ptr<Node> &source, const shared_pt
             if(isinf(dist[targetNode->getId()]) ||
                dist[targetNode->getId()] > dist[node->getId()] + edge->getCost()) {
                 //apparently the graph contains a negative cost cycle in this case
-                return shared_ptr<vector<shared_ptr<Edge>>>();
+                return shared_ptr<deque<shared_ptr<Edge>>>();
             }
         }
     }
-    deque<shared_ptr<Edge>> path;
+    auto path = make_shared<deque<shared_ptr<Edge>>>();
     auto currentNode = target;
     // path.push_front(pred[target->getId()]);
 
     while(currentNode != source) {
         //the source node of the edge must be a managed weak_ptr at this point, provided the graph is well formed
         //regarding the pointers
-        path.push_front(pred[currentNode->getId()]);
+        path->push_front(pred[currentNode->getId()]);
         currentNode = pred[currentNode->getId()]->getSource().lock();
     }
 
-    return make_shared<vector<shared_ptr<Edge>>>(path.begin(),path.end());
+    return path;
+}
+
+
+shared_ptr<list<shared_ptr<Edge>>> Graph::generateEulerTour() {
+    auto eulerTour = make_shared<list<shared_ptr<Edge>>>();
+    if(nodes.empty()) return eulerTour;
+
+    unordered_set<shared_ptr<Edge>> unmarkedEdges;
+
+    for(auto& node:nodes) {
+        auto& edges = node->getEdges();
+        auto& inEdges = node->getInEdges();
+
+        //return nothing if the graph is not symmetric
+        if(edges.size() != inEdges.size()) {
+            return eulerTour;
+        }
+
+        for(auto& edge:edges) {
+            unmarkedEdges.insert(edge);
+        }
+    }
+
+    //create the first tour
+    auto currentNode = nodes[0];
+    do {
+        shared_ptr<Node> nextNode;
+        for(auto& edge:currentNode->getEdges()) {
+            if(unmarkedEdges.count(edge) > 0) {
+                unmarkedEdges.erase(edge);
+                nextNode = edge->getTarget().lock();
+                eulerTour->push_back(edge);
+            }
+        }
+        if(!nextNode) {
+            //should not happen, check must be performed though, otherwise you get stuck in the loop (no valid node ids, graph not well-formed etc.)
+            return make_shared<list<shared_ptr<Edge>>>();
+        }
+        currentNode = nextNode;
+    } while(currentNode != nodes[0]);
+
+
+    while(!unmarkedEdges.empty()) {
+        shared_ptr<Node> v;
+        auto curr = eulerTour->front()->getSource().lock();
+        for(auto& e:curr->getEdges()) {
+            if(unmarkedEdges.count(e) > 0) {
+                v = curr;
+                break;
+            }
+        }
+        if(!v) {
+            for (auto &edge:*eulerTour) {
+                curr = edge->getTarget().lock();
+                for(auto& e:curr->getEdges()) {
+                    if(unmarkedEdges.count(e) > 0) {
+                        v = curr;
+                        break;
+                    }
+                }
+                if(v) break;
+            }
+            auto firstPart = make_shared<list<shared_ptr<Edge>>>();
+            auto secondPart = make_shared<list<shared_ptr<Edge>>>();
+            for(auto it = eulerTour->begin(); it == eulerTour->end(); ++it) {
+
+            }
+        }
+        if(!v) return make_shared<list<shared_ptr<Edge>>>();
+
+        auto nextTour = make_shared<list<shared_ptr<Edge>>>();
+        //create the first tour
+        auto currentNode = v;
+        do {
+            shared_ptr<Node> nextNode;
+            for(auto& edge:currentNode->getEdges()) {
+                if(unmarkedEdges.count(edge) > 0) {
+                    unmarkedEdges.erase(edge);
+                    nextNode = edge->getTarget().lock();
+                    nextTour->push_back(edge);
+                }
+            }
+            if(!nextNode) {
+                //should not happen, check must be performed though, otherwise you get stuck in the loop (no valid node ids, graph not well-formed etc.)
+                return make_shared<list<shared_ptr<Edge>>>();
+            }
+            currentNode = nextNode;
+        } while(currentNode != nodes[0]);
+
+    }
+
+    return eulerTour;
+
 }
 
 ostream & operator<<(ostream & out, const Graph & graph) {
@@ -118,4 +212,5 @@ bool Graph::validateNodeIds() const {
     }
     return true;
 }
+
 

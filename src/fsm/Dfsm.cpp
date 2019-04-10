@@ -1497,7 +1497,7 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
         //the new component
         auto component = make_shared<unordered_set<int>>();
         component->insert(rootNodeId);
-        bool containsVerifiedInit = false;
+        bool containsVerifiedInit = rootNodeId == (initStateIdx + nodes.size());
 
         //queue for bfs
         queue<shared_ptr<Node>> workingQueue;
@@ -1522,7 +1522,7 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
                         if(it != unvisitedNodes.end()) {
                             unvisitedNodes.erase(verifiedSrcNodeId);
                             multiGraphNodes[verifiedSrcNodeId] = make_shared<Node>(verifiedSrcNodeId);
-                            containsVerifiedInit |= verifiedSrcNodeId == initStateIdx + nodes.size();
+                            containsVerifiedInit |= verifiedSrcNodeId == (initStateIdx + nodes.size());
                             component->insert(verifiedSrcNodeId);
                             workingQueue.push(multiGraphNodes[verifiedSrcNodeId]);
                         }
@@ -1533,7 +1533,7 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
                     if(it != unvisitedNodes.end()) {
                         unvisitedNodes.erase(srcNodeId);
                         multiGraphNodes[srcNodeId] = make_shared<Node>(srcNodeId);
-                        containsVerifiedInit |= srcNodeId == initStateIdx + nodes.size();
+                        containsVerifiedInit |= srcNodeId == (initStateIdx + nodes.size());
                         component->insert(srcNodeId);
                         workingQueue.push(multiGraphNodes[srcNodeId]);
                     }
@@ -1567,7 +1567,7 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
                     if(it != unvisitedNodes.end()) {
                         unvisitedNodes.erase(tgtNodeId);
                         multiGraphNodes[tgtNodeId] = make_shared<Node>(tgtNodeId);
-                        containsVerifiedInit |= tgtNodeId == initStateIdx + nodes.size();
+                        containsVerifiedInit |= tgtNodeId == (initStateIdx + nodes.size());
                         component->insert(tgtNodeId);
                         workingQueue.push(multiGraphNodes[tgtNodeId]);
                     }
@@ -1589,6 +1589,9 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
             initComponent = component;
         }
     }
+
+    auto multiGraph = make_shared<Graph>(multiGraphNodes);
+
     if(idToInTrans[initStateIdx].empty()) {
        /*
         auto& nonVerifiedInitNode = multiGraphNodes[initStateIdx];
@@ -1627,7 +1630,6 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
         exit(EXIT_SUCCESS);
         */
     }
-    auto multiGraph = make_shared<Graph>(multiGraphNodes);
     if(components.size() > 1) {
         /*
         cout << "multigraph components size: " << components.size() << endl;
@@ -1639,13 +1641,69 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
         this->toDot("multicomp_fsm");
         multiGraph->toDot("multicomp_multigraph");
     }
-    while(components.size() > 1) {
-        for(auto& id:*initComponent) {
 
+    //connect the components, if there is more than one
+    while(components.size() > 1) {
+        shared_ptr<unordered_set<int>> otherComponent;
+        shared_ptr<NetworkEdge> ePrime;
+        shared_ptr<NetworkEdge> eTop;
+        shared_ptr<NetworkEdge> eOne;
+
+        for(auto& id:*initComponent) {
+            //check the verified nodes only
+            if(id < nodes.size()) continue;
+            int corrFsmNodeId = id - nodes.size();
+            auto& transitions = idToInTrans[corrFsmNodeId];
+
+            for(auto& tr:transitions) {
+                int srcNodeId = tr->getSource()->getId() + nodes.size();
+                if(initComponent->count(srcNodeId) > 0) continue;
+                //find the other component
+                for(auto& component:components) {
+                    if(component->count(srcNodeId)){
+                        otherComponent = component;
+                    }
+                }
+                ePrime = make_shared<NetworkEdge>(vector<int> {tr->getLabel()->getInput()},multiGraphNodes[srcNodeId],multiGraphNodes[id],1,1);
+                multiGraphNodes[srcNodeId]->addEdge(ePrime);
+                multiGraphNodes[id]->addInEdge(ePrime);
+
+                //get the corresponding ds or alpha edge (preferrably first option)
+                auto& edges = multiGraphNodes[id-nodes.size()]->getEdges();
+                auto& dsOrAlphaEdge = edges.at(edges.size()-1);
+                auto tgtNode = dsOrAlphaEdge->getTarget().lock();
+                eTop = make_shared<NetworkEdge>(dsOrAlphaEdge->getTrace(),multiGraphNodes[id],tgtNode,
+                        1,dsOrAlphaEdge->getTrace().size());
+                multiGraphNodes[id]->addEdge(eTop);
+                tgtNode->addInEdge(eTop);
+
+                //dont need no eOne edge in this case
+                if(tgtNode == multiGraphNodes[srcNodeId]) break;
+
+                auto shortestPath = multiGraph->shortestPathByBellmanFord(tgtNode,multiGraphNodes[srcNodeId]);
+                vector<int> eTopTrace;
+
+                for(auto& edge:*shortestPath) {
+                    eTopTrace.insert(eTopTrace.begin(),edge->getTrace().begin(),edge->getTrace().end());
+                }
+
+                eOne = make_shared<NetworkEdge>(eTopTrace,tgtNode,multiGraphNodes[srcNodeId],1,eTopTrace.size());
+                tgtNode->addEdge(eOne);
+                multiGraphNodes[srcNodeId]->addInEdge(eOne);
+
+                break;
+            }
+            if(otherComponent) break;
         }
+
+        //merge the components
+        for(int id:*otherComponent) {
+            initComponent->insert(id);
+        }
+        components.erase(remove(components.begin(),components.end(),otherComponent),components.end());
     }
 
-    //multiGraph->toDot("multigraph");
+    //multiGraph->toDot("connected_multigraph");
 
     auto ioll = make_shared<vector<vector<int>>>();
     return IOListContainer(ioll, presentationLayer);
