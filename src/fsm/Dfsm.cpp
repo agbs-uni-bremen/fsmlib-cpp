@@ -5,6 +5,7 @@
  */
 #include <cassert>
 #include <queue>
+#include <iterator>
 #include "fsm/Dfsm.h"
 #include "fsm/FsmNode.h"
 #include "fsm/FsmTransition.h"
@@ -1703,9 +1704,87 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
         components.erase(remove(components.begin(),components.end(),otherComponent),components.end());
     }
 
-    //multiGraph->toDot("connected_multigraph");
+    multiGraph->toDot("connected_multigraph");
 
+    auto eulerTour = multiGraph->generateEulerTour();
+    //should not be empty at this point
+    assert(!eulerTour->empty());
+
+    //change start of path
+    auto startOfPath = eulerTour->begin();
+    if(!idToInTrans[initStateIdx].empty()) {
+        auto& ds = hsi->at(initStateIdx);
+        //TODO: maybe find a more efficient way to get the target nodes of the hsis on the fly (maybe during creation of the alphasequences)?
+        int initDsTargetId = (*idToFsmNode[initStateIdx]->after(ds).begin())->getId() + nodes.size();
+
+        auto curr = eulerTour->front()->getSource().lock();
+
+        if(curr->getId() != initDsTargetId) {
+            for(auto it = eulerTour->begin(); it != eulerTour->end(); ++it) {
+                auto edge = *it;
+                curr = edge->getTarget().lock();
+                if(curr->getId() == initDsTargetId) {
+                    startOfPath = ++it;
+                    break;
+                }
+            }
+            eulerTour->splice(eulerTour->begin(),*eulerTour,startOfPath,eulerTour->end());
+        }
+    } else {
+        auto curr = eulerTour->front()->getSource().lock();
+
+        if(curr->getId() != initStateIdx) {
+            for(auto it = eulerTour->begin(); it != eulerTour->end(); ++it) {
+                auto edge = *it;
+                curr = edge->getTarget().lock();
+                auto nit = it;
+                advance(nit,1);
+                if(curr->getId() == initStateIdx && static_pointer_cast<NetworkEdge>((*nit))->getIsAlpha()) {
+                    startOfPath = nit;
+                    break;
+                }
+            }
+            eulerTour->splice(eulerTour->begin(),*eulerTour,startOfPath,eulerTour->end());
+        }
+    }
+    assert(!eulerTour->empty());
+
+    auto new_end = eulerTour->end();
+    //remove unneccessary edges at the end of the path
+    for(auto rit= eulerTour->rbegin();rit!=eulerTour->rend();++rit) {
+        auto edge = static_pointer_cast<NetworkEdge>(*rit);
+        if(edge->getIsAlpha() || edge->getIsDs()) {
+            new_end = --(--rit).base();
+            break;
+        }
+    }
+    auto path = make_shared<list<shared_ptr<Edge>>>();
+    path->splice(path->end(),*eulerTour,eulerTour->begin(),new_end);
+
+    //create test suite
     auto ioll = make_shared<vector<vector<int>>>();
+    vector<int> testCase;
+    if(!idToInTrans[initStateIdx].empty()) {
+        testCase = hsi->at(initStateIdx);
+    }
+    for(auto& edge:*path) {
+        auto& trace = edge->getTrace();
+        for(int input:trace) {
+            if(input == Fsm::RESET_INPUT) {
+                if(!testCase.empty()) {
+                    ioll->push_back(move(testCase));
+                    testCase.clear();
+                }
+                continue;
+            } else {
+                testCase.push_back(input);
+            }
+        }
+    }
+    if(!testCase.empty()) {
+        ioll->push_back(move(testCase));
+    }
+
     return IOListContainer(ioll, presentationLayer);
 }
 

@@ -59,7 +59,9 @@ void test() {
     //shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("../../../resources/lee94_no_pds.fsm",pl,"lee94_no_pds");
     shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("../../../resources/hierons_multicomp.fsm",pl,"hierons_multicomp");
 
-    dfsm->hieronsDMethodOnMinimisedDfsm(true);
+    auto ts = dfsm->hieronsDMethodOnMinimisedDfsm(true);
+    cout << "testsuite size: " << ts.getFlatSize() << endl;
+    
 }
 void testRandom(const int numStates,const int numInput,const int numOutput)
 {

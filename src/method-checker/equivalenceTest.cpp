@@ -45,6 +45,8 @@ shared_ptr<vector<IOTrace>> wpMethodIOTraces = make_shared<vector<IOTrace>>();
 shared_ptr<vector<IOTrace>> hMethodIOTraces = make_shared<vector<IOTrace>>();
 shared_ptr<vector<IOTrace>> dMethodIOTraces = make_shared<vector<IOTrace>>();
 shared_ptr<vector<IOTrace>> adsMethodIOTraces = make_shared<vector<IOTrace>>();
+shared_ptr<vector<IOTrace>> hieronsDMethodIOTraces = make_shared<vector<IOTrace>>();
+shared_ptr<vector<IOTrace>> hieronsAdsMethodIOTraces = make_shared<vector<IOTrace>>();
 
 void runTestClass(shared_ptr<Dfsm> dfsm ,int numOutputFaults,int numTransitionFaults,
                   string faultClass) {
@@ -56,6 +58,8 @@ void runTestClass(shared_ptr<Dfsm> dfsm ,int numOutputFaults,int numTransitionFa
     int count_hMethod_pass = 0;
     int count_dMethod_pass = 0;
     int count_adsMethod_pass = 0;
+    int count_hieronsDMethod_pass = 0;
+    int count_hieronsAdsMethod_pass = 0;
 
     int numberOfMutants = 100;
 
@@ -100,6 +104,18 @@ void runTestClass(shared_ptr<Dfsm> dfsm ,int numOutputFaults,int numTransitionFa
             result &= mutant->pass(io);
         }
         if(result) count_adsMethod_pass++;
+
+        result = true;
+        for(IOTrace io: *hieronsDMethodIOTraces) {
+            result &= mutant->pass(io);
+        }
+        if(result) count_hieronsDMethod_pass++;
+
+        result = true;
+        for(IOTrace io: *hieronsAdsMethodIOTraces) {
+            result &= mutant->pass(io);
+        }
+        if(result) count_hieronsAdsMethod_pass++;
     }
     cout << "Compare DFSM with Mutants of Class " << faultClass
        << "(numOutputFaults = " << numOutputFaults << ", "
@@ -110,15 +126,17 @@ void runTestClass(shared_ptr<Dfsm> dfsm ,int numOutputFaults,int numTransitionFa
        << "Number of Wp-Method pass : "  << count_wpMethod_pass << endl
        << "Number of D-Method pass : "  << count_dMethod_pass << endl
        << "Number of D-Method(ADS) pass : "  << count_adsMethod_pass << endl
+       << "Number of Hierons-D-Method pass : "  << count_hieronsDMethod_pass << endl
+       << "Number of Hierons-D-Method(ADS) pass : "  << count_hieronsAdsMethod_pass << endl
        << "Number of H-Method pass : "  << count_hMethod_pass << endl;
 }
 
 int main(int argc, char* argv[])
 {
     while(true) {
-        shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(15, 100, 15);
+        shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(7, 20, 7);
 
-        shared_ptr<Dfsm> temp = make_shared<Dfsm>("Dfsm", 100, 15, 15, pl);
+        shared_ptr<Dfsm> temp = make_shared<Dfsm>("Dfsm", 20, 7, 7, pl);
         shared_ptr<Dfsm> dfsm = make_shared<Dfsm>(temp->minimise());
 
         IOListContainer e = dfsm->dMethodOnMinimisedDfsm(0, false);
@@ -137,6 +155,22 @@ int main(int argc, char* argv[])
             adsMethodIOTraces->push_back(io);
         }
         cout << "dMethod(ADS) size: " << f.getFlatSize() << endl;
+
+        IOListContainer g = dfsm->hieronsDMethodOnMinimisedDfsm(false);
+        for (vector<int> v: *g.getIOLists()) {
+            InputTrace i(v, pl);
+            IOTrace io = dfsm->applyDet(i);
+            hieronsDMethodIOTraces->push_back(io);
+        }
+        cout << "hieronsDMethod size: " << g.getFlatSize() << endl;
+
+        IOListContainer h = dfsm->hieronsDMethodOnMinimisedDfsm(true);
+        for (vector<int> v: *h.getIOLists()) {
+            InputTrace i(v, pl);
+            IOTrace io = dfsm->applyDet(i);
+            hieronsAdsMethodIOTraces->push_back(io);
+        }
+        cout << "hieronsDMethod(ADS) size: " << h.getFlatSize() << endl;
 
         IOListContainer a = dfsm->tMethod();
         for (vector<int> v: *a.getIOLists()) {

@@ -109,6 +109,7 @@ shared_ptr<list<shared_ptr<Edge>>> Graph::generateEulerTour() {
                 unmarkedEdges.erase(edge);
                 nextNode = edge->getTarget().lock();
                 eulerTour->push_back(edge);
+                break;
             }
         }
         if(!nextNode) {
@@ -129,7 +130,8 @@ shared_ptr<list<shared_ptr<Edge>>> Graph::generateEulerTour() {
             }
         }
         if(!v) {
-            for (auto &edge:*eulerTour) {
+            for(auto it = eulerTour->begin(); it != eulerTour->end(); ++it) {
+                auto edge = *it;
                 curr = edge->getTarget().lock();
                 for(auto& e:curr->getEdges()) {
                     if(unmarkedEdges.count(e) > 0) {
@@ -137,15 +139,15 @@ shared_ptr<list<shared_ptr<Edge>>> Graph::generateEulerTour() {
                         break;
                     }
                 }
-                if(v) break;
-            }
-            auto firstPart = make_shared<list<shared_ptr<Edge>>>();
-            auto secondPart = make_shared<list<shared_ptr<Edge>>>();
-            for(auto it = eulerTour->begin(); it == eulerTour->end(); ++it) {
-
+                if(v) {
+                    eulerTour->splice(eulerTour->begin(),*eulerTour,++it,eulerTour->end());
+                    break;
+                }
             }
         }
-        if(!v) return make_shared<list<shared_ptr<Edge>>>();
+        if(!v) {
+            return make_shared<list<shared_ptr<Edge>>>();
+        }
 
         auto nextTour = make_shared<list<shared_ptr<Edge>>>();
         //create the first tour
@@ -157,6 +159,7 @@ shared_ptr<list<shared_ptr<Edge>>> Graph::generateEulerTour() {
                     unmarkedEdges.erase(edge);
                     nextNode = edge->getTarget().lock();
                     nextTour->push_back(edge);
+                    break;
                 }
             }
             if(!nextNode) {
@@ -164,10 +167,10 @@ shared_ptr<list<shared_ptr<Edge>>> Graph::generateEulerTour() {
                 return make_shared<list<shared_ptr<Edge>>>();
             }
             currentNode = nextNode;
-        } while(currentNode != nodes[0]);
+        } while(currentNode != v);
 
+        eulerTour->splice(eulerTour->end(),*nextTour);
     }
-
     return eulerTour;
 
 }
