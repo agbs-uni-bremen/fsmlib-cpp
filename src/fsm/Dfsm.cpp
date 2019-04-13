@@ -2417,9 +2417,11 @@ std::shared_ptr<InputOutputTree> Dfsm::createAdaptiveDistinguishingSequence() {
 
 shared_ptr<Dfsm> Dfsm::createMutant(const std::string & fsmName,
                                   const size_t numOutputFaults,
-                                  const size_t numTransitionFaults){
+                                  const size_t numTransitionFaults,
+                                  const size_t numAdditionalStateFaults){
 
     srand(getRandomSeed());
+    int newNodesSize = nodes.size()+numAdditionalStateFaults;
 
     // Create new nodes for the mutant.
     vector<shared_ptr<FsmNode> > lst;
@@ -2441,21 +2443,31 @@ shared_ptr<Dfsm> Dfsm::createMutant(const std::string & fsmName,
         }
     }
 
+    // add additional state faults to the new machine
+    for (size_t asf = 0; asf < numAdditionalStateFaults; asf++ ) {
+        lst.push_back(make_shared<FsmNode>(nodes.size()+asf,fsmName,presentationLayer));
+
+        int srcNodeId = rand() % (maxState+1);
+        int trNo = rand() % lst[srcNodeId]->getTransitions().size();
+        auto tr = lst[srcNodeId]->getTransitions()[trNo];
+        tr->setTarget(lst[nodes.size() + asf]);
+    }
+
     // Now add transition faults to the new machine
     for ( size_t tf = 0; tf < numTransitionFaults; tf++ ) {
-        int srcNodeId = rand() % (maxState+1);
-        int newTgtNodeId = rand() % (maxState+1);
+        int srcNodeId = rand() % (newNodesSize);
+        int newTgtNodeId = rand() % (newNodesSize);
         int trNo = rand() % lst[srcNodeId]->getTransitions().size();
         auto tr = lst[srcNodeId]->getTransitions()[trNo];
         if ( tr->getTarget()->getId() == newTgtNodeId ) {
-            newTgtNodeId = (newTgtNodeId+1) % (maxState+1);
+            newTgtNodeId = (newTgtNodeId+1) % (newNodesSize);
         }
         lst[srcNodeId]->getTransitions()[trNo]->setTarget(lst[newTgtNodeId]);
     }
 
     // Now add output faults to the new machine
     for (size_t of = 0; of < numOutputFaults; of++ ) {
-        int srcNodeId = rand() % (maxState+1);
+        int srcNodeId = rand() % (newNodesSize);
         int trNo = rand() % lst[srcNodeId]->getTransitions().size();
         auto tr = lst[srcNodeId]->getTransitions()[trNo];
         int theInput = tr->getLabel()->getInput();
@@ -2494,6 +2506,7 @@ shared_ptr<Dfsm> Dfsm::createMutant(const std::string & fsmName,
             tr->setLabel(newLbl);
         }
     }
+
 
     return make_shared<Dfsm>(fsmName,maxInput,maxOutput,lst,presentationLayer);
 

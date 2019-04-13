@@ -571,7 +571,8 @@ public:
      */
     std::shared_ptr<Dfsm> createMutant(const std::string & fsmName,
                                       const size_t numOutputFaults,
-                                      const size_t numTransitionFaults);
+                                      const size_t numTransitionFaults,
+                                      const size_t numAdditionalStateFaults = 0);
 
 };
 #endif //FSM_FSM_DFSM_H_
