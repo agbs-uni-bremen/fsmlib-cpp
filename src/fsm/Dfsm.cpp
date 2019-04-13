@@ -21,7 +21,6 @@
 #include "graphs/Graph.h"
 #include "graphs/Network.h"
 #include "graphs/NetworkEdge.h"
-#include "Dfsm.h"
 
 
 using namespace std;
@@ -1315,20 +1314,6 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
     //generate optimized alpha sequences
     auto optimizedAlphaSequences = createOptimizedAlphaSequences(hsi);
 
-    /*for(auto& idToP:*optimizedAlphaSequences) {
-        int srcId = idToP.first;
-        vector<int>& ak = idToP.second.first;
-        int tgtId = idToP.second.second;
-        cout << "print optimized alpha sequences: " << endl;
-        cout << "start node -> " << srcId << endl;
-        cout << "target node -> " << tgtId << endl;
-        cout << "ak -> ";
-        for(int inp:ak) {
-            cout << to_string(inp) << ".";
-        }
-        cout << endl;
-    }*/
-
     //compute the indegree for all fsm nodes
     vector<vector<shared_ptr<FsmTransition>>> idToInTrans(nodes.size(),vector<shared_ptr<FsmTransition>>());
     vector<shared_ptr<FsmNode>> idToFsmNode(nodes.size(),nullptr); //store mapping of id to fsmnode for faster access
@@ -1593,56 +1578,6 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
 
     auto multiGraph = make_shared<Graph>(multiGraphNodes);
 
-    if(idToInTrans[initStateIdx].empty()) {
-       /*
-        auto& nonVerifiedInitNode = multiGraphNodes[initStateIdx];
-        assert(nonVerifiedInitNode->getEdges().empty() && nonVerifiedInitNode->getInEdges().empty());
-
-        auto it = optimizedAlphaSequences->find(initStateIdx);
-        assert(it != optimizedAlphaSequences->end());
-        auto alphaSequence = it->second.first;
-        int alphaTgtNodeId = it->second.second + nodes.size();
-
-        //add the missing alpha edge
-        auto alphaEdge = make_shared<NetworkEdge>(alphaSequence,nonVerifiedInitNode,multiGraphNodes[alphaTgtNodeId],0,alphaSequence.size());
-        nonVerifiedInitNode->addEdge(alphaEdge);
-        multiGraphNodes[alphaTgtNodeId]->addInEdge(alphaEdge);
-        alphaEdge->setIsAlpha(true);
-
-        //add an reset edge to make non-verified initial node reachable + the multigraph stays symmetric
-        auto resetEdge = make_shared<NetworkEdge>(vector<int>{Fsm::RESET_INPUT},multiGraphNodes[alphaTgtNodeId],nonVerifiedInitNode,0,1);
-        multiGraphNodes[alphaTgtNodeId]->addEdge(resetEdge);
-        nonVerifiedInitNode->addInEdge(resetEdge);
-
-        //merge components
-        int initStateId = initStateIdx;
-        components.erase(remove_if(components.begin(),components.end(),[initStateId](shared_ptr<unordered_set<int>> component){
-            return component->count(initStateId);
-        }),components.end());
-
-        for(auto& component:components) {
-            if(component->count(alphaTgtNodeId)) component->insert(initStateIdx);
-        }
-        auto multiGraph = make_shared<Graph>(multiGraphNodes);
-        cout << "multigraph components size: " << components.size() << endl;
-        cout << "first comp. size: " << components.at(0)->size() << endl;
-        this->toDot("multicomp_fsm");
-        multiGraph->toDot("multicomp_multigraph");
-        exit(EXIT_SUCCESS);
-        */
-    }
-    if(components.size() > 1) {
-        /*
-        cout << "multigraph components size: " << components.size() << endl;
-        this->toDot("multicomp_fsm");
-        multiGraph->toDot("multicomp_multigraph");
-        exit(EXIT_SUCCESS);
-         */
-        cout << "multicomp multigraph detected! " << endl;
-        this->toDot("multicomp_fsm");
-        multiGraph->toDot("multicomp_multigraph");
-    }
-
     //connect the components, if there is more than one
     while(components.size() > 1) {
         shared_ptr<unordered_set<int>> otherComponent;
@@ -1703,8 +1638,6 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
         }
         components.erase(remove(components.begin(),components.end(),otherComponent),components.end());
     }
-
-    multiGraph->toDot("connected_multigraph");
 
     auto eulerTour = multiGraph->generateEulerTour();
     //should not be empty at this point
@@ -1770,6 +1703,7 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
     for(auto& edge:*path) {
         auto& trace = edge->getTrace();
         for(int input:trace) {
+            //split the path at the reset inputs
             if(input == Fsm::RESET_INPUT) {
                 if(!testCase.empty()) {
                     ioll->push_back(move(testCase));
