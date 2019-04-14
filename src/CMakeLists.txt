@@ -83,7 +83,7 @@ add_subdirectory (utils)
 
 add_subdirectory (graphs)
 
-add_subdirectory (method-checker)
+add_subdirectory (evaluation)
 
 if(gui)
 	add_subdirectory (window)
