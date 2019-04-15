@@ -984,16 +984,10 @@ int main(int argc, char** argv)
 {
 
 	std::cout << "test start" << std::endl;
-	//cout << argc << endl;
-	//cout << argv[0] << endl;
-	//if (argc == 2) {
-	//	string input(argv[1]);
 
 	vector<TestResult> results;
 
 	// FSM Transformation Tests:
-	//if(argc == 2 and input == "1") //
-	
 	results.push_back(removeUnreachableNodes_TS());
 	results.push_back(transformToObservableFSM_TS());
 	results.push_back(minimise_Dfsm_TS());
@@ -1089,124 +1083,7 @@ int main(int argc, char** argv)
     fsmObs.toDot(fsmObs.getName());
     
 #endif
-	//testTreeNodeAddConstInt1();
-	//testTreeNodeAddConstInt2();
-	//testTreeNodeAddConstInt3();
-	//testTreeNodeEqualOperator1();
-	//testTreeNodeEqualOperator2();
-	//testTreeNodeCalcLeaves();
-	//testTreeNodeClone();
-	//testTreeNodeGetPath();
-	//testTreeNodeSuperTreeOf1();
-	//testTreeNodeSuperTreeOf2();
-	//testTreeNodeTraverse();
-	//testTreeNodeDeleteNode();
-	//testTreeNodeDeleteSingleNode();
-	//testAddToThisNode();
-	//testTreeNodeAddIOListContainer();
-	//testTreeNodeTentativeAddToThisNode();
-	//testTreeNodeAfter();
-	//testTreeNodeAddToThisNodeIOListContainer();
 
-	//testTreeRemove();
-	//testTreeToDot();
-	//testTreeGetPrefixRelationTree();
-	//testTreeTentativeAddToRoot();
-
-	//testFsmPresentationLayerFileConstructor();
-	//testFsmPresentationLayerDumpIn();
-	//testFsmPresentationLayerComparePositive();
-	//testFsmPresentationLayerCompareNegative();
-	
-	//testTraceEquals1Positive();
-	//testTraceEquals1Negative();
-	//testTraceEquals2Positive();
-	//testTraceEquals2Negative();
-	//testTraceOutputOperator();
-
-	//testInputTraceOutputOperator();
-	
-	//testOutputTraceOutputOperator();
-
-	//testOutputTreeContainsNegative();
-	//testOutputTreeContainsPositive();
-	//testOutputTreeToDot();
-	//testOutputTreeGetOutputTraces();
-	//testOutputTreeOutputOperator();
-
-	//testTestSuiteIsEquivalentToPositive();
-	//testTestSuiteIsEquivalentToNegative();
-	//testTestSuiteIsReductionOfNegative();
-	//testTestSuiteIsReductionOfPositive();
-
-	//testIOListContainerConstructor();
-
-	//testTraceSegmentGetCopy();
-
-	//testSegmentedTraceEqualOperatorPositive();
-	//testSegmentedTraceEqualOperatorNegative();
-
-	//testHittingSetConstructor();
-	//testHittingSetCalcMinCardHittingSet();
-
-	//testHsTreeNodeIsHittingSetPositive();
-	//testHsTreeNodeIsHittingSetNegative();
-	//testHsTreeNodeExpandNode();
-	//testHsTreeNodeToDot();
-
-	//testInt2IntMapConstructor();
-
-	//testPkTableRowIsEquivalentPositive();
-	//testPkTableRowIsEquivalentNegative();
-
-	//testPkTableMaxClassId();
-	//testPkTableGetPkPlusOneTable();
-	//testPkTableGetMembers();
-	//testPkTableToFsm();
-
-	//testDFSMTableGetP1Table();
-
-	//testOFSMTableRowConstructor();
-	//testOFSMTableIoEqualsPositive();
-	//testOFSMTableIoEqualsNegative();
-	//testOFSMTableClassEqualsPositive();
-	//testOFSMTableClassEqualsNegative();
-
-	//testOFSMTableConstructor();
-	//testOFSMTableMaxClassId();
-	//testOFSMTableNext();
-	//testOFSMTableToFsm();
-
-	//testFsmLabelOperatorLessThan();
-
-	//testFsmNodeAddTransition();
-	//testFsmNodeApply();
-	//testFsmNodeAfter1();
-	//testFsmNodeAfter2();
-	//testFsmNodeGetDFSMTableRow();
-	//testFsmNodeDistinguishedPositive();
-	//testFsmNodeDistinguishedNegative();
-	//testFsmNodeCalcDistinguishingTrace1();
-	//testFsmNodeCalcDistinguishingTrace2();
-	//testFsmNodeIsObservable();
-	//testFsmNodeIsDeterministic();
-
-    //testFsmAccept();
-	//testFsmDeepCopyConstructor();
-	//testFsmConstructor1();
-	//testFsmConstructor2();
-	//testFsmCreateRandomFsm();
-	//testFsmCreateMutant();
-	//testFsmDumpFsm();
-
-
-	/*testMinimise();
-	testWMethod();*/
-	//testCharacterisationSet();
-	//testGetDistTraces();
-	//testHMethod();
-	//testWpMethodWithDfsm(); 
-	//testIntersectionCharacteristics();
     //test1();
     //test2();
     //test3();

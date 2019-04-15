@@ -13,20 +13,6 @@
 #include <tuple>
 #include "Tests.h"
 
-//#include <trees/TestSuite.h>
-//#include "json/json.h"
-//
-//#include "sets/HittingSet.h"
-//#include "sets/HsTreeNode.h"
-//#include <algorithm>
-//#include <cmath>
-//#include "fsm/PkTableRow.h"
-//#include "fsm/PkTable.h"
-//#include "fsm/DFSMTable.h"
-//#include "fsm/DFSMTableRow.h"
-//#include "fsm/OFSMTableRow.h"
-//#include "fsm/OFSMTable.h"
-
 using namespace std;
 
 // Creates and returns some non observable Fsm. These are needed by the tests of some functions to achieve
@@ -1235,35 +1221,6 @@ TestResult intersect_TS() {
 // Test functions for the calculation of distinguishing traces
 
 /*
-	Applies inputTrc to startNode and produces the set of outputtraces. Only complete output traces are contained in this
-	set (each output trace has the same length as inputTrc).
-*/
-//set<vector<int>> calcCompleteOutputTraces(const shared_ptr<FsmNode> startNode, const vector<int> inputTrc) {	
-//	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl{ {startNode, vector<int>()} };
-//	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl_next;
-//
-//	for (int x : inputTrc) {
-//		for (auto reachedNode : wl) {
-//			for (auto transition : std::get<0>(reachedNode)->getTransitions()) {
-//				if (transition->getLabel()->getInput() != x) continue; 
-//				vector<int> outputTrc = get<1>(reachedNode);
-//				outputTrc.push_back(transition->getLabel()->getOutput());
-//				wl_next.insert({ transition->getTarget(), outputTrc });
-//			}
-//		}
-//		wl = wl_next;
-//		wl_next = set<std::tuple<shared_ptr<FsmNode>, vector<int>>>();
-//	}
-//
-//	set<vector<int>> outputTrcs;
-//	for (auto reachedNode : wl) {
-//		outputTrcs.insert(std::get<1>(reachedNode));
-//	}
-//
-//	return outputTrcs;
-//}
-
-/*
 	Second Version of Algorithm. Applies inputTrc to startNode and produces set of outputtraces. If some FsmNode is reached with a prefix
 	of inputTrc in which the next input of inputTrc is undefined, the corresponding output trace will be expanded by an 'NULL'/-1 output
 	(not contained in the output alphabet) and algorithm stays in this FsmNode. Then the next input is applied.
@@ -1301,45 +1258,6 @@ set<vector<int>> calcCompleteOutputTraces(const shared_ptr<FsmNode> startNode, c
 }
 
 /*
-	Second Version of Algorithm. Applies inputTrc to startNode and produces set of outputtraces. If some FsmNode is reached with a prefix
-	of inputTrc in which the next input of inputTrc is undefined, the corresponding output trace will be expanded by an 'NULL' output
-	(not contained in the output alphabet) and algorithm stays in this FsmNode. Then the next input is applied.
-*/
-//set<vector<int>> calcCompleteOutputTraces2(const shared_ptr<FsmNode> startNode, const vector<int> inputTrc, const int maxOutput) {
-//	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl{ {startNode, vector<int>()} };
-//	set<std::tuple<shared_ptr<FsmNode>, vector<int>>> wl_next;
-//	const int nullOutput = maxOutput + 1;
-//
-//	for (int x : inputTrc) {
-//		for (auto reachedNode : wl) {
-//			bool defined = false;
-//			for (auto transition : std::get<0>(reachedNode)->getTransitions()) {
-//				if (transition->getLabel()->getInput() != x) continue;
-//				defined = true;
-//				vector<int> outputTrc = get<1>(reachedNode);
-//				outputTrc.push_back(transition->getLabel()->getOutput());
-//				wl_next.insert({ transition->getTarget(), outputTrc });
-//			}
-//			if (not defined) {
-//				vector<int> outputTrc = get<1>(reachedNode);
-//				outputTrc.push_back(nullOutput);
-//				wl_next.insert({ std::get<0>(reachedNode), outputTrc });
-//			}
-//		}
-//		wl = wl_next;
-//		wl_next = set<std::tuple<shared_ptr<FsmNode>, vector<int>>>();
-//	}
-//
-//	set<vector<int>> outputTrcs;
-//	for (auto reachedNode : wl) {
-//		//for (auto i : std::get<1>(reachedNode)) cout << i << ",";
-//		//cout << "\n";
-//		outputTrcs.insert(std::get<1>(reachedNode));
-//	}
-//	return outputTrcs;
-//}
-
-/*
 	Checks if given inTrc is a Distinguishing Trace for q1 and q2.
 	Returns true iff inTrc produces some outTrc of the same length
 	which is only contained in the language of one of these FsmNodes.
@@ -1370,24 +1288,6 @@ bool isCharaterisationSet(const Fsm &m, const IOListContainer w) {
 	}
 	return true;
 }
-
-/*
-	Checks if trc is a non empty prefix of some element contained in w.
-*/
-//bool isPrefixOfElement(const vector<int> &trc, const std::shared_ptr<const Tree> w) {
-//	if (trc.size() == 0) return false;
-//
-//	vector<vector<int>> trcsOfW = *w->getIOLists().getIOLists();
-//	for (auto elem : trcsOfW) {
-//		if (elem.size() < trc.size()) continue;
-//
-//		for (size_t i = 0; i < trc.size(); ++i) {
-//			if (trc.at(i) != elem.at(i)) continue;
-//		}
-//		return true;
-//	}
-//	return false;
-//}
 
 /*
 	Checks if trc is a non empty prefix of some element contained in w.
@@ -2134,55 +2034,6 @@ TestResult calcStateIdentificationSets_TS() {
 	result.printResults();
 	return result;
 }
-
-
-/**
- * Create a complete Fsm from m by adding self loops in states for undefined inputs producing some nullouput not contained in the
- * regular output alphabet. (nullOutput is expected to be greater than m.getMaxOutput())
- */
-//shared_ptr<Fsm> transformToComplete(const shared_ptr<const Fsm> m, const size_t nullOutput) {
-//	vector<shared_ptr<FsmNode> > lst;
-//	for (int n = 0; n <= m->getMaxState(); n++) {
-//		lst.push_back(make_shared<FsmNode>(n, m->getName(), m->getPresentationLayer()));
-//	}
-//
-//	bool partial = false;
-//
-//	// Now add transitions that correspond exactly to the transitions in
-//	// this FSM
-//	for (int n = 0; n <= m->getMaxState(); n++) {
-//		auto theNewFsmNodeSrc = lst[n];
-//		auto theOldFsmNodeSrc = m->getNodes()[n];
-//		set<int> definedInputs;
-//		for (auto tr : theOldFsmNodeSrc->getTransitions()) {
-//			definedInputs.insert(tr->getLabel()->getInput());
-//			int tgtId = tr->getTarget()->getId();
-//			auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
-//			shared_ptr<FsmTransition> newTr =
-//				make_shared<FsmTransition>(theNewFsmNodeSrc, lst[tgtId], newLbl);
-//			theNewFsmNodeSrc->addTransition(newTr);
-//		}
-//		// add self loops with nullOutputs for undefined inputs
-//		for (int input = 0; input <= m->getMaxInput(); ++input) {
-//			if (definedInputs.count(input) == 0) {
-//				partial = true;
-//				shared_ptr<FsmTransition> newTr =
-//					make_shared<FsmTransition>(theNewFsmNodeSrc, lst[n], make_shared<FsmLabel>(input, nullOutput, m->getPresentationLayer()));
-//				theNewFsmNodeSrc->addTransition(newTr);
-//			}
-//		}
-//	}
-//	if (partial) {
-//		auto completeM = make_shared<Fsm>(m->getName(), m->getMaxInput(), nullOutput, lst, m->getPresentationLayer());
-//		completeM->initStateIdx = m->initStateIdx;
-//		return completeM;
-//	}
-//	else {
-//		auto completeM = make_shared<Fsm>(m->getName(), m->getMaxInput(), m->getMaxOutput(), lst, m->getPresentationLayer());
-//		completeM->initStateIdx = m->initStateIdx;
-//		return completeM;
-//	}
-//}
 
 /*
  *	Random Test Suite for test of Fsm::calcStateIdentificationSetsFast().
