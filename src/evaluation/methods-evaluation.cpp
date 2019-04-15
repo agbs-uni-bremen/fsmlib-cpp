@@ -84,6 +84,7 @@ void testRandomPdsAndAds(const int numStates,const int numInput,const int numOut
 
     for(int i=0;i<numberOfTests;++i) {
         shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(numInput, numStates, numOutput);
+        //create random minimised dfsm with certain number of states, inputs and outputs
         shared_ptr<Dfsm> dfsm = make_shared<Dfsm>(make_shared<Dfsm>("Dfsm", numStates, numInput, numOutput, pl)->minimise());
 
         vector<int> ds = dfsm->createDistinguishingSequence();
