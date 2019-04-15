@@ -2031,7 +2031,6 @@ TestResult calcStateIdentificationSets_TS() {
 	for (int i = 0; i < 2500; ++i) {
 		auto fsm = Fsm::createRandomFsmRepeatable("M", rand() % 4, rand() % 4 + 1, rand() % 6, make_shared<FsmPresentationLayer>());
 		auto minFsm = fsm->minimise();
-		cout << minFsm.size() << endl;
 		if (minFsm.size() > 50) {
 			cout << "M is too big. Stop Test Case." << endl;
 			continue;

@@ -1930,7 +1930,6 @@ bool Fsm::checkAllTransitions() const {
  * Returns true iff the Fsm class invariant holds for this object.
  */
 bool Fsm::checkInvariant() const {
-	//cout << "Fsm_inv" << endl;
 	if (maxInput < 0) return false;
 	if (maxOutput < 0) return false;
 	if (nodes.size() < 1) return false;
