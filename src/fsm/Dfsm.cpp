@@ -1421,7 +1421,6 @@ IOListContainer Dfsm::hieronsDMethodOnMinimisedDfsm(bool useAdaptiveDistinguishi
     //calculate the min cost/max flow for the network
     auto network = make_shared<Network>(networkGraphNodes,sourceNode->getId(),sinkNode->getId());
     network->calculateMinimumCostMaximumFlow();
-    //network->toDot("mcfp_network");
 
     //add the missing alpha sequence edge to the network before
     if(idToInTrans[initStateIdx].empty()) {

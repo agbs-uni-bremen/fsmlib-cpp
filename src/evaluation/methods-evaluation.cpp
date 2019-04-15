@@ -52,28 +52,65 @@ shared_ptr<FsmPresentationLayer> createPresentationLayer(const size_t maxInput, 
 }
 
 
-void test() {
-    srand(getRandomSeed());
-
+void testLeeAds()
+{
     shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(1,6,1);
-    //shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("../../../resources/lee94_no_pds.fsm",pl,"lee94_no_pds");
-    shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("../../../resources/hierons_multicomp.fsm",pl,"hierons_multicomp");
+    shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("../../../resources/lee94_no_pds.fsm",pl,"lee94_no_pds");
 
-    auto ts = dfsm->hieronsDMethodOnMinimisedDfsm(true);
-    cout << "testsuite size: " << ts.getFlatSize() << endl;
+    vector<int> ds = dfsm->createDistinguishingSequence();
 
+    //lee94_no_pds does not possess a pds
+    assert(ds.empty());
+
+    shared_ptr<InputOutputTree> ads = dfsm->createAdaptiveDistinguishingSequence();
+
+    //lee94_no_pds does possess an ads
+    assert(ads);
+
+    auto nds = dfsm->getNodes();
+    auto& nodes = nds;
+
+    auto adsList = make_shared<vector<shared_ptr<InputOutputTree>>>();
+    adsList->push_back(ads);
+    IOTreeContainer adaptiveTestCases(adsList,dfsm->getPresentationLayer());
+
+    //the ads should distinguish all states from each other
+    assert(dfsm->distinguishesAllStates(nodes,nodes,adaptiveTestCases));
 }
-void testRandom(const int numStates,const int numInput,const int numOutput)
+
+void testRandomPdsAndAds(const int numStates,const int numInput,const int numOutput)
 {
     int numberOfTests = 100;
 
     for(int i=0;i<numberOfTests;++i) {
         shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(numInput, numStates, numOutput);
-        auto dfsm = make_shared<Dfsm>("Dfsm", numStates, numInput, numOutput, pl);
-        shared_ptr<Dfsm> dfsmMin = make_shared<Dfsm>(dfsm->minimise());
+        shared_ptr<Dfsm> dfsm = make_shared<Dfsm>(make_shared<Dfsm>("Dfsm", numStates, numInput, numOutput, pl)->minimise());
 
-        dfsm->hieronsDMethodOnMinimisedDfsm(true);
-        cout << "next one " << endl;
+        vector<int> ds = dfsm->createDistinguishingSequence();
+        while(ds.empty()) {
+            dfsm = make_shared<Dfsm>(make_shared<Dfsm>("Dfsm", numStates, numInput, numOutput, pl)->minimise());
+            ds = dfsm->createDistinguishingSequence();
+        }
+
+        shared_ptr<InputOutputTree> ads = dfsm->createAdaptiveDistinguishingSequence();
+
+        //ads should exist for dfsm with pds
+        assert(ads);
+
+        auto nds = dfsm->getNodes();
+        auto& nodes = nds;
+
+        InputTrace distinguishingSequence(ds,pl);
+
+        //distinguishing sequence should distinguish all states from each other
+        assert(dfsm->distinguishesAllStates(nodes,distinguishingSequence));
+
+        auto adsList = make_shared<vector<shared_ptr<InputOutputTree>>>();
+        adsList->push_back(ads);
+        IOTreeContainer adaptiveTestCases(adsList,dfsm->getPresentationLayer());
+
+        //adaptive distinguishing sequence should distinguish all states from each other
+        assert(dfsm->distinguishesAllStates(nodes,nodes,adaptiveTestCases));
     }
 }
 
@@ -82,22 +119,6 @@ int main(int argc, char* argv[])
 
     srand(getRandomSeed());
 
-    test();
-    //testRandom(6,1,1);
-    //testCustomAds();
-    //testRandomAds(15, 3, 3);
-    //testRandomFaultCoverage(30, 6, 6);
-
-    /*
-    testRandomApplicability(30,2,2);
-    testRandomApplicability(30,4,4);
-    testRandomApplicability(30,6,6);
-    testRandomApplicability(30,10,10);
-
-    testRandomApplicability(50,3,3);
-    testRandomApplicability(50,6,6);
-    testRandomApplicability(50,10,10);
-    testRandomApplicability(50,17,17);
-*/
-
+    testRandomPdsAndAds(6,2,2);
+    testLeeAds();
 }
