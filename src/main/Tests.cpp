@@ -593,8 +593,8 @@ void parseFsmTransformationTSFile(const string &testSuitePath, vector<FsmTransfo
 
 	}
 	else
-	{
-		cout << "Unable to open input file" << endl;
+	{		
+		cout << "Unable to open file. Please make sure that relative path ../../../resources/TestSuites points to location of TestSuites folder" << endl;
 		exit(EXIT_FAILURE);
 	}
 }
@@ -1108,7 +1108,7 @@ shared_ptr<vector<IntersectTestCase>> parseIntersectTSFile(const string &testSui
 	}
 	else
 	{
-		cout << "Unable to open input file" << endl;
+		cout << "Unable to open file. Please make sure that relative path ../../../resources/TestSuites points to location of TestSuites folder" << endl;
 		exit(EXIT_FAILURE);
 	}
 }
@@ -1616,7 +1616,7 @@ void parseDistinguishingTraceTSFile(const string &testSuitePath, vector<Distingu
 	}
 	else
 	{
-		cout << "Unable to open input file" << endl;
+		cout << "Unable to open file. Please make sure that relative path ../../../resources/TestSuites points to location of TestSuites folder" << endl;
 		exit(EXIT_FAILURE);
 	}
 }
@@ -2435,7 +2435,7 @@ shared_ptr<vector<TestTheoryTestCase>> parseTestTheoryTSFile(const string &testS
 	}
 	else
 	{
-		cout << "Unable to open input file" << endl;
+		cout << "Unable to open file. Please make sure that relative path ../../../resources/TestSuites points to location of TestSuites folder" << endl;
 		exit(EXIT_FAILURE);
 	}
 }
