@@ -115,6 +115,15 @@ void testRandomPdsAndAds(const int numStates,const int numInput,const int numOut
     }
 }
 
+void evaluateDMethodsFaultCoverage() {
+    int numDfsm = 100,
+        numMutants = 100;
+
+    vector<vector<int>> dfsm_sizes = {{10,2,2},
+                                      {10,3,3},
+                                      {10,4,4}};
+}
+
 int main(int argc, char* argv[])
 {
 
