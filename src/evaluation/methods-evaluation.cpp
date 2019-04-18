@@ -566,9 +566,9 @@ void evaluateTestSuiteSizes() {
         avgHADSMethSize = (double) avgHADSMethSize/(double) numDfsm;
 
         out << dfsm_size[0] << ";"
-            << dfsm_size[1] << ";"
-            << dfsm_size[2] << ";"
-            << dfsm_size[0] * dfsm_size[1] << ";"
+            << (dfsm_size[1]+1) << ";"
+            << (dfsm_size[2]+1) << ";"
+            << (dfsm_size[0]+1) * (dfsm_size[1]+1) << ";"
             << avgWMethSize << ";"
             << avgWMethDuration << ";"
             << avgWpMethSize << ";"
