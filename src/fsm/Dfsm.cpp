@@ -2421,11 +2421,24 @@ shared_ptr<Dfsm> Dfsm::createMutant(const std::string & fsmName,
 
     srand(getRandomSeed());
     int newNodesSize = nodes.size()+numAdditionalStateFaults;
+    int newMaxOutput = maxOutput;
+    auto newPresentationLayer = make_shared<FsmPresentationLayer>(*presentationLayer);
+    for (size_t asf = 0; asf < numAdditionalStateFaults; asf++ ) {
+        newPresentationLayer->addState2String(to_string(asf));
+    }
+    newPresentationLayer->addOut2String(to_string(maxOutput + 1));
+
+    //auxilliary variable to store indegree of fsm nodes
+    vector<vector<shared_ptr<FsmTransition>>> idToInTrans;
+    //auxilliary set to store potential source nodes from where additional state faults originate
+    unordered_set<int> potSrcNodeIds;
+    potSrcNodeIds.insert(initStateIdx);
 
     // Create new nodes for the mutant.
     vector<shared_ptr<FsmNode> > lst;
     for ( int n = 0; n <= maxState; n++ ) {
-        lst.push_back(make_shared<FsmNode>(n,fsmName,presentationLayer));
+        lst.push_back(make_shared<FsmNode>(n,fsmName,newPresentationLayer));
+        idToInTrans.push_back(vector<shared_ptr<FsmTransition>>());
     }
 
     // Now add transitions that correspond exactly to the transitions in
@@ -2439,18 +2452,71 @@ shared_ptr<Dfsm> Dfsm::createMutant(const std::string & fsmName,
             shared_ptr<FsmTransition> newTr =
             make_shared<FsmTransition>(theNewFsmNodeSrc,lst[tgtId],newLbl);
             theNewFsmNodeSrc->addTransition(newTr);
+            idToInTrans[tgtId].push_back(newTr);
+            if(idToInTrans[tgtId].size() > 1) {
+                potSrcNodeIds.insert(tgtId);
+            }
         }
     }
+    if(potSrcNodeIds.size() > 1)
+        potSrcNodeIds.erase(initStateIdx);
 
-    // add additional state faults to the new machine
+    /**
+     * add additional states in a way, that the output of the last input of certain subsequences
+     * are affected. this is done by adding a sequence of new states that form a chain of
+     * the corresponding transitions, where the new states in the chain correspond to the
+     * appropriate old state. the last new state contains a output fault, affecting the subsequence only.
+     */
+    //get random potential start point of chain
+    int rand_el = rand() % potSrcNodeIds.size();
+    auto it = potSrcNodeIds.begin();
+    advance(it,rand_el);
+    int r = *it;
+    int rand_tr = rand() % (idToInTrans[r].size());
+    auto nextTr = idToInTrans[r][rand_tr];
+
     for (size_t asf = 0; asf < numAdditionalStateFaults; asf++ ) {
-        lst.push_back(make_shared<FsmNode>(nodes.size()+asf,fsmName,presentationLayer));
+        lst.push_back(make_shared<FsmNode>(nodes.size()+asf,fsmName,newPresentationLayer));
+        auto oldTarget = nextTr->getTarget();
+        nextTr->setTarget(lst[nodes.size() + asf]);
+        for(auto& tr:oldTarget->getTransitions()) {
+            int tgtId = tr->getTarget()->getId();
+            auto newLbl = make_shared<FsmLabel>(*(tr->getLabel()));
+            shared_ptr<FsmTransition> newTr =
+                    make_shared<FsmTransition>(lst[nodes.size() + asf],lst[tgtId],newLbl);
+            lst[nodes.size() + asf]->addTransition(newTr);
+        }
+        int trNo = rand() % lst[nodes.size() + asf]->getTransitions().size();
+        nextTr = lst[nodes.size() + asf]->getTransitions()[trNo];
+    }
+    if(numAdditionalStateFaults > 0) {
+        int oldOutput = nextTr->getLabel()->getOutput();
+        int newOutput = rand() % (newMaxOutput + 1);
+        if(newOutput == oldOutput) {
+            newOutput = maxOutput + 1;
+            newMaxOutput = newOutput;
+        }
+        auto newLbl = make_shared<FsmLabel>(nextTr->getLabel()->getInput(),
+                                            newOutput,
+                                            newPresentationLayer);
+        nextTr->setLabel(newLbl);
+    }
+    /*for (size_t asf = 0; asf < numAdditionalStateFaults; asf++ ) {
+        lst.push_back(make_shared<FsmNode>(nodes.size()+asf,fsmName,newPresentationLayer));
 
-        int srcNodeId = rand() % (maxState+1);
+        int srcNodeId = rand() % (lst.size() -1);
         int trNo = rand() % lst[srcNodeId]->getTransitions().size();
         auto tr = lst[srcNodeId]->getTransitions()[trNo];
         tr->setTarget(lst[nodes.size() + asf]);
-    }
+        //give the new node transitions
+        for(int i=0;i<=maxInput;i++) {
+            int tgtId = rand() % (lst.size() -1);
+            int output = rand() % (newMaxOutput + 1);
+            auto newLbl = make_shared<FsmLabel>(i,output,newPresentationLayer);
+            auto newTr = make_shared<FsmTransition>(lst[nodes.size() + asf],lst[tgtId],newLbl);
+            lst[nodes.size() + asf]->addTransition(newTr);
+        }
+    }*/
 
     // Now add transition faults to the new machine
     for ( size_t tf = 0; tf < numTransitionFaults; tf++ ) {
@@ -2470,7 +2536,7 @@ shared_ptr<Dfsm> Dfsm::createMutant(const std::string & fsmName,
         int trNo = rand() % lst[srcNodeId]->getTransitions().size();
         auto tr = lst[srcNodeId]->getTransitions()[trNo];
         int theInput = tr->getLabel()->getInput();
-        int newOutVal = rand() % (maxOutput+1);
+        int newOutVal = rand() % (newMaxOutput+1);
         bool newOutValOk;
 
         // We don't want to modify this transition in such a way
@@ -2491,7 +2557,7 @@ shared_ptr<Dfsm> Dfsm::createMutant(const std::string & fsmName,
             }
 
             if ( not newOutValOk ) {
-                newOutVal = (newOutVal+1) % (maxOutput+1);
+                newOutVal = (newOutVal+1) % (newMaxOutput+1);
             }
 
         } while (not newOutValOk);
@@ -2500,14 +2566,14 @@ shared_ptr<Dfsm> Dfsm::createMutant(const std::string & fsmName,
 
             auto newLbl = make_shared<FsmLabel>(tr->getLabel()->getInput(),
                                                 newOutVal,
-                                                presentationLayer);
+                                                newPresentationLayer);
 
             tr->setLabel(newLbl);
         }
     }
 
 
-    return make_shared<Dfsm>(fsmName,maxInput,maxOutput,lst,presentationLayer);
+    return make_shared<Dfsm>(fsmName,maxInput,newMaxOutput,lst,newPresentationLayer);
 
 }
 
