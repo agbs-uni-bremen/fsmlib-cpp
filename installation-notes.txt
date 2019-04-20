@@ -1,7 +1,9 @@
 After building the library as described in README.md, please make sure that
-the relative path from the executable to the resources/TestSuites
+the relative path from the executable fsm-main to the resources/TestSuites
 directory is "../../../resources/TestSuites" .
 To this end, you may need to move the contents of the original build directory 
 to a new created subdirectory of build, if the library was build under Linux.
 (such that build/main/fsm-main becomes build/debug/main/fsm-main, if the
 new subdirectory is called 'debug')
+
+To start executing the test suites, run fsm-main.

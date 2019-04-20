@@ -600,7 +600,7 @@ void parseFsmTransformationTSFile(const string &testSuitePath, vector<FsmTransfo
 }
 
 /**
- * Test Suite: Fsm::removeUnreachableNodes()
+ * Execute testsuite of Fsm::removeUnreachableNodes()
  */
 TestResult removeUnreachableNodes_TS() {
 	TestResult result("Fsm::removeUnreachableNodes");
@@ -680,7 +680,7 @@ TestResult removeUnreachableNodes_TS() {
 }
 
 /**
- * Test Suite: Fsm::transformToObservableFSM()
+ * Execute testsuite of Fsm::transformToObservableFSM()
  */
 TestResult transformToObservableFSM_TS() {
 	TestResult result("Fsm::transformToObservableFSM");
@@ -751,7 +751,7 @@ TestResult transformToObservableFSM_TS() {
 }
 
 /**
- * Test Suite: Dfsm::minimise()
+ * Execute testsuite of Dfsm::minimise()
  */
 TestResult minimise_Dfsm_TS() {
 	TestResult result("Dfsm::minimise");
@@ -811,7 +811,7 @@ TestResult minimise_Dfsm_TS() {
 }
 
 /**
- * Test Suite: Fsm::minimiseObservableFSM()
+ * Execute testsuite of Fsm::minimiseObservableFSM()
  */
 TestResult minimiseObservableFSM_TS() {
 	TestResult result("Fsm::minimiseObservableFSM");
@@ -893,7 +893,7 @@ TestResult minimiseObservableFSM_TS() {
 }
 
 /**
- * Test Suite: Fsm::minimise()
+ * Execute testsuite of Fsm::minimise()
  */
 TestResult minimise_Fsm_TS() {
 	TestResult result("Fsm::minimise");
@@ -1114,7 +1114,7 @@ shared_ptr<vector<IntersectTestCase>> parseIntersectTSFile(const string &testSui
 }
 
 /*
- *	Test Suite of Fsm::intersect
+ *	Execute testsuite of Fsm::intersect
 */
 TestResult intersect_TS() {
 	TestResult result("Fsm::intersect");
@@ -1221,7 +1221,7 @@ TestResult intersect_TS() {
 // Test functions for the calculation of distinguishing traces
 
 /*
-	Second Version of Algorithm. Applies inputTrc to startNode and produces set of outputtraces. If some FsmNode is reached with a prefix
+	Applies inputTrc to startNode and produces set of outputtraces. If some FsmNode is reached with a prefix
 	of inputTrc in which the next input of inputTrc is undefined, the corresponding output trace will be expanded by an 'NULL'/-1 output
 	(not contained in the output alphabet) and algorithm stays in this FsmNode. Then the next input is applied.
 */
@@ -1622,7 +1622,7 @@ void parseDistinguishingTraceTSFile(const string &testSuitePath, vector<Distingu
 }
 
 /*
- *	Random Test Suite for test of Dfsm::getCharacterisationSet().
+ *	Execute testsuite of Dfsm::getCharacterisationSet().
  */
 TestResult getCharacterisationSet_Dfsm_TS() {
 	TestResult result("Dfsm::getCharacterisationSet");
@@ -1685,7 +1685,7 @@ TestResult getCharacterisationSet_Dfsm_TS() {
 }
 
 /*
- *	Random Test Suite for test of Fsm::getCharacterisationSet().
+ *	Execute testsuite of Fsm::getCharacterisationSet().
  */
 TestResult getCharacterisationSet_Fsm_TS() { 
 	TestResult result("Fsm::getCharacterisationSet");
@@ -1767,7 +1767,7 @@ TestResult getCharacterisationSet_Fsm_TS() {
 }
 
 /*
- *	Random Test Suite for test of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
+ *	Execute testsuite of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
  *                                           const vector<shared_ptr<PkTable>>& pktblLst,
  *                                           const int maxInput)
  */
@@ -1837,7 +1837,7 @@ TestResult calcDistinguishingTrace_PkTables_TS() {
 }
 
 /*
- *	Random Test Suite for test of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
+ *	Execute testsuite of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
  *                                           const vector<shared_ptr<OFSMTable>>& ofsmTblLst,
  *                                           const int maxInput,
  *                                           const int maxOutput)
@@ -1919,7 +1919,7 @@ TestResult calcDistinguishingTrace_OFSMTables_TS() {
 }
 
 /*
- *	Random Test Suite for test of Fsm::calcStateIdentificationSets().
+ *	Execute testsuite of Fsm::calcStateIdentificationSets().
  */
 TestResult calcStateIdentificationSets_TS() {
 	TestResult result("Fsm::calcStateIdentificationSets");
@@ -2036,7 +2036,7 @@ TestResult calcStateIdentificationSets_TS() {
 }
 
 /*
- *	Random Test Suite for test of Fsm::calcStateIdentificationSetsFast().
+ *	Execute testsuite of Fsm::calcStateIdentificationSetsFast().
 */
 TestResult calcStateIdentificationSetsFast_TS() {
 	TestResult result("Fsm::calcStateIdentificationSetsFast");
@@ -2474,7 +2474,7 @@ void executeTestTheoryTC(TestTheoryTestCase & tc, shared_ptr<TestSuiteGenerator>
 }
 
 
-// Test Fsm::wMethod(...)
+// Execute testsuite of Fsm::wMethod(...)
 TestResult wMethod_Fsm_TS() {
 	TestResult result("Fsm::wMethod");
 	cout << "============================= Start Test of Fsm::wMethod =============================" << endl;
@@ -2612,7 +2612,7 @@ TestResult wMethod_Fsm_TS() {
 	return result;
 }
 
-// Test Dfsm::wMethod(...)
+// Execute testsuite of Dfsm::wMethod(...)
 TestResult wMethod_Dfsm_TS() {
 	TestResult result("Dfsm::wMethod");
 	cout << "============================= Start Test of Dfsm::wMethod =============================" << endl;	
@@ -2686,7 +2686,7 @@ TestResult wMethod_Dfsm_TS() {
 	return result;
 }
 
-// Test Fsm::wMethodOnMinimisedFsm(...)
+// Execute testsuite of Fsm::wMethodOnMinimisedFsm(...)
 TestResult wMethodOnMinimisedFsm_TS() {
 	TestResult result("Fsm::wMethodOnMinimisedFsm");
 	cout << "============================= Start Test of Fsm::wMethodOnMinimisedFsm =============================" << endl;	
@@ -2807,7 +2807,7 @@ TestResult wMethodOnMinimisedFsm_TS() {
 	return result;
 }
 
-// test Dfsm::wMethodOnMinimisedDfsm(...)
+// Execute testsuite of Dfsm::wMethodOnMinimisedDfsm(...)
 TestResult wMethodOnMinimisedDfsm_TS() {
 	TestResult result("Dfsm::wMethodOnMinimisedDfsm");
 	cout << "============================= Start Test of Dfsm::wMethodOnMinimisedDfsm =============================" << endl;	
@@ -2881,7 +2881,7 @@ TestResult wMethodOnMinimisedDfsm_TS() {
 	return result;
 }
 
-// test Fsm::wpMethod(...)
+// Execute testsuite of Fsm::wpMethod(...)
 TestResult wpMethod_Fsm_TS() {
 	TestResult result("Fsm::wpMethod");
 	cout << "============================= Start Test of Fsm::wpMethod =============================" << endl;	
@@ -2978,7 +2978,7 @@ TestResult wpMethod_Fsm_TS() {
 	return result;
 }
 
-// Test Dfsm::wpMethod(...)
+// Execute testsuite of Dfsm::wpMethod(...)
 TestResult wpMethod_Dfsm_TS() {
 	TestResult result("Dfsm::wpMethod");
 	cout << "============================= Start Test of Dfsm::wpMethod =============================" << endl;	
@@ -3054,7 +3054,7 @@ TestResult wpMethod_Dfsm_TS() {
 	return result;
 }
 
-// Test Dfsm::wpMethodOnMinimisedDfsm(...)
+// Execute testsuite of Dfsm::wpMethodOnMinimisedDfsm(...)
 TestResult wpMethodOnMinimisedDfsm_TS() {
 	TestResult result("Dfsm::wpMethodOnMinimisedDfsm");
 	cout << "============================= Start Test of Dfsm::wpMethodOnMinimisedDfsm =============================" << endl;	
@@ -3131,7 +3131,7 @@ TestResult wpMethodOnMinimisedDfsm_TS() {
 	return result;
 }
 
-// test Fsm::hsiMethod(...)
+// Execute testsuite of Fsm::hsiMethod(...)
 TestResult hsiMethod_Fsm_TS() {
 	TestResult result("Fsm::hsiMethod");
 	cout << "============================= Start Test of Fsm::hsiMethod =============================" << endl;	
@@ -3239,7 +3239,7 @@ TestResult hsiMethod_Fsm_TS() {
 	return result;
 }
 
-// Test Dfsm::hsiMethod(...)
+// Execute testsuite of Dfsm::hsiMethod(...)
 TestResult hsiMethod_Dfsm_TS() {
 	TestResult result("Dfsm::hsiMethod");
 	cout << "============================= Start Test of Dfsm::hsiMethod =============================" << endl;	
@@ -3328,7 +3328,7 @@ TestResult hsiMethod_Dfsm_TS() {
 	return result;
 }
 
-// Test Dfsm::hMethodOnMinimisedDfsm(...)
+// Execute testsuite of Dfsm::hMethodOnMinimisedDfsm(...)
 TestResult hMethodOnMinimisedDfsm_TS() {
 	TestResult result("Dfsm::hMethodOnMinimisedDfsm");
 	cout << "============================= Start Test of Dfsm::hMethodOnMinimisedDfsm =============================" << endl;	
@@ -3443,7 +3443,7 @@ bool testTMethod(Dfsm & m, const vector<shared_ptr<const Fsm>>& mutants, const s
 }
 
 /*
- *	Test Suite of Dfsm::tMethod().
+ *	Execute testsuite of Dfsm::tMethod().
  */
 TestResult tMethod_TS() {
 	TestResult result("Dfsm::tMethod");

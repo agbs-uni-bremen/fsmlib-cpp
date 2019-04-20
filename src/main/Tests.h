@@ -21,54 +21,54 @@ struct TestResult {
 };
 
 /**
- * Test Suite: Fsm::removeUnreachableNodes()
+ * Execute testsuite of Fsm::removeUnreachableNodes()
  */
 TestResult removeUnreachableNodes_TS();
 
 /**
- * Test Suite: Fsm::transformToObservableFSM()
+ * Execute testsuite of Fsm::transformToObservableFSM()
  */
 TestResult transformToObservableFSM_TS();
 
 /**
- * Test Suite: Dfsm::minimise()
+ * Execute testsuite of Dfsm::minimise()
  */
 TestResult minimise_Dfsm_TS();
 
 /**
- * Test Suite: Fsm::minimiseObservableFSM()
+ * Execute testsuite of Fsm::minimiseObservableFSM()
  */
 TestResult minimiseObservableFSM_TS();
 
 /**
- * Test Suite: Fsm::minimise()
+ * Execute testsuite of Fsm::minimise()
  */
 TestResult minimise_Fsm_TS();
 
 /*
- *	Random Test Suite for test of Fsm::getCharacterisationSet().
+ * Execute testsuite of Fsm::intersect().
  */
 TestResult intersect_TS();
 
 /*
- *	Random Test Suite for test of Fsm::getCharacterisationSet().
+ *	Execute testsuite of Dfsm::getCharacterisationSet().
  */
 TestResult getCharacterisationSet_Dfsm_TS();
 
 /*
- *	Random Test Suite for test of Fsm::getCharacterisationSet().
+ *	Execute testsuite of Fsm::getCharacterisationSet().
  */
 TestResult getCharacterisationSet_Fsm_TS();
 
 /*
- *	Random Test Suite for test of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
+ *	Execute testsuite of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
  *                                           const vector<shared_ptr<PkTable>>& pktblLst,
  *                                           const int maxInput)
  */
 TestResult calcDistinguishingTrace_PkTables_TS();
 
 /*
- *	Random Test Suite for test of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
+ *	Execute testsuite of FsmNode::calcDistinguishingTrace(const shared_ptr<FsmNode> otherNode,
  *                                           const vector<shared_ptr<OFSMTable>>& ofsmTblLst,
  *                                           const int maxInput,
  *                                           const int maxOutput)
@@ -76,48 +76,48 @@ TestResult calcDistinguishingTrace_PkTables_TS();
 TestResult calcDistinguishingTrace_OFSMTables_TS();
 
 /*
- *	Random Test Suite for test of Fsm::calcStateIdentificationSets().
+ *	Execute testsuite of Fsm::calcStateIdentificationSets().
  */
 TestResult calcStateIdentificationSets_TS();
 
 /*
- *	Random Test Suite for test of Fsm::calcStateIdentificationSetsFast().
+ *	Execute testsuite of Fsm::calcStateIdentificationSetsFast().
  */
 TestResult calcStateIdentificationSetsFast_TS();
 
 /*
- *	Random Test Suite for test of Dfsm::tMethod().
+ *	Execute testsuite of Dfsm::tMethod().
  */
 TestResult tMethod_TS();
 
-// Test Fsm::wMethod(...)
+// Execute testsuite of Fsm::wMethod(...)
 TestResult wMethod_Fsm_TS();
 
-// Test Dfsm::wMethod(...)
+// Execute testsuite of Dfsm::wMethod(...)
 TestResult wMethod_Dfsm_TS();
 
-// Test Fsm::wMethodOnMinimisedFsm(...)
+// Execute testsuite of Fsm::wMethodOnMinimisedFsm(...)
 TestResult wMethodOnMinimisedFsm_TS();
 
-// test Dfsm::wMethodOnMinimisedDfsm(...)
+// Execute testsuite of Dfsm::wMethodOnMinimisedDfsm(...)
 TestResult wMethodOnMinimisedDfsm_TS();
 
-// test Fsm::wpMethod(...)
+// Execute testsuite of Fsm::wpMethod(...)
 TestResult wpMethod_Fsm_TS();
 
-// Test Dfsm::wpMethod(...)
+// Execute testsuite of Dfsm::wpMethod(...)
 TestResult wpMethod_Dfsm_TS();
 
-// Test Dfsm::wpMethodOnMinimisedDfsm(...)
+// Execute testsuite of Dfsm::wpMethodOnMinimisedDfsm(...)
 TestResult wpMethodOnMinimisedDfsm_TS();
 
-// test Fsm::hsiMethod(...)
+// Execute testsuite of Fsm::hsiMethod(...)
 TestResult hsiMethod_Fsm_TS();
 
-// Test Dfsm::hsiMethod(...)
+// Execute testsuite of Dfsm::hsiMethod(...)
 TestResult hsiMethod_Dfsm_TS();
 
-// Test Dfsm::hMethodOnMinimisedDfsm(...)
+// Execute testsuite of Dfsm::hMethodOnMinimisedDfsm(...)
 TestResult hMethodOnMinimisedDfsm_TS();
 
 
