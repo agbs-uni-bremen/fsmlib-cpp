@@ -308,34 +308,43 @@ void evaluateDMethodsApplicability() {
 
     int numDfsm = 100;
 
-    vector<vector<int>> dfsm_sizes = {{10,2,2},
-                                      {10,4,4},
-                                      {10,5,5},
-                                      {30,1,1},
-                                      {30,3,3},
-                                      {30,6,6},
-                                      {30,15,15},
-                                      {50,3,3},
-                                      {50,6,6},
-                                      {50,11,11},
-                                      {50,25,25},
-                                      {70,5,5},
-                                      {70,10,10},
-                                      {70,16,16},
-                                      {70,35,35},
-                                      {100,7,7},
-                                      {100,14,14},
-                                      {100,22,22},
-                                      {100,50,50}
+    vector<vector<int>> dfsm_sizes = {{20,1,1}, //0.1
+                                      {20,2,2}, //0.15
+                                      {20,3,3}, //0.2
+                                      {20,4,4}, //0.25
+                                      {20,10,10}, //0.55
+                                      {30,2,2}, //0.1
+                                      {30,3,3}, //0.13333
+                                      {30,5,5}, //0.2
+                                      {30,6,6}, //0.2333
+                                      {30,16,16}, //0.566
+                                      {50,4,4}, //0.1
+                                      {50,7,7}, //0.16
+                                      {50,9,9}, //0.2
+                                      {50,11,11}, //0.24
+                                      {50,26,26}, //0.54
+                                      {70,6,6}, //0.1
+                                      {70,10,10}, //0.157
+                                      {70,13,13}, //0.2
+                                      {70,16,16}, //0.242
+                                      {70,35,35}, //0.514
+                                      {100,9,9}, //0.1
+                                      {100,14,14}, //0.15
+                                      {100,19,19}, //0.2
+                                      {100,23,23}, //0.24
+                                      {100,50,50}, //0.51
     };
     ofstream out("dmethods_ac.csv");
-    out << "No. Dfsm ,"
-        << "states  ,"
-        << "inputs  ,"
-        << "outputs ,"
-        << "ratio(output/state) ,"
+    out << "No. Dfsm,"
+        << "states,"
+        << "inputs,"
+        << "outputs,"
+        << "ratio(output/state),"
         << "D-Method,"
-        << "D-Method(ADS) " << endl;
+        << "D-Method(ADS), "
+        << "Hierons D-Method,"
+        << "Hierons D-Method(ADS)"
+        << endl;
 
     for(auto& dfsm_size:dfsm_sizes) {
         cout << endl << "Evaluate Applicability for DFSM with: " << endl
@@ -368,9 +377,12 @@ void evaluateDMethodsApplicability() {
             auto b = dfsm->dMethodOnMinimisedDfsm(0,true);
             if(b.size() > 0) sidAds_ac++;
 
-            //auto c = dfsm->hieronsDMethodOnMinimisedDfsm(false);
-            //auto d = dfsm->hieronsDMethodOnMinimisedDfsm(false);
+            /*auto c = dfsm->hieronsDMethodOnMinimisedDfsm(false);
+            if(c.size() > 0) hierPds_ac++;
 
+            auto d = dfsm->hieronsDMethodOnMinimisedDfsm(true);
+            if(d.size() > 0) hierAds_ac++;
+            */
             cout << "Created testsuites for all D-Method variants..." << endl;
         }
 
@@ -381,11 +393,14 @@ void evaluateDMethodsApplicability() {
 
         out << numDfsm << ","
             << dfsm_size[0] << ","
-            << dfsm_size[1] << ","
-            << dfsm_size[2] << ","
-            << ((float) dfsm_size[2]/ (float) dfsm_size[0]) << ","
+            << (dfsm_size[1]+1) << ","
+            << (dfsm_size[2]+1) << ","
+            << ((float) (dfsm_size[2]+1)/ (float) dfsm_size[0]) << ","
             << sidPds_ac << ","
-            << sidAds_ac << endl;
+            << sidAds_ac << ","
+            << hierPds_ac << ","
+            << hierAds_ac
+            << endl;
     }
     out.close();
     cout << "Finished!" << endl << endl;
@@ -657,7 +672,7 @@ void evaluateTestSuiteSizes() {
         out << dfsm_size[0] << ","
             << (dfsm_size[1]+1) << ","
             << (dfsm_size[2]+1) << ","
-            << (dfsm_size[0]+1) * (dfsm_size[1]+1) << ","
+            << (dfsm_size[0]) * (dfsm_size[1]+1) << ","
             << avgWMethSize << ","
             << avgWMethDuration << ","
             << avgWpMethSize << ","
@@ -1160,9 +1175,9 @@ int main(int argc, char* argv[])
 
     srand(getRandomSeed());
 
-    //evaluateDMethodsApplicability();
+    evaluateDMethodsApplicability();
     //evaluateTestCaseLength();
-    evaluateFCOutsideFaultDomain();
+    //evaluateFCOutsideFaultDomain();
     //evaluateDMethodsFaultCoverage();
     //evaluateTestSuiteSizes();
     //testRandomPdsAndAds(6,2,2);
