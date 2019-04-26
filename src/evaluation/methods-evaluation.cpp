@@ -942,7 +942,7 @@ void evaluateFCOutsideFaultDomain() {
 void evaluateTestCaseLength() {
     cout << " Start Test Case Length Evaluation..." << endl;
 
-    int numDfsm = 25;
+    int numDfsm = 50;
 
     vector<vector<int>> dfsm_sizes = {{10,1,1}, //20
                                       {10,2,2}, //30
