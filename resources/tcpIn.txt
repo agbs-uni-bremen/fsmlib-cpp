@@ -1,0 +1,9 @@
+passive_open
+active_open4
+send
+close
+rcv SYN
+rcv ACK
+rcv SYN,ACK
+rcv FIN
+timeout=2MSL

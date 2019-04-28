@@ -17,6 +17,7 @@
 #include "trees/InputOutputTree.h"
 #include "trees/SplittingTree.h"
 #include "trees/IOTreeContainer.h"
+#include "utils/Logger.hpp"
 
 using namespace std;
 
@@ -1170,12 +1171,817 @@ void evaluateTestCaseLength() {
     cout << "Finished!" << endl << endl;
 }
 
+void evaluateTCPDfsm()
+{
+    int numMutants = 100,
+        numAddStates = 5;
+
+    cout << "Starting Evaluation for tcp.fsm..." << endl;
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>("../../../resources/tcpIn.txt",
+                                                                  "../../../resources/tcpOut.txt",
+                                                                  "../../../resources/tcpState.txt");
+    shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("../../../resources/tcp.fsm",pl,"tcp");
+    auto minDfsm = dfsm->minimise();
+
+    cout << "orig. size -> " << dfsm->size() << endl;
+    cout << "min. size -> " << minDfsm.size() << endl;
+
+    auto dTs = dfsm->dMethodOnMinimisedDfsm(0,false);
+    auto adsTs = dfsm->dMethodOnMinimisedDfsm(0,true);
+    auto hdTs = dfsm->hieronsDMethodOnMinimisedDfsm(false);
+    auto hadsTs = dfsm->hieronsDMethodOnMinimisedDfsm(true);
+
+    bool dsExists = dTs.size() > 0;
+    bool adsExists = adsTs.size() > 0;
+
+    double avgLengthSidPds = 0,
+            avgLengthSidAds = 0,
+            avgLengthHierPds = 0,
+            avgLengthHierAds = 0,
+            avgLengthW = 0,
+            avgLengthWp = 0,
+            avgLengthH = 0;
+
+    cout << "DS exists -> " << dsExists << endl;
+    if(dsExists) {
+        cout << "DS length -> " << dfsm->createDistinguishingSequence().size() << endl;
+    }
+    cout << "ADS exists -> " << adsExists << endl;
+    if(adsExists) {
+        auto hsi = dfsm->createAdaptiveDistinguishingSequence()->getHsi();
+        int maxDepth = hsi->begin()->size();
+        for(auto h: *hsi) {
+            cout << "lel -> " << h.size() << endl;
+            maxDepth = maxDepth >= h.size()?maxDepth:h.size();
+        }
+        cout << "ADS depth -> " << maxDepth << endl;
+    }
+
+    vector<IOTrace> sidPdsTs;
+    for(vector<int> v: *dTs.getIOLists()) {
+        InputTrace i(v,pl);
+        IOTrace io = dfsm->applyDet(i);
+        sidPdsTs.push_back(io);
+        avgLengthSidPds += v.size();
+    }
+    avgLengthSidPds = sidPdsTs.size()?avgLengthSidPds / (double) sidPdsTs.size():0;
+
+    vector<IOTrace> sidAdsTs;
+    for(vector<int> v: *adsTs.getIOLists()) {
+        InputTrace i(v,pl);
+        IOTrace io = dfsm->applyDet(i);
+        sidAdsTs.push_back(io);
+        avgLengthSidAds += v.size();
+    }
+    avgLengthSidAds = sidAdsTs.size()?avgLengthSidAds / (double) sidAdsTs.size():0;
+
+
+    vector<IOTrace> hierPdsTs;
+    for(vector<int> v: *hdTs.getIOLists()) {
+        InputTrace i(v,pl);
+        IOTrace io = dfsm->applyDet(i);
+        hierPdsTs.push_back(io);
+        avgLengthHierPds+= v.size();
+    }
+    avgLengthHierPds = hierPdsTs.size()?avgLengthHierPds / (double) hierPdsTs.size():0;
+
+    vector<IOTrace> hierAdsTs;
+    for(vector<int> v: *hadsTs.getIOLists()) {
+        InputTrace i(v,pl);
+        IOTrace io = dfsm->applyDet(i);
+        hierAdsTs.push_back(io);
+        avgLengthHierAds+= v.size();
+    }
+    avgLengthHierAds = hierAdsTs.size()?avgLengthHierAds / (double) hierAdsTs.size():0;
+
+    auto w =  dfsm->wMethodOnMinimisedDfsm(0);
+    vector<IOTrace> wTs;
+    for(vector<int> v: *w.getIOLists()) {
+        InputTrace i(v,pl);
+        IOTrace io = dfsm->applyDet(i);
+        wTs.push_back(io);
+        avgLengthW += v.size();
+    }
+    avgLengthW = wTs.size()?avgLengthW/ (double) wTs.size():0;
+
+    auto wp =  dfsm->wpMethodOnMinimisedDfsm(0);
+    vector<IOTrace> wpTs;
+    for(vector<int> v: *wp.getIOLists()) {
+        InputTrace i(v,pl);
+        IOTrace io = dfsm->applyDet(i);
+        wpTs.push_back(io);
+        avgLengthWp += v.size();
+    }
+    avgLengthWp = wpTs.size()?avgLengthWp/ (double) wpTs.size():0;
+
+    auto h =  dfsm->hMethodOnMinimisedDfsm(0);
+    vector<IOTrace> hTs;
+    for(vector<int> v: *h.getIOLists()) {
+        InputTrace i(v,pl);
+        IOTrace io = dfsm->applyDet(i);
+        hTs.push_back(io);
+        avgLengthH += v.size();
+    }
+    avgLengthH = wpTs.size()?avgLengthH/ (double) hTs.size():0;
+
+    cout << "Created testsuites for all Methods..." << endl;
+
+    float sidPds_fc = 0,
+            sidAds_fc = 0,
+            hierPds_fc = 0,
+            hierAds_fc = 0;
+
+    int num_nonequal_mut = 0,
+            num_not_passing_sidPds = 0,
+            num_not_passing_sidAds = 0,
+            num_not_passing_hierPds = 0,
+            num_not_passing_hierAds = 0;
+
+    for(int j=0;j<numMutants;++j) {
+        unsigned int numOutputFaults = rand() % (dfsm->getMaxNodes()/3),
+                numTransitionFaults = rand() % (dfsm->getMaxNodes()/3);
+        if(random_bool_with_prob(0.4)) {
+            numOutputFaults = 0;
+            numTransitionFaults = 0;
+        }
+        shared_ptr<Dfsm> mutant = dfsm->createMutant("Mutant",numOutputFaults,numTransitionFaults);
+
+        bool result = dfsm->equivalenceCheck(*mutant);
+        if (!result) num_nonequal_mut++;
+
+        result = true;
+        for (IOTrace io: sidPdsTs) {
+            result &= mutant->pass(io);
+        }
+        if (!result) num_not_passing_sidPds++;
+
+        result = true;
+        for (IOTrace io: sidAdsTs) {
+            result &= mutant->pass(io);
+        }
+        if (!result) num_not_passing_sidAds++;
+
+        result = true;
+        for (IOTrace io: hierPdsTs) {
+            result &= mutant->pass(io);
+        }
+        if (!result) num_not_passing_hierPds++;
+
+        result = true;
+        for (IOTrace io: hierAdsTs) {
+            result &= mutant->pass(io);
+        }
+        if (!result) num_not_passing_hierAds++;
+
+    }
+
+    sidPds_fc = (num_nonequal_mut>0?(float)num_not_passing_sidPds/(float)num_nonequal_mut*100:
+             ((num_not_passing_sidPds == 0)?100:0));
+    sidAds_fc = (num_nonequal_mut>0?(float)num_not_passing_sidAds/(float)num_nonequal_mut*100:
+             ((num_not_passing_sidAds == 0)?100:0));
+    hierPds_fc = (num_nonequal_mut>0?(float)num_not_passing_hierPds/(float)num_nonequal_mut*100:
+              ((num_not_passing_hierPds == 0)?100:0));
+    hierAds_fc = (num_nonequal_mut>0?(float)num_not_passing_hierAds/(float)num_nonequal_mut*100:
+              ((num_not_passing_hierAds == 0)?100:0));
+
+    cout << endl
+            << "Number of unequal mutants -> " << num_nonequal_mut << endl
+            << "Not passing D-Method(PDS) -> " << num_not_passing_sidPds << endl
+            << "Not passing D-Method(ADS) -> " << num_not_passing_sidAds << endl
+            << "Not passing Hierons D-Method(PDS) -> " << num_not_passing_hierPds << endl
+            << "Not passing Hierons D-Method(ADS) -> " << num_not_passing_hierAds << endl;
+
+    cout << "D-Method(PDS) Fault Coverage -> " << sidPds_fc << endl
+            << "D-Method(ADS) Fault Coverage -> " << sidAds_fc << endl
+            << "Hierons D-Method(PDS) Fault Coverage -> " << hierPds_fc << endl
+            << "Hierons D-Method(ADS) Fault Coverage -> " << hierAds_fc << endl << endl;
+
+    cout << endl
+            << "W-Method size -> " << w.getFlatSize() << endl
+            << "Wp-Method size -> " << wp.getFlatSize() << endl
+            << "H-Method size -> " << h.getFlatSize() << endl
+            << "D-Method size -> " << dTs.getFlatSize() << endl
+            << "D-Method(ADS) size -> " << adsTs.getFlatSize() << endl
+            << "H.D-Method size -> " << hdTs.getFlatSize() << endl
+            << "H.D-Method(ADS) size -> " << hadsTs.getFlatSize() << endl;
+
+    cout << endl
+         << "W-Method avg length -> " << avgLengthW << endl
+         << "Wp-Method avg length -> " << avgLengthWp << endl
+         << "H-Method avg length -> " << avgLengthH << endl
+         << "D-Method avg length -> " << avgLengthSidPds << endl
+         << "D-Method(ADS) avg length -> " << avgLengthSidAds << endl
+         << "H.D-Method avg length -> " << avgLengthHierPds << endl
+         << "H.D-Method(ADS) avg length -> " << avgLengthHierAds << endl;
+
+    //Calculate fault coverage outside fault domain for a limited number of additional states
+    ofstream out("tcp_fc_add_states.csv");
+    out << "No. Add. States,"
+        << "W-Method,"
+        << "Wp-Method,"
+        << "H-Method,"
+        << "D-Method,"
+        << "D-Method(ADS),"
+        << "Hierons D-Method,"
+        << "Hierons D-Method(ADS)" << endl;
+
+
+    for(int i=1;i<=numAddStates;++i) {
+        sidPds_fc = 0;
+        sidAds_fc = 0;
+        hierPds_fc = 0;
+        hierAds_fc = 0;
+        float w_fc = 0,
+            wp_fc = 0,
+            h_fc = 0;
+
+
+        int num_not_pass = 0;
+        num_nonequal_mut = 0;
+        for(int j=0;j<numMutants;++j) {
+            shared_ptr<Dfsm> mutant = make_shared<Dfsm>(
+                    dfsm->createMutant("Mutant",0,0,i)->minimise());
+
+            while(mutant->size() < (dfsm->size() + i)) {
+                mutant = make_shared<Dfsm>(
+                        dfsm->createMutant("Mutant",0,0,i)->minimise());
+            }
+
+            bool result = dfsm->equivalenceCheck(*mutant);
+            if (!result) num_nonequal_mut++;
+
+            result = true;
+            for (IOTrace io: sidPdsTs) {
+                result &= mutant->pass(io);
+            }
+            if (!result) num_not_pass++;
+        }
+        sidPds_fc = (num_nonequal_mut>0?(float)num_not_pass/(float)num_nonequal_mut*100:
+              ((num_not_pass == 0)?100:0));
+
+        num_not_pass = 0;
+        num_nonequal_mut = 0;
+        for(int j=0;j<numMutants;++j) {
+            shared_ptr<Dfsm> mutant = make_shared<Dfsm>(
+                    dfsm->createMutant("Mutant",0,0,i)->minimise());
+
+            while(mutant->size() < (dfsm->size() + i)) {
+                mutant = make_shared<Dfsm>(
+                        dfsm->createMutant("Mutant",0,0,i)->minimise());
+            }
+
+            bool result = dfsm->equivalenceCheck(*mutant);
+            if (!result) num_nonequal_mut++;
+
+            result = true;
+            for (IOTrace io: sidAdsTs) {
+                result &= mutant->pass(io);
+            }
+            if (!result) num_not_pass++;
+        }
+        sidAds_fc = (num_nonequal_mut>0?(float)num_not_pass/(float)num_nonequal_mut*100:
+                     ((num_not_pass == 0)?100:0));
+
+        num_not_pass = 0;
+        num_nonequal_mut = 0;
+        for(int j=0;j<numMutants;++j) {
+            shared_ptr<Dfsm> mutant = make_shared<Dfsm>(
+                    dfsm->createMutant("Mutant",0,0,i)->minimise());
+
+            while(mutant->size() < (dfsm->size() + i)) {
+                mutant = make_shared<Dfsm>(
+                        dfsm->createMutant("Mutant",0,0,i)->minimise());
+            }
+
+            bool result = dfsm->equivalenceCheck(*mutant);
+            if (!result) num_nonequal_mut++;
+
+            result = true;
+            for (IOTrace io: hierPdsTs) {
+                result &= mutant->pass(io);
+            }
+            if (!result) num_not_pass++;
+        }
+        hierPds_fc = (num_nonequal_mut>0?(float)num_not_pass/(float)num_nonequal_mut*100:
+                     ((num_not_pass == 0)?100:0));
+
+        num_not_pass = 0;
+        num_nonequal_mut = 0;
+        for(int j=0;j<numMutants;++j) {
+            shared_ptr<Dfsm> mutant = make_shared<Dfsm>(
+                    dfsm->createMutant("Mutant",0,0,i)->minimise());
+
+            while(mutant->size() < (dfsm->size() + i)) {
+                mutant = make_shared<Dfsm>(
+                        dfsm->createMutant("Mutant",0,0,i)->minimise());
+            }
+
+            bool result = dfsm->equivalenceCheck(*mutant);
+            if (!result) num_nonequal_mut++;
+
+            result = true;
+            for (IOTrace io: hierAdsTs) {
+                result &= mutant->pass(io);
+            }
+            if (!result) num_not_pass++;
+        }
+        hierAds_fc = (num_nonequal_mut>0?(float)num_not_pass/(float)num_nonequal_mut*100:
+                     ((num_not_pass == 0)?100:0));
+
+        num_not_pass = 0;
+        num_nonequal_mut = 0;
+        for(int j=0;j<numMutants;++j) {
+            shared_ptr<Dfsm> mutant = make_shared<Dfsm>(
+                    dfsm->createMutant("Mutant",0,0,i)->minimise());
+
+            while(mutant->size() < (dfsm->size() + i)) {
+                mutant = make_shared<Dfsm>(
+                        dfsm->createMutant("Mutant",0,0,i)->minimise());
+            }
+
+            bool result = dfsm->equivalenceCheck(*mutant);
+            if (!result) num_nonequal_mut++;
+
+            result = true;
+            for (IOTrace io: wTs) {
+                result &= mutant->pass(io);
+            }
+            if (!result) num_not_pass++;
+        }
+        w_fc = (num_nonequal_mut>0?(float)num_not_pass/(float)num_nonequal_mut*100:
+                     ((num_not_pass == 0)?100:0));
+
+        num_not_pass = 0;
+        num_nonequal_mut = 0;
+        for(int j=0;j<numMutants;++j) {
+            shared_ptr<Dfsm> mutant = make_shared<Dfsm>(
+                    dfsm->createMutant("Mutant",0,0,i)->minimise());
+
+            while(mutant->size() < (dfsm->size() + i)) {
+                mutant = make_shared<Dfsm>(
+                        dfsm->createMutant("Mutant",0,0,i)->minimise());
+            }
+
+            bool result = dfsm->equivalenceCheck(*mutant);
+            if (!result) num_nonequal_mut++;
+
+            result = true;
+            for (IOTrace io: wpTs) {
+                result &= mutant->pass(io);
+            }
+            if (!result) num_not_pass++;
+        }
+        wp_fc = (num_nonequal_mut>0?(float)num_not_pass/(float)num_nonequal_mut*100:
+                     ((num_not_pass == 0)?100:0));
+
+        num_not_pass = 0;
+        num_nonequal_mut = 0;
+        for(int j=0;j<numMutants;++j) {
+            shared_ptr<Dfsm> mutant = make_shared<Dfsm>(
+                    dfsm->createMutant("Mutant",0,0,i)->minimise());
+
+            while(mutant->size() < (dfsm->size() + i)) {
+                mutant = make_shared<Dfsm>(
+                        dfsm->createMutant("Mutant",0,0,i)->minimise());
+            }
+
+            bool result = dfsm->equivalenceCheck(*mutant);
+            if (!result) num_nonequal_mut++;
+
+            result = true;
+            for (IOTrace io: hTs) {
+                result &= mutant->pass(io);
+            }
+            if (!result) num_not_pass++;
+        }
+        h_fc = (num_nonequal_mut>0?(float)num_not_pass/(float)num_nonequal_mut*100:
+                     ((num_not_pass == 0)?100:0));
+
+        out << i << ","
+            << w_fc << ","
+            << wp_fc << ","
+            << h_fc << ","
+            << sidPds_fc << ","
+            << sidAds_fc << ","
+            << hierPds_fc << ","
+            << hierAds_fc << endl;
+    }
+
+    out.close();
+
+    cout << "Finished with SUCCESS!" << endl << endl;
+}
+
+void evaluateLee94Dfsm()
+{
+    int numMutants = 100,
+            numAddStates = 5;
+
+    cout << "Starting Evaluation for lee94_no_pds.fsm..." << endl;
+    shared_ptr<FsmPresentationLayer> pl = createPresentationLayer(1,6,1);
+    shared_ptr<Dfsm> dfsm = make_shared<Dfsm>("../../../resources/lee94_no_pds.fsm",pl,"lee94_no_pds");
+    auto minDfsm = dfsm->minimise();
+
+    cout << "orig. size -> " << dfsm->size() << endl;
+    cout << "min. size -> " << minDfsm.size() << endl;
+
+    auto dTs = dfsm->dMethodOnMinimisedDfsm(0,false);
+    auto adsTs = dfsm->dMethodOnMinimisedDfsm(0,true);
+    auto hdTs = dfsm->hieronsDMethodOnMinimisedDfsm(false);
+    auto hadsTs = dfsm->hieronsDMethodOnMinimisedDfsm(true);
+
+    bool dsExists = dTs.size() > 0;
+    bool adsExists = adsTs.size() > 0;
+
+    double avgLengthSidPds = 0,
+        avgLengthSidAds = 0,
+            avgLengthHierPds = 0,
+            avgLengthHierAds = 0,
+            avgLengthW = 0,
+            avgLengthWp = 0,
+            avgLengthH = 0;
+
+    cout << "DS exists -> " << dsExists << endl;
+    if(dsExists) {
+        cout << "DS length -> " << dfsm->createDistinguishingSequence().size() << endl;
+    }
+    cout << "ADS exists -> " << adsExists << endl;
+    if(adsExists) {
+        auto hsi = dfsm->createAdaptiveDistinguishingSequence()->getHsi();
+        int maxDepth = hsi->begin()->size();
+        for(auto h: *hsi) {
+            cout << "lel -> " << h.size() << endl;
+            maxDepth = maxDepth >= h.size()?maxDepth:h.size();
+        }
+        cout << "ADS depth -> " << maxDepth << endl;
+    }
+    
+    vector<IOTrace> sidPdsTs;
+    for(vector<int> v: *dTs.getIOLists()) {
+        InputTrace i(v,pl);
+        IOTrace io = dfsm->applyDet(i);
+        sidPdsTs.push_back(io);
+        avgLengthSidPds += v.size();
+    }
+    avgLengthSidPds = sidPdsTs.size()?avgLengthSidPds / (double) sidPdsTs.size():0;
+
+    vector<IOTrace> sidAdsTs;
+    for(vector<int> v: *adsTs.getIOLists()) {
+        InputTrace i(v,pl);
+        IOTrace io = dfsm->applyDet(i);
+        sidAdsTs.push_back(io);
+        avgLengthSidAds += v.size();
+    }
+    avgLengthSidAds = sidAdsTs.size()?avgLengthSidAds / (double) sidAdsTs.size():0;
+
+
+    vector<IOTrace> hierPdsTs;
+    for(vector<int> v: *hdTs.getIOLists()) {
+        InputTrace i(v,pl);
+        IOTrace io = dfsm->applyDet(i);
+        hierPdsTs.push_back(io);
+        avgLengthHierPds+= v.size();
+    }
+    avgLengthHierPds = hierPdsTs.size()?avgLengthHierPds / (double) hierPdsTs.size():0;
+
+    vector<IOTrace> hierAdsTs;
+    for(vector<int> v: *hadsTs.getIOLists()) {
+        InputTrace i(v,pl);
+        IOTrace io = dfsm->applyDet(i);
+        hierAdsTs.push_back(io);
+        avgLengthHierAds+= v.size();
+    }
+    avgLengthHierAds = hierAdsTs.size()?avgLengthHierAds / (double) hierAdsTs.size():0;
+
+    auto w =  dfsm->wMethodOnMinimisedDfsm(0);
+    vector<IOTrace> wTs;
+    for(vector<int> v: *w.getIOLists()) {
+        InputTrace i(v,pl);
+        IOTrace io = dfsm->applyDet(i);
+        wTs.push_back(io);
+        avgLengthW += v.size();
+    }
+    avgLengthW = wTs.size()?avgLengthW/ (double) wTs.size():0;
+
+    auto wp =  dfsm->wpMethodOnMinimisedDfsm(0);
+    vector<IOTrace> wpTs;
+    for(vector<int> v: *wp.getIOLists()) {
+        InputTrace i(v,pl);
+        IOTrace io = dfsm->applyDet(i);
+        wpTs.push_back(io);
+        avgLengthWp += v.size();
+    }
+    avgLengthWp = wpTs.size()?avgLengthWp/ (double) wpTs.size():0;
+
+    auto h =  dfsm->hMethodOnMinimisedDfsm(0);
+    vector<IOTrace> hTs;
+    for(vector<int> v: *h.getIOLists()) {
+        InputTrace i(v,pl);
+        IOTrace io = dfsm->applyDet(i);
+        hTs.push_back(io);
+        avgLengthH += v.size();
+    }
+    avgLengthH = wpTs.size()?avgLengthH/ (double) hTs.size():0;
+
+    cout << "Created testsuites for all Methods..." << endl;
+
+    float sidPds_fc = 0,
+            sidAds_fc = 0,
+            hierPds_fc = 0,
+            hierAds_fc = 0;
+
+    int num_nonequal_mut = 0,
+            num_not_passing_sidPds = 0,
+            num_not_passing_sidAds = 0,
+            num_not_passing_hierPds = 0,
+            num_not_passing_hierAds = 0;
+
+    for(int j=0;j<numMutants;++j) {
+        unsigned int numOutputFaults = rand() % (dfsm->getMaxNodes()/3),
+                numTransitionFaults = rand() % (dfsm->getMaxNodes()/3);
+        if(random_bool_with_prob(0.4)) {
+            numOutputFaults = 0;
+            numTransitionFaults = 0;
+        }
+        shared_ptr<Dfsm> mutant = dfsm->createMutant("Mutant",numOutputFaults,numTransitionFaults);
+
+        bool result = dfsm->equivalenceCheck(*mutant);
+        if (!result) num_nonequal_mut++;
+
+        result = true;
+        for (IOTrace io: sidPdsTs) {
+            result &= mutant->pass(io);
+        }
+        if (!result) num_not_passing_sidPds++;
+
+        result = true;
+        for (IOTrace io: sidAdsTs) {
+            result &= mutant->pass(io);
+        }
+        if (!result) num_not_passing_sidAds++;
+
+        result = true;
+        for (IOTrace io: hierPdsTs) {
+            result &= mutant->pass(io);
+        }
+        if (!result) num_not_passing_hierPds++;
+
+        result = true;
+        for (IOTrace io: hierAdsTs) {
+            result &= mutant->pass(io);
+        }
+        if (!result) num_not_passing_hierAds++;
+
+    }
+
+    sidPds_fc = (num_nonequal_mut>0?(float)num_not_passing_sidPds/(float)num_nonequal_mut*100:
+                 ((num_not_passing_sidPds == 0)?100:0));
+    sidAds_fc = (num_nonequal_mut>0?(float)num_not_passing_sidAds/(float)num_nonequal_mut*100:
+                 ((num_not_passing_sidAds == 0)?100:0));
+    hierPds_fc = (num_nonequal_mut>0?(float)num_not_passing_hierPds/(float)num_nonequal_mut*100:
+                  ((num_not_passing_hierPds == 0)?100:0));
+    hierAds_fc = (num_nonequal_mut>0?(float)num_not_passing_hierAds/(float)num_nonequal_mut*100:
+                  ((num_not_passing_hierAds == 0)?100:0));
+
+    cout << endl
+         << "Number of unequal mutants -> " << num_nonequal_mut << endl
+         << "Not passing D-Method(PDS) -> " << num_not_passing_sidPds << endl
+         << "Not passing D-Method(ADS) -> " << num_not_passing_sidAds << endl
+         << "Not passing Hierons D-Method(PDS) -> " << num_not_passing_hierPds << endl
+         << "Not passing Hierons D-Method(ADS) -> " << num_not_passing_hierAds << endl;
+
+    cout << "D-Method(PDS) Fault Coverage -> " << sidPds_fc << endl
+         << "D-Method(ADS) Fault Coverage -> " << sidAds_fc << endl
+         << "Hierons D-Method(PDS) Fault Coverage -> " << hierPds_fc << endl
+         << "Hierons D-Method(ADS) Fault Coverage -> " << hierAds_fc << endl << endl;
+
+    cout << endl
+         << "W-Method size -> " << w.getFlatSize() << endl
+         << "Wp-Method size -> " << wp.getFlatSize() << endl
+         << "H-Method size -> " << h.getFlatSize() << endl
+         << "D-Method size -> " << dTs.getFlatSize() << endl
+         << "D-Method(ADS) size -> " << adsTs.getFlatSize() << endl
+         << "H.D-Method size -> " << hdTs.getFlatSize() << endl
+         << "H.D-Method(ADS) size -> " << hadsTs.getFlatSize() << endl;
+
+    cout << endl
+         << "W-Method avg length -> " << avgLengthW << endl
+         << "Wp-Method avg length -> " << avgLengthWp << endl
+         << "H-Method avg length -> " << avgLengthH << endl
+         << "D-Method avg length -> " << avgLengthSidPds << endl
+         << "D-Method(ADS) avg length -> " << avgLengthSidAds << endl
+         << "H.D-Method avg length -> " << avgLengthHierPds << endl
+         << "H.D-Method(ADS) avg length -> " << avgLengthHierAds << endl;
+
+    //Calculate fault coverage outside fault domain for a limited number of additional states
+    ofstream out("lee94_fc_add_states.csv");
+    out << "No. Add. States,"
+        << "W-Method,"
+        << "Wp-Method,"
+        << "H-Method,"
+        << "D-Method,"
+        << "D-Method(ADS),"
+        << "Hierons D-Method,"
+        << "Hierons D-Method(ADS)" << endl;
+
+    for(int i=1;i<=numAddStates;++i) {
+        sidPds_fc = 0;
+        sidAds_fc = 0;
+        hierPds_fc = 0;
+        hierAds_fc = 0;
+        float w_fc = 0,
+                wp_fc = 0,
+                h_fc = 0;
+
+
+        int num_not_pass = 0;
+        num_nonequal_mut = 0;
+        for(int j=0;j<numMutants;++j) {
+            shared_ptr<Dfsm> mutant = make_shared<Dfsm>(
+                    dfsm->createMutant("Mutant",0,0,i)->minimise());
+
+            while(mutant->size() < (dfsm->size() + i)) {
+                mutant = make_shared<Dfsm>(
+                        dfsm->createMutant("Mutant",0,0,i)->minimise());
+            }
+
+            bool result = dfsm->equivalenceCheck(*mutant);
+            if (!result) num_nonequal_mut++;
+
+            result = true;
+            for (IOTrace io: sidPdsTs) {
+                result &= mutant->pass(io);
+            }
+            if (!result) num_not_pass++;
+        }
+        sidPds_fc = (num_nonequal_mut>0?(float)num_not_pass/(float)num_nonequal_mut*100:
+                     ((num_not_pass == 0)?100:0));
+
+        num_not_pass = 0;
+        num_nonequal_mut = 0;
+        for(int j=0;j<numMutants;++j) {
+            shared_ptr<Dfsm> mutant = make_shared<Dfsm>(
+                    dfsm->createMutant("Mutant",0,0,i)->minimise());
+
+            while(mutant->size() < (dfsm->size() + i)) {
+                mutant = make_shared<Dfsm>(
+                        dfsm->createMutant("Mutant",0,0,i)->minimise());
+            }
+
+            bool result = dfsm->equivalenceCheck(*mutant);
+            if (!result) num_nonequal_mut++;
+
+            result = true;
+            for (IOTrace io: sidAdsTs) {
+                result &= mutant->pass(io);
+            }
+            if (!result) num_not_pass++;
+        }
+        sidAds_fc = (num_nonequal_mut>0?(float)num_not_pass/(float)num_nonequal_mut*100:
+                     ((num_not_pass == 0)?100:0));
+
+        num_not_pass = 0;
+        num_nonequal_mut = 0;
+        for(int j=0;j<numMutants;++j) {
+            shared_ptr<Dfsm> mutant = make_shared<Dfsm>(
+                    dfsm->createMutant("Mutant",0,0,i)->minimise());
+
+            while(mutant->size() < (dfsm->size() + i)) {
+                mutant = make_shared<Dfsm>(
+                        dfsm->createMutant("Mutant",0,0,i)->minimise());
+            }
+
+            bool result = dfsm->equivalenceCheck(*mutant);
+            if (!result) num_nonequal_mut++;
+
+            result = true;
+            for (IOTrace io: hierPdsTs) {
+                result &= mutant->pass(io);
+            }
+            if (!result) num_not_pass++;
+        }
+        hierPds_fc = (num_nonequal_mut>0?(float)num_not_pass/(float)num_nonequal_mut*100:
+                      ((num_not_pass == 0)?100:0));
+
+        num_not_pass = 0;
+        num_nonequal_mut = 0;
+        for(int j=0;j<numMutants;++j) {
+            shared_ptr<Dfsm> mutant = make_shared<Dfsm>(
+                    dfsm->createMutant("Mutant",0,0,i)->minimise());
+
+            while(mutant->size() < (dfsm->size() + i)) {
+                mutant = make_shared<Dfsm>(
+                        dfsm->createMutant("Mutant",0,0,i)->minimise());
+            }
+
+            bool result = dfsm->equivalenceCheck(*mutant);
+            if (!result) num_nonequal_mut++;
+
+            result = true;
+            for (IOTrace io: hierAdsTs) {
+                result &= mutant->pass(io);
+            }
+            if (!result) num_not_pass++;
+        }
+        hierAds_fc = (num_nonequal_mut>0?(float)num_not_pass/(float)num_nonequal_mut*100:
+                      ((num_not_pass == 0)?100:0));
+
+        num_not_pass = 0;
+        num_nonequal_mut = 0;
+        for(int j=0;j<numMutants;++j) {
+            shared_ptr<Dfsm> mutant = make_shared<Dfsm>(
+                    dfsm->createMutant("Mutant",0,0,i)->minimise());
+
+            while(mutant->size() < (dfsm->size() + i)) {
+                mutant = make_shared<Dfsm>(
+                        dfsm->createMutant("Mutant",0,0,i)->minimise());
+            }
+
+            bool result = dfsm->equivalenceCheck(*mutant);
+            if (!result) num_nonequal_mut++;
+
+            result = true;
+            for (IOTrace io: wTs) {
+                result &= mutant->pass(io);
+            }
+            if (!result) num_not_pass++;
+        }
+        w_fc = (num_nonequal_mut>0?(float)num_not_pass/(float)num_nonequal_mut*100:
+                ((num_not_pass == 0)?100:0));
+
+        num_not_pass = 0;
+        num_nonequal_mut = 0;
+        for(int j=0;j<numMutants;++j) {
+            shared_ptr<Dfsm> mutant = make_shared<Dfsm>(
+                    dfsm->createMutant("Mutant",0,0,i)->minimise());
+
+            while(mutant->size() < (dfsm->size() + i)) {
+                mutant = make_shared<Dfsm>(
+                        dfsm->createMutant("Mutant",0,0,i)->minimise());
+            }
+
+            bool result = dfsm->equivalenceCheck(*mutant);
+            if (!result) num_nonequal_mut++;
+
+            result = true;
+            for (IOTrace io: wpTs) {
+                result &= mutant->pass(io);
+            }
+            if (!result) num_not_pass++;
+        }
+        wp_fc = (num_nonequal_mut>0?(float)num_not_pass/(float)num_nonequal_mut*100:
+                 ((num_not_pass == 0)?100:0));
+
+        num_not_pass = 0;
+        num_nonequal_mut = 0;
+        for(int j=0;j<numMutants;++j) {
+            shared_ptr<Dfsm> mutant = make_shared<Dfsm>(
+                    dfsm->createMutant("Mutant",0,0,i)->minimise());
+
+            while(mutant->size() < (dfsm->size() + i)) {
+                mutant = make_shared<Dfsm>(
+                        dfsm->createMutant("Mutant",0,0,i)->minimise());
+            }
+
+            bool result = dfsm->equivalenceCheck(*mutant);
+            if (!result) num_nonequal_mut++;
+
+            result = true;
+            for (IOTrace io: hTs) {
+                result &= mutant->pass(io);
+            }
+            if (!result) num_not_pass++;
+        }
+        h_fc = (num_nonequal_mut>0?(float)num_not_pass/(float)num_nonequal_mut*100:
+                ((num_not_pass == 0)?100:0));
+
+        out << i << ","
+            << w_fc << ","
+            << wp_fc << ","
+            << h_fc << ","
+            << sidPds_fc << ","
+            << sidAds_fc << ","
+            << hierPds_fc << ","
+            << hierAds_fc << endl;
+    }
+
+    out.close();
+
+    cout << "Finished with SUCCESS!" << endl << endl;
+}
+
 int main(int argc, char* argv[])
 {
 
     srand(getRandomSeed());
 
-    evaluateDMethodsApplicability();
+    //Logging
+    //LogCoordinator& logger = LogCoordinator::getStandardLogger();
+    //logger.setDefaultStream(cout);
+
+    //evaluateLee94Dfsm();
+    evaluateTCPDfsm();
+    //evaluateDMethodsApplicability();
     //evaluateTestCaseLength();
     //evaluateFCOutsideFaultDomain();
     //evaluateDMethodsFaultCoverage();
