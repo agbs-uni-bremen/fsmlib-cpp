@@ -1615,7 +1615,7 @@ void evaluateLee94Dfsm()
         }
         cout << "ADS depth -> " << maxDepth << endl;
     }
-    
+
     vector<IOTrace> sidPdsTs;
     for(vector<int> v: *dTs.getIOLists()) {
         InputTrace i(v,pl);
@@ -1979,14 +1979,14 @@ int main(int argc, char* argv[])
     //LogCoordinator& logger = LogCoordinator::getStandardLogger();
     //logger.setDefaultStream(cout);
 
-    //evaluateLee94Dfsm();
+    evaluateLee94Dfsm();
     evaluateTCPDfsm();
-    //evaluateDMethodsApplicability();
-    //evaluateTestCaseLength();
-    //evaluateFCOutsideFaultDomain();
-    //evaluateDMethodsFaultCoverage();
-    //evaluateTestSuiteSizes();
-    //testRandomPdsAndAds(6,2,2);
-    //testLeeAds();
+    evaluateDMethodsApplicability();
+    evaluateTestCaseLength();
+    evaluateFCOutsideFaultDomain();
+    evaluateDMethodsFaultCoverage();
+    evaluateTestSuiteSizes();
+    testRandomPdsAndAds(6,2,2);
+    testLeeAds();
 
 }

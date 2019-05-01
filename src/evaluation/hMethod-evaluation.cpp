@@ -372,9 +372,5 @@ int main(int argc, char* argv[])
 
     evaluateTestCaseLength();
     evaluateFCOutsideFaultDomain();
-    //evaluateDMethodsFaultCoverage();
-    //evaluateTestSuiteSizes();
-    //testRandomPdsAndAds(6,2,2);
-    //testLeeAds();
-
+    evaluateTestSuiteSizes();
 }
