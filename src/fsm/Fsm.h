@@ -204,6 +204,9 @@ public:
         const int maxOutput,
         const std::shared_ptr<FsmPresentationLayer>& presentationLayer);
     
+    /** Destructor */
+    virtual ~Fsm();
+    
     /**
      *  Constructor creating an FSM specified in a file.
      *  @param fname Filename of a text file (typically with extension *.fsm),
