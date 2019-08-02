@@ -15,18 +15,19 @@
 using namespace std;
 
 
+/** key comparator for usage in string sets */
+struct setCmp
+{
+    bool operator()(const string& s1, const string& s2) const
+    {
+        return (s1.compare(s2) < 0);
+    }
+};
+
 
 shared_ptr<FsmPresentationLayer> Dfsm::createPresentationLayerFromCsvFormat(const string & fname) {
     
-    // key comparator for usage in string sets
-    class setCmp
-    {
-    public:
-        bool operator()(const string& s1, const string& s2)
-        {
-            return (s1.compare(s2) < 0);
-        }
-    };
+
     // Set containing all output events defined so far
     set<string,setCmp> outStrSet;
     
@@ -138,15 +139,8 @@ shared_ptr<FsmPresentationLayer> Dfsm::createPresentationLayerFromCsvFormat(cons
 shared_ptr<FsmPresentationLayer>
 Dfsm::createPresentationLayerFromCsvFormat(const string & fname,
                                            const shared_ptr<FsmPresentationLayer>& pl) {
-    // key comparator for usage in string sets
-    class setCmp
-    {
-    public:
-        bool operator()(const string& s1, const string& s2)
-        {
-            return (s1.compare(s2) < 0);
-        }
-    };
+    
+    
     // Set containing all output events defined so far
     set<string,setCmp> outStrSet;
     
