@@ -78,7 +78,10 @@ static bool rttMbtStyle = false;
  * @param name program name as specified in argv[0]
  */
 static void printUsage(char* name) {
-    cerr << "usage: " << name << " [-w|-wp|-h|-hsi] [-s] [-n fsmname] [-p infile outfile statefile] [-a additionalstates] [-t testsuitename] [-rtt <prefix>] modelfile [model abstraction file]" << endl;
+    cerr << "usage: " << name
+    << " [-w|-wp|-h|-hsi] [-s] [-n fsmname] [-p infile outfile statefile] "
+    << "[-a additionalstates] [-t testsuitename] [-rtt <prefix>] modelfile "
+    << "[model abstraction file]" << endl;
 }
 
 /**
