@@ -626,9 +626,13 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
     // Minimise abstracted Dfsm
     Dfsm dfsmAbstractionMin = dfsmAbstraction->minimise();
     
-    dfsmRefMin.toDot("FSM_MINIMAL");
-    dfsmAbstractionMin.toDot("ABS_FSM_MINIMAL");
-    dfsmAbstractionMin.toCsv("ABS_FSM_MINIMAL");
+    string fsmNameMinimal(fsmName + "_MINIMAL");
+    string absFsmNameMinimal("ABS_" + fsmName + "_MINIMAL");
+    
+    dfsmRefMin.toDot(fsmNameMinimal);
+    dfsmAbstractionMin.toDot(absFsmNameMinimal);
+    dfsmAbstractionMin.toCsv(absFsmNameMinimal);
+    
     cout << "REF    size = " << dfsm->size() << endl;
     cout << "REFMIN size = " << dfsmRefMin.size() << endl;
     cout << "ABSMIN size = " << dfsmAbstractionMin.size() << endl;
@@ -958,9 +962,12 @@ static void safeHMethod(const shared_ptr<TestSuite> &testSuite) {
     // Minimise abstracted Dfsm
     Dfsm dfsmAbstractionMin = dfsmAbstraction->minimise();
     
-    dfsmRefMin.toDot("FSM_MINIMAL");
-    dfsmAbstractionMin.toDot("ABS_FSM_MINIMAL");
-    dfsmAbstractionMin.toCsv("ABS_FSM_MINIMAL");
+    string fsmNameMinimal(fsmName + "_MINIMAL");
+    string absFsmNameMinimal("ABS_" + fsmName + "_MINIMAL");
+    
+    dfsmRefMin.toDot(fsmNameMinimal);
+    dfsmAbstractionMin.toDot(absFsmNameMinimal);
+    dfsmAbstractionMin.toCsv(absFsmNameMinimal);
     cout << "REF    size = " << dfsm->size() << endl;
     cout << "REFMIN size = " << dfsmRefMin.size() << endl;
     cout << "ABSMIN size = " << dfsmAbstractionMin.size() << endl;
