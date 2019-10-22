@@ -365,7 +365,21 @@ public:
     std::shared_ptr<FsmPresentationLayer> getPresentationLayer() const;
     int getInitStateIdx() const;
     void resetColor();
+    
+    /**
+     * Create a dot (GraphViz)-File from this FSM and store it in the
+     *  working directory with file name fname.
+     */
     void toDot(const std::string & fname);
+    
+    /**
+     * Store the FSM in internal file format consisting of 4-tuples
+     *          <source state> <input> <output> <target state>
+     * All states, inputs, outputs ar encoded as integers in range 0,1,2,...
+     * @param fname Basename  of the file to be created. Extension
+     * .fsm will be added if not already used as extension in fname.
+     */
+    void toInternalFsmFormat(const std::string & fname);
     
     float getDegreeOfCompleteness(const int& minus = 0, std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
     float getDegreeOfNonDeterminism(const int& diff = 0, std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
