@@ -22,6 +22,8 @@
 #include "trees/OutputTree.h"
 #include "trees/TestSuite.h"
 
+#include "utils/Logger.hpp"
+
 #define DBG 0
 using namespace std;
 using namespace Json;
@@ -276,14 +278,7 @@ static void readModel(model_type_t mtp,
 // {
     
 
-//     /**
-//      * T_c - set of current elements of T: those that are being considered in the search
-//      * through state space. The elements in T_c are the maximal sequences considered that
-//      * do not meet the termination criterion.
-//      */
-//     InputTraceSet tC = detStateCover;
-//     iterations = 0;
-//     while (tC.size() != 0)
+
 //     {
 //         ++iterations;
 //         stringstream ss;
@@ -734,6 +729,15 @@ IOTraceContainer getResponsesToInputTrace(const InputTrace& inputTrace, int repe
     return cont;
 }
 
+vector<shared_ptr<OutputTrace>> getOutputTracesToInputTrace(const InputTrace& inputTrace, int repetitions) {
+    vector<shared_ptr<OutputTrace>> cont;
+    for (int i = 0; i < repetitions; ++i) {
+        IOTrace response = getSingleResponseToInputTrace(inputTrace);
+        cont.push_back(make_shared<OutputTrace>(response.getOutputTrace()));
+    }
+    return cont;
+}
+
 vector<IOTraceContainer> calculateVPrime(const InputTraceSet& detStateCover) {
     vector<IOTraceContainer> vPrime;
 
@@ -824,9 +828,38 @@ IOTraceContainer applyAdaptiveTestCasesAfterInputSequences(const IOTreeContainer
 */
 
 
-unordered_set<IOTraceContainer> collectResponseSetsForInputTrace(const IOTreeContainer& adaptiveTestCases, const InputTrace& trace, int repetitions) {
+unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> collectResponseMapForInputTrace(const IOTreeContainer& adaptiveTestCases, const InputTrace& trace, int repetitions) {
 
-    unordered_map<IOTrace,IOTraceContainer> responseSetsForIOTraces;
+    unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> responseSetsForIOTraces;
+
+    for (const auto tree : *adaptiveTestCases.getList()) {
+        for (int i = 0; i < repetitions; ++i) {
+            IOTrace traceResponse(pl);
+            IOTrace testCaseResponse(pl);
+            applyAdaptiveTestCaseAfterInputTrace(*tree, trace, traceResponse, testCaseResponse);
+
+            shared_ptr<const IOTrace> testCaseResponsePtr = make_shared<const IOTrace>(testCaseResponse);
+            responseSetsForIOTraces[make_shared<IOTrace>(traceResponse)]->add(testCaseResponsePtr);
+        }
+    }
+}
+
+
+unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> collectResponseMapForInputTraces(const IOTreeContainer& adaptiveTestCases, const InputTraceSet& traces, int repetitions) {
+    unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> responseMap;
+
+    for (const auto trace : traces) {
+        unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> traceMap = collectResponseMapForInputTrace(adaptiveTestCases,*trace,repetitions);
+        responseMap.insert(traceMap.begin(), traceMap.end());
+    }
+
+    return responseMap;
+}
+
+
+unordered_set<shared_ptr<IOTraceContainer>> collectResponseSetsForInputTrace(const IOTreeContainer& adaptiveTestCases, const InputTrace& trace, int repetitions) {
+
+    /*unordered_map<IOTrace,IOTraceContainer> responseSetsForIOTraces;
 
     for (const auto tree : *adaptiveTestCases.getList()) {
         for (int i = 0; i < repetitions; ++i) {
@@ -837,10 +870,12 @@ unordered_set<IOTraceContainer> collectResponseSetsForInputTrace(const IOTreeCon
             shared_ptr<const IOTrace> testCaseResponsePtr = make_shared<const IOTrace>(testCaseResponse);
             responseSetsForIOTraces[traceResponse].add(testCaseResponsePtr);
         }
-    }
+    }*/
 
-    unordered_set<IOTraceContainer> responseSets;
-    for (auto kv : responseSetsForIOTraces) {
+    unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> responseMap = collectResponseMapForInputTrace(adaptiveTestCases,trace,repetitions);
+
+    unordered_set<shared_ptr<IOTraceContainer>> responseSets;
+    for (auto kv : responseMap) {
         responseSets.insert(kv.second);
     }
     return responseSets;
@@ -850,11 +885,12 @@ unordered_set<IOTraceContainer> collectResponseSetsForInputTrace(const IOTreeCon
 
 
 
-unordered_set<IOTraceContainer> collectResponseSetsForInputTraces(const IOTreeContainer& adaptiveTestCases, const InputTraceSet& traces, int repetitions) {
-    unordered_set<IOTraceContainer> responseSets;
+
+unordered_set<shared_ptr<IOTraceContainer>> collectResponseSetsForInputTraces(const IOTreeContainer& adaptiveTestCases, const InputTraceSet& traces, int repetitions) {
+    unordered_set<shared_ptr<IOTraceContainer>> responseSets;
 
     for (const auto trace : traces) {
-        unordered_set<IOTraceContainer> traceSets = collectResponseSetsForInputTrace(adaptiveTestCases,*trace,repetitions);
+        unordered_set<shared_ptr<IOTraceContainer>> traceSets = collectResponseSetsForInputTrace(adaptiveTestCases,*trace,repetitions);
         responseSets.insert(traceSets.begin(), traceSets.end());
     }
 
@@ -865,6 +901,8 @@ unordered_set<IOTraceContainer> collectResponseSetsForInputTraces(const IOTreeCo
 
 int main(int argc, char* argv[])
 {
+    shared_ptr<IOTrace> failTrace;
+
     sut_init();
 
     parseParameters(argc,argv);
@@ -895,10 +933,339 @@ int main(int argc, char* argv[])
     /**
      * Holds all B_Ω(T) for the current t.
      */
-    unordered_set<IOTraceContainer> bOmegaT;
+    unordered_set<shared_ptr<IOTraceContainer>> bOmegaT;
 
     //// first iteration
     bOmegaT = collectResponseSetsForInputTraces(adaptiveTestCases,t,k);
+
+
+    /**
+     * T_c - set of current elements of T: those that are being considered in the search
+     * through state space. The elements in T_c are the maximal sequences considered that
+     * do not meet the termination criterion.
+     */
+    InputTraceSet tC = detStateCover;
+    int iterations = 0;
+
+    while (tC.size() != 0) 
+        {
+        ++iterations;
+        stringstream ss;
+
+        map<shared_ptr<InputTrace>, vector<shared_ptr<OutputTrace>>> observedOutputsTCElements;
+        size_t numberInputTraces = tC.size();
+        size_t inputTraceCount = 0;
+
+        unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> observedIUTResponsesToATCs = collectResponseMapForInputTraces(adaptiveTestCases,tC,k);
+        
+        // Applying all input traces from T_c to this FSM.
+        // All observed outputs are being recorded.
+        // If the FSM observes a failure, adaptive state counting terminates.
+        for (const shared_ptr<InputTrace>& inputTrace : tC)
+        {
+            /**
+             * Hold the produced output traces for the current input trace.
+             */
+            vector<shared_ptr<OutputTrace>> producedOutputsSpec;
+            vector<shared_ptr<OutputTrace>> producedOutputsIut;
+            /**
+             * Hold the reached nodes for the current input trace.
+             */
+            vector<shared_ptr<FsmNode>> reachedNodesSpec;
+            ////vector<shared_ptr<FsmNode>> reachedNodesIut;
+
+            fsm->apply(*inputTrace, producedOutputsSpec, reachedNodesSpec);
+
+            ////iut.apply(*inputTrace, producedOutputsIut, reachedNodesIut);
+            producedOutputsIut = getOutputTracesToInputTrace(*inputTrace,k);
+
+            observedOutputsTCElements.insert(make_pair(inputTrace, producedOutputsIut));
+
+            for (const shared_ptr<OutputTrace>& oTrace : producedOutputsIut)
+            {
+                observedTraces.add(make_shared<const IOTrace>(*inputTrace, *oTrace));
+            }
+
+            LOG("VERBOSE_1") << "Checking produced outputs for failures" << std::endl;
+            //Check if the IUT has produced any output that can not be produced by the specification.
+            for (size_t i = 0; i < producedOutputsIut.size(); ++i)
+            {
+                const shared_ptr<OutputTrace>& outIut = producedOutputsIut.at(i);
+                bool allowed = false;
+                for (size_t j = 0; j < producedOutputsSpec.size(); ++j)
+                {
+                    const shared_ptr<OutputTrace>& outSpec = producedOutputsSpec.at(j);
+                    if (*outIut == *outSpec)
+                    {
+                        allowed = true;
+                        // No need to apply adaptive test cases, if there are no adaptive test cases.
+                        if (adaptiveTestCases.size() > 0)
+                        {
+                            // get IOTraces for the two output traces combined with their shared input trace
+                            shared_ptr<IOTrace> observedTraceSpec = make_shared<IOTrace>(IOTrace(*inputTrace,*outSpec));
+                            shared_ptr<IOTrace> observedTraceIut = make_shared<IOTrace>(IOTrace(*inputTrace,*outIut));
+
+                            // Applying adaptive test cases to every node reached by the current input/output trace.
+                            LOG("VERBOSE_1") << "----------------- Getting adaptive traces -----------------" << std::endl;
+                            IOTraceContainer observedAdaptiveTracesIut;
+                            IOTraceContainer observedAdaptiveTracesSpec;
+                            //const shared_ptr<FsmNode>& nodeIut = reachedNodesIut.at(i);
+                            const shared_ptr<FsmNode>& nodeSpec = reachedNodesSpec.at(j);
+
+                            ////iut.addPossibleIOTraces(nodeIut, adaptiveTestCases, observedAdaptiveTracesIut);
+                            observedAdaptiveTracesIut = *observedIUTResponsesToATCs[observedTraceIut];
+                            fsm->addPossibleIOTraces(nodeSpec, adaptiveTestCases, observedAdaptiveTracesSpec);
+
+                            
+                            bool failure = false;
+                            for (auto traceIt = observedAdaptiveTracesIut.cbegin(); traceIt != observedAdaptiveTracesIut.cend(); ++traceIt)
+                            {
+                                const shared_ptr<const IOTrace>& trace = *traceIt;
+                                if (!observedAdaptiveTracesSpec.contains(trace))
+                                {
+                                    LOG("INFO") << "  Specification does not contain " << *trace << std::endl;
+                                    failTrace = make_shared<IOTrace>(*inputTrace, *outIut);
+                                    IOTrace traceCopy = IOTrace(*trace);
+                                    failTrace->append(traceCopy);
+                                    LOG("INFO") << "failTrace: " << *failTrace << std::endl;
+                                    failure = true;
+                                    break;
+                                }
+                            }
+                            LOG("VERBOSE_1") << "  concatenating: " << *inputTrace << "/" << *outIut << std::endl;
+                            observedAdaptiveTracesIut.concatenateToFront(inputTrace, outIut);
+                            LOG("VERBOSE_1") << "  observedAdaptiveTraces after concatenation to front: " << observedAdaptiveTracesIut << std::endl;
+                            observedTraces.add(observedAdaptiveTracesIut);
+                            if (failure)
+                            {
+                                // IUT produced an output that can not be produced by the specification.
+                                LOG("INFO") << "  Failure observed:" << std::endl;
+                                LOG("INFO") << "    Input Trace: " << *inputTrace << std::endl;
+                                LOG("INFO") << "    Observed adaptive traces:" << std::endl;
+                                LOG("INFO") << observedAdaptiveTracesIut << std::endl;
+                                LOG("VERBOSE_1") << "IUT is not a reduction of the specification." << std::endl;
+                                return false;
+                            }
+                        }
+                        // No failure observed, IUT output is allowed by specification.
+                        // No need to search through remaining specification outputs.
+                        break;
+                    }
+                }
+                if (!allowed)
+                {
+                    // IUT produced an output that can not be produced by the specification.
+                    LOG("INFO") << "  Failure observed:" << std::endl;
+                    LOG("INFO") << "    Input Trace: " << *inputTrace << std::endl;
+                    ss << "    Produced Outputs Iut: ";
+                    for (size_t i = 0; i < producedOutputsIut.size(); ++i)
+                    {
+                        ss << *producedOutputsIut.at(i);
+                        if (i != producedOutputsIut.size() - 1)
+                        {
+                            ss << ", ";
+                        }
+                    }
+                    LOG("INFO") << ss.str() << std::endl;
+                    ss.str(std::string());
+                    LOG("VERBOSE_1") << "Specification does not produce output " << *outIut << "." << std::endl;
+                    LOG("VERBOSE_1") << "IUT is not a reduction of the specification." << std::endl;
+                    failTrace = make_shared<IOTrace>(*inputTrace, *outIut);
+                    LOG("INFO") << "failTrace: " << *failTrace << std::endl;
+                    return false;
+                }
+            }
+
+
+            // TODO: remove
+            // if (producedOutputsIut.size() != reachedNodesIut.size())
+            // {
+            //     cerr << "Number of produced outputs and number of reached nodes do not match.";
+            //     exit(EXIT_FAILURE);
+            // }
+        }
+
+        long numberToCheck = 0;
+        LOG("VERBOSE_1") << "observedOutputsTCElements:" << std::endl;
+        for (auto e : observedOutputsTCElements)
+        {
+            LOG("VERBOSE_1") << "  " << *e.first << ":" << std::endl;
+            for (auto o : e.second)
+            {
+                LOG("VERBOSE_1") << "    " << *o << std::endl;
+                ++numberToCheck;
+            }
+        }
+        LOG("VERBOSE_1") << "Number of input/output combinations: " << numberToCheck << std::endl;
+        InputTraceSet newT = t;
+        InputTraceSet newTC;
+        inputTraceCount = 0;
+        for (shared_ptr<InputTrace> inputTrace : tC)
+        {
+            bool inputTraceMeetsCriteria = true;
+            LOG("INFO") << "check inputTrace: " << *inputTrace << " (" << ++inputTraceCount << " of " << numberInputTraces << ")" << std::endl;
+            vector<shared_ptr<OutputTrace>>& producedOutputs = observedOutputsTCElements.at(inputTrace);
+            LOG("VERBOSE_1") << "producedOutputs:" << std::endl;
+            for (shared_ptr<OutputTrace> outputTrace : producedOutputs)
+            {
+                LOG("VERBOSE_1") << "  " << *outputTrace << std::endl;
+            }
+            long outputTraceCount = 0;
+            size_t numberOutputTraces = producedOutputs.size();
+
+            shared_ptr<const InputTrace> maxInputPrefixInV = nullptr;
+            for (const shared_ptr<InputTrace>& detStateTransition : detStateCover)
+            {
+                if (inputTrace->isPrefix(*detStateTransition, false, true) &&
+                        ( !maxInputPrefixInV || maxInputPrefixInV->isEmptyTrace() || detStateTransition->size() > maxInputPrefixInV->size()))
+                {
+                    maxInputPrefixInV = detStateTransition;
+                }
+            }
+            if (!maxInputPrefixInV)
+            {
+                stringstream ss;
+                ss << "No prefix for input trace " << *inputTrace << " found in V. This should not happen.";
+                std::cerr << ss.str();
+                throw ss.str();
+            }
+            LOG("VERBOSE_1") << "maxInputPrefixInV: " << *maxInputPrefixInV << std::endl;
+
+            for (shared_ptr<OutputTrace> outputTrace : producedOutputs)
+            {
+                if (!inputTraceMeetsCriteria)
+                {
+                    break;
+                }
+                LOG("INFO") << "outputTrace: " << *outputTrace << " (" << ++outputTraceCount << " of " << numberOutputTraces << ")" << std::endl;
+                IOTrace currentTrace(*inputTrace, *outputTrace);
+                LOG("VERBOSE_1") << "currentTrace (x_1/y_1): " << currentTrace << std::endl;
+                bool outputTraceMeetsCriteria = false;
+                vPrimeLazy.reset();
+
+                LOG("VERBOSE_1") << "maxInputPrefixInV.size(): " << maxInputPrefixInV->size() << std::endl;
+                shared_ptr<const IOTrace> maxIOPrefixInV = make_shared<const IOTrace>(*static_pointer_cast<const Trace>(maxInputPrefixInV),
+                                                                                      *outputTrace->getPrefix(maxInputPrefixInV->size(), true));
+                LOG("VERBOSE_1") << "maxIOPrefixInV (v/v'): " << *maxIOPrefixInV << std::endl;
+                IOTrace suffix(InputTrace(spec.presentationLayer), OutputTrace(spec.presentationLayer));
+                suffix = currentTrace.getSuffix(*maxIOPrefixInV);
+                LOG("VERBOSE_1") << "suffix (x/y): " << suffix << std::endl;
+
+                LOG("VERBOSE_1") << "vPrimeLazy.hasNext(): " << vPrimeLazy.hasNext() << std::endl;
+                while (vPrimeLazy.hasNext())
+                {
+                    const IOTraceContainer& vDoublePrime = vPrimeLazy.getNext();
+                    if (outputTraceMeetsCriteria)
+                    {
+                        break;
+                    }
+                    LOG("VERBOSE_1") << "vDoublePrime: " << vDoublePrime << std::endl;
+
+                    if (!vDoublePrime.contains(maxIOPrefixInV))
+                    {
+                        LOG("VERBOSE_1") << "vDoublePrime does not contain prefix " << *maxIOPrefixInV << ". Skipping." << std::endl;
+                        LOG("VERBOSE_1") << "vPrimeLazy.hasNext(): " << vPrimeLazy.hasNext() << std::endl;
+                        continue;
+                    }
+                    for (const vector<shared_ptr<FsmNode>>& rDistStates : maximalSetsOfRDistinguishableStates)
+                    {
+                        LOG("VERBOSE_1") << "rDistStates:" << std::endl;
+                        for (auto r : rDistStates)
+                        {
+                            LOG("VERBOSE_1") << "  " << r->getName() << std::endl;
+                        }
+                        
+                        bool exceedsBound = Fsm::exceedsBound(m, *maxIOPrefixInV, suffix, rDistStates, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
+                        LOG("VERBOSE_1") << "exceedsBound: " << exceedsBound << std::endl;
+                        if (exceedsBound)
+                        {
+                            LOG("VERBOSE_1") << "Exceeded lower bound. Output trace " << *outputTrace << " meets criteria." << std::endl;
+                            outputTraceMeetsCriteria = true;
+                            break;
+                        }
+                    }
+                }
+                if (outputTraceMeetsCriteria == false)
+                {
+                    inputTraceMeetsCriteria = false;
+                }
+            }
+
+            if (!inputTraceMeetsCriteria)
+            {
+                // Keeping current input trace in T_C
+                LOG("VERBOSE_1") << "Keeping " << *inputTrace << " in T_C." << std::endl;
+                newTC.insert(inputTrace);
+                // Next input trace.
+                continue;
+            }
+            else
+            {
+                LOG("VERBOSE_1") << "Removing " << *inputTrace << " from T_C." << std::endl;
+            }
+        }
+        ss << "newTC: ";
+        for (auto w : newTC)
+        {
+            ss << *w << ", ";
+        }
+        LOG("VERBOSE_1") << ss.str() << endl << std::endl;
+        ss.str(std::string());
+        // Expanding sequences.
+        InputTraceSet expandedTC;
+        InputTraceSet tracesAddedToT;
+        LOG("INFO") << "Expanding input sequences." << std::endl;
+        for (int x = 0; x <= spec.maxInput; ++x)
+        {
+            for (const shared_ptr<InputTrace>& inputTrace : newTC)
+            {
+
+                shared_ptr<InputTrace> concat;
+                if (inputTrace->isEmptyTrace())
+                {
+                    concat = make_shared<InputTrace>(inputTrace->getPresentationLayer());
+                }
+                else
+                {
+                    concat = make_shared<InputTrace>(*inputTrace);
+                }
+
+                concat->add(x);
+                if (!InputTrace::contains(t, concat))
+                {
+                    expandedTC.insert(concat);
+                }
+
+                if (newT.insert(concat).second)
+                {
+                    tracesAddedToT.insert(concat);
+                }
+            }
+        }
+        LOG("INFO") << "Finished expansion." << std::endl;
+        iut.bOmega(adaptiveTestCases, tracesAddedToT, bOmegaT);
+        LOG("INFO") << "Finished calculating bOmega." << std::endl;
+
+        ss << "expandedTC: ";
+        for (auto w : expandedTC)
+        {
+            ss << *w << ", ";
+        }
+        LOG("VERBOSE_1") << ss.str() << endl << std::endl;
+        ss.str(std::string());
+        ss << "newT: ";
+        for (auto w : newT)
+        {
+            ss << *w << ", ";
+        }
+        LOG("VERBOSE_1") << ss.str() << endl << std::endl;
+        ss.str(std::string());
+        tC = expandedTC;
+        t = newT;
+    }
+    LOG("VERBOSE_1") << "  RESULT: " << observedTraces << std::endl;
+    LOG("VERBOSE_1") << "IUT is a reduction of the specification." << std::endl;
+
 
     
     
