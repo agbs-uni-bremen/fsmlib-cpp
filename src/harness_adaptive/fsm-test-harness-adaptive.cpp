@@ -1,4 +1,4 @@
-#include "harness_adaptive/sut_wrapper_adaptive.h"
+#include "sut_wrapper_adaptive.h"
 
 #include <iostream>
 #include <fstream>
@@ -8,21 +8,21 @@
 #include <utility>
 
 
-#include "interface/FsmPresentationLayer.h"
-#include "fsm/Dfsm.h"
-#include "fsm/PkTable.h"
-#include "fsm/FsmNode.h"
-#include "fsm/IOTrace.h"
-#include "fsm/SegmentedTrace.h"
-#include "fsm/IOTraceContainer.h"
+#include "../interface/FsmPresentationLayer.h"
+#include "../fsm/Dfsm.h"
+#include "../fsm/PkTable.h"
+#include "../fsm/FsmNode.h"
+#include "../fsm/IOTrace.h"
+#include "../fsm/SegmentedTrace.h"
+#include "../fsm/IOTraceContainer.h"
 
-#include "trees/AdaptiveTreeNode.h"
-#include "trees/IOListContainer.h"
-#include "trees/IOTreeContainer.h"
-#include "trees/OutputTree.h"
-#include "trees/TestSuite.h"
+#include "../trees/AdaptiveTreeNode.h"
+#include "../trees/IOListContainer.h"
+#include "../trees/IOTreeContainer.h"
+#include "../trees/OutputTree.h"
+#include "../trees/TestSuite.h"
 
-#include "utils/Logger.hpp"
+#include "../utils/Logger.hpp"
 
 #define DBG 0
 using namespace std;
