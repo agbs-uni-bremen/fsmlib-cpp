@@ -1,4 +1,5 @@
 #include "sut_wrapper_adaptive.h"
+#include "vPrimeEnumerator.h"
 
 #include <iostream>
 #include <fstream>
@@ -269,6 +270,98 @@ static void readModel(model_type_t mtp,
 
 
 
+
+bool exceedsBound(  const size_t m,
+                    const IOTrace& base,
+                    const IOTrace& suffix,
+                    const vector<shared_ptr<FsmNode>>& states,
+                    const IOTreeContainer& adaptiveTestCases,
+                    unordered_set<IOTraceContainer> bOmegaT,
+                    const IOTraceContainer& vDoublePrime,
+                    const vector<shared_ptr<FsmNode>>& dReachableStates,
+                    const Fsm& spec)
+{
+    size_t lB = Fsm::lowerBound(base, suffix, states, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
+    LOG("VERBOSE_1") << "lB: " << lB << std::endl;
+    return lB > m;
+}
+
+size_t lowerBound(const IOTrace& base,
+                       const IOTrace& suffix,
+                       const vector<shared_ptr<FsmNode>>& states,
+                       //const IOTreeContainer& adaptiveTestCases,
+                       //unordered_set<IOTraceContainer> bOmegaT,
+                       unordered_set<shared_ptr<IOTraceContainer>> responseSets,
+                       unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> responseMaps,
+                       const IOTraceContainer& vDoublePrime,
+                       const vector<shared_ptr<FsmNode>>& dReachableStates,
+                       const Fsm& spec)
+{
+    LOG("VERBOSE_1") << "lowerBound()" << std::endl;
+    LOG("VERBOSE_1") << "base: " << base << std::endl;
+    LOG("VERBOSE_1") << "suffix: " << suffix << std::endl;
+    LOG("VERBOSE_1") << "states:" << std::endl;
+    for (auto s : states)
+    {
+        LOG("VERBOSE_1") << "  " << s->getName() << std::endl;
+    }
+    //LOG("VERBOSE_1") << "adaptiveTestCases: " << adaptiveTestCases << std::endl;
+    LOG("VERBOSE_1") << "vDoublePrime: " << vDoublePrime << std::endl;
+    LOG("VERBOSE_1") << "dReachableStates: " << std::endl;
+    for (auto s : dReachableStates)
+    {
+        LOG("VERBOSE_1") << "  " << s->getName() << std::endl;
+    }
+    size_t result = 0;
+    LOG("VERBOSE_1") << "lb result: " << result << std::endl;
+
+    LOG("VERBOSE_1") << "bOmegaT:" << std::endl;
+    for (const auto& cont : bOmegaT)
+    {
+        LOG("VERBOSE_1") << "  " << cont << std::endl;
+    }
+
+    for (shared_ptr<FsmNode> state : states)
+    {
+        const IOTraceContainer& rResult = spec.r(state, base, suffix);
+        LOG("VERBOSE_1") << "--- state: " << state->getName() << std::endl;
+        LOG("VERBOSE_1") << "rResult(" << state->getName() << ", " << base << ", " << suffix << "): " << rResult << std::endl;
+        result += rResult.size();
+        LOG("VERBOSE_1") << "lb result: " << result << std::endl;
+        if(find(dReachableStates.begin(), dReachableStates.end(), state) != dReachableStates.end()) {
+            ++result;
+            LOG("VERBOSE_1") << "State " << state->getName() << " is d-reachable. Incrementing." << std::endl;
+            LOG("VERBOSE_1") << "lb result: " << result << std::endl;
+        }
+
+        IOTraceContainer rPlusResult = spec.rPlus(state, base, suffix, vDoublePrime, true);
+        rPlusResult.add(rResult);
+        LOG("VERBOSE_1") << "rPlusResult: " << rPlusResult << std::endl;
+        for (auto traceIt = rPlusResult.cbegin(); traceIt != rPlusResult.cend(); ++traceIt)
+        {
+            const shared_ptr<const IOTrace>& trace = *traceIt;
+            IOTraceContainer traces = iut.bOmega(adaptiveTestCases, *trace);
+            LOG("VERBOSE_1") << "Removing " << traces << " from testTraces." << std::endl;
+
+            IOTraceContainer::remove(bOmegaT, traces);
+
+            LOG("VERBOSE_1") << "testTraces:" << std::endl;
+            for (const auto& cont : bOmegaT)
+            {
+                LOG("VERBOSE_1") << "  " << cont << std::endl;
+            }
+        }
+    }
+    LOG("VERBOSE_1") << "bOmegaT size: " << bOmegaT.size() << std::endl;
+    LOG("VERBOSE_1") << "bOmegaT:" << std::endl;
+    for (const auto& cont : bOmegaT)
+    {
+        LOG("VERBOSE_1") << "  " << cont << std::endl;
+    }
+    result += bOmegaT.size();
+    LOG("VERBOSE_1") << "lowerBound() result: " << result << std::endl;
+    return result;
+}
 
 
 
@@ -884,8 +977,6 @@ unordered_set<shared_ptr<IOTraceContainer>> collectResponseSetsForInputTrace(con
 
 
 
-
-
 unordered_set<shared_ptr<IOTraceContainer>> collectResponseSetsForInputTraces(const IOTreeContainer& adaptiveTestCases, const InputTraceSet& traces, int repetitions) {
     unordered_set<shared_ptr<IOTraceContainer>> responseSets;
 
@@ -895,6 +986,25 @@ unordered_set<shared_ptr<IOTraceContainer>> collectResponseSetsForInputTraces(co
     }
 
     return responseSets;
+}
+
+
+
+unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> collectResponseMapAndSetsForInputTraces(const IOTreeContainer& adaptiveTestCases, const InputTraceSet& traces, int repetitions, unordered_set<shared_ptr<IOTraceContainer>>& responseSets) {
+    unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> responseMap;
+
+    responseSets = unordered_set<shared_ptr<IOTraceContainer>>();
+
+    for (const auto trace : traces) {
+        unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> traceMap = collectResponseMapForInputTrace(adaptiveTestCases,*trace,repetitions);
+        responseMap.insert(traceMap.begin(), traceMap.end());
+    }
+
+    for (auto kv : responseMap) {
+        responseSets.insert(kv.second);
+    }
+
+    return responseMap;
 }
 
 
@@ -923,6 +1033,8 @@ int main(int argc, char* argv[])
     const vector<shared_ptr<FsmNode>>& dReachableStates = fsm->calcDReachableStates(detStateCover);
     vector<IOTraceContainer> vPrime = calculateVPrime(detStateCover);
 
+    VPrimeEnumerator vPrimeEnumerator(vPrime);
+
     
     IOTraceContainer observedTraces;
 
@@ -933,11 +1045,20 @@ int main(int argc, char* argv[])
     /**
      * Holds all B_Ω(T) for the current t.
      */
-    unordered_set<shared_ptr<IOTraceContainer>> bOmegaT;
+    //unordered_set<shared_ptr<IOTraceContainer>> bOmegaT;
+    unordered_set<shared_ptr<IOTraceContainer>> responseSets;
+    unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> responseMaps;
 
-    //// first iteration
-    bOmegaT = collectResponseSetsForInputTraces(adaptiveTestCases,t,k);
-
+    //// TODO: Execute first iteration later
+    responseMaps = collectResponseMapAndSetsForInputTraces(adaptiveTestCases,t,k,responseSets);
+    LOG("VERBOSE_1") << "Response sets observed for:" << std::endl;
+    for (const auto& kv : responseMaps)
+    {
+        LOG("VERBOSE_1") << "\t" << kv.first << std::endl;
+        for (const auto& response : *kv.second) {
+            LOG("VERBOSE_1") << "\t\t" << response << std::endl;
+        }
+    }
 
     /**
      * T_c - set of current elements of T: those that are being considered in the search
@@ -1141,20 +1262,31 @@ int main(int argc, char* argv[])
                 IOTrace currentTrace(*inputTrace, *outputTrace);
                 LOG("VERBOSE_1") << "currentTrace (x_1/y_1): " << currentTrace << std::endl;
                 bool outputTraceMeetsCriteria = false;
-                vPrimeLazy.reset();
+                
+                ////vPrimeLazy.reset();
+                vPrimeEnumerator.reset();
 
                 LOG("VERBOSE_1") << "maxInputPrefixInV.size(): " << maxInputPrefixInV->size() << std::endl;
                 shared_ptr<const IOTrace> maxIOPrefixInV = make_shared<const IOTrace>(*static_pointer_cast<const Trace>(maxInputPrefixInV),
                                                                                       *outputTrace->getPrefix(maxInputPrefixInV->size(), true));
                 LOG("VERBOSE_1") << "maxIOPrefixInV (v/v'): " << *maxIOPrefixInV << std::endl;
-                IOTrace suffix(InputTrace(spec.presentationLayer), OutputTrace(spec.presentationLayer));
+                
+                
+                ////IOTrace suffix(InputTrace(spec.presentationLayer), OutputTrace(spec.presentationLayer));
+                IOTrace suffix(InputTrace( fsm->getPresentationLayer() ), OutputTrace( fsm->getPresentationLayer() ));
+
+                
                 suffix = currentTrace.getSuffix(*maxIOPrefixInV);
                 LOG("VERBOSE_1") << "suffix (x/y): " << suffix << std::endl;
 
-                LOG("VERBOSE_1") << "vPrimeLazy.hasNext(): " << vPrimeLazy.hasNext() << std::endl;
-                while (vPrimeLazy.hasNext())
+
+
+                // TODO: modify method of calculating next bOmegaT
+
+                LOG("VERBOSE_1") << "vPrimeEnumerator.hasNext(): " << vPrimeEnumerator.hasNext() << std::endl;
+                while (vPrimeEnumerator.hasNext())
                 {
-                    const IOTraceContainer& vDoublePrime = vPrimeLazy.getNext();
+                    const IOTraceContainer& vDoublePrime = vPrimeEnumerator.getNext();
                     if (outputTraceMeetsCriteria)
                     {
                         break;
@@ -1164,7 +1296,7 @@ int main(int argc, char* argv[])
                     if (!vDoublePrime.contains(maxIOPrefixInV))
                     {
                         LOG("VERBOSE_1") << "vDoublePrime does not contain prefix " << *maxIOPrefixInV << ". Skipping." << std::endl;
-                        LOG("VERBOSE_1") << "vPrimeLazy.hasNext(): " << vPrimeLazy.hasNext() << std::endl;
+                        LOG("VERBOSE_1") << "vPrimeEnumerator.hasNext(): " << vPrimeEnumerator.hasNext() << std::endl;
                         continue;
                     }
                     for (const vector<shared_ptr<FsmNode>>& rDistStates : maximalSetsOfRDistinguishableStates)
@@ -1215,7 +1347,7 @@ int main(int argc, char* argv[])
         InputTraceSet expandedTC;
         InputTraceSet tracesAddedToT;
         LOG("INFO") << "Expanding input sequences." << std::endl;
-        for (int x = 0; x <= spec.maxInput; ++x)
+        for (int x = 0; x <= fsm->getMaxInput(); ++x)
         {
             for (const shared_ptr<InputTrace>& inputTrace : newTC)
             {
