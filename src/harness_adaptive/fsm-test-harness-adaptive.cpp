@@ -275,13 +275,16 @@ bool exceedsBound(  const size_t m,
                     const IOTrace& base,
                     const IOTrace& suffix,
                     const vector<shared_ptr<FsmNode>>& states,
-                    const IOTreeContainer& adaptiveTestCases,
-                    unordered_set<IOTraceContainer> bOmegaT,
+                    //const IOTreeContainer& adaptiveTestCases,
+                    //unordered_set<IOTraceContainer> bOmegaT,
+                    unordered_set<shared_ptr<IOTraceContainer>>& responseSets,
+                    unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>>& responseMaps,
                     const IOTraceContainer& vDoublePrime,
                     const vector<shared_ptr<FsmNode>>& dReachableStates,
                     const Fsm& spec)
 {
-    size_t lB = Fsm::lowerBound(base, suffix, states, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
+    ////size_t lB = Fsm::lowerBound(base, suffix, states, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
+    size_t lB = lowerBound(base, suffix, states, responseSets, responseMaps, vDoublePrime, dReachableStates, spec);
     LOG("VERBOSE_1") << "lB: " << lB << std::endl;
     return lB > m;
 }
@@ -291,12 +294,15 @@ size_t lowerBound(const IOTrace& base,
                        const vector<shared_ptr<FsmNode>>& states,
                        //const IOTreeContainer& adaptiveTestCases,
                        //unordered_set<IOTraceContainer> bOmegaT,
-                       unordered_set<shared_ptr<IOTraceContainer>> responseSets,
-                       unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> responseMaps,
+                       const unordered_set<shared_ptr<IOTraceContainer>>& responseSets,
+                       const unordered_map<const shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>>& responseMap,
                        const IOTraceContainer& vDoublePrime,
                        const vector<shared_ptr<FsmNode>>& dReachableStates,
                        const Fsm& spec)
 {
+    // response sets observed along suffix applied after base
+    unordered_set<shared_ptr<IOTraceContainer>> observedResponseSetsAlongSuffix;
+
     LOG("VERBOSE_1") << "lowerBound()" << std::endl;
     LOG("VERBOSE_1") << "base: " << base << std::endl;
     LOG("VERBOSE_1") << "suffix: " << suffix << std::endl;
@@ -315,11 +321,11 @@ size_t lowerBound(const IOTrace& base,
     size_t result = 0;
     LOG("VERBOSE_1") << "lb result: " << result << std::endl;
 
-    LOG("VERBOSE_1") << "bOmegaT:" << std::endl;
-    for (const auto& cont : bOmegaT)
-    {
-        LOG("VERBOSE_1") << "  " << cont << std::endl;
-    }
+    // LOG("VERBOSE_1") << "bOmegaT:" << std::endl;
+    // for (const auto& cont : bOmegaT)
+    // {
+    //     LOG("VERBOSE_1") << "  " << cont << std::endl;
+    // }
 
     for (shared_ptr<FsmNode> state : states)
     {
@@ -340,7 +346,8 @@ size_t lowerBound(const IOTrace& base,
         for (auto traceIt = rPlusResult.cbegin(); traceIt != rPlusResult.cend(); ++traceIt)
         {
             const shared_ptr<const IOTrace>& trace = *traceIt;
-            IOTraceContainer traces = iut.bOmega(adaptiveTestCases, *trace);
+            ////IOTraceContainer traces = iut.bOmega(adaptiveTestCases, *trace);
+            IOTraceContainer traces = responseMap[traceIt];
             LOG("VERBOSE_1") << "Removing " << traces << " from testTraces." << std::endl;
 
             IOTraceContainer::remove(bOmegaT, traces);
@@ -989,11 +996,12 @@ unordered_set<shared_ptr<IOTraceContainer>> collectResponseSetsForInputTraces(co
 }
 
 
-
+// only inserts to responseSets
+// -> used to carry all previously observed response sets
 unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> collectResponseMapAndSetsForInputTraces(const IOTreeContainer& adaptiveTestCases, const InputTraceSet& traces, int repetitions, unordered_set<shared_ptr<IOTraceContainer>>& responseSets) {
     unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> responseMap;
 
-    responseSets = unordered_set<shared_ptr<IOTraceContainer>>();
+    //responseSets = unordered_set<shared_ptr<IOTraceContainer>>();
 
     for (const auto trace : traces) {
         unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> traceMap = collectResponseMapForInputTrace(adaptiveTestCases,*trace,repetitions);
@@ -1046,19 +1054,23 @@ int main(int argc, char* argv[])
      * Holds all B_Ω(T) for the current t.
      */
     //unordered_set<shared_ptr<IOTraceContainer>> bOmegaT;
-    unordered_set<shared_ptr<IOTraceContainer>> responseSets;
-    unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> responseMaps;
 
-    //// TODO: Execute first iteration later
-    responseMaps = collectResponseMapAndSetsForInputTraces(adaptiveTestCases,t,k,responseSets);
-    LOG("VERBOSE_1") << "Response sets observed for:" << std::endl;
-    for (const auto& kv : responseMaps)
-    {
-        LOG("VERBOSE_1") << "\t" << kv.first << std::endl;
-        for (const auto& response : *kv.second) {
-            LOG("VERBOSE_1") << "\t\t" << response << std::endl;
-        }
-    }
+    // new
+    // contains all observed response sets, not only the current ones
+    unordered_set<shared_ptr<IOTraceContainer>> responseSets;
+    // contains only current response sets
+    unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> responseMap;
+
+    // //// TODO: Execute first iteration later
+    // responseMaps = collectResponseMapAndSetsForInputTraces(adaptiveTestCases,t,k,responseSets);
+    // LOG("VERBOSE_1") << "Response sets observed for:" << std::endl;
+    // for (const auto& kv : responseMaps)
+    // {
+    //     LOG("VERBOSE_1") << "\t" << kv.first << std::endl;
+    //     for (const auto& response : *kv.second) {
+    //         LOG("VERBOSE_1") << "\t\t" << response << std::endl;
+    //     }
+    // }
 
     /**
      * T_c - set of current elements of T: those that are being considered in the search
@@ -1077,7 +1089,17 @@ int main(int argc, char* argv[])
         size_t numberInputTraces = tC.size();
         size_t inputTraceCount = 0;
 
-        unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> observedIUTResponsesToATCs = collectResponseMapForInputTraces(adaptiveTestCases,tC,k);
+        //unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> observedIUTResponsesToATCs = collectResponseMapForInputTraces(adaptiveTestCases,tC,k);
+        // new:
+        responseMap = collectResponseMapAndSetsForInputTraces(adaptiveTestCases,t,k,responseSets);
+        LOG("VERBOSE_1") << "Response sets observed for:" << std::endl;
+        for (const auto& kv : responseMap)
+        {
+            LOG("VERBOSE_1") << "\t" << kv.first << std::endl;
+            for (const auto& response : *kv.second) {
+                LOG("VERBOSE_1") << "\t\t" << response << std::endl;
+            }
+        }
         
         // Applying all input traces from T_c to this FSM.
         // All observed outputs are being recorded.
@@ -1134,7 +1156,9 @@ int main(int argc, char* argv[])
                             const shared_ptr<FsmNode>& nodeSpec = reachedNodesSpec.at(j);
 
                             ////iut.addPossibleIOTraces(nodeIut, adaptiveTestCases, observedAdaptiveTracesIut);
-                            observedAdaptiveTracesIut = *observedIUTResponsesToATCs[observedTraceIut];
+                            
+                            ////observedAdaptiveTracesIut = *observedIUTResponsesToATCs[observedTraceIut];
+                            observedAdaptiveTracesIut = *responseMap[observedTraceIut];
                             fsm->addPossibleIOTraces(nodeSpec, adaptiveTestCases, observedAdaptiveTracesSpec);
 
                             
@@ -1307,7 +1331,8 @@ int main(int argc, char* argv[])
                             LOG("VERBOSE_1") << "  " << r->getName() << std::endl;
                         }
                         
-                        bool exceedsBound = Fsm::exceedsBound(m, *maxIOPrefixInV, suffix, rDistStates, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
+                        ////bool exceedsBound = Fsm::exceedsBound(m, *maxIOPrefixInV, suffix, rDistStates, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
+                        bool exceedsBound = exceedsBound(m, *maxIOPrefixInV, suffix, rDistStates, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
                         LOG("VERBOSE_1") << "exceedsBound: " << exceedsBound << std::endl;
                         if (exceedsBound)
                         {
