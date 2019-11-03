@@ -37,6 +37,8 @@
 #include <stdio.h>
 #include <deque>
 
+#define RESOURCES_DIR "../../resources/"
+
 using namespace std;
 using namespace Json;
 
@@ -46,8 +48,8 @@ static const string csvSep = ";";
 
 static string nowText;
 
-static const string ascTestDirectory = "../../resources/asc-tests/";
-static const string ascTestResultDirectory = "../../resources/asc-test-results/";
+static const string ascTestDirectory = string(RESOURCES_DIR) + string("asc-tests/");
+static const string ascTestResultDirectory = string(RESOURCES_DIR) + string("asc-test-results/");
 static const string ascCsvDirectory = "../../../csv/";
 
 static shared_ptr<FsmPresentationLayer> plTestSpec = make_shared<FsmPresentationLayer>(
@@ -315,7 +317,7 @@ void test1() {
     << endl;
 
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-    Dfsm d("../../resources/TC-DFSM-0001.fsm",pl,"m1");
+    Dfsm d(string(RESOURCES_DIR) + string("TC-DFSM-0001.fsm"),pl,"m1");
     d.toDot("TC-DFSM-0001");
 
     vector<int> inp;
@@ -575,7 +577,7 @@ void test5() {
 
 
     shared_ptr<Fsm> fsm =
-    make_shared<Fsm>("../../resources/TC-FSM-0005.fsm",pl,"F");
+    make_shared<Fsm>(string(RESOURCES_DIR) + string("TC-FSM-0005.fsm"),pl,"F");
     fsm->toDot("TC-FSM-0005");
 
     vector< std::unordered_set<int> > v = fsm->getEquivalentInputs();
@@ -615,7 +617,7 @@ void test5() {
 
 
     // Check FSM without any equivalent inputs
-    fsm = make_shared<Fsm>("../../resources/fsmGillA7.fsm",pl,"F");
+    fsm = make_shared<Fsm>(string(RESOURCES_DIR) + string("fsmGillA7.fsm"),pl,"F");
     fsm->toDot("fsmGillA7");
     v = fsm->getEquivalentInputs();
 
@@ -642,7 +644,7 @@ void test6() {
     cout << "TC-FSM-0006 Check correctness of FSM Print Visitor " << endl;
 
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-    Dfsm d("../../resources/TC-DFSM-0001.fsm",pl,"m1");
+    Dfsm d(string(RESOURCES_DIR) + string("TC-DFSM-0001.fsm"),pl,"m1");
 
     FsmPrintVisitor v;
 
@@ -661,10 +663,10 @@ void test7() {
     //    << endl;
 
     shared_ptr<FsmPresentationLayer> pl =
-    make_shared<FsmPresentationLayer>("../../resources/garageIn.txt",
-                                      "../../resources/garageOut.txt",
-                                      "../../resources/garageState.txt");
-    Dfsm d("../../resources/garage.fsm",pl,"GC");
+    make_shared<FsmPresentationLayer>(string(RESOURCES_DIR) + string("garageIn.txt"),
+                                      string(RESOURCES_DIR) + string("garageOut.txt"),
+                                      string(RESOURCES_DIR) + string("garageState.txt"));
+    Dfsm d(string(RESOURCES_DIR) + string("garage.fsm"),pl,"GC");
     d.toDot("GC");
 
     FsmSimVisitor v;
@@ -686,10 +688,10 @@ void test8() {
     //    << endl;
 
     shared_ptr<FsmPresentationLayer> pl =
-    make_shared<FsmPresentationLayer>("../../resources/garageIn.txt",
-                                      "../../resources/garageOut.txt",
-                                      "../../resources/garageState.txt");
-    Dfsm d("../../resources/garage.fsm",pl,"GC");
+    make_shared<FsmPresentationLayer>(string(RESOURCES_DIR) + string("garageIn.txt"),
+                                      string(RESOURCES_DIR) + string("garageOut.txt"),
+                                      string(RESOURCES_DIR) + string("garageState.txt"));
+    Dfsm d(string(RESOURCES_DIR) + string("garage.fsm"),pl,"GC");
     d.toDot("GC");
 
     FsmOraVisitor v;
@@ -713,7 +715,7 @@ void test9() {
     Reader jReader;
     Value root;
     stringstream document;
-    ifstream inputFile("../../resources/unreachable_gdc.fsm");
+    ifstream inputFile(string(RESOURCES_DIR) + string("unreachable_gdc.fsm"));
     document << inputFile.rdbuf();
     inputFile.close();
 
@@ -763,7 +765,7 @@ void test10() {
     Reader jReader;
     Value root;
     stringstream document;
-    ifstream inputFile("../../resources/unreachable_gdc.fsm");
+    ifstream inputFile(string(RESOURCES_DIR) + string("unreachable_gdc.fsm"));
     document << inputFile.rdbuf();
     inputFile.close();
 
@@ -827,6 +829,14 @@ void test10() {
                true,
                "All nodes of minimised DFSM must be distinguishable");
     }
+    
+    // Now check that original DFSM and minimised DFSM are language equivalent.
+    // Since the DFSMs are completely specified, we do this by checking whether the
+    // intersection is complete
+    Dfsm dIntersect = d->intersect(dMin);
+    fsmlib_assert("TC-FSM-0010",
+                  dIntersect.isCompletelyDefined(),
+                  "Intersection of original and minimised DFSM is complete, so they are equivalent");
 
 }
 
@@ -837,14 +847,16 @@ void test10b() {
     << endl;
 
     shared_ptr<FsmPresentationLayer> pl =
-        make_shared<FsmPresentationLayer>("../../resources/huang201711in.txt",
-                                          "../../resources/huang201711out.txt",
-                                          "../../resources/huang201711state.txt");
+        make_shared<FsmPresentationLayer>(string(RESOURCES_DIR) + string("huang201711in.txt"),
+                                          string(RESOURCES_DIR) + string("huang201711out.txt"),
+                                          string(RESOURCES_DIR) + string("huang201711state.txt"));
 
-
-    shared_ptr<Dfsm> d = make_shared<Dfsm>("../../resources/huang201711.fsm",
+    shared_ptr<Dfsm> d = make_shared<Dfsm>(string(RESOURCES_DIR) + string("huang201711.fsm"),
                                            pl,
-                                           "F");
+                                           "huang201711");
+    
+    fsmlib_assert("TC-FSM-1010",d->isCompletelyDefined(),"DFSM is completely specified");
+    
     Dfsm dMin = d->minimise();
 
     IOListContainer w = dMin.getCharacterisationSet();
@@ -893,9 +905,17 @@ void test10b() {
     if ( allNodesDistinguished ) {
         fsmlib_assert("TC-FSM-1010",
                true,
-               "All nodes of minimised DFSM must be distinguishable");
+               "All nodes of minimised DFSM huang201711 must be distinguishable");
     }
-
+    
+    // Now check that original DFSM and minimised DFSM are language equivalent.
+    // Since the DFSMs are completely specified, we do this by checking whether the
+    // intersection is complete
+    Dfsm dIntersect = d->intersect(dMin);
+    fsmlib_assert("TC-FSM-1010",
+                  dIntersect.isCompletelyDefined(),
+                  "Intersection of original and minimised DFSM huang201711 is complete, so they are equivalent");
+        
 }
 
 
@@ -906,7 +926,7 @@ void gdc_test1() {
 
 
     shared_ptr<Dfsm> gdc =
-    make_shared<Dfsm>("../../resources/garage-door-controller.csv","GDC");
+    make_shared<Dfsm>(string(RESOURCES_DIR) + string("garage-door-controller.csv"),"GDC");
 
     shared_ptr<FsmPresentationLayer> pl = gdc->getPresentationLayer();
 
@@ -933,9 +953,11 @@ void gdc_test1() {
     }
 
     testSuite->save("testsuite.txt");
+    
+    string diffString("diff testsuite.txt " + string(RESOURCES_DIR) + string("gdc-testsuite.txt"));
 
     fsmlib_assert("TC-GDC-0001",
-            0 == system("diff testsuite.txt ../../resources/gdc-testsuite.txt"),
+            0 == system(diffString.c_str()),
            "Expected GDC test suite and generated suite are identical");
 
 
@@ -984,11 +1006,11 @@ void runAgainstMutant(shared_ptr<Dfsm> mutant, vector<IOTrace>& expected) {
 
 void test11() {
 
-    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>("../../resources/garageIn.txt",
-                                                                            "../../resources/garageOut.txt",
-                                                                            "../../resources/garageState.txt");
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>(string(RESOURCES_DIR) + string("garageIn.txt"),
+                                                                            string(RESOURCES_DIR) + string("garageOut.txt"),
+                                                                            string(RESOURCES_DIR) + string("garageState.txt"));
 
-    shared_ptr<Fsm> gdc = make_shared<Fsm>("../../resources/garage.fsm",pl,"GDC");
+    shared_ptr<Fsm> gdc = make_shared<Fsm>(string(RESOURCES_DIR) + string("garage.fsm"),pl,"GDC");
 
 
     gdc->toDot("GDC");
@@ -1001,11 +1023,11 @@ void test11() {
 
 void test12() {
 
-    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>("../../resources/garageIn.txt",
-                                                                            "../../resources/garageOut.txt",
-                                                                            "../../resources/garageState.txt");
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>(string(RESOURCES_DIR) + string("garageIn.txt"),
+                                                                            string(RESOURCES_DIR) + string("garageOut.txt"),
+                                                                            string(RESOURCES_DIR) + string("garageState.txt"));
 
-    shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../resources/garage.fsm",pl,"GDC");
+    shared_ptr<Dfsm> gdc = make_shared<Dfsm>(string(RESOURCES_DIR) + string("garage.fsm"),pl,"GDC");
 
 
     gdc->toDot("GDC");
@@ -1020,7 +1042,7 @@ void test13() {
 
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
-    shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../resources/garage.fsm",pl,"GDC");
+    shared_ptr<Dfsm> gdc = make_shared<Dfsm>(string(RESOURCES_DIR) + string("garage.fsm"),pl,"GDC");
 
 
     gdc->toDot("GDC");
@@ -1036,7 +1058,7 @@ void test14() {
 
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
-    shared_ptr<Fsm> fsm = make_shared<Fsm>("../../resources/NN.fsm",pl,"NN");
+    shared_ptr<Fsm> fsm = make_shared<Fsm>(string(RESOURCES_DIR) + string("NN.fsm"),pl,"NN");
 
     fsm->toDot("NN");
 
@@ -1055,7 +1077,7 @@ void test15() {
 
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
-    shared_ptr<Fsm> nonObs = make_shared<Fsm>("../../resources/nonObservable.fsm",pl,"NON_OBS");
+    shared_ptr<Fsm> nonObs = make_shared<Fsm>(string(RESOURCES_DIR) + string("nonObservable.fsm"),pl,"NON_OBS");
 
 
     nonObs->toDot("NON_OBS");
@@ -1106,29 +1128,6 @@ void test15() {
 
 }
 
-void faux() {
-
-
-    shared_ptr<FsmPresentationLayer> pl =
-    make_shared<FsmPresentationLayer>("../../resources/gillIn.txt",
-                                      "../../resources/gillOut.txt",
-                                      "../../resources/gillState.txt");
-
-    shared_ptr<Dfsm> d = make_shared<Dfsm>("../../resources/gill.fsm",
-                                           pl,
-                                           "G0");
-
-    d->toDot("G0");
-
-    d->toCsv("G0");
-
-    Dfsm dMin = d->minimise();
-
-    dMin.toDot("G0_MIN");
-
-
-
-}
 
 void test16() {
 
@@ -1136,7 +1135,7 @@ void test16() {
     Reader jReader;
     Value root;
     stringstream document;
-    ifstream inputFile("../../resources/exp1.fsm");
+    ifstream inputFile(string(RESOURCES_DIR) + string("exp1.fsm"));
     document << inputFile.rdbuf();
     inputFile.close();
 
@@ -1154,7 +1153,7 @@ void test16() {
     Reader jReader2;
     Value root2;
     stringstream document2;
-    ifstream inputFile2("../../resources/exp2.fsm");
+    ifstream inputFile2(string(RESOURCES_DIR) + string("exp2.fsm"));
     document2 << inputFile2.rdbuf();
     inputFile2.close();
 
@@ -2730,7 +2729,6 @@ int main(int argc, char** argv)
     test14();
     test15();
 
-    faux();
     gdc_test1();
     
     /** Uncomment to run Adaptive State Counting tests **/
