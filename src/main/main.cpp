@@ -46,8 +46,8 @@ static const string csvSep = ";";
 
 static string nowText;
 
-static const string ascTestDirectory = "../../../resources/asc-tests/";
-static const string ascTestResultDirectory = "../../../resources/asc-test-results/";
+static const string ascTestDirectory = "../../resources/asc-tests/";
+static const string ascTestResultDirectory = "../../resources/asc-test-results/";
 static const string ascCsvDirectory = "../../../csv/";
 
 static shared_ptr<FsmPresentationLayer> plTestSpec = make_shared<FsmPresentationLayer>(
@@ -173,7 +173,13 @@ string initialize()
     std::time_t tNow = system_clock::to_time_t(now);
     char nowTextRaw[21];
     struct tm buf;
-    strftime(nowTextRaw, 21, "%Y-%m-%d--%H-%M-%S", localtime_r(&tNow, &buf));
+    #ifdef WINDOWS
+        localtime_s(&buf, &tNow);
+        strftime(nowTextRaw, 21, "%Y-%m-%d--%H-%M-%S", &buf);
+    #else
+        strftime(nowTextRaw, 21, "%Y-%m-%d--%H-%M-%S", localtime_r(&tNow, &buf));
+    #endif
+    
     return string(nowTextRaw);
 }
 
@@ -309,7 +315,7 @@ void test1() {
     << endl;
 
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-    Dfsm d("../../../resources/TC-DFSM-0001.fsm",pl,"m1");
+    Dfsm d("../../resources/TC-DFSM-0001.fsm",pl,"m1");
     d.toDot("TC-DFSM-0001");
 
     vector<int> inp;
@@ -419,6 +425,11 @@ void test3() {
         }
 
         cout << "Call W-Method - additional states (m) = " << m << endl;
+        
+        if ( m >= 6 ) {
+            cout << "Skip this test case, mutant has too many additional states" << endl;
+            continue;
+        }
 
         IOListContainer iolc1 = fsmMin.wMethodOnMinimisedFsm(m);
 
@@ -564,7 +575,7 @@ void test5() {
 
 
     shared_ptr<Fsm> fsm =
-    make_shared<Fsm>("../../../resources/TC-FSM-0005.fsm",pl,"F");
+    make_shared<Fsm>("../../resources/TC-FSM-0005.fsm",pl,"F");
     fsm->toDot("TC-FSM-0005");
 
     vector< std::unordered_set<int> > v = fsm->getEquivalentInputs();
@@ -604,7 +615,7 @@ void test5() {
 
 
     // Check FSM without any equivalent inputs
-    fsm = make_shared<Fsm>("../../../resources/fsmGillA7.fsm",pl,"F");
+    fsm = make_shared<Fsm>("../../resources/fsmGillA7.fsm",pl,"F");
     fsm->toDot("fsmGillA7");
     v = fsm->getEquivalentInputs();
 
@@ -631,7 +642,7 @@ void test6() {
     cout << "TC-FSM-0006 Check correctness of FSM Print Visitor " << endl;
 
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-    Dfsm d("../../../resources/TC-DFSM-0001.fsm",pl,"m1");
+    Dfsm d("../../resources/TC-DFSM-0001.fsm",pl,"m1");
 
     FsmPrintVisitor v;
 
@@ -650,10 +661,10 @@ void test7() {
     //    << endl;
 
     shared_ptr<FsmPresentationLayer> pl =
-    make_shared<FsmPresentationLayer>("../../../resources/garageIn.txt",
-                                      "../../../resources/garageOut.txt",
-                                      "../../../resources/garageState.txt");
-    Dfsm d("../../../resources/garage.fsm",pl,"GC");
+    make_shared<FsmPresentationLayer>("../../resources/garageIn.txt",
+                                      "../../resources/garageOut.txt",
+                                      "../../resources/garageState.txt");
+    Dfsm d("../../resources/garage.fsm",pl,"GC");
     d.toDot("GC");
 
     FsmSimVisitor v;
@@ -675,10 +686,10 @@ void test8() {
     //    << endl;
 
     shared_ptr<FsmPresentationLayer> pl =
-    make_shared<FsmPresentationLayer>("../../../resources/garageIn.txt",
-                                      "../../../resources/garageOut.txt",
-                                      "../../../resources/garageState.txt");
-    Dfsm d("../../../resources/garage.fsm",pl,"GC");
+    make_shared<FsmPresentationLayer>("../../resources/garageIn.txt",
+                                      "../../resources/garageOut.txt",
+                                      "../../resources/garageState.txt");
+    Dfsm d("../../resources/garage.fsm",pl,"GC");
     d.toDot("GC");
 
     FsmOraVisitor v;
@@ -702,7 +713,7 @@ void test9() {
     Reader jReader;
     Value root;
     stringstream document;
-    ifstream inputFile("../../../resources/unreachable_gdc.fsm");
+    ifstream inputFile("../../resources/unreachable_gdc.fsm");
     document << inputFile.rdbuf();
     inputFile.close();
 
@@ -752,7 +763,7 @@ void test10() {
     Reader jReader;
     Value root;
     stringstream document;
-    ifstream inputFile("../../../resources/unreachable_gdc.fsm");
+    ifstream inputFile("../../resources/unreachable_gdc.fsm");
     document << inputFile.rdbuf();
     inputFile.close();
 
@@ -826,12 +837,12 @@ void test10b() {
     << endl;
 
     shared_ptr<FsmPresentationLayer> pl =
-        make_shared<FsmPresentationLayer>("../../../resources/huang201711in.txt",
-                                          "../../../resources/huang201711out.txt",
-                                          "../../../resources/huang201711state.txt");
+        make_shared<FsmPresentationLayer>("../../resources/huang201711in.txt",
+                                          "../../resources/huang201711out.txt",
+                                          "../../resources/huang201711state.txt");
 
 
-    shared_ptr<Dfsm> d = make_shared<Dfsm>("../../../resources/huang201711.fsm",
+    shared_ptr<Dfsm> d = make_shared<Dfsm>("../../resources/huang201711.fsm",
                                            pl,
                                            "F");
     Dfsm dMin = d->minimise();
@@ -895,7 +906,7 @@ void gdc_test1() {
 
 
     shared_ptr<Dfsm> gdc =
-    make_shared<Dfsm>("../../../resources/garage-door-controller.csv","GDC");
+    make_shared<Dfsm>("../../resources/garage-door-controller.csv","GDC");
 
     shared_ptr<FsmPresentationLayer> pl = gdc->getPresentationLayer();
 
@@ -924,7 +935,7 @@ void gdc_test1() {
     testSuite->save("testsuite.txt");
 
     fsmlib_assert("TC-GDC-0001",
-            0 == system("diff testsuite.txt ../../../resources/gdc-testsuite.txt"),
+            0 == system("diff testsuite.txt ../../resources/gdc-testsuite.txt"),
            "Expected GDC test suite and generated suite are identical");
 
 
@@ -969,66 +980,15 @@ void runAgainstMutant(shared_ptr<Dfsm> mutant, vector<IOTrace>& expected) {
     }
 
 }
-
-void wVersusT() {
-
-    shared_ptr<Dfsm> refModel = make_shared<Dfsm>("FSBRTSX.csv","FSBRTS");
-
-//    IOListContainer wTestSuite0 = refModel->wMethod(0);
-//    IOListContainer wTestSuite1 = refModel->wMethod(1);
-//    IOListContainer wTestSuite2 = refModel->wMethod(2);
-//    IOListContainer wTestSuite3 = refModel->wMethod(3);
-//
-  IOListContainer wpTestSuite0 = refModel->wpMethod(0);
-//    IOListContainer wpTestSuite1 = refModel->wpMethod(1);
-//    IOListContainer wpTestSuite2 = refModel->wpMethod(2);
-//    IOListContainer wpTestSuite3 = refModel->wpMethod(3);
-
-    //    IOListContainer tTestSuite = refModel->tMethod();
-
-//    vector<IOTrace> expectedResultsW0 = runAgainstRefModel(refModel, wTestSuite0);
-//    vector<IOTrace> expectedResultsW1 = runAgainstRefModel(refModel, wTestSuite1);
-//    vector<IOTrace> expectedResultsW2 = runAgainstRefModel(refModel, wTestSuite2);
-//    vector<IOTrace> expectedResultsW3 = runAgainstRefModel(refModel, wTestSuite3);
-    vector<IOTrace> expectedResultsWp0 = runAgainstRefModel(refModel, wpTestSuite0);
-//    vector<IOTrace> expectedResultsWp1 = runAgainstRefModel(refModel, wpTestSuite1);
-//    vector<IOTrace> expectedResultsWp2  = runAgainstRefModel(refModel, wpTestSuite2);
-//    vector<IOTrace> expectedResultsWp3 = runAgainstRefModel(refModel, wpTestSuite3);
-//    vector<IOTrace> expectedResultsT = runAgainstRefModel(refModel, tTestSuite);
-
-
-
-    for ( int i = 0; i < 10; i++ ) {
-
-        cout << "Mutant No. " << (i+1) << ": " << endl;
-
-        shared_ptr<Dfsm> mutant =
-            make_shared<Dfsm>("FSBRTSX.csv","FSBRTS");
-        mutant->createAtRandom();
-
-//        runAgainstMutant(mutant,expectedResultsW0);
-//        runAgainstMutant(mutant,expectedResultsW1);
-//        runAgainstMutant(mutant,expectedResultsW2);
-//        runAgainstMutant(mutant,expectedResultsW3);
-        runAgainstMutant(mutant,expectedResultsWp0);
-//        runAgainstMutant(mutant,expectedResultsWp1);
-//        runAgainstMutant(mutant,expectedResultsWp2);
-//        runAgainstMutant(mutant,expectedResultsWp3);
-//        runAgainstMutant(mutant,expectedResultsT);
-
-
-    }
-
-
-}
+ 
 
 void test11() {
 
-    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>("../../../resources/garageIn.txt",
-                                                                            "../../../resources/garageOut.txt",
-                                                                            "../../../resources/garageState.txt");
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>("../../resources/garageIn.txt",
+                                                                            "../../resources/garageOut.txt",
+                                                                            "../../resources/garageState.txt");
 
-    shared_ptr<Fsm> gdc = make_shared<Fsm>("../../../resources/garage.fsm",pl,"GDC");
+    shared_ptr<Fsm> gdc = make_shared<Fsm>("../../resources/garage.fsm",pl,"GDC");
 
 
     gdc->toDot("GDC");
@@ -1041,11 +1001,11 @@ void test11() {
 
 void test12() {
 
-    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>("../../../resources/garageIn.txt",
-                                                                            "../../../resources/garageOut.txt",
-                                                                            "../../../resources/garageState.txt");
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>("../../resources/garageIn.txt",
+                                                                            "../../resources/garageOut.txt",
+                                                                            "../../resources/garageState.txt");
 
-    shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../../resources/garage.fsm",pl,"GDC");
+    shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../resources/garage.fsm",pl,"GDC");
 
 
     gdc->toDot("GDC");
@@ -1060,7 +1020,7 @@ void test13() {
 
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
-    shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../../resources/garage.fsm",pl,"GDC");
+    shared_ptr<Dfsm> gdc = make_shared<Dfsm>("../../resources/garage.fsm",pl,"GDC");
 
 
     gdc->toDot("GDC");
@@ -1076,7 +1036,7 @@ void test14() {
 
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
-    shared_ptr<Fsm> fsm = make_shared<Fsm>("../../../resources/NN.fsm",pl,"NN");
+    shared_ptr<Fsm> fsm = make_shared<Fsm>("../../resources/NN.fsm",pl,"NN");
 
     fsm->toDot("NN");
 
@@ -1095,7 +1055,7 @@ void test15() {
 
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
 
-    shared_ptr<Fsm> nonObs = make_shared<Fsm>("../../../resources/nonObservable.fsm",pl,"NON_OBS");
+    shared_ptr<Fsm> nonObs = make_shared<Fsm>("../../resources/nonObservable.fsm",pl,"NON_OBS");
 
 
     nonObs->toDot("NON_OBS");
@@ -1150,11 +1110,11 @@ void faux() {
 
 
     shared_ptr<FsmPresentationLayer> pl =
-    make_shared<FsmPresentationLayer>("../../../resources/gillIn.txt",
-                                      "../../../resources/gillOut.txt",
-                                      "../../../resources/gillState.txt");
+    make_shared<FsmPresentationLayer>("../../resources/gillIn.txt",
+                                      "../../resources/gillOut.txt",
+                                      "../../resources/gillState.txt");
 
-    shared_ptr<Dfsm> d = make_shared<Dfsm>("../../../resources/gill.fsm",
+    shared_ptr<Dfsm> d = make_shared<Dfsm>("../../resources/gill.fsm",
                                            pl,
                                            "G0");
 
@@ -1176,7 +1136,7 @@ void test16() {
     Reader jReader;
     Value root;
     stringstream document;
-    ifstream inputFile("../../../resources/exp1.fsm");
+    ifstream inputFile("../../resources/exp1.fsm");
     document << inputFile.rdbuf();
     inputFile.close();
 
@@ -1194,7 +1154,7 @@ void test16() {
     Reader jReader2;
     Value root2;
     stringstream document2;
-    ifstream inputFile2("../../../resources/exp2.fsm");
+    ifstream inputFile2("../../resources/exp2.fsm");
     document2 << inputFile2.rdbuf();
     inputFile2.close();
 
@@ -2752,8 +2712,8 @@ int main(int argc, char** argv)
 #ifdef ENABLE_DEBUG_MACRO
     LOG("INFO") << "This is a debug build!" << std::endl;
 #endif
-
-#if 0
+    
+#if 1
     test1();
     test2();
     test3();
@@ -2771,99 +2731,13 @@ int main(int argc, char** argv)
     test15();
 
     faux();
-
-
     gdc_test1();
-
-
-
-    wVersusT();
-
-    if ( argc < 6 ) {
-        cerr << endl <<
-        "Missing file names - exit." << endl;
-        exit(1);
-    }
-#endif
-
-
-    string fsmName(argv[1]);
-    string fsmFile(argv[2]);
     
-    //shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>(inputFile,outputFile,stateFile);
-
-    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-
-    /* Create an Fsm instance, using the transition relation file,
-     * the presentation layer, and the FSM name
-     */
-    shared_ptr<Fsm> fsm = make_shared<Fsm>(fsmFile,pl,fsmName);
-
-    /* Produce a GraphViz (.dot) representation of the created FSM */
-    fsm->toDot(fsmName);
-
-    /* Transform the FSM into an equivalent observable one */
-    Fsm fsmObs = fsm->transformToObservableFSM();
-
-    /* Output the observable FSM to a GraphViz file (.dot-file) */
-    fsmObs.toDot(fsmObs.getName());
-    
-    /* Output the observable FSM in its internal presentation */
-    fsmObs.toInternalFsmFormat(fsmName + "_O");
-    
-#if 0
-
-    /*
-    string inputFile(argv[3]);
-    string outputFile(argv[4]);
-    string stateFile(argv[5]);
-    */
-
-    /* Create the presentation layer */
-    //shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>(inputFile,outputFile,stateFile);
-
-    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-
-    /* Create an Fsm instance, using the transition relation file,
-     * the presentation layer, and the FSM name
-     */
-    shared_ptr<Fsm> fsm = make_shared<Fsm>(fsmFile,pl,fsmName);
-
-    /* Produce a GraphViz (.dot) representation of the created FSM */
-    fsm->toDot(fsmName);
-
-    /* Transform the FSM into an equivalent observable one */
-    Fsm fsmObs = fsm->transformToObservableFSM();
-
-    /* Output the observable FSM to a GraphViz file (.dot-file) */
-    fsmObs.toDot(fsmObs.getName());
-
-
-    test1();
-    test2();
-    test3();
-    test4();
-    test5();
-    test6();
-    test7();
-    test8();
-    test9();
-    test10();
-    test10b();
-    test11();
-    test13();
-    test14();
-    test15();
-
     /** Uncomment to run Adaptive State Counting tests **/
     //runAdaptiveStateCountingTests();
-    #endif
 
+#endif
     
-    
-    
-    
-    exit(0);
-
+     
 }
 
