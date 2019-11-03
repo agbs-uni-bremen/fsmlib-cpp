@@ -116,6 +116,13 @@ protected:
     void parseLine(const std::string & line);
     void readFsm(const std::string & fname);
     
+    /**
+     *  Parse a line from from a *.fsm file supposed to be in raw format
+     *  <source-state-number> <input-number> <output-number> <target-state-number>
+     *  The line is checked w.r.t. consisting of exactly 4 numbers. If the line has another format,
+     *  false is returned.
+     */
+    bool checkRawFormat(const std::string& line);
     void parseLineInitial (const std::string & line);
     void readFsmInitial (const std::string & fname);
     /**

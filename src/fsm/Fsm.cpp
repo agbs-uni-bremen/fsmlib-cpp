@@ -104,6 +104,12 @@ shared_ptr<FsmNode> Fsm::findp(const vector<shared_ptr<FsmNode>>& lst,
 
 void Fsm::parseLine(const string & line)
 {
+    
+    if ( not checkRawFormat(line) ) {
+        cerr << "Illegal line in fsm-raw format: `" << line << "'" << endl;
+        return;
+    }
+    
     stringstream ss(line);
     
     int source;
@@ -165,8 +171,20 @@ void Fsm::parseLine(const string & line)
                                                                 theLabel));
 }
 
+
+bool Fsm::checkRawFormat(const string& line) {
+    return regex_match(line,regex("[ \t]*[0-9]+[ \t]+[0-9]+[ \t]+[0-9]+[ \t]+[0-9]+[ \t]*"));
+}
+
 void Fsm::parseLineInitial (const string & line)
 {
+    
+    if ( not checkRawFormat(line) ) {
+        cerr << "Illegal line in fsm-raw format: `" << line << "'" << endl;
+        return;
+    }
+    
+    
     stringstream ss(line);
     
     int source;
