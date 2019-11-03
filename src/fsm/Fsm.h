@@ -100,7 +100,6 @@ protected:
     std::shared_ptr<Tree> characterisationSet;
     std::vector<std::shared_ptr<FsmNode>> dReachableStates;
     Minimal minimal;
-    bool complete;
 
     std::vector<std::shared_ptr<OFSMTable>> ofsmTableLst;
     std::vector<std::shared_ptr<Tree>> stateIdentificationSets;
@@ -446,7 +445,6 @@ public:
      */
     bool isObservable() const;
     Minimal isMinimal() const;
-    bool isComplete() const;
     
     /**
      *   Check for unreachable states and remove them from the 

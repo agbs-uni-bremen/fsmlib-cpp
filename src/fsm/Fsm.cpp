@@ -467,7 +467,17 @@ string Fsm::labelString(unordered_set<shared_ptr<FsmNode>>& lbl) const
 
 Fsm::~Fsm() { }
 
-Fsm::Fsm() { }
+Fsm::Fsm() :
+name(""),
+currentParsedNode(nullptr),
+maxInput(-1),
+maxOutput(-1),
+maxState(-1),
+initStateIdx(-1),
+characterisationSet(nullptr),
+minimal(Maybe),
+presentationLayer(nullptr)
+{  }
 
 Fsm::Fsm(const Fsm& other): Fsm(other, other.name, other.presentationLayer)
 {
@@ -1414,10 +1424,7 @@ Minimal Fsm::isMinimal() const
     return minimal;
 }
 
-bool Fsm::isComplete() const
-{
-    return complete;
-}
+
 
 void Fsm::calcOFSMTables() {
     
