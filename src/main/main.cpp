@@ -2795,11 +2795,34 @@ int main(int argc, char** argv)
         "Missing file names - exit." << endl;
         exit(1);
     }
-
+#endif
 
 
     string fsmName(argv[1]);
     string fsmFile(argv[2]);
+    
+    //shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>(inputFile,outputFile,stateFile);
+
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
+
+    /* Create an Fsm instance, using the transition relation file,
+     * the presentation layer, and the FSM name
+     */
+    shared_ptr<Fsm> fsm = make_shared<Fsm>(fsmFile,pl,fsmName);
+
+    /* Produce a GraphViz (.dot) representation of the created FSM */
+    fsm->toDot(fsmName);
+
+    /* Transform the FSM into an equivalent observable one */
+    Fsm fsmObs = fsm->transformToObservableFSM();
+
+    /* Output the observable FSM to a GraphViz file (.dot-file) */
+    fsmObs.toDot(fsmObs.getName());
+    
+    /* Output the observable FSM in its internal presentation */
+    fsmObs.toInternalFsmFormat(fsmName + "_O");
+    
+#if 0
 
     /*
     string inputFile(argv[3]);
@@ -2826,7 +2849,6 @@ int main(int argc, char** argv)
     /* Output the observable FSM to a GraphViz file (.dot-file) */
     fsmObs.toDot(fsmObs.getName());
 
-#endif
 
     test1();
     test2();
@@ -2846,7 +2868,12 @@ int main(int argc, char** argv)
 
     /** Uncomment to run Adaptive State Counting tests **/
     //runAdaptiveStateCountingTests();
+    #endif
 
+    
+    
+    
+    
     exit(0);
 
 }

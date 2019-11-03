@@ -814,6 +814,40 @@ void Fsm::toDot(const string & fname)
     out.close();
 }
 
+void Fsm::toInternalFsmFormat(const string& fname) {
+    
+    string fileName(fname);
+    if ( fileName.size() < 4 or
+         fileName.find(".fsm") != fileName.size() - 4 ) {
+        fileName += ".fsm";
+    }
+    
+    ofstream out(fileName);
+    
+    for ( int n = initStateIdx; n < size(); n++ ) {
+        shared_ptr<FsmNode> theNode = nodes[n];
+        
+        for ( auto tr : theNode->getTransitions() ) {
+            out << n << " " << tr->getLabel()->getInput()
+            << " " << tr->getLabel()->getOutput()
+            << " " << tr->getTarget()->getId() << endl;
+        }
+    }
+    
+    for ( int n = 0; n < initStateIdx; n++ ) {
+        shared_ptr<FsmNode> theNode = nodes[n];
+        
+        for ( auto tr : theNode->getTransitions() ) {
+            out << n << " " << tr->getLabel()->getInput()
+            << " " << tr->getLabel()->getOutput()
+            << " " << tr->getTarget()->getId() << endl;
+        }
+    }
+    
+    out.close();
+    
+}
+
 
 int Fsm::getNumberOfPossibleTransitions(vector<shared_ptr<FsmNode>> nodePool) const
 {
