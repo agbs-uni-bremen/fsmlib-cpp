@@ -6,6 +6,6 @@ void sut_init() { }
 
 void sut_reset() { }
 
-std::string sut(const std::string input) {
+const std::string sut(const std::string input) {
     return "a1";
 }

@@ -11,7 +11,7 @@ VPrimeEnumerator::VPrimeEnumerator(const vector<IOTraceContainer>& detStateCover
     LOG("VERBOSE_1") << "detStateCoverResponses:" << std::endl;
     
     // TODO: verify
-    for (int i = 0; i < detStateCoverResponses.size(); ++i) {
+    for (unsigned int i = 0; i < detStateCoverResponses.size(); ++i) {
         vector<shared_ptr<const IOTrace>> temp;
         for (auto it = detStateCoverResponses.at(i).cbegin(); it != detStateCoverResponses.at(i).cend(); ++it)
         {
