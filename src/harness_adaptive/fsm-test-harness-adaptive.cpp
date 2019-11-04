@@ -10,21 +10,21 @@
 #include <unordered_map>
 
 
-#include "../interface/FsmPresentationLayer.h"
-#include "../fsm/Dfsm.h"
-#include "../fsm/PkTable.h"
-#include "../fsm/FsmNode.h"
-#include "../fsm/IOTrace.h"
-#include "../fsm/SegmentedTrace.h"
-#include "../fsm/IOTraceContainer.h"
+#include "interface/FsmPresentationLayer.h"
+#include "fsm/Dfsm.h"
+#include "fsm/PkTable.h"
+#include "fsm/FsmNode.h"
+#include "fsm/IOTrace.h"
+#include "fsm/SegmentedTrace.h"
+#include "fsm/IOTraceContainer.h"
 
-#include "../trees/AdaptiveTreeNode.h"
-#include "../trees/IOListContainer.h"
-#include "../trees/IOTreeContainer.h"
-#include "../trees/OutputTree.h"
-#include "../trees/TestSuite.h"
+#include "trees/AdaptiveTreeNode.h"
+#include "trees/IOListContainer.h"
+#include "trees/IOTreeContainer.h"
+#include "trees/OutputTree.h"
+#include "trees/TestSuite.h"
 
-#include "../utils/Logger.hpp"
+#include "utils/Logger.hpp"
 
 #define DBG 0
 using namespace std;
@@ -1113,6 +1113,17 @@ int main(int argc, char* argv[])
     //     }
     // }
 
+    responseMap = collectResponseMapAndSetsForInputTraces(adaptiveTestCases,t,k,responseSets);
+    LOG("VERBOSE_1") << "Response sets observed for:" << std::endl;
+    for (const auto& kv : responseMap)
+    {
+        LOG("VERBOSE_1") << "\t" << kv.first << std::endl;
+        for (auto traceIt = kv.second->cbegin(); traceIt != kv.second->cend(); ++traceIt) {
+            const shared_ptr<const IOTrace>& trace = *traceIt;
+            LOG("VERBOSE_1") << "\t\t" << trace << std::endl;
+        }
+    }
+
     /**
      * T_c - set of current elements of T: those that are being considered in the search
      * through state space. The elements in T_c are the maximal sequences considered that
@@ -1130,21 +1141,10 @@ int main(int argc, char* argv[])
         size_t numberInputTraces = tC.size();
         size_t inputTraceCount = 0;
 
-        //unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> observedIUTResponsesToATCs = collectResponseMapForInputTraces(adaptiveTestCases,tC,k);
-        // new:
-        responseMap = collectResponseMapAndSetsForInputTraces(adaptiveTestCases,t,k,responseSets);
-        LOG("VERBOSE_1") << "Response sets observed for:" << std::endl;
-        for (const auto& kv : responseMap)
-        {
-            LOG("VERBOSE_1") << "\t" << kv.first << std::endl;
-            for (auto traceIt = kv.second->cbegin(); traceIt != kv.second->cend(); ++traceIt) {
-                const shared_ptr<const IOTrace>& trace = *traceIt;
-                LOG("VERBOSE_1") << "\t\t" << trace << std::endl;
-            }
-            // for (const auto& response : *kv.second) {
-            //     LOG("VERBOSE_1") << "\t\t" << response << std::endl;
-            // }
-        }
+        
+
+
+
         
         // Applying all input traces from T_c to this FSM.
         // All observed outputs are being recorded.
@@ -1391,8 +1391,8 @@ int main(int argc, char* argv[])
                         //                     const Fsm& spec)
 
                         bool doesExceedBound = exceedsBound(m, *maxIOPrefixInV, suffix, rDistStates, responseSets, responseMap, vDoublePrime, dReachableStates, *fsm);
-                        LOG("VERBOSE_1") << "exceedsBound: " << exceedsBound << std::endl;
-                        if (exceedsBound)
+                        LOG("VERBOSE_1") << "exceedsBound: " << doesExceedBound << std::endl;
+                        if (doesExceedBound)
                         {
                             LOG("VERBOSE_1") << "Exceeded lower bound. Output trace " << *outputTrace << " meets criteria." << std::endl;
                             outputTraceMeetsCriteria = true;
@@ -1460,7 +1460,20 @@ int main(int argc, char* argv[])
 
         
         LOG("INFO") << "Finished expansion." << std::endl;
-        iut.bOmega(adaptiveTestCases, tracesAddedToT, bOmegaT);
+        ////iut.bOmega(adaptiveTestCases, tracesAddedToT, bOmegaT);
+
+        responseMap = collectResponseMapAndSetsForInputTraces(adaptiveTestCases,tracesAddedToT,k,responseSets);
+        LOG("VERBOSE_1") << "Response sets observed for:" << std::endl;
+        for (const auto& kv : responseMap)
+        {
+            LOG("VERBOSE_1") << "\t" << kv.first << std::endl;
+            for (auto traceIt = kv.second->cbegin(); traceIt != kv.second->cend(); ++traceIt) {
+                const shared_ptr<const IOTrace>& trace = *traceIt;
+                LOG("VERBOSE_1") << "\t\t" << trace << std::endl;
+            }
+        }
+
+
         LOG("INFO") << "Finished calculating bOmega." << std::endl;
 
         ss << "expandedTC: ";
