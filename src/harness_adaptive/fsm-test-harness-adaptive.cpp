@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <utility>
+#include <unordered_map>
 
 
 #include "../interface/FsmPresentationLayer.h"
@@ -277,8 +278,8 @@ size_t lowerBound(const IOTrace& base,
                        const vector<shared_ptr<FsmNode>>& states,
                        //const IOTreeContainer& adaptiveTestCases,
                        //unordered_set<IOTraceContainer> bOmegaT,
-                       const unordered_set<shared_ptr<IOTraceContainer>>& responseSets,
-                       const unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>>& responseMap,
+                       const unordered_set<shared_ptr<const IOTraceContainer>>& responseSets,
+                       const unordered_map<shared_ptr<const IOTrace>, const shared_ptr<const IOTraceContainer>>& responseMap,
                        const IOTraceContainer& vDoublePrime,
                        const vector<shared_ptr<FsmNode>>& dReachableStates,
                        const Fsm& spec)
@@ -390,7 +391,7 @@ bool exceedsBound(  const size_t m,
                     //const IOTreeContainer& adaptiveTestCases,
                     //unordered_set<IOTraceContainer> bOmegaT,
                     const unordered_set<shared_ptr<const IOTraceContainer>>& responseSets,
-                    const unordered_map<shared_ptr<const IOTrace>, shared_ptr<const IOTraceContainer>>& responseMaps,
+                    const unordered_map<shared_ptr<const IOTrace>, const shared_ptr<const IOTraceContainer>>& responseMaps,
                     const IOTraceContainer& vDoublePrime,
                     const vector<shared_ptr<FsmNode>>& dReachableStates,
                     const Fsm& spec)
@@ -959,9 +960,9 @@ IOTraceContainer applyAdaptiveTestCasesAfterInputSequences(const IOTreeContainer
 */
 
 
-unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> collectResponseMapForInputTrace(const IOTreeContainer& adaptiveTestCases, const InputTrace& trace, int repetitions) {
+unordered_map<shared_ptr<const IOTrace>, shared_ptr<const IOTraceContainer>> collectResponseMapForInputTrace(const IOTreeContainer& adaptiveTestCases, const InputTrace& trace, int repetitions) {
 
-    unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> responseSetsForIOTraces;
+    unordered_map<shared_ptr<const IOTrace>, shared_ptr<IOTraceContainer>> responseSetsForIOTraces;
 
     for (const auto tree : *adaptiveTestCases.getList()) {
         for (int i = 0; i < repetitions; ++i) {
@@ -973,14 +974,23 @@ unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> collectResponse
             responseSetsForIOTraces[make_shared<IOTrace>(traceResponse)]->add(testCaseResponsePtr);
         }
     }
+
+    // TODO: no better way?
+    unordered_map<shared_ptr<const IOTrace>, shared_ptr<const IOTraceContainer>> responseSetsForIOTracesC;
+    for (const auto& kv : responseSetsForIOTraces) {
+
+        responseSetsForIOTracesC.emplace(kv.first,kv.second);
+    }
+
+    return responseSetsForIOTracesC;
 }
 
 
-unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> collectResponseMapForInputTraces(const IOTreeContainer& adaptiveTestCases, const InputTraceSet& traces, int repetitions) {
-    unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> responseMap;
+unordered_map<shared_ptr<const IOTrace>, shared_ptr<const IOTraceContainer>> collectResponseMapForInputTraces(const IOTreeContainer& adaptiveTestCases, const InputTraceSet& traces, int repetitions) {
+    unordered_map<shared_ptr<const IOTrace>, shared_ptr<const IOTraceContainer>> responseMap;
 
     for (const auto trace : traces) {
-        unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> traceMap = collectResponseMapForInputTrace(adaptiveTestCases,*trace,repetitions);
+        unordered_map<shared_ptr<const IOTrace>, shared_ptr<const IOTraceContainer>> traceMap = collectResponseMapForInputTrace(adaptiveTestCases,*trace,repetitions);
         responseMap.insert(traceMap.begin(), traceMap.end());
     }
 
@@ -988,7 +998,7 @@ unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> collectResponse
 }
 
 
-unordered_set<shared_ptr<IOTraceContainer>> collectResponseSetsForInputTrace(const IOTreeContainer& adaptiveTestCases, const InputTrace& trace, int repetitions) {
+unordered_set<shared_ptr<const IOTraceContainer>> collectResponseSetsForInputTrace(const IOTreeContainer& adaptiveTestCases, const InputTrace& trace, int repetitions) {
 
     /*unordered_map<IOTrace,IOTraceContainer> responseSetsForIOTraces;
 
@@ -1003,9 +1013,9 @@ unordered_set<shared_ptr<IOTraceContainer>> collectResponseSetsForInputTrace(con
         }
     }*/
 
-    unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> responseMap = collectResponseMapForInputTrace(adaptiveTestCases,trace,repetitions);
+    unordered_map<shared_ptr<const IOTrace>, shared_ptr<const IOTraceContainer>> responseMap = collectResponseMapForInputTrace(adaptiveTestCases,trace,repetitions);
 
-    unordered_set<shared_ptr<IOTraceContainer>> responseSets;
+    unordered_set<shared_ptr<const IOTraceContainer>> responseSets;
     for (auto kv : responseMap) {
         responseSets.insert(kv.second);
     }
@@ -1015,11 +1025,11 @@ unordered_set<shared_ptr<IOTraceContainer>> collectResponseSetsForInputTrace(con
 
 
 
-unordered_set<shared_ptr<IOTraceContainer>> collectResponseSetsForInputTraces(const IOTreeContainer& adaptiveTestCases, const InputTraceSet& traces, int repetitions) {
-    unordered_set<shared_ptr<IOTraceContainer>> responseSets;
+unordered_set<shared_ptr<const IOTraceContainer>> collectResponseSetsForInputTraces(const IOTreeContainer& adaptiveTestCases, const InputTraceSet& traces, int repetitions) {
+    unordered_set<shared_ptr<const IOTraceContainer>> responseSets;
 
     for (const auto trace : traces) {
-        unordered_set<shared_ptr<IOTraceContainer>> traceSets = collectResponseSetsForInputTrace(adaptiveTestCases,*trace,repetitions);
+        unordered_set<shared_ptr<const IOTraceContainer>> traceSets = collectResponseSetsForInputTrace(adaptiveTestCases,*trace,repetitions);
         responseSets.insert(traceSets.begin(), traceSets.end());
     }
 
@@ -1029,13 +1039,13 @@ unordered_set<shared_ptr<IOTraceContainer>> collectResponseSetsForInputTraces(co
 
 // only inserts to responseSets
 // -> used to carry all previously observed response sets
-unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> collectResponseMapAndSetsForInputTraces(const IOTreeContainer& adaptiveTestCases, const InputTraceSet& traces, int repetitions, unordered_set<shared_ptr<IOTraceContainer>>& responseSets) {
-    unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> responseMap;
+unordered_map<shared_ptr<const IOTrace>, const shared_ptr<const IOTraceContainer>> collectResponseMapAndSetsForInputTraces(const IOTreeContainer& adaptiveTestCases, const InputTraceSet& traces, int repetitions, unordered_set<shared_ptr<const IOTraceContainer>>& responseSets) {
+    unordered_map<shared_ptr<const IOTrace>, const shared_ptr<const IOTraceContainer>> responseMap;
 
     //responseSets = unordered_set<shared_ptr<IOTraceContainer>>();
 
     for (const auto trace : traces) {
-        unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> traceMap = collectResponseMapForInputTrace(adaptiveTestCases,*trace,repetitions);
+        unordered_map<shared_ptr<const IOTrace>, shared_ptr<const IOTraceContainer>> traceMap = collectResponseMapForInputTrace(adaptiveTestCases,*trace,repetitions);
         responseMap.insert(traceMap.begin(), traceMap.end());
     }
 
@@ -1088,9 +1098,9 @@ int main(int argc, char* argv[])
 
     // new
     // contains all observed response sets, not only the current ones
-    unordered_set<shared_ptr<IOTraceContainer>> responseSets;
+    unordered_set<shared_ptr<const IOTraceContainer>> responseSets;
     // contains only current response sets
-    unordered_map<shared_ptr<IOTrace>, shared_ptr<IOTraceContainer>> responseMap;
+    unordered_map<shared_ptr<const IOTrace>, const shared_ptr<const IOTraceContainer>> responseMap;
 
     // //// TODO: Execute first iteration later
     // responseMaps = collectResponseMapAndSetsForInputTraces(adaptiveTestCases,t,k,responseSets);
@@ -1127,9 +1137,13 @@ int main(int argc, char* argv[])
         for (const auto& kv : responseMap)
         {
             LOG("VERBOSE_1") << "\t" << kv.first << std::endl;
-            for (const auto& response : *kv.second) {
-                LOG("VERBOSE_1") << "\t\t" << response << std::endl;
+            for (auto traceIt = kv.second->cbegin(); traceIt != kv.second->cend(); ++traceIt) {
+                const shared_ptr<const IOTrace>& trace = *traceIt;
+                LOG("VERBOSE_1") << "\t\t" << trace << std::endl;
             }
+            // for (const auto& response : *kv.second) {
+            //     LOG("VERBOSE_1") << "\t\t" << response << std::endl;
+            // }
         }
         
         // Applying all input traces from T_c to this FSM.
@@ -1443,6 +1457,8 @@ int main(int argc, char* argv[])
                 }
             }
         }
+
+        
         LOG("INFO") << "Finished expansion." << std::endl;
         iut.bOmega(adaptiveTestCases, tracesAddedToT, bOmegaT);
         LOG("INFO") << "Finished calculating bOmega." << std::endl;
