@@ -814,30 +814,44 @@ bool exceedsBound(  const size_t m,
 
 int applyInputToSUT(int input) {
     
+    LOG("VERBOSE_SUT_APPLICATIONS_2") << "Applying input: " << input << std::endl;
+
     // TODO: handle invalid input
     string inputStr = pl->getInId(input);
-        
+    LOG("VERBOSE_SUT_APPLICATIONS_2") << "\tInput string is: " << inputStr << std::endl;        
+
     // TODO: handle invalid output
     string outputStr = sut(inputStr);
+    LOG("VERBOSE_SUT_APPLICATIONS_2") << "\tOutput string is: " << outputStr << std::endl;
+    
     int output = pl->out2Num(outputStr);
+    LOG("VERBOSE_SUT_APPLICATIONS_2") << "\tOutput is: " << output << std::endl;
     
     return output;
 }
 
 int applyInputToSUT(int input, string& outputStr) {
-    
+    LOG("VERBOSE_SUT_APPLICATIONS_2") << "Applying input: " << input << std::endl;
+   
     // TODO: handle invalid input
     string inputStr = pl->getInId(input);
+    LOG("VERBOSE_SUT_APPLICATIONS_2") << "\tInput string is: " << inputStr << std::endl;
         
     // TODO: handle invalid output
     outputStr = sut(inputStr);
+    LOG("VERBOSE_SUT_APPLICATIONS_2") << "\tOutput string is: " << outputStr << std::endl;
+
     int output = pl->out2Num(outputStr);
+    LOG("VERBOSE_SUT_APPLICATIONS_2") << "\tOutput is: " << output << std::endl;
     
     return output;
 }
 
 
 IOTrace getSingleResponseToInputTrace(const InputTrace& inputTrace) {
+
+    LOG("VERBOSE_SUT_APPLICATIONS_1") << "Applying input trace: " << inputTrace << std::endl;
+
     sut_reset();
 
     vector<int> outputs;
@@ -971,7 +985,14 @@ unordered_map<shared_ptr<const IOTrace>, shared_ptr<const IOTraceContainer>> col
             applyAdaptiveTestCaseAfterInputTrace(*tree, trace, traceResponse, testCaseResponse);
 
             shared_ptr<const IOTrace> testCaseResponsePtr = make_shared<const IOTrace>(testCaseResponse);
-            responseSetsForIOTraces[make_shared<IOTrace>(traceResponse)]->add(testCaseResponsePtr);
+            shared_ptr<const IOTrace> traceResponsePtr = make_shared<const IOTrace>(traceResponse);
+            
+            auto findResult = responseSetsForIOTraces.find(traceResponsePtr);
+            if (findResult == responseSetsForIOTraces.end()) {
+                responseSetsForIOTraces.emplace(traceResponsePtr, make_shared<IOTraceContainer>(IOTraceContainer()));
+            }
+
+            responseSetsForIOTraces[traceResponsePtr]->add(testCaseResponsePtr);
         }
     }
 
@@ -1060,6 +1081,19 @@ unordered_map<shared_ptr<const IOTrace>, const shared_ptr<const IOTraceContainer
 
 int main(int argc, char* argv[])
 {
+
+    // TODO: direct to correct outputs
+    LogCoordinator::getStandardLogger().bindAllToDevNull();
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("INFO", std::cout);
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("WARNING", std::cout);
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("ERROR", std::cout);
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("FATAL", std::cout);
+
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SPEC", std::cout);
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SUT_APPLICATIONS_1", std::cout);
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SUT_APPLICATIONS_2", std::cout);
+
+
     shared_ptr<IOTrace> failTrace;
 
     sut_init();
@@ -1080,9 +1114,45 @@ int main(int argc, char* argv[])
     const vector<vector<shared_ptr<FsmNode>>>& maximalSetsOfRDistinguishableStates = fsm->getMaximalSetsOfRDistinguishableStates();
     InputTraceSet detStateCover;
     const vector<shared_ptr<FsmNode>>& dReachableStates = fsm->calcDReachableStates(detStateCover);
-    vector<IOTraceContainer> vPrime = calculateVPrime(detStateCover);
+    
+    // remove epsilons
+    for (auto& x : detStateCover) {
+        *x = x->removeEpsilon();
+    }
 
+    vector<IOTraceContainer> vPrime = calculateVPrime(detStateCover);
     VPrimeEnumerator vPrimeEnumerator(vPrime);
+
+
+    unsigned int rd_set_counter = 0;
+    LOG("VERBOSE_SPEC") << "Maximal r-d state sets: " << std::endl;
+    for (const auto& d : maximalSetsOfRDistinguishableStates) {
+        LOG("VERBOSE_SPEC") << "\t" <<  "Maximal r-d set #" << rd_set_counter++ << std::endl;
+        for (const auto& s : d) {
+            LOG("VERBOSE_SPEC") << "\t\t" <<  s->getId() << std::endl;
+        }
+    }
+
+    LOG("VERBOSE_SPEC") << "Det. state cover: " << std::endl;
+    for (const auto& x : detStateCover) {
+        LOG("VERBOSE_SPEC") << "\t" <<  *x << std::endl;
+    }
+    
+    LOG("VERBOSE_SPEC") << "D-r states: " << std::endl;
+    for (const auto& s : dReachableStates) {
+        LOG("VERBOSE_SPEC") << "\t" <<  s->getId() << std::endl;
+    }
+
+    unsigned int vprime_set_counter = 0;
+    LOG("VERBOSE_SPEC") << "V': " << std::endl;
+    for (const auto& d : vPrime) {
+        LOG("VERBOSE_SPEC") << "\t" <<  "V' subset #" << vprime_set_counter++ << std::endl;
+        for (auto traceIt = d.cbegin(); traceIt != d.cend(); ++traceIt) {
+            const shared_ptr<const IOTrace>& trace = *traceIt;
+            LOG("VERBOSE_SPEC") << "\t\t" << *trace << std::endl;
+        }
+    }
+
 
     
     IOTraceContainer observedTraces;
@@ -1117,10 +1187,10 @@ int main(int argc, char* argv[])
     LOG("VERBOSE_1") << "Response sets observed for:" << std::endl;
     for (const auto& kv : responseMap)
     {
-        LOG("VERBOSE_1") << "\t" << kv.first << std::endl;
+        LOG("VERBOSE_1") << "\t" << *kv.first << std::endl;
         for (auto traceIt = kv.second->cbegin(); traceIt != kv.second->cend(); ++traceIt) {
             const shared_ptr<const IOTrace>& trace = *traceIt;
-            LOG("VERBOSE_1") << "\t\t" << trace << std::endl;
+            LOG("VERBOSE_1") << "\t\t" << *trace << std::endl;
         }
     }
 
@@ -1497,7 +1567,7 @@ int main(int argc, char* argv[])
     LOG("VERBOSE_1") << "IUT is a reduction of the specification." << std::endl;
 
 
-    
+    cerr << "finished" << endl;
     
     exit(0);
     
