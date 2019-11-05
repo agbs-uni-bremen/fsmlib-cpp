@@ -17,7 +17,7 @@ VPrimeEnumerator::VPrimeEnumerator(const vector<IOTraceContainer>& detStateCover
         {
             temp.push_back(*it);
         }
-        
+        vPrime.push_back(temp);
     }
 
     size_t i = vPrime.size();

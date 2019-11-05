@@ -74,6 +74,11 @@ namespace std {
     };
     template <> struct equal_to<InputTrace>
     {
+        bool operator() (const InputTrace& a, const InputTrace& b) const
+        {
+            return std::equal_to<Trace>()(a ,b);
+        }
+
         bool operator() (const shared_ptr<const InputTrace>& a, const shared_ptr<const InputTrace>& b) const
         {
             const shared_ptr<const Trace>& tA = static_pointer_cast<const Trace>(a);

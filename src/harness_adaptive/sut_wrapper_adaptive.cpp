@@ -20,7 +20,7 @@ enum SUT_Output {
 };
 
 SUT_State currentState;
-
+unsigned int input_length;
 
 void sut_init() { 
     sut_reset();
@@ -28,14 +28,18 @@ void sut_init() {
 
 void sut_reset() { 
     currentState = S1;
+    input_length = 0;
 }
 
 
 
 // variables to store the last response to inputs to state that cause nondeterministic behaviour,
 // used to cycle through all possible responses
-SUT_Output S1Ia_last_response = O1;
-SUT_Output S3Ib_last_response = O1;
+//SUT_Output S1Ia_last_response = O1;
+//SUT_Output S3Ib_last_response = O1;
+
+unsigned int s1ia_transitions = 0;
+unsigned int s3ib_transitions = 0;
 
 const std::string sut(const std::string input) {
     
@@ -51,20 +55,33 @@ const std::string sut(const std::string input) {
 
     SUT_Output output;
 
+    ++input_length;
+
     switch (currentState) {
         case S1 : 
             switch (sut_input) {
                 case Ia: 
-                    switch (S1Ia_last_response) {
-                        case O0: 
-                            currentState = S4;
-                            output = O1;
-                            break;
-                        case O1: 
-                            currentState = S2;
-                            output = O0;
-                            break;
-                    };
+                    // switch (S1Ia_last_response) {
+                    //     case O0: 
+                    //         currentState = S4;
+                    //         output = O1;
+                    //         break;
+                    //     case O1: 
+                    //         currentState = S2;
+                    //         output = O0;
+                    //         break;
+                    // };
+                    // S1Ia_last_response = output;
+
+                    if (s1ia_transitions % 2 == 0) {
+                        currentState = S4;
+                        output = O1;
+                    } else {
+                        currentState = S2;
+                        output = O0;
+                    }
+
+                    ++s1ia_transitions;
                     break;
                 case Ib:
                     currentState = S4;
@@ -91,16 +108,29 @@ const std::string sut(const std::string input) {
                     output = O1;
                     break;
                 case Ib: 
-                    switch (S3Ib_last_response) {
-                        case O0: 
-                            currentState = S3;
-                            output = O1;
-                            break;
-                        case O1: 
-                            currentState = S1;
-                            output = O0;
-                            break;
-                    };
+                    // switch (S3Ib_last_response) {
+                    //     case O0: 
+                    //         currentState = S3;
+                    //         output = O1;
+                    //         break;
+                    //     case O1: 
+                    //         currentState = S1;
+                    //         output = O0;
+                    //         break;
+                    // };
+                    // S3Ib_last_response = output;
+
+                    // choose different threshold (!= that for s1ia_transitions)
+                    if (s3ib_transitions % 3 == 0) {
+                        currentState = S3;
+                        output = O1;
+                    } else {
+                        currentState = S1;
+                        output = O0;
+                    }
+
+                    ++s3ib_transitions;
+
                     break;
             };
             break;
