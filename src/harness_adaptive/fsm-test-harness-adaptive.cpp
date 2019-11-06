@@ -286,7 +286,8 @@ size_t lowerBound(const IOTrace& base,
                        const Fsm& spec)
 {
     // response sets observed along suffix applied after base
-    unordered_set<shared_ptr<IOTraceContainer>> observedResponseSetsAlongSuffix;
+    // TODO: efficient as non-pointer set?
+    unordered_set<IOTraceContainer> observedResponseSetsAlongSuffix;
 
     LOG("VERBOSE_1") << "lowerBound()" << std::endl;
     LOG("VERBOSE_1") << "base: " << base << std::endl;
@@ -349,7 +350,8 @@ size_t lowerBound(const IOTrace& base,
             LOG("VERBOSE_1") << "Removing " << traces << " from testTraces." << std::endl;
 
             //IOTraceContainer::remove(bOmegaT, traces);
-            observedResponseSetsAlongSuffix.insert(make_shared<IOTraceContainer>(traces));
+            //observedResponseSetsAlongSuffix.insert(make_shared<IOTraceContainer>(traces));
+            observedResponseSetsAlongSuffix.insert(traces);
 
             /*LOG("VERBOSE_1") << "testTraces:" << std::endl;
             for (const auto& cont : bOmegaT)
@@ -361,7 +363,10 @@ size_t lowerBound(const IOTrace& base,
 
     }
     //LOG("VERBOSE_1") << "bOmegaT size: " << bOmegaT.size() << std::endl;
+
     auto nonObservedResponseSets = responseSets.size() - observedResponseSetsAlongSuffix.size();
+    LOG("VERBOSE_1") << "ResponseSets#           : " << responseSets.size()  << std::endl;
+    LOG("VERBOSE_1") << "ObservedResponseSets#   : " << observedResponseSetsAlongSuffix.size() << std::endl;
     LOG("VERBOSE_1") << "nonObservedResponseSets#: " << nonObservedResponseSets << std::endl;
 
 
@@ -377,6 +382,7 @@ size_t lowerBound(const IOTrace& base,
     for (const auto& cont : responseSets)
     {
         LOG("VERBOSE_1") << "\tResponse set #" << response_set_counter++ << std::endl;
+        
         LOG("VERBOSE_1") << "\t" << cont << std::endl;
     }
     LOG("VERBOSE_1") << "Observed response sets along suffix:" << std::endl;
@@ -930,7 +936,8 @@ void applyAdaptiveTestCaseAfterInputTrace(const InputOutputTree& adaptiveTestCas
     shared_ptr<TreeNode> rootNode = adaptiveTestCase.getRoot();
     shared_ptr<AdaptiveTreeNode> node = static_pointer_cast<AdaptiveTreeNode>(rootNode);
     bool edgeExists = true; 
-    while (!node->isLeaf() && edgeExists) {
+    //while (!node->isLeaf() && edgeExists) {
+    while(edgeExists) {
 
         int input = node->getInput();
         responseInputs.push_back(input);
@@ -1127,8 +1134,12 @@ int main(int argc, char* argv[])
     LogCoordinator::getStandardLogger().createLogTargetAndBind("FATAL", std::cout);
 
     LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SPEC", std::cout);
-    LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SUT_APPLICATIONS_1", std::cout);
-    LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SUT_APPLICATIONS_2", std::cout);
+    //LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SUT_APPLICATIONS_1", std::cout);
+    //LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SUT_APPLICATIONS_2", std::cout);
+
+    //LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SUT_INTERNAL", std::cout);
+
+
 
     LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_1", std::cout);
 
