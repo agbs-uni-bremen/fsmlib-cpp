@@ -540,11 +540,21 @@ public:
                              IOTraceContainer& iOTraceContainer,
                              const bool cleanTrailingEmptyTraces = true) const;
 
+    void addPossibleIOTraces(std::shared_ptr<FsmNode> node,
+                             std::shared_ptr<InputOutputTree> tree,
+                             std::unordered_set<IOTrace>& iOTraceContainer,
+                             const bool cleanTrailingEmptyTraces = true) const;                             
+
 
     void addPossibleIOTraces(std::shared_ptr<FsmNode> node,
                              const IOTreeContainer& treeContainer,
                              IOTraceContainer& iOTraceContainer,
                              const bool cleanTrailingEmptyTraces = true) const;
+
+    void addPossibleIOTraces(std::shared_ptr<FsmNode> node,
+                             const IOTreeContainer& treeContainer,
+                             std::unordered_set<IOTrace>& iOTraceContainer,
+                             const bool cleanTrailingEmptyTraces = true) const;                             
 
     bool hasFailure() const;
 
