@@ -27,6 +27,7 @@ SUT_State currentState;
 unsigned int input_length;
 
 void sut_init() { 
+    srand((unsigned)time(0)); 
     sut_reset();
 }
 
@@ -88,6 +89,13 @@ const std::string sut(const std::string input) {
                     } else {
                         currentState = S2;
                         output = O0;
+                    }
+
+                    //injected error
+                    if (rand() % 100 == 0) {
+                        currentState = S2;
+                        output = O1;
+                        //return "3";
                     }
 
                     ++s1ia_transitions;
