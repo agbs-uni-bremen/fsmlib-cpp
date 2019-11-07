@@ -33,16 +33,28 @@ using namespace std;
 using namespace Json;
 
 
-/* Required inputs:
- *  - SUT-handling (init, reset, apply)
- *     --> via sut_wrapper
- *  - k (for applying tests k-times)
- *     --> via additional input
- *  - Spec
- *     --> via additional input
- *  - m
- *     --> via additional input
+/**
+ *  Hashing support for unordered sets of IOTrace-elements
  */
+namespace std {
+    template <> struct hash<unordered_set<IOTrace>>
+    {
+        size_t operator()(const unordered_set<IOTrace>& traces) const
+        {
+
+            size_t hashValue = 0;
+            std::hash<IOTrace> hasher;
+
+            for (const auto& t : traces)
+            {
+                // probably inefficient / non-uniform distribution
+                hashValue += hasher(t);
+            }
+
+            return hashValue;
+        }
+    };
+}
 
 
 /**
@@ -80,7 +92,7 @@ static int numAddStates; // m - (size of reference model)
  */
 static void printUsage(char* name) {
     cerr << "usage: " << name
-    << "[-a additionalstates] [-k input application repetitions] modelfile " << endl;
+    << "[-a additionalstates] [-k input application repetitions] [-p presentation layer files (.in, .out, .states)] modelfile " << endl;
 }
 
 
@@ -255,53 +267,47 @@ static void readModel(model_type_t mtp,
             break;
     }
     
-    /*
-    if ( myFsm != nullptr ) {
-        myFsm->toDot(fsmName);
-    }
-    else if ( myFsm != nullptr ) {
-        myFsm->toDot(fsmName);
-        myFsm->toCsv(fsmName);
-    }
-    */
-
-
-    // set m
+    // set m as <size of minimised and observable reference model> + <number of additional states>
+    *myFsm = myFsm->minimise();
     m = myFsm->size() + numAddStates;
     
 }
 
 
-// TODO: move
-namespace std {
-    template <> struct hash<unordered_set<IOTrace>>
-    {
-        size_t operator()(const unordered_set<IOTrace>& traces) const
-        {
-
-            size_t hashValue = 0;
-            std::hash<IOTrace> hasher;
-
-            for (const auto& t : traces)
-            {
-                // probably inefficient / non-uniform distribution
-                hashValue += hasher(t);
-            }
-
-            return hashValue;
-        }
-    };
-}
 
 
 
 
 
+/**
+ * Calculates the lower bound that may be placed on the number of states
+ * of the FSM if there has been no repetition in the states of the product
+ * machine for a given input/output sequence.
+ *
+ * Let x/y be the given input/output sequence, being observed when applying
+ * a determinisitc state cover input sequence.
+ * @param base Input/output sequence with the input sequence being an element
+ * of the deterministic state cover and the output sequence being a possible
+ * output to said input sequence. `base` is a prefix of x/y.
+ * @param suffix Suffix x/y with base.suffix = x/y
+ * @param states A maximum set of r-distinguishable states, that has been used
+ * during the calculation of `base` and `suffix`.
+ * @param responseSets Response sets observed during application of adaptive
+ * test cases to the SUT.
+ * @param responseMap Map from IO-traces observed in the SUT to the response 
+ * set observed after that trace.
+ * @param vDoublePrime A set of input/output sequences that represents one
+ * possible combination of all input traces from the deterministic state cover
+ * and theirs corresponding output sequences.
+ * @param dReachableStates All d-reachable states.
+ * @param spec The reference model.
+ * @return The lower bound that may be placed on the number of states
+ * of the FSM if there has been no repetition in the states of the product
+ * machine for a given input/output sequence.
+ */
 size_t lowerBound(const IOTrace& base,
                        const IOTrace& suffix,
                        const vector<shared_ptr<FsmNode>>& states,
-                       //const IOTreeContainer& adaptiveTestCases,
-                       //unordered_set<IOTraceContainer> bOmegaT,
                        const unordered_set<unordered_set<IOTrace>>& responseSets,
                        const unordered_map<IOTrace, const shared_ptr<const unordered_set<IOTrace>>>& responseMap,
                        const IOTraceContainer& vDoublePrime,
@@ -310,7 +316,6 @@ size_t lowerBound(const IOTrace& base,
 {
     // response sets observed along suffix applied after base
     // TODO: efficient as non-pointer set?
-    //?traceSetSet observedResponseSetsAlongSuffix2;
     unordered_set<unordered_set<IOTrace>> observedResponseSetsAlongSuffix;
 
     LOG("VERBOSE_1") << "lowerBound()" << std::endl;
@@ -321,7 +326,6 @@ size_t lowerBound(const IOTrace& base,
     {
         LOG("VERBOSE_1") << "  " << s->getName() << std::endl;
     }
-    //LOG("VERBOSE_1") << "adaptiveTestCases: " << adaptiveTestCases << std::endl;
     LOG("VERBOSE_1") << "vDoublePrime: " << vDoublePrime << std::endl;
     LOG("VERBOSE_1") << "dReachableStates: " << std::endl;
     for (auto s : dReachableStates)
@@ -331,6 +335,7 @@ size_t lowerBound(const IOTrace& base,
     size_t result = 0;
     LOG("VERBOSE_1") << "lb result: " << result << std::endl;
 
+    // TODO: reduce overall logging?
     // LOG("VERBOSE_1") << "bOmegaT:" << std::endl;
     // for (const auto& cont : bOmegaT)
     // {
@@ -356,43 +361,29 @@ size_t lowerBound(const IOTrace& base,
         for (auto traceIt = rPlusResult.cbegin(); traceIt != rPlusResult.cend(); ++traceIt)
         {
             const shared_ptr<const IOTrace>& trace = *traceIt;
-            ////IOTraceContainer traces = iut.bOmega(adaptiveTestCases, *trace);
             
             auto findResult = responseMap.find(*trace);
             
 
-            // TODO: add to responseMap instead of replacing it after each iteration
-            //       -> must contain observed response sets for prefixes!
-            //       -> unify?  
             if (findResult == responseMap.end()) {
                 LOG("VERBOSE_1") << "Trace " << *trace << " not observed in IUT " << std::endl;    
                 continue;
             }
 
-            //const IOTraceContainer& traces = *findResult->second;
             const unordered_set<IOTrace>& traces = *findResult->second;
 
-            //LOG("VERBOSE_1") << "Removing " << traces << " from testTraces." << std::endl;
             LOG("VERBOSE_1") << "Removing from testTraces: {" << std::endl;
             for (const auto& t : traces) {
                 LOG("VERBOSE_1") << "\t\t" << t  << std::endl;
             }
             LOG("VERBOSE_1") << "\t}" << std::endl;
 
-            //IOTraceContainer::remove(bOmegaT, traces);
-            //observedResponseSetsAlongSuffix.insert(make_shared<IOTraceContainer>(traces));
             observedResponseSetsAlongSuffix.insert(traces);
-
-            /*LOG("VERBOSE_1") << "testTraces:" << std::endl;
-            for (const auto& cont : bOmegaT)
-            {
-                LOG("VERBOSE_1") << "  " << cont << std::endl;
-            }*/
         }
 
 
     }
-    //LOG("VERBOSE_1") << "bOmegaT size: " << bOmegaT.size() << std::endl;
+    
 
     auto nonObservedResponseSets = responseSets.size() - observedResponseSetsAlongSuffix.size();
     LOG("VERBOSE_1") << "ResponseSets#           : " << responseSets.size()  << std::endl;
@@ -403,20 +394,12 @@ size_t lowerBound(const IOTrace& base,
     LOG("VERBOSE_1") << "nonObservedResponseSets#: " << nonObservedResponseSets << std::endl;
 
 
-    // LOG("VERBOSE_1") << "bOmegaT:" << std::endl;
-    // for (const auto& cont : bOmegaT)
-    // {
-    //     LOG("VERBOSE_1") << "  " << cont << std::endl;
-    // }
-    // result += bOmegaT.size();
-
     unsigned int response_set_counter = 0;
     LOG("VERBOSE_1") << "All observed response sets:" << std::endl;
     for (const auto& cont : responseSets)
     {
         LOG("VERBOSE_1") << "\tResponse set #" << response_set_counter++ << std::endl;
         
-        //LOG("VERBOSE_1") << "\t" << cont << std::endl;
         for (const auto& t : cont) {
             LOG("VERBOSE_1") << "\t\t" << t  << std::endl;
         }
@@ -428,7 +411,6 @@ size_t lowerBound(const IOTrace& base,
     LOG("VERBOSE_1") << "Observed response sets along suffix:" << std::endl;
     for (const auto& cont : observedResponseSetsAlongSuffix)
     {
-        //LOG("VERBOSE_1") << "  " << cont << std::endl;
         LOG("VERBOSE_1") << "\tObserved response set #" << observed_response_set_counter++ << std::endl;
         for (const auto& t : cont) {
             LOG("VERBOSE_1") << "\t\t" << t  << std::endl;
@@ -440,20 +422,44 @@ size_t lowerBound(const IOTrace& base,
     return result;
 }
 
-
+/**
+ * Calculates the lower bound that may be placed on the number of states
+ * of the FSM if there has been no repetition in the states of the product
+ * machine for a given input/output sequence and checks if it exceeds some
+ * upper bound.
+ *
+ * Let x/y be the given input/output sequence, being observed when applying
+ * a determinisitc state cover input sequence.
+ * @param upperBound The upper bound to compare the lower bound against.
+ * @param base Input/output sequence with the input sequence being an element
+ * of the deterministic state cover and the output sequence being a possible
+ * output to said input sequence. `base` is a prefix of x/y.
+ * @param suffix Suffix x/y with base.suffix = x/y
+ * @param states A maximum set of r-distinguishable states, that has been used
+ * during the calculation of `base` and `suffix`.
+ * @param responseSets Response sets observed during application of adaptive
+ * test cases to the SUT.
+ * @param responseMap Map from IO-traces observed in the SUT to the response 
+ * set observed after that trace.
+ * @param vDoublePrime A set of input/output sequences that represents one
+ * possible combination of all input traces from the deterministic state cover
+ * and theirs corresponding output sequences.
+ * @param dReachableStates All d-reachable states.
+ * @param spec The reference model.
+ * @return The lower bound that may be placed on the number of states
+ * of the FSM if there has been no repetition in the states of the product
+ * machine for a given input/output sequence.
+ */
 bool exceedsBound(  const size_t upperBound,
                     const IOTrace& base,
                     const IOTrace& suffix,
                     const vector<shared_ptr<FsmNode>>& states,
-                    //const IOTreeContainer& adaptiveTestCases,
-                    //unordered_set<IOTraceContainer> bOmegaT,
                     const unordered_set<unordered_set<IOTrace>>& responseSets,
                     const unordered_map<IOTrace, const shared_ptr<const unordered_set<IOTrace>>>& responseMaps,
                     const IOTraceContainer& vDoublePrime,
                     const vector<shared_ptr<FsmNode>>& dReachableStates,
                     const Fsm& spec)
 {
-    ////size_t lB = Fsm::lowerBound(base, suffix, states, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
     size_t lB = lowerBound(base, suffix, states, responseSets, responseMaps, vDoublePrime, dReachableStates, spec);
     LOG("VERBOSE_1") << "lB: " << lB << std::endl;
     return lB > upperBound;
@@ -464,17 +470,19 @@ bool exceedsBound(  const size_t upperBound,
 
 
 
-// TODO: verify handling of epsilon
 
+/**
+ * Apply a single input to the SUT.
+ * @param input The input to apply.
+ * @return The index of the observed output. -1 if the string returned by the SUT is not a known output.
+ */
 int applyInputToSUT(int input) {
     
     LOG("VERBOSE_SUT_APPLICATIONS_2") << "Applying input: " << input << std::endl;
 
-    // TODO: handle invalid input
     string inputStr = pl->getInId(input);
     LOG("VERBOSE_SUT_APPLICATIONS_2") << "\tInput string is: " << inputStr << std::endl;        
 
-    // TODO: handle invalid output
     string outputStr = sut(inputStr);
     LOG("VERBOSE_SUT_APPLICATIONS_2") << "\tOutput string is: " << outputStr << std::endl;
     
@@ -484,6 +492,12 @@ int applyInputToSUT(int input) {
     return output;
 }
 
+/**
+ * Apply a single input to the SUT.
+ * @param input The input to apply.
+ * @param outputStr Output parameter to store the string returned by the SUT.
+ * @return The index of the observed output. -1 if the string returned by the SUT is not a known output.
+ */
 int applyInputToSUT(int input, string& outputStr) {
     LOG("VERBOSE_SUT_APPLICATIONS_2") << "Applying input: " << input << std::endl;
    
@@ -502,6 +516,12 @@ int applyInputToSUT(int input, string& outputStr) {
 }
 
 
+/**
+ * Apply a single input trace to the SUT.
+ * @param inputTrace The input trace to apply.
+ * @param trace Output parameter to store the observed IO-trace.
+ * @return True if no invalid output has been observed during application. False otherwise.
+ */
 bool getSingleResponseToInputTrace(const InputTrace& inputTrace, IOTrace& trace) {
 
     LOG("VERBOSE_SUT_APPLICATIONS_1") << "Applying input trace: " << inputTrace << std::endl;
@@ -516,7 +536,7 @@ bool getSingleResponseToInputTrace(const InputTrace& inputTrace, IOTrace& trace)
         int output = applyInputToSUT(*traceIt, outputStr);
         
         if (output == -1) {
-            // TODO: terminate execution
+            
             cerr << "Failure detected: Observed invalid output \"" << outputStr << "\" in trace "; 
 
             if (outputs.size() == 0) {
@@ -542,8 +562,14 @@ bool getSingleResponseToInputTrace(const InputTrace& inputTrace, IOTrace& trace)
     return true;
 }
 
+/**
+ * Apply a single input trace to the SUT multiple times.
+ * @param inputTrace The input trace to apply.
+ * @param repetition The number of times to apply the input trace.
+ * @param cont Output parameter to store the observed IO-traces.
+ * @return True if no invalid output has been observed during application. False otherwise.
+ */
 bool getResponsesToInputTrace(const InputTrace& inputTrace, int repetitions, IOTraceContainer& cont) {
-    //IOTraceContainer cont;
     for (int i = 0; i < repetitions; ++i) {
         IOTrace t(pl);
         if (!getSingleResponseToInputTrace(inputTrace, t)) {
@@ -555,17 +581,12 @@ bool getResponsesToInputTrace(const InputTrace& inputTrace, int repetitions, IOT
     return true;
 }
 
-bool getOutputTracesToInputTrace(const InputTrace& inputTrace, int repetitions, vector<shared_ptr<OutputTrace>>& cont) {
-    for (int i = 0; i < repetitions; ++i) {
-        IOTrace response(pl);
-        if(!getSingleResponseToInputTrace(inputTrace,response)) {
-            return false;
-        }
-        cont.push_back(make_shared<OutputTrace>(response.getOutputTrace()));
-    }
-    return true;
-}
-
+/**
+ * Calculate V''.
+ * @param detStateCover The deterministic state cover to apply.
+ * @param vPrime Output parameter to store the observed IO-traces for each trace in detStateCover.
+ * @return True if no invalid output has been observed during application. False otherwise.
+ */
 bool calculateVPrime(const InputTraceSet& detStateCover, vector<IOTraceContainer>& vPrime) {
     
     for(auto trace : detStateCover) {
@@ -579,6 +600,14 @@ bool calculateVPrime(const InputTraceSet& detStateCover, vector<IOTraceContainer
     return true;
 }
 
+/**
+ * Apply a single adaptive test case after applying a single input trace.
+ * @param adaptiveTestCase The adaptive test case to apply.
+ * @param inputTrace Input trace to apply.
+ * @param traceResponse Output parameter to store the observed IO-trace to inputTrace.
+ * @param testCaseResponse Output parameter to store the response to the adaptive test case.
+ * @return True if no invalid output has been observed during application. False otherwise.
+ */
 bool applyAdaptiveTestCaseAfterInputTrace(const InputOutputTree& adaptiveTestCase, const InputTrace& inputTrace, IOTrace& traceResponse, IOTrace& testCaseResponse) {
     sut_reset();
 
@@ -630,17 +659,16 @@ bool applyAdaptiveTestCaseAfterInputTrace(const InputOutputTree& adaptiveTestCas
     shared_ptr<AdaptiveTreeNode> node = static_pointer_cast<AdaptiveTreeNode>(rootNode);
     bool edgeExists = true; 
     while (!node->isLeaf() && edgeExists) {
-    //while(edgeExists) {
 
         int input = node->getInput();
         responseInputs.push_back(input);
 
-        //int output = applyInputToSUT(input);
+        
         string outputStr;
         int output = applyInputToSUT(input, outputStr);
         
         if (output == -1) {
-            // TODO: terminate execution
+            
             cerr << "Failure detected: Observed invalid output \"" << outputStr << "\" in trace "; 
 
             if (outputs.size() > 0) {
@@ -692,33 +720,17 @@ bool applyAdaptiveTestCaseAfterInputTrace(const InputOutputTree& adaptiveTestCas
 }
 
 
-/*
-IOTraceContainer applyAdaptiveTestCasesAfterInputSequence(const IOTreeContainer& adaptiveTestCases, const InputTrace& trace, int maxInput, int repetitions) {
-    IOTraceContainer cont;
 
-    for (const auto tree : *adaptiveTestCases.getList()) {
-        IOTraceContainer subCont;
-        for (int i = 0; i < repetitions; ++i) {
-            shared_ptr<const IOTrace> observedTrace = make_shared<const IOTrace>(applyAdaptiveTestCaseAfterInputTrace(*tree, trace, maxInput));
-            subCont.add(observedTrace);
-        }
-    }
-
-    return cont;
-}
-
-IOTraceContainer applyAdaptiveTestCasesAfterInputSequences(const IOTreeContainer& adaptiveTestCases, const InputTraceSet& traces, int maxInput, int repetitions) {
-    IOTraceContainer cont;
-
-    for (const auto trace : traces) {
-        cont.add(applyAdaptiveTestCasesAfterInputSequence(adaptiveTestCases,*trace,maxInput,repetitions));
-    }
-
-    return cont;
-}
-*/
-
-
+/**
+ * Apply multiple adaptive test case, each after applying a single input trace.
+ * @param adaptiveTestCases The adaptive test cases to apply.
+ * @param trace Input trace to apply.
+ * @param repetition How often the input trace is to be followed by each adaptive test case.
+ * @param responseMap Output parameter to store a map that uses observed IO-traces to the 
+ *                    input trace as keys mapping to the response set of the state reached 
+ *                    by that IO-trace to the adaptive test cases.
+ * @return True if no invalid output has been observed during application. False otherwise.
+ */
 bool collectResponseMapForInputTrace(const IOTreeContainer& adaptiveTestCases, const InputTrace& trace, int repetitions, unordered_map<IOTrace, shared_ptr<const unordered_set<IOTrace>>>& responseMap) {
 
     unordered_map<IOTrace, shared_ptr<unordered_set<IOTrace>>> responseSetsForIOTraces;
@@ -746,94 +758,33 @@ bool collectResponseMapForInputTrace(const IOTreeContainer& adaptiveTestCases, c
                 responseSetsForIOTraces.emplace(traceResponse, make_shared<unordered_set<IOTrace>>(unordered_set<IOTrace>()));
             }
 
-            //responseSetsForIOTraces.at(traceResponse)->add(make_shared<const IOTrace>(testCaseResponse));
             responseSetsForIOTraces.at(traceResponse)->insert(testCaseResponse);
         }
     }
 
     // TODO: no better way?
-    //unordered_map<IOTrace, shared_ptr<const unordered_set<IOTrace>>> responseSetsForIOTracesC;
     for (const auto& kv : responseSetsForIOTraces) {
 
         responseMap.emplace(kv.first,kv.second);
     }
-    //responseMap = responseSetsForIOTracesC;
 
     return true;
 }
 
 
-bool collectResponseMapForInputTraces(const IOTreeContainer& adaptiveTestCases, const InputTraceSet& traces, int repetitions, unordered_map<IOTrace, shared_ptr<const unordered_set<IOTrace>>>& responseMap) {
-    //unordered_map<IOTrace, shared_ptr<const unordered_set<IOTrace>>> responseMap;
-
-    for (const auto trace : traces) {
-        unordered_map<IOTrace, shared_ptr<const unordered_set<IOTrace>>> traceMap;
-        bool applicationSuccessful = collectResponseMapForInputTrace(adaptiveTestCases,*trace,repetitions, traceMap);
-        if (!applicationSuccessful) {
-            return false;
-        }
-        responseMap.insert(traceMap.begin(), traceMap.end());
-    }
-
-    return true;
-}
-
-
-bool collectResponseSetsForInputTrace(const IOTreeContainer& adaptiveTestCases, const InputTrace& trace, int repetitions, unordered_set<unordered_set<IOTrace>>& responseSets) {
-
-    /*unordered_map<IOTrace,IOTraceContainer> responseSetsForIOTraces;
-
-    for (const auto tree : *adaptiveTestCases.getList()) {
-        for (int i = 0; i < repetitions; ++i) {
-            IOTrace traceResponse(pl);
-            IOTrace testCaseResponse(pl);
-            applyAdaptiveTestCaseAfterInputTrace(*tree, trace, traceResponse, testCaseResponse);
-
-            shared_ptr<const IOTrace> testCaseResponsePtr = make_shared<const IOTrace>(testCaseResponse);
-            responseSetsForIOTraces[traceResponse].add(testCaseResponsePtr);
-        }
-    }*/
-
-    unordered_map<IOTrace, shared_ptr<const unordered_set<IOTrace>>> responseMap; 
-    bool applicationSuccessful = collectResponseMapForInputTrace(adaptiveTestCases,trace,repetitions, responseMap);
-    if (!applicationSuccessful) {
-        return false;
-    }
-
-    //unordered_set<unordered_set<IOTrace>> responseSets;
-    for (auto kv : responseMap) {
-        responseSets.insert(*kv.second);
-    }
-    
-    return true;
-
-}
-
-
-
-bool collectResponseSetsForInputTraces(const IOTreeContainer& adaptiveTestCases, const InputTraceSet& traces, int repetitions, unordered_set<unordered_set<IOTrace>>& responseSets) {
-    //unordered_set<unordered_set<IOTrace>> responseSets ({});
-
-    for (const auto trace : traces) {
-        unordered_set<unordered_set<IOTrace>> traceSets; 
-        bool applicationSuccessful = collectResponseSetsForInputTrace(adaptiveTestCases,*trace,repetitions, traceSets);
-        if (!applicationSuccessful) {
-            return false;
-        }
-        responseSets.insert(traceSets.begin(), traceSets.end());
-    }
-
-    return true;
-}
-
-
-// only inserts to responseSets
-// -> used to carry all previously observed response sets
+/**
+ * Apply multiple adaptive test case, each after applying a single input trace.
+ * Performed for each input trace in a given set of traces.
+ * @param adaptiveTestCases The adaptive test cases to apply.
+ * @param trace Input trace to apply.
+ * @param repetition How often the input trace is to be followed by each adaptive test case.
+ * @param responseSet Set into which the values of responseMap are inserted.
+ * @param responseMap Output parameter to store a map that uses observed IO-traces to the 
+ *                    input traces as keys mapping to the response set of the state reached 
+ *                    by that IO-trace to the adaptive test cases.
+ * @return True if no invalid output has been observed during application. False otherwise.
+ */
 bool collectResponseMapAndSetsForInputTraces(const IOTreeContainer& adaptiveTestCases, const InputTraceSet& traces, int repetitions, unordered_set<unordered_set<IOTrace>>& responseSets, unordered_map<IOTrace, const shared_ptr<const unordered_set<IOTrace>>>& responseMap) {
-    //unordered_map<IOTrace, const shared_ptr<const unordered_set<IOTrace>>> responseMap;
-
-    //responseSets = unordered_set<shared_ptr<IOTraceContainer>>();
-
     for (const auto trace : traces) {
         unordered_map<IOTrace, shared_ptr<const unordered_set<IOTrace>>> traceMap;
         bool applicationSuccessful = collectResponseMapForInputTrace(adaptiveTestCases,*trace,repetitions, traceMap);
@@ -852,7 +803,11 @@ bool collectResponseMapAndSetsForInputTraces(const IOTreeContainer& adaptiveTest
 
 
 
-
+/**
+ *  Log an adaptive test case
+ * @param node Root of the test case to log
+ * @param depth Indentation depth
+ */
 void printATC(AdaptiveTreeNode& node, unsigned int depth) {
     
     if (node.isLeaf()) {
@@ -977,7 +932,6 @@ int main(int argc, char* argv[])
     }
 
     
-    //IOTraceContainer observedTraces;
     unordered_set<IOTrace> observedTraces;
 
     /**
@@ -987,37 +941,15 @@ int main(int argc, char* argv[])
     /**
      * Holds all B_Ω(T) for the current t.
      */
-    //unordered_set<shared_ptr<IOTraceContainer>> bOmegaT;
+    
 
-    // new
     // contains all observed response sets, not only the current ones
-    //unordered_set<IOTraceContainer> responseSets;
     unordered_set<unordered_set<IOTrace>> responseSets;
+    
     // contains only current response sets
-    //unordered_map<IOTrace, const shared_ptr<const IOTraceContainer>> responseMap;
     unordered_map<IOTrace, const shared_ptr<const unordered_set<IOTrace>>> responseMap;
 
-    // //// TODO: Execute first iteration later
-    // responseMaps = collectResponseMapAndSetsForInputTraces(adaptiveTestCases,t,k,responseSets);
-    // LOG("VERBOSE_1") << "Response sets observed for:" << std::endl;
-    // for (const auto& kv : responseMaps)
-    // {
-    //     LOG("VERBOSE_1") << "\t" << kv.first << std::endl;
-    //     for (const auto& response : *kv.second) {
-    //         LOG("VERBOSE_1") << "\t\t" << response << std::endl;
-    //     }
-    // }
-
-    // responseMap = collectResponseMapAndSetsForInputTraces(adaptiveTestCases,t,k,responseSets);
-    // LOG("VERBOSE_1") << "Response sets observed for:" << std::endl;
-    // for (const auto& kv : responseMap)
-    // {
-    //     LOG("VERBOSE_1") << "\t" << *kv.first << std::endl;
-    //     for (auto traceIt = kv.second->cbegin(); traceIt != kv.second->cend(); ++traceIt) {
-    //         const shared_ptr<const IOTrace>& trace = *traceIt;
-    //         LOG("VERBOSE_1") << "\t\t" << *trace << std::endl;
-    //     }
-    // }
+    
 
     /**
      * T_c - set of current elements of T: those that are being considered in the search
@@ -1028,8 +960,7 @@ int main(int argc, char* argv[])
     int iterations = 0;
 
     while (tC.size() != 0) 
-    //while (tC.size() != 0 && iterations <= 5) 
-        {
+    {
         ++iterations;
         stringstream ss;
 
@@ -1038,7 +969,6 @@ int main(int argc, char* argv[])
         size_t inputTraceCount = 0;
 
         
-        //unordered_map<IOTrace, const shared_ptr<const IOTraceContainer>> currentResponseMap = collectResponseMapAndSetsForInputTraces(adaptiveTestCases,tC,k,responseSets);
         unordered_map<IOTrace, const shared_ptr<const unordered_set<IOTrace>>> currentResponseMap;
         if (!collectResponseMapAndSetsForInputTraces(adaptiveTestCases,tC,k,responseSets,currentResponseMap)) {
             return false;
@@ -1048,7 +978,7 @@ int main(int argc, char* argv[])
         {
             LOG("VERBOSE_1") << "\t" << kv.first << std::endl;
             for (auto traceIt = kv.second->cbegin(); traceIt != kv.second->cend(); ++traceIt) {
-                //const shared_ptr<const IOTrace>& trace = *traceIt;
+                
                 const IOTrace& trace = *traceIt;
                 LOG("VERBOSE_1") << "\t\t" << trace << std::endl;
             }
@@ -1067,23 +997,9 @@ int main(int argc, char* argv[])
             if (findResult == observedOutputsTCElements.end()) {
                 observedOutputsTCElements.emplace(kv.first.getInputTrace(), vector<shared_ptr<OutputTrace>>());
             }
-            //observedOutputsTCElements.try_emplace(kv.first.getInputTrace());
             observedOutputsTCElements.at(kv.first.getInputTrace()).push_back(make_shared<OutputTrace>(kv.first.getOutputTrace()));
             
             
-            
-            
-            
-            
-            // LOG("VERBOSE_SUT_APPLICATIONS_1") << "Observed responses after adding " << kv.first << std::endl;
-            // LOG("VERBOSE_SUT_APPLICATIONS_1") << "#########################################################################################"  << std::endl;
-            // LOG("VERBOSE_SUT_APPLICATIONS_1") << "Observed responses to tC" << std::endl;
-            // for (const auto& kv : observedOutputsTCElements) {
-            //     LOG("VERBOSE_SUT_APPLICATIONS_1") << "\tObserved responses to " << kv.first << std::endl;
-            //     for (const auto& resp : kv.second) {
-            //         LOG("VERBOSE_SUT_APPLICATIONS_1") << "\t\t " << *resp << std::endl;
-            //     }
-            // }
         }
         LOG("VERBOSE_SUT_APPLICATIONS_1") << "Observed responses to tC" << std::endl;
         for (const auto& kv : observedOutputsTCElements) {
@@ -1116,8 +1032,7 @@ int main(int argc, char* argv[])
              * Hold the reached nodes for the current input trace.
              */
             vector<shared_ptr<FsmNode>> reachedNodesSpec;
-            ////vector<shared_ptr<FsmNode>> reachedNodesIut;
-
+            
             fsm->apply(*inputTrace, producedOutputsSpec, reachedNodesSpec);
 
             // add empty output trace in case the empty trace is applied
@@ -1126,16 +1041,10 @@ int main(int argc, char* argv[])
                 producedOutputsSpec.push_back(make_shared<OutputTrace>(outputs,inputTrace->getPresentationLayer()));
             }
 
-            ////iut.apply(*inputTrace, producedOutputsIut, reachedNodesIut);
-            
-            // avoid repeated calculation, use keys of responseMap instead
-            //////producedOutputsIut = getOutputTracesToInputTrace(*inputTrace,k);
-            //////observedOutputsTCElements.insert(make_pair(inputTrace, producedOutputsIut));
             
 
             for (const shared_ptr<OutputTrace>& oTrace : producedOutputsIut)
             {
-                //observedTraces.add(make_shared<const IOTrace>(*inputTrace, *oTrace));
                 observedTraces.insert(IOTrace(*inputTrace, *oTrace));
             }
 
@@ -1178,18 +1087,12 @@ int main(int argc, char* argv[])
                             // Applying adaptive test cases to every node reached by the current input/output trace.
                             LOG("VERBOSE_1") << "----------------- Getting adaptive traces -----------------" << std::endl;
                             
-                            //IOTraceContainer observedAdaptiveTracesIut;
                             unordered_set<IOTrace> observedAdaptiveTracesIut = *responseMap[*observedTraceIut];
-                            //IOTraceContainer observedAdaptiveTracesSpec;
                             unordered_set<IOTrace> observedAdaptiveTracesSpec;
 
-                            //const shared_ptr<FsmNode>& nodeIut = reachedNodesIut.at(i);
                             const shared_ptr<FsmNode>& nodeSpec = reachedNodesSpec.at(j);
 
-                            ////iut.addPossibleIOTraces(nodeIut, adaptiveTestCases, observedAdaptiveTracesIut);
                             
-                            ////observedAdaptiveTracesIut = *observedIUTResponsesToATCs[observedTraceIut];
-                            //observedAdaptiveTracesIut = *responseMap[*observedTraceIut];
                             fsm->addPossibleIOTraces(nodeSpec, adaptiveTestCases, observedAdaptiveTracesSpec);
 
                             
@@ -1197,7 +1100,6 @@ int main(int argc, char* argv[])
                             for (auto traceIt = observedAdaptiveTracesIut.cbegin(); traceIt != observedAdaptiveTracesIut.cend(); ++traceIt)
                             
                             {
-                                //const shared_ptr<const IOTrace>& trace = *traceIt;
                                 const IOTrace& trace = *traceIt;
 
                                 //if (!observedAdaptiveTracesSpec.contains(trace))
@@ -1235,7 +1137,7 @@ int main(int argc, char* argv[])
                                 }
                             }
                             LOG("VERBOSE_1") << "  concatenating: " << *inputTrace << "/" << *outIut << std::endl;
-                            //observedAdaptiveTracesIut.concatenateToFront(inputTrace, outIut);
+                            
                             IOTrace newIOTrace = IOTrace(*inputTrace, *outIut);
                             unordered_set<IOTrace> newSet;
                             for (const auto& oldTrace : observedAdaptiveTracesIut)
@@ -1246,14 +1148,12 @@ int main(int argc, char* argv[])
                             observedAdaptiveTracesIut = newSet;
 
 
-                            //LOG("VERBOSE_1") << "  observedAdaptiveTraces after concatenation to front: " << observedAdaptiveTracesIut << std::endl;
                             LOG("VERBOSE_1") << "  observedAdaptiveTraces after concatenation to front: " << std::endl;
                             for (const auto& t : observedAdaptiveTracesIut) {
                                 LOG("VERBOSE_1") << "\t\t" << t << std::endl;
                             }
                             
                             
-                            //observedTraces.add(observedAdaptiveTracesIut);
                             for (const auto& t : observedAdaptiveTracesIut) {
                                 observedTraces.insert(t);
                             }
@@ -1262,8 +1162,7 @@ int main(int argc, char* argv[])
                                 // IUT produced an output that can not be produced by the specification.
                                 LOG("INFO") << "  Failure observed:" << std::endl;
                                 LOG("INFO") << "    Input Trace: " << *inputTrace << std::endl;
-                                LOG("INFO") << "    Observed adaptive traces:" << std::endl;
-                                //LOG("INFO") << observedAdaptiveTracesIut << std::endl;
+                                
                                 for (const auto& t : observedAdaptiveTracesIut) {
                                     LOG("INFO") << "\t\t" << t << std::endl;
                                 }
@@ -1299,21 +1198,13 @@ int main(int argc, char* argv[])
                     return false;
                 }
             }
-
-
-            // TODO: remove
-            // if (producedOutputsIut.size() != reachedNodesIut.size())
-            // {
-            //     cerr << "Number of produced outputs and number of reached nodes do not match.";
-            //     exit(EXIT_FAILURE);
-            // }
         }
 
         long numberToCheck = 0;
         LOG("VERBOSE_1") << "observedOutputsTCElements:" << std::endl;
         for (auto e : observedOutputsTCElements)
         {
-            LOG("VERBOSE_1") << "  " << e.first /**e.first*/ << ":" << std::endl;
+            LOG("VERBOSE_1") << "  " << e.first << ":" << std::endl;
             for (auto o : e.second)
             {
                 LOG("VERBOSE_1") << "    " << *o << std::endl;
@@ -1366,19 +1257,16 @@ int main(int argc, char* argv[])
                 LOG("VERBOSE_1") << "currentTrace (x_1/y_1): " << currentTrace << std::endl;
                 bool outputTraceMeetsCriteria = false;
                 
-                ////vPrimeLazy.reset();
                 vPrimeEnumerator.reset();
 
                 LOG("VERBOSE_1") << "maxInputPrefixInV.size(): " << maxInputPrefixInV->size() << std::endl;
-                // shared_ptr<const IOTrace> maxIOPrefixInV = make_shared<const IOTrace>(*static_pointer_cast<const Trace>(maxInputPrefixInV),
-                //                                                                       *outputTrace->getPrefix(maxInputPrefixInV->size(), true));
-                // TODO: handle epsilon
+                
                 shared_ptr<const IOTrace> maxIOPrefixInV = make_shared<const IOTrace>(*static_pointer_cast<const Trace>(maxInputPrefixInV), outputTrace->getPrefix(maxInputPrefixInV->size(), true)->removeEpsilon());
 
                 LOG("VERBOSE_1") << "maxIOPrefixInV (v/v'): " << *maxIOPrefixInV << std::endl;
                 
                 
-                ////IOTrace suffix(InputTrace(spec.presentationLayer), OutputTrace(spec.presentationLayer));
+                
                 IOTrace suffix(InputTrace( fsm->getPresentationLayer() ), OutputTrace( fsm->getPresentationLayer() ));
 
                 
@@ -1413,19 +1301,6 @@ int main(int argc, char* argv[])
                             LOG("VERBOSE_1") << "  " << r->getName() << std::endl;
                         }
                         
-                        ////bool exceedsBound = Fsm::exceedsBound(m, *maxIOPrefixInV, suffix, rDistStates, adaptiveTestCases, bOmegaT, vDoublePrime, dReachableStates, spec, iut);
-
-                        // bool exceedsBound(  const size_t m,
-                        //                     const IOTrace& base,
-                        //                     const IOTrace& suffix,
-                        //                     const vector<shared_ptr<FsmNode>>& states,
-                        //                     //const IOTreeContainer& adaptiveTestCases,
-                        //                     //unordered_set<IOTraceContainer> bOmegaT,
-                        //                     const unordered_set<const IOTraceContainer>& responseSets,
-                        //                     const unordered_map<IOTrace, shared_ptr<const IOTraceContainer>>& responseMaps,
-                        //                     const IOTraceContainer& vDoublePrime,
-                        //                     const vector<shared_ptr<FsmNode>>& dReachableStates,
-                        //                     const Fsm& spec)
 
                         bool doesExceedBound = exceedsBound(m, *maxIOPrefixInV, suffix, rDistStates, responseSets, responseMap, vDoublePrime, dReachableStates, *fsm);
                         LOG("VERBOSE_1") << "exceedsBound: " << doesExceedBound << std::endl;
@@ -1497,21 +1372,7 @@ int main(int argc, char* argv[])
 
         
         LOG("INFO") << "Finished expansion." << std::endl;
-        ////iut.bOmega(adaptiveTestCases, tracesAddedToT, bOmegaT);
-
-        // TODO: superfluous?
-        //
-        // responseMap = collectResponseMapAndSetsForInputTraces(adaptiveTestCases,tracesAddedToT,k,responseSets);
-        // LOG("VERBOSE_1") << "Response sets observed for:" << std::endl;
-        // for (const auto& kv : responseMap)
-        // {
-        //     LOG("VERBOSE_1") << "\t" << kv.first << std::endl;
-        //     for (auto traceIt = kv.second->cbegin(); traceIt != kv.second->cend(); ++traceIt) {
-        //         const shared_ptr<const IOTrace>& trace = *traceIt;
-        //         LOG("VERBOSE_1") << "\t\t" << *trace << std::endl;
-        //     }
-        // }
-
+        
 
         LOG("INFO") << "Finished calculating bOmega." << std::endl;
 
@@ -1532,7 +1393,7 @@ int main(int argc, char* argv[])
         tC = expandedTC;
         t = newT;
     }
-    //LOG("VERBOSE_1") << "  RESULT: " << observedTraces << std::endl;
+    
     LOG("VERBOSE_1") << "  RESULT: " << std::endl;
     for (const auto& t : observedTraces) {
         LOG("VERBOSE_1") << "\t\t" << t << std::endl;
