@@ -629,8 +629,8 @@ bool applyAdaptiveTestCaseAfterInputTrace(const InputOutputTree& adaptiveTestCas
     shared_ptr<TreeNode> rootNode = adaptiveTestCase.getRoot();
     shared_ptr<AdaptiveTreeNode> node = static_pointer_cast<AdaptiveTreeNode>(rootNode);
     bool edgeExists = true; 
-    //while (!node->isLeaf() && edgeExists) {
-    while(edgeExists) {
+    while (!node->isLeaf() && edgeExists) {
+    //while(edgeExists) {
 
         int input = node->getInput();
         responseInputs.push_back(input);
@@ -884,7 +884,7 @@ int main(int argc, char* argv[])
 
     LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SPEC", std::cout);
     LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_FAILURE_CHECK", std::cout);
-    //LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SUT_APPLICATIONS_1", std::cout);
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SUT_APPLICATIONS_1", std::cout);
     //LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SUT_APPLICATIONS_2", std::cout);
 
     //LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SUT_INTERNAL", std::cout);
@@ -1101,11 +1101,14 @@ int main(int argc, char* argv[])
         // If the FSM observes a failure, adaptive state counting terminates.
         for (const shared_ptr<InputTrace>& inputTrace : tC)
         {
+            
             /**
              * Hold the produced output traces for the current input trace.
              */
             vector<shared_ptr<OutputTrace>> producedOutputsSpec;
             
+            
+
             // TODO: use observedOutputsTCElements
             vector<shared_ptr<OutputTrace>>& producedOutputsIut = observedOutputsTCElements[*inputTrace];
 
@@ -1116,6 +1119,12 @@ int main(int argc, char* argv[])
             ////vector<shared_ptr<FsmNode>> reachedNodesIut;
 
             fsm->apply(*inputTrace, producedOutputsSpec, reachedNodesSpec);
+
+            // add empty output trace in case the empty trace is applied
+            if (inputTrace->get().size() == 0) {
+                vector<int> outputs; // empty output vector
+                producedOutputsSpec.push_back(make_shared<OutputTrace>(outputs,inputTrace->getPresentationLayer()));
+            }
 
             ////iut.apply(*inputTrace, producedOutputsIut, reachedNodesIut);
             
@@ -1133,17 +1142,29 @@ int main(int argc, char* argv[])
             
 
             LOG("VERBOSE_1") << "Checking produced outputs for failures" << std::endl;
+            LOG("VERBOSE_1") << "\tinputTrace            : " << *inputTrace << std::endl;
             //Check if the IUT has produced any output that can not be produced by the specification.
             
-            //for (size_t i = 0; i < producedOutputsIut.size(); ++i)
-            for (size_t i = 0; i < observedOutputsTCElements.size(); ++i)
+            for (size_t i = 0; i < producedOutputsIut.size(); ++i)
             {
+                LOG("VERBOSE_1") << "\t\toutputTrace (IUT) : " << *producedOutputsIut.at(i) << std::endl;
+
+                LOG("VERBOSE_1") << "\t\toutputTraces (REF): " << std::endl;
+                for (const auto& t : producedOutputsSpec) {
+                    LOG("VERBOSE_1") << "\t\t\t" << *t << std::endl;
+                }
 
                 const shared_ptr<OutputTrace>& outIut = producedOutputsIut.at(i);
                 bool allowed = false;
                 for (size_t j = 0; j < producedOutputsSpec.size(); ++j)
                 {
+                    
                     const shared_ptr<OutputTrace>& outSpec = producedOutputsSpec.at(j);
+
+                    LOG("VERBOSE_1") << "\tinputTrace       : " << *inputTrace << std::endl;
+                    LOG("VERBOSE_1") << "\t\tchecking outputTrace (IUT): " << *outIut << std::endl;
+                    LOG("VERBOSE_1") << "\t\tagainst  outputTrace (REF): " << *outSpec << std::endl;
+
                     if (*outIut == *outSpec)
                     {
                         allowed = true;
@@ -1194,6 +1215,13 @@ int main(int argc, char* argv[])
                                     LOG("INFO") << "\tobserved responses REF:" << std::endl;
                                     for (const auto& t : observedAdaptiveTracesSpec) {
                                         LOG("INFO") << "\t\t" << t << std::endl;
+                                    }
+
+                                    IOTraceContainer observedAdaptiveTracesSpecC;
+                                    fsm->addPossibleIOTraces(nodeSpec, adaptiveTestCases, observedAdaptiveTracesSpecC);
+                                    LOG("INFO") << "\tobserved responses REF (C):" << std::endl;
+                                    for (const auto& t : observedAdaptiveTracesSpecC) {
+                                        LOG("INFO") << "\t\t" << *t << std::endl;
                                     }
 
 
