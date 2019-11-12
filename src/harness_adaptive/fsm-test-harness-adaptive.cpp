@@ -1,4 +1,5 @@
-#include "sut_wrapper_adaptive.h"
+//#include "sut_wrapper_adaptive.h"
+#include "sut_wrapper_adaptive_test.h"
 #include "vPrimeEnumerator.h"
 
 #include <iostream>
@@ -851,7 +852,7 @@ int main(int argc, char* argv[])
 
     shared_ptr<IOTrace> failTrace;
 
-    sut_init();
+    
 
     parseParameters(argc,argv);
     readModel(modelType,modelFile,fsm);
@@ -859,6 +860,11 @@ int main(int argc, char* argv[])
 
     int maxInput = fsm->getMaxInput();
     int maxOutput = fsm->getMaxOutput();
+
+
+    //sut_init();
+    //sut_init(fsm,true);
+    sut_init(fsm,false);
 
 
     /** calculation of basic structures */

@@ -82,7 +82,6 @@ add_subdirectory (cloneable)
 add_subdirectory (utils)
 
 add_subdirectory (harness_adaptive)
-add_subdirectory (example_adaptive)
 
 if(gui)
 	add_subdirectory (window)
