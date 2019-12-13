@@ -197,7 +197,7 @@ static void executeTestCase(const char* tcId, char* line) {
         
         if ( xInt < 0 ) {
             cerr << "Unknown input " << x
-            << " i test case " << theLine << endl;
+            << " in test case " << theLine << endl;
         }
         else if ( yInt < 0 ) {
             cout << "FAIL: SUT does not produce expected output "
