@@ -155,3 +155,9 @@ Release.OSX/main/NON_OBS.dot
 Release.OSX/main/OBS.dot
 Release.OSX/main/TC-DFSM-0001.dot
 Release.OSX/main/testsuite.txt
+Release.OSX/generator/ABS_FSM.csv
+Release.OSX/generator/ABS_FSM.dot
+Release.OSX/generator/ABS_FSM_MINIMAL.csv
+Release.OSX/generator/ABS_FSM_MINIMAL.dot
+Release.OSX/generator/FSM.csv
+Release.OSX/generator/FSM_MINIMAL.dot
