@@ -22,6 +22,8 @@
 #include "trees/OutputTree.h"
 #include "trees/TestSuite.h"
 
+#include "generator/generalized-h-method.hpp"
+
 #define DBG 0
 using namespace std;
 using namespace Json;
@@ -1269,7 +1271,7 @@ static void safeWMethod(const shared_ptr<TestSuite> &testSuite) {
 
 
 static void generateTestSuite() {
-    
+
     shared_ptr<TestSuite> testSuite =
     make_shared<TestSuite>();
     
@@ -1316,6 +1318,27 @@ static void generateTestSuite() {
                 for ( auto inVec : *iolc.getIOLists() ) {
                     shared_ptr<InputTrace> itrc = make_shared<InputTrace>(inVec,pl);
                     testSuite->push_back(dfsm->apply(*itrc));
+                }
+                //if(isApplicable(dfsmMin)) {
+                //    auto hMethodTestSuite = generateHMethodTestSuite(dfsmMin, numAddStates);
+                //    for ( auto inVec : hMethodTestSuite ) {
+                //        shared_ptr<InputTrace> itrc = make_shared<InputTrace>(inVec,pl);
+                //        testSuite->push_back(dfsm->apply(*itrc));
+                //    }
+                //} else {
+                //    exit(-1);
+                //    std::cout << "Invalid Dfsm for H-Method." << std::endl;
+                //}
+            } else {
+                Fsm fsmMin = fsm->minimise();
+                if(isApplicable(fsmMin)) {
+                    auto hMethodTestSuite = generateHMethodTestSuite(fsmMin, numAddStates);
+                    for ( auto inVec : hMethodTestSuite ) {
+                        shared_ptr<InputTrace> itrc = make_shared<InputTrace>(inVec,pl);
+                        testSuite->push_back(fsm->apply(*itrc));
+                    }
+                } else {
+                    std::cout << "Invalid Fsm for H-Method." << std::endl;
                 }
             }
             break;

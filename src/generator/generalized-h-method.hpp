@@ -16,11 +16,185 @@ struct FSM_t {
 };
 
 template<>
+struct FSM_t<Fsm> {
+    struct tag {};
+    typedef int InputType;
+    typedef std::shared_ptr<FsmNode> StateType;
+};
+
+template<>
 struct FSM_t<Dfsm> {
     struct tag {};
     typedef int InputType;
     typedef std::shared_ptr<FsmNode> StateType;
 };
+
+//template<typename FSM, typename InputTrace, typename Tag>
+//bool inputTraceDefinedOnFSM(FSM &&fsm, InputTrace &&trace, Tag);
+//template<typename FSM, typename StateType, typename InputTrace, typename Tag>
+//bool inputTraceDefinedOnState(FSM &&fsm, StateType &&state, InputTrace &&trace, Tag);
+//template<typename FSM, typename StateType, typename InputTrace, typename Tag>
+//bool isDistinguishingSequence(FSM &&fsm, StateType &&state1, StateType &&state2, InputTrace &&trace, Tag);
+//template<typename FSM, typename InputTrace, typename StateType, typename Tag>
+//InputTrace getDistinguishingSequence(FSM &&fsm, StateType &&state1, StateType &&state2, Tag);
+//template<typename FSM, typename InputTrace, typename StateType, typename Tag>
+//StateType getStateAfter(FSM &&fsm, InputTrace &&trace, Tag);
+//template<typename FSM, typename TestSuiteType, typename Tag>
+//TestSuiteType getStateCover(FSM &&fsm, Tag);
+//template<typename FSM, typename IterableInputAlphabet, typename Tag>
+//IterableInputAlphabet getInputAlphabet(FSM &&fsm, Tag);
+template<typename FSM, typename InputTrace>
+bool inputTraceDefinedOnFSM(FSM &&fsm, InputTrace &&trace, struct FSM_t<Fsm>::tag) {
+    return inputTraceDefinedOnState(std::forward<FSM>(fsm), fsm.getInitialState(), std::forward<InputTrace>(trace));
+}
+template<typename FSM, typename StateType, typename InputTrace = std::vector<typename FSM_t<typename std::decay<FSM>::type>::InputType> >
+bool inputTraceDefinedOnState(FSM &&fsm, StateType &&state, InputTrace &&trace, struct FSM_t<Fsm>::tag) {
+    //NOTE: Due to the assumption of harmonized traces, all output traces should have the same length.
+    return (state->apply(::InputTrace(trace, nullptr), false).getOutputTraces().front().size() == trace.size());
+}
+template<typename FSM, typename StateType, typename InputTrace = std::vector<typename FSM_t<typename std::decay<FSM>::type>::InputType> >
+bool isDistinguishingSequence(FSM &&fsm, StateType &&state1, StateType &&state2, InputTrace &&trace, struct FSM_t<Fsm>::tag) {
+    return (state1->apply(::InputTrace(trace, nullptr), false) != state2->apply(::InputTrace(trace, nullptr), false));
+}
+template<typename FSM, typename InputTrace, typename StateType>
+InputTrace getDistinguishingSequence(FSM &&fsm, StateType &&state1, StateType &&state2, struct FSM_t<Fsm>::tag tag) {
+    //Assumption: There is a distinguishing sequence
+    assert(fsm.distinguishable(*state1, *state2));
+    return fsm.calculateDistinguishingTrace(state1, state2).get();
+}
+template<typename FSM, typename InputTrace, typename StateType>
+std::vector<StateType> getStatesAfter(FSM &&fsm, InputTrace &&trace, struct FSM_t<Fsm>::tag) {
+    std::vector<std::shared_ptr<OutputTrace>> outputs;
+    std::vector<StateType> states;
+    fsm.apply(::InputTrace(std::forward<InputTrace>(trace), nullptr), outputs, states);
+    return states;
+}
+
+//TODO: When having template parameters setting the type for a return parameter, make sure it is a decayed type and a container type
+template<typename FSM, typename TestSuiteType>
+TestSuiteType getStateCover(FSM &&fsm, struct FSM_t<Fsm>::tag) {
+    auto stateCover = fsm.getStateCover();
+    auto iolists = stateCover->getIOListsWithPrefixes();
+    auto traces = iolists.getIOLists();
+    TestSuiteType result;
+    std::copy(traces->begin(), traces->end(), std::inserter(result, result.end()));
+    return result;
+}
+template<typename FSM, typename IterableInputAlphabet>
+IterableInputAlphabet getInputAlphabet(FSM &&fsm, struct FSM_t<Fsm>::tag) {
+    IterableInputAlphabet result;
+    for(int symbol = 0; symbol <= fsm.getMaxInput(); ++symbol) {
+        result.emplace(result.end(), symbol);
+    }
+    return result;
+}
+template<typename FSM>
+bool isMinimal(FSM &&fsm, struct FSM_t<Fsm>::tag) {
+    return fsm.isMinimal() == True;
+}
+template<typename FSM>
+bool isHarmonized(FSM &&fsm, struct FSM_t<Fsm>::tag) {
+    return fsm.isHarmonized();
+}
+
+
+
+template<typename FSM, typename InputTrace>
+bool inputTraceDefinedOnFSM(FSM &&fsm, InputTrace &&trace, struct FSM_t<Dfsm>::tag) {
+    return inputTraceDefinedOnState(std::forward<FSM>(fsm), fsm.getInitialState(), std::forward<InputTrace>(trace));
+}
+template<typename FSM, typename StateType, typename InputTrace = std::vector<typename FSM_t<typename std::decay<FSM>::type>::InputType> >
+bool inputTraceDefinedOnState(FSM &&fsm, StateType &&state, InputTrace &&trace, struct FSM_t<Dfsm>::tag) {
+    return (state->apply(::InputTrace(trace, nullptr), false).getOutputTraces().front().size() == trace.size());
+}
+template<typename FSM, typename StateType, typename InputTrace = std::vector<typename FSM_t<typename std::decay<FSM>::type>::InputType> >
+bool isDistinguishingSequence(FSM &&fsm, StateType &&state1, StateType &&state2, InputTrace &&trace, struct FSM_t<Dfsm>::tag) {
+    return (state1->apply(::InputTrace(trace, nullptr), false) != state2->apply(::InputTrace(trace, nullptr), false));
+}
+template<typename FSM, typename InputTrace, typename StateType>
+InputTrace getDistinguishingSequence(FSM &&fsm, StateType &&state1, StateType &&state2, struct FSM_t<Dfsm>::tag) {
+    //Assumption: There is a distinguishing sequence
+    fsm.calculateDistMatrix();
+    return *(fsm.getDistTraces(*state1, *state2).front());
+}
+template<typename FSM, typename InputTrace, typename StateType>
+std::vector<StateType> getStatesAfter(FSM &&fsm, InputTrace &&trace, struct FSM_t<Dfsm>::tag) {
+    std::vector<std::shared_ptr<OutputTrace>> outputs;
+    std::vector<StateType> states;
+    fsm.apply(::InputTrace(std::forward<InputTrace>(trace), nullptr), outputs, states);
+    return states;
+}
+
+//TODO: When having template parameters setting the type for a return parameter, make sure it is a decayed type and a container type
+template<typename FSM, typename TestSuiteType>
+TestSuiteType getStateCover(FSM &&fsm, struct FSM_t<Dfsm>::tag) {
+    auto stateCover = fsm.getStateCover();
+    auto iolists = stateCover->getIOListsWithPrefixes();
+    auto traces = iolists.getIOLists();
+    TestSuiteType result;
+    std::copy(traces->begin(), traces->end(), std::inserter(result, result.end()));
+    return result;
+}
+template<typename FSM, typename IterableInputAlphabet>
+IterableInputAlphabet getInputAlphabet(FSM &&fsm, struct FSM_t<Dfsm>::tag) {
+    IterableInputAlphabet result;
+    for(int symbol = 0; symbol <= fsm.getMaxInput(); ++symbol) {
+        result.emplace(result.end(), symbol);
+    }
+    return result;
+}
+template<typename FSM>
+bool isMinimal(FSM &&fsm, struct FSM_t<Dfsm>::tag) {
+    return fsm.isMinimal() == True;
+}
+template<typename FSM>
+bool isHarmonized(FSM &&fsm, struct FSM_t<Dfsm>::tag) {
+    return true;
+}
+
+template<typename FSM, typename InputTrace>
+bool inputTraceDefinedOnFSM(FSM &&fsm, InputTrace &&trace) {
+    struct FSM_t<typename std::decay<FSM>::type>::tag tag;
+    return inputTraceDefinedOnFSM(std::forward<FSM>(fsm), std::forward<InputTrace>(trace), tag);
+}
+template<typename FSM, typename StateType, typename InputTrace>
+bool inputTraceDefinedOnState(FSM &&fsm, StateType &&state, InputTrace &&trace) {
+    struct FSM_t<typename std::decay<FSM>::type>::tag tag;
+    return inputTraceDefinedOnState(std::forward<FSM>(fsm), std::forward<StateType>(state), std::forward<InputTrace>(trace), tag);
+}
+template<typename FSM, typename StateType, typename InputTrace>
+bool isDistinguishingSequence(FSM &&fsm, StateType &&state1, StateType &&state2, InputTrace &&trace) {
+    struct FSM_t<typename std::decay<FSM>::type>::tag tag;
+    return isDistinguishingSequence(std::forward<FSM>(fsm), std::forward<StateType>(state1), std::forward<StateType>(state2), std::forward<InputTrace>(trace), tag);
+}
+template<typename FSM, typename StateType = typename FSM_t<typename std::decay<FSM>::type>::StateType, typename InputTrace = std::vector<typename FSM_t<typename std::decay<FSM>::type>::InputType>>
+InputTrace getDistinguishingSequence(FSM &&fsm, StateType &&state1, StateType &&state2) {
+    struct FSM_t<typename std::decay<FSM>::type>::tag tag;
+    return getDistinguishingSequence<FSM, InputTrace, StateType>(std::forward<FSM>(fsm), std::forward<StateType>(state1), std::forward<StateType>(state2), tag);
+}
+template<typename FSM, typename InputTrace, typename StateType = typename FSM_t<typename std::decay<FSM>::type>::StateType>
+std::vector<StateType> getStatesAfter(FSM &&fsm, InputTrace &&trace) {
+    struct FSM_t<typename std::decay<FSM>::type>::tag tag;
+    return getStatesAfter<FSM, InputTrace, StateType>(std::forward<FSM>(fsm), std::forward<InputTrace>(trace), tag);
+}
+template<typename FSM, typename TestSuiteType = std::vector<std::vector<typename FSM_t<typename std::decay<FSM>::type>::InputType>>>
+TestSuiteType getStateCover(FSM &&fsm) {
+    struct FSM_t<typename std::decay<FSM>::type>::tag tag;
+    return getStateCover<FSM, TestSuiteType>(std::forward<FSM>(fsm), tag);
+}
+template<typename FSM, typename IterableInputAlphabet = std::vector<typename FSM_t<typename std::decay<FSM>::type>::InputType>>
+IterableInputAlphabet getInputAlphabet(FSM &&fsm) {
+    struct FSM_t<typename std::decay<FSM>::type>::tag tag;
+    return getInputAlphabet<FSM, IterableInputAlphabet>(std::forward<FSM>(fsm), tag);
+}
+template<typename FSM>
+bool isApplicable(FSM &&fsm) {
+    struct FSM_t<typename std::decay<FSM>::type>::tag tag;
+    return isMinimal(std::forward<FSM>(fsm), tag)
+       and isHarmonized(std::forward<FSM>(fsm), tag);
+}
+
+
 
 template<typename IIter1, typename IIter2, typename Value = typename std::decay<decltype(*std::declval<IIter1>())>::type>
 std::vector<Value> concatenateTraces(IIter1 begin1, IIter1 end1, IIter2 begin2, IIter2 end2) {
@@ -68,104 +242,6 @@ std::vector<std::vector<Value>> getPrefixes(IIter begin, IIter end) {
         result.emplace_back(begin, intermediate);
     }
     return result;
-}
-
-//template<typename FSM, typename InputTrace, typename Tag>
-//bool inputTraceDefinedOnFSM(FSM &&fsm, InputTrace &&trace, Tag);
-//template<typename FSM, typename StateType, typename InputTrace, typename Tag>
-//bool inputTraceDefinedOnState(FSM &&fsm, StateType &&state, InputTrace &&trace, Tag);
-//template<typename FSM, typename StateType, typename InputTrace, typename Tag>
-//bool isDistinguishingSequence(FSM &&fsm, StateType &&state1, StateType &&state2, InputTrace &&trace, Tag);
-//template<typename FSM, typename InputTrace, typename StateType, typename Tag>
-//InputTrace getDistinguishingSequence(FSM &&fsm, StateType &&state1, StateType &&state2, Tag);
-//template<typename FSM, typename InputTrace, typename StateType, typename Tag>
-//StateType getStateAfter(FSM &&fsm, InputTrace &&trace, Tag);
-//template<typename FSM, typename TestSuiteType, typename Tag>
-//TestSuiteType getStateCover(FSM &&fsm, Tag);
-//template<typename FSM, typename IterableInputAlphabet, typename Tag>
-//IterableInputAlphabet getInputAlphabet(FSM &&fsm, Tag);
-
-template<typename FSM, typename InputTrace>
-bool inputTraceDefinedOnFSM(FSM &&fsm, InputTrace &&trace, struct FSM_t<Dfsm>::tag) {
-    return inputTraceDefinedOnState(std::forward<FSM>(fsm), fsm.getInitialState(), std::forward<InputTrace>(trace));
-}
-template<typename FSM, typename StateType, typename InputTrace = std::vector<typename FSM_t<typename std::decay<FSM>::type>::InputType> >
-bool inputTraceDefinedOnState(FSM &&fsm, StateType &&state, InputTrace &&trace, struct FSM_t<Dfsm>::tag) {
-    //TODO: Höchstens für deterministische korrekt
-    return (state->apply(::InputTrace(trace, nullptr), false).size() == trace.size()+1);
-}
-template<typename FSM, typename StateType, typename InputTrace = std::vector<typename FSM_t<typename std::decay<FSM>::type>::InputType> >
-bool isDistinguishingSequence(FSM &&fsm, StateType &&state1, StateType &&state2, InputTrace &&trace, struct FSM_t<Dfsm>::tag) {
-    return (state1->apply(::InputTrace(trace, nullptr), false) != state2->apply(::InputTrace(trace, nullptr), false));
-}
-template<typename FSM, typename InputTrace, typename StateType>
-InputTrace getDistinguishingSequence(FSM &&fsm, StateType &&state1, StateType &&state2, struct FSM_t<Dfsm>::tag) {
-    //Assumption: There is a distinguishing sequence
-    fsm.calculateDistMatrix();
-    return *(fsm.getDistTraces(*state1, *state2).front());
-}
-template<typename FSM, typename InputTrace, typename StateType>
-StateType getStateAfter(FSM &&fsm, InputTrace &&trace, struct FSM_t<Dfsm>::tag) {
-    std::vector<std::shared_ptr<OutputTrace>> outputs;
-    std::vector<std::shared_ptr<FsmNode>> states;
-    fsm.apply(::InputTrace(std::forward<InputTrace>(trace), nullptr), outputs, states);
-    //Assumption: There is exactly one state reached
-    return states.front();
-}
-
-//TODO: When having template parameters setting the type for a return parameter, make sure it is a decayed type and a container type
-template<typename FSM, typename TestSuiteType>
-TestSuiteType getStateCover(FSM &&fsm, struct FSM_t<Dfsm>::tag) {
-    auto stateCover = fsm.getStateCover();
-    auto iolists = stateCover->getIOListsWithPrefixes();
-    auto traces = iolists.getIOLists();
-    TestSuiteType result;
-    std::copy(traces->begin(), traces->end(), std::inserter(result, result.end()));
-    return result;
-}
-template<typename FSM, typename IterableInputAlphabet>
-IterableInputAlphabet getInputAlphabet(FSM &&fsm, struct FSM_t<Dfsm>::tag) {
-    IterableInputAlphabet result;
-    for(int symbol = 0; symbol <= fsm.getMaxInput(); ++symbol) {
-        result.emplace(result.end(), symbol);
-    }
-    return result;
-}
-
-template<typename FSM, typename InputTrace>
-bool inputTraceDefinedOnFSM(FSM &&fsm, InputTrace &&trace) {
-    struct FSM_t<typename std::decay<FSM>::type>::tag tag;
-    return inputTraceDefinedOnFSM(std::forward<FSM>(fsm), std::forward<InputTrace>(trace), tag);
-}
-template<typename FSM, typename StateType, typename InputTrace>
-bool inputTraceDefinedOnState(FSM &&fsm, StateType &&state, InputTrace &&trace) {
-    struct FSM_t<typename std::decay<FSM>::type>::tag tag;
-    return inputTraceDefinedOnState(std::forward<FSM>(fsm), std::forward<StateType>(state), std::forward<InputTrace>(trace), tag);
-}
-template<typename FSM, typename StateType, typename InputTrace>
-bool isDistinguishingSequence(FSM &&fsm, StateType &&state1, StateType &&state2, InputTrace &&trace) {
-    struct FSM_t<typename std::decay<FSM>::type>::tag tag;
-    return isDistinguishingSequence(std::forward<FSM>(fsm), std::forward<StateType>(state1), std::forward<StateType>(state2), std::forward<InputTrace>(trace), tag);
-}
-template<typename FSM, typename StateType = typename FSM_t<typename std::decay<FSM>::type>::StateType, typename InputTrace = std::vector<typename FSM_t<typename std::decay<FSM>::type>::InputType>>
-InputTrace getDistinguishingSequence(FSM &&fsm, StateType &&state1, StateType &&state2) {
-    struct FSM_t<typename std::decay<FSM>::type>::tag tag;
-    return getDistinguishingSequence<FSM, InputTrace, StateType>(std::forward<FSM>(fsm), std::forward<StateType>(state1), std::forward<StateType>(state2), tag);
-}
-template<typename FSM, typename InputTrace, typename StateType = typename FSM_t<typename std::decay<FSM>::type>::StateType>
-StateType getStateAfter(FSM &&fsm, InputTrace &&trace) {
-    struct FSM_t<typename std::decay<FSM>::type>::tag tag;
-    return getStateAfter<FSM, InputTrace, StateType>(std::forward<FSM>(fsm), std::forward<InputTrace>(trace), tag);
-}
-template<typename FSM, typename TestSuiteType = std::vector<std::vector<typename FSM_t<typename std::decay<FSM>::type>::InputType>>>
-TestSuiteType getStateCover(FSM &&fsm) {
-    struct FSM_t<typename std::decay<FSM>::type>::tag tag;
-    return getStateCover<FSM, TestSuiteType>(std::forward<FSM>(fsm), tag);
-}
-template<typename FSM, typename IterableInputAlphabet = std::vector<typename FSM_t<typename std::decay<FSM>::type>::InputType>>
-IterableInputAlphabet getInputAlphabet(FSM &&fsm) {
-    struct FSM_t<typename std::decay<FSM>::type>::tag tag;
-    return getInputAlphabet<FSM, IterableInputAlphabet>(std::forward<FSM>(fsm), tag);
 }
 
 template<typename IterableInputAlphabet, typename SingletonTraceContainer = std::vector<std::vector<typename std::decay<decltype(*std::declval<IterableInputAlphabet>().begin())>::type>>>
@@ -279,46 +355,18 @@ TestSuiteType generateHMethodTestSuite(FSM &&specification, unsigned int additio
             if(stateCoverSequence1 != stateCoverSequence2) {
                 auto const &sequence1 = stateCoverSequence1;
                 auto const &sequence2 = stateCoverSequence2;
-                //Implicit assumption: state cover covers states exactly once
-                auto state1 = getStateAfter(std::forward<FSM>(specification), stateCoverSequence1);
-                auto state2 = getStateAfter(std::forward<FSM>(specification), stateCoverSequence2);
-                decltype(stateCover) commonSuffixes;
-                copyCommonSuffixesOfSequencesInTestSuitePrefixedBySequences1And2(testSuiteDefined.begin(), testSuiteDefined.end(),
-                                                                                 sequence1.begin(), sequence1.end(),
-                                                                                 sequence2.begin(), sequence2.end(),
-                                                                                 std::inserter(commonSuffixes, commonSuffixes.end()));
-                if(std::none_of(commonSuffixes.begin(), commonSuffixes.end(), [&specification, &state1, &state2](decltype(*commonSuffixes.begin()) const &suffix) -> bool {
-                    return isDistinguishingSequence(std::forward<FSM>(specification), state1, state2, suffix);
-                })) {
-                    addDistinguishingSequencesIfNotAlreadyContained(std::forward<FSM>(specification), state1, state2,
-                                                                    sequence1.begin(), sequence1.end(),
-                                                                    sequence2.begin(), sequence2.end(),
-                                                                    testSuiteDefined.begin(), testSuiteDefined.end(),
-                                                                    std::inserter(testSuiteDefined, testSuiteDefined.end()));
-                }
-            }
-        }
-    }
-
-    for(auto const &stateCoverSequence1 : stateCover) {
-        //NOTE: Implicit (usually justified) assumption, that stateCover sequences are all defined
-        //TODO: Encode all implicit assumptions appropriately as assert statements. Preferably using the GSL
-        auto baseState = getStateAfter(std::forward<FSM>(specification), stateCoverSequence1);
-        for(auto const &stateCoverSequence2 : stateCover) {
-            for(auto const &power : inputAlphabetPowers) {
-                for(auto const &traceInAlphabetPower : power) {
-                    if(inputTraceDefinedOnState(std::forward<FSM>(specification), baseState, traceInAlphabetPower)) {
-                        auto sequence1 = concatenateTraces(stateCoverSequence1.begin(), stateCoverSequence1.end(), traceInAlphabetPower.begin(), traceInAlphabetPower.end());
-                        auto const &sequence2 = stateCoverSequence2;
-                        auto state1 = getStateAfter(std::forward<FSM>(specification), sequence1);
-                        auto state2 = getStateAfter(std::forward<FSM>(specification), sequence2);
+                //Implicit assumption: state cover finally reaches states exactly once
+                auto states1 = getStatesAfter(std::forward<FSM>(specification), stateCoverSequence1);
+                auto states2 = getStatesAfter(std::forward<FSM>(specification), stateCoverSequence2);
+                for(auto const &state1 : states1) {
+                    for(auto const &state2 : states2) {
                         if(state1 != state2) {
-                            std::vector<decltype(sequence1)> commonSuffixes;
+                            decltype(stateCover) commonSuffixes;
                             copyCommonSuffixesOfSequencesInTestSuitePrefixedBySequences1And2(testSuiteDefined.begin(), testSuiteDefined.end(),
                                                                                              sequence1.begin(), sequence1.end(),
                                                                                              sequence2.begin(), sequence2.end(),
                                                                                              std::inserter(commonSuffixes, commonSuffixes.end()));
-                            if(std::none_of(commonSuffixes.begin(), commonSuffixes.end(), [&specification, &state1, &state2](typename std::decay<decltype(*commonSuffixes.begin())>::type const &suffix) {
+                            if(std::none_of(commonSuffixes.begin(), commonSuffixes.end(), [&specification, &state1, &state2](decltype(*commonSuffixes.begin()) const &suffix) -> bool {
                                 return isDistinguishingSequence(std::forward<FSM>(specification), state1, state2, suffix);
                             })) {
                                 addDistinguishingSequencesIfNotAlreadyContained(std::forward<FSM>(specification), state1, state2,
@@ -334,33 +382,79 @@ TestSuiteType generateHMethodTestSuite(FSM &&specification, unsigned int additio
         }
     }
 
+    for(auto const &stateCoverSequence1 : stateCover) {
+        //NOTE: Implicit (usually justified) assumption, that stateCover sequences are all defined
+        //TODO: Encode all implicit assumptions appropriately as assert statements. Preferably using the GSL
+        auto baseStates = getStatesAfter(std::forward<FSM>(specification), stateCoverSequence1);
+        for(auto const &stateCoverSequence2 : stateCover) {
+            for(auto const &power : inputAlphabetPowers) {
+                for(auto const &traceInAlphabetPower : power) {
+                    if(std::all_of(baseStates.begin(), baseStates.end(), [&specification, &traceInAlphabetPower](decltype(*baseStates.begin()) const &baseState) {
+                            return inputTraceDefinedOnState(std::forward<FSM>(specification), baseState, traceInAlphabetPower);
+                        })) {
+                        auto sequence1 = concatenateTraces(stateCoverSequence1.begin(), stateCoverSequence1.end(), traceInAlphabetPower.begin(), traceInAlphabetPower.end());
+                        auto const &sequence2 = stateCoverSequence2;
+                        auto states1 = getStatesAfter(std::forward<FSM>(specification), sequence1);
+                        auto states2 = getStatesAfter(std::forward<FSM>(specification), sequence2);
+                        for(auto const &state1 : states1) {
+                            for(auto const &state2 : states2) {
+                                if(state1 != state2) {
+                                    std::vector<decltype(sequence1)> commonSuffixes;
+                                    copyCommonSuffixesOfSequencesInTestSuitePrefixedBySequences1And2(testSuiteDefined.begin(), testSuiteDefined.end(),
+                                                                                                     sequence1.begin(), sequence1.end(),
+                                                                                                     sequence2.begin(), sequence2.end(),
+                                                                                                     std::inserter(commonSuffixes, commonSuffixes.end()));
+                                    if(std::none_of(commonSuffixes.begin(), commonSuffixes.end(), [&specification, &state1, &state2](typename std::decay<decltype(*commonSuffixes.begin())>::type const &suffix) {
+                                        return isDistinguishingSequence(std::forward<FSM>(specification), state1, state2, suffix);
+                                    })) {
+                                        addDistinguishingSequencesIfNotAlreadyContained(std::forward<FSM>(specification), state1, state2,
+                                                                                        sequence1.begin(), sequence1.end(),
+                                                                                        sequence2.begin(), sequence2.end(),
+                                                                                        testSuiteDefined.begin(), testSuiteDefined.end(),
+                                                                                        std::inserter(testSuiteDefined, testSuiteDefined.end()));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     for(auto const &stateCoverSequence : stateCover) {
         //NOTE: Implicit (usually justified) assumption, that stateCover sequences are all defined
         //TODO: Encode all implicit assumptions appropriately as assert statements. Preferably using the GSL
-        auto baseState = getStateAfter(std::forward<FSM>(specification), stateCoverSequence);
+        auto baseStates = getStatesAfter(std::forward<FSM>(specification), stateCoverSequence);
         for(auto const &power : inputAlphabetPowers) {
             for(auto const &traceInAlphabetPower : power) {
                 if(traceInAlphabetPower.size() > 0
-                   and inputTraceDefinedOnState(std::forward<FSM>(specification), baseState, traceInAlphabetPower)) {
+                   and std::all_of(baseStates.begin(), baseStates.end(), [&specification, &traceInAlphabetPower](decltype(*baseStates.begin()) const &baseState) {
+                            return inputTraceDefinedOnState(std::forward<FSM>(specification), baseState, traceInAlphabetPower);
+                        })) {
                     for(auto iter = traceInAlphabetPower.begin() + 1; iter != traceInAlphabetPower.end(); ++iter) {
                         auto sequence1 = concatenateTraces(stateCoverSequence.begin(), stateCoverSequence.end(), traceInAlphabetPower.begin(), traceInAlphabetPower.end());
                         auto sequence2 = concatenateTraces(stateCoverSequence.begin(), stateCoverSequence.end(), traceInAlphabetPower.begin(), iter);
-                        auto state1 = getStateAfter(std::forward<FSM>(specification), sequence1);
-                        auto state2 = getStateAfter(std::forward<FSM>(specification), sequence2);
-                        if(state1 != state2) {
-                            std::vector<decltype(sequence1)> commonSuffixes;
-                            copyCommonSuffixesOfSequencesInTestSuitePrefixedBySequences1And2(testSuiteDefined.begin(), testSuiteDefined.end(),
-                                                                                             sequence1.begin(), sequence1.end(),
-                                                                                             sequence2.begin(), sequence2.end(),
-                                                                                             std::inserter(commonSuffixes, commonSuffixes.end()));
-                            if(std::none_of(commonSuffixes.begin(), commonSuffixes.end(), [&specification, &state1, &state2](typename std::decay<decltype(*commonSuffixes.begin())>::type const &suffix) {
-                                return isDistinguishingSequence(std::forward<FSM>(specification), state1, state2, suffix);
-                            })) {
-                                addDistinguishingSequencesIfNotAlreadyContained(std::forward<FSM>(specification), state1, state2,
-                                                                                sequence1.begin(), sequence1.end(),
-                                                                                sequence2.begin(), sequence2.end(),
-                                                                                testSuiteDefined.begin(), testSuiteDefined.end(),
-                                                                                std::inserter(testSuiteDefined, testSuiteDefined.end()));
+                        auto states1 = getStatesAfter(std::forward<FSM>(specification), sequence1);
+                        auto states2 = getStatesAfter(std::forward<FSM>(specification), sequence2);
+                        for(auto const &state1 : states1) {
+                            for(auto const &state2 : states2) {
+                                if(state1 != state2) {
+                                    std::vector<decltype(sequence1)> commonSuffixes;
+                                    copyCommonSuffixesOfSequencesInTestSuitePrefixedBySequences1And2(testSuiteDefined.begin(), testSuiteDefined.end(),
+                                                                                                     sequence1.begin(), sequence1.end(),
+                                                                                                     sequence2.begin(), sequence2.end(),
+                                                                                                     std::inserter(commonSuffixes, commonSuffixes.end()));
+                                    if(std::none_of(commonSuffixes.begin(), commonSuffixes.end(), [&specification, &state1, &state2](typename std::decay<decltype(*commonSuffixes.begin())>::type const &suffix) {
+                                        return isDistinguishingSequence(std::forward<FSM>(specification), state1, state2, suffix);
+                                    })) {
+                                        addDistinguishingSequencesIfNotAlreadyContained(std::forward<FSM>(specification), state1, state2,
+                                                                                        sequence1.begin(), sequence1.end(),
+                                                                                        sequence2.begin(), sequence2.end(),
+                                                                                        testSuiteDefined.begin(), testSuiteDefined.end(),
+                                                                                        std::inserter(testSuiteDefined, testSuiteDefined.end()));
+                                    }
+                                }
                             }
                         }
                     }
@@ -376,8 +470,6 @@ TestSuiteType generateHMethodTestSuite(FSM &&specification, unsigned int additio
             return isPrefix(potentialTestCase.begin(), potentialTestCase.end(), potentialSupersequence.begin(), potentialSupersequence.end());
         });
     });
-    std::cout << "testSuiteDefined: " << testSuiteDefined.size() << std::endl;
-    std::cout << "prefixFreeDefinedTestSuite: " << prefixFreeDefinedTestSuite.size() << std::endl;
 
     return prefixFreeDefinedTestSuite;
 }

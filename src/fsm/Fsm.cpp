@@ -7,8 +7,10 @@
 #include <chrono>
 #include <deque>
 #include <algorithm>
+#include <numeric>
 #include <regex>
 #include <math.h>
+#include <cassert>
 
 #include "fsm/Dfsm.h"
 #include "fsm/Fsm.h"
@@ -30,6 +32,7 @@
 #include "trees/InputOutputTree.h"
 #include "trees/AdaptiveTreeNode.h"
 #include "utils/Logger.hpp"
+#include "utils/generic-equivalence-class-calculation.hpp"
 
 using namespace std;
 using namespace std::chrono;
@@ -852,7 +855,7 @@ void Fsm::toInternalFsmFormat(const string& fname) {
     
     ofstream out(fileName);
     
-    for ( int n = initStateIdx; n < size(); n++ ) {
+    for ( unsigned int n = initStateIdx; n < size(); n++ ) {
         shared_ptr<FsmNode> theNode = nodes[n];
         
         for ( auto tr : theNode->getTransitions() ) {
@@ -4932,5 +4935,47 @@ bool Fsm::distinguishable(const FsmNode& s1, const FsmNode& s2) {
 }
 
 
+InputTrace Fsm::calculateDistinguishingTrace(std::shared_ptr<FsmNode> const &s1, std::shared_ptr<FsmNode> const &s2) const {
+    return s1->calcDistinguishingTrace(s2, this->ofsmTableLst, maxInput, maxOutput);
+}
+
+bool Fsm::isHarmonized() const {
+    auto equivalencePartitioning = createInitialPartitioning(this->nodes, [this](std::decay<decltype(*this->nodes.begin())>::type const &node) {
+        std::vector<bool> isInputDefined(this->maxInput+1);
+
+        //Calculate initial predicate for state
+        for(auto const &transitionPtr : node->getTransitions()) {
+            auto const &label = *transitionPtr->getLabel();
+            auto input = label.getInput();
+            isInputDefined.at(input) = true;
+        }
+
+        return isInputDefined;
+    });
+
+    std::vector<int> symbolSet(this->maxInput+1);
+    std::iota(symbolSet.begin(), symbolSet.end(), 0);
+    auto transitionFunction = [](std::decay<decltype(*this->nodes.begin())>::type const &state, int symbol) {
+        return state->after(symbol);
+    };
+    auto refinedPartitioning = fixpoint([&symbolSet,&transitionFunction](decltype(equivalencePartitioning) const &partitioning) {
+        return refineStatePartitioning(partitioning, symbolSet, transitionFunction);
+    }, equivalencePartitioning);
+
+    return std::all_of(refinedPartitioning.begin(), refinedPartitioning.end(), [&symbolSet,&transitionFunction,&refinedPartitioning](std::decay<decltype(*refinedPartitioning.begin())>::type const &partition) {
+        auto const &firstState = *partition.begin();
+        return std::all_of(symbolSet.begin(), symbolSet.end(), [&firstState,&transitionFunction,&refinedPartitioning](int symbol) {
+            auto reachedStates = transitionFunction(firstState, symbol);
+            std::set<decltype(mapStateToEquivalenceClass(refinedPartitioning, firstState))> reachedClasses;
+            std::transform(reachedStates.begin(), reachedStates.end(), std::inserter(reachedClasses, reachedClasses.end()), [&refinedPartitioning](decltype(*reachedStates.begin()) state) {
+                return mapStateToEquivalenceClass(refinedPartitioning, state);
+            });
+            if(reachedClasses.size() > 1) {
+                std::cout << "Counterexample: State " << firstState->getName() << " reaches several classes on input " << symbol << std::endl;
+            }
+            return reachedClasses.size() <= 1;
+        });
+    });
+}
 
 

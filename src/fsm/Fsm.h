@@ -924,5 +924,17 @@ public:
      */
     virtual bool distinguishable(const FsmNode& s1, const FsmNode& s2);
 
+    /**
+     * Calculates and returns the OFSM tables.
+     */
+    InputTrace calculateDistinguishingTrace(std::shared_ptr<FsmNode> const &s1, std::shared_ptr<FsmNode> const &s2) const;
+
+    /**
+     * Calculates whether the FSM is harmonized, i.e. whether for every state
+     * s_1 and every pair of states s_2, s_2' nondeterministically reachable
+     * from s_1 with the same input trace x the states s_2 and s_2' accept the
+     * same set of inputs.
+     */
+    bool isHarmonized() const;
 };
 #endif //FSM_FSM_FSM_H_
