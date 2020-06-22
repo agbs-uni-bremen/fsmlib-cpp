@@ -1,5 +1,6 @@
 set (FSM_GENERATOR_SOURCES
 	fsm-test-generator.cpp
+  generalized-h-method.hpp
 )
 
 add_executable (fsm-generator ${FSM_GENERATOR_SOURCES}
