@@ -121,9 +121,14 @@ public:
      * @note Checking for equality (or inequality) has a side effect on the output trees involved:
      *       Their leaves are calculated again.
 	 */
-	friend bool operator==(OutputTree& outputTree1, OutputTree& outputTree2);
+	friend bool operator==(OutputTree const &outputTree1, OutputTree const &outputTree2);
     
     /** complementary operator to == */
-    friend bool operator!=(OutputTree& outputTree1, OutputTree& outputTree2);
+    friend bool operator!=(OutputTree const &outputTree1, OutputTree const &outputTree2);
 };
+
+bool operator==(OutputTree const &outputTree1, OutputTree const &outputTree2);
+
+/** complementary operator to == */
+bool operator!=(OutputTree const &outputTree1, OutputTree const &outputTree2);
 #endif //FSM_TREES_OUTPUTTREE_H_
