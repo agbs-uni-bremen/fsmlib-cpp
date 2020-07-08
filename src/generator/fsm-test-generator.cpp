@@ -22,7 +22,7 @@
 #include "trees/OutputTree.h"
 #include "trees/TestSuite.h"
 
-#include "generator/generalized-h-method.hpp"
+#include "fsm/generalized-h-method.hpp"
 
 #define DBG 0
 using namespace std;

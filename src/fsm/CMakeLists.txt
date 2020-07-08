@@ -47,6 +47,7 @@ set (FSM_FSM_SOURCES
         VPrimeLazy.cpp
         VPrimeLazy.h
 	typedef.inc
+  generalized-h-method.hpp
 )
 
 add_library (fsm-fsm OBJECT ${FSM_FSM_SOURCES})
