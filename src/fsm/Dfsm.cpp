@@ -391,11 +391,11 @@ void Dfsm::initDistTraces() {
     
     distTraces.clear();
     
-    for ( int n = 0; n < size(); n++ ) {
+    for ( size_t n = 0; n < size(); n++ ) {
         // Create empty vector of for row n, to be extended in
         // the inner loop
         vector< vector< shared_ptr< vector<int> > > > thisRow;
-        for ( int m = 0; m < size(); m++ ) {
+        for ( size_t m = 0; m < size(); m++ ) {
             // Create empty vector of pointers to traces
             vector< shared_ptr< vector<int> > > v;
             thisRow.push_back(v);
@@ -1652,8 +1652,8 @@ void Dfsm::calculateDistMatrix() {
     initDistTraces();
     calcPkTables();
     
-    for ( int n = 0; n < size(); n++ ) {
-        for ( int m = n+1; m < size(); m++ ) {
+    for ( size_t n = 0; n < size(); n++ ) {
+        for ( size_t m = n+1; m < size(); m++ ) {
             // Skip indistinguishable nodes
             if ( not distinguishable(*nodes[n], *nodes[m]) ) continue;
             
