@@ -6,7 +6,6 @@
 #ifndef FSM_FSM_IOTRACE_H_
 #define FSM_FSM_IOTRACE_H_
 
-#include <iostream>
 #include <vector>
 
 #include "fsm/InputTrace.h"

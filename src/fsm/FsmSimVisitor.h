@@ -9,7 +9,6 @@
 #ifndef FsmSimVisitor_hpp
 #define FsmSimVisitor_hpp
 
-#include <stdio.h>
 #include "fsm/FsmVisitor.h"
 
 class FsmSimVisitor : public FsmVisitor {

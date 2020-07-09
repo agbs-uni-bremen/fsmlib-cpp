@@ -1,6 +1,12 @@
 #ifndef __FSM_LIB_GENERIC_EQUIVALENCE_CLASS_CALCULATION_HPP__
 #define __FSM_LIB_GENERIC_EQUIVALENCE_CLASS_CALCULATION_HPP__
 
+#include <set>
+#include <algorithm>
+#include <type_traits>
+#include <vector>
+#include <iterator>
+
 template<typename StateEquivalencePartitioningType, typename StateType>
 typename std::decay<decltype(std::declval<StateEquivalencePartitioningType>().begin())>::type
 mapStateToEquivalenceClass(StateEquivalencePartitioningType &&partitioning, StateType &&state) {

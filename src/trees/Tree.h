@@ -6,7 +6,6 @@
 #ifndef FSM_TREES_TREE_H_
 #define FSM_TREES_TREE_H_
 
-#include <algorithm>
 #include <memory>
 #include <vector>
 

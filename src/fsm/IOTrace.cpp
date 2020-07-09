@@ -7,6 +7,9 @@
 #include "fsm/FsmNode.h"
 #include "fsm/FsmLabel.h"
 
+#include <iostream>
+#include <sstream>
+
 using namespace std;
 
 IOTrace::IOTrace(const InputTrace & i, const OutputTrace & o, std::shared_ptr<FsmNode> targetNode)

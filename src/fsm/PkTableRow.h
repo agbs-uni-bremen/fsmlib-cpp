@@ -6,8 +6,7 @@
 #ifndef FSM_FSM_PKTABLEROW_H_
 #define FSM_FSM_PKTABLEROW_H_
 
-#include <iostream>
-
+#include <ostream>
 #include "fsm/typedef.inc"
 
 class PkTableRow

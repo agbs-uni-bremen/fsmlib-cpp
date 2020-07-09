@@ -6,7 +6,7 @@
 #ifndef FSM_FSM_DFSMTABLEROW_H_
 #define FSM_FSM_DFSMTABLEROW_H_
 
-#include <iostream>
+#include <ostream>
 
 #include "fsm/Int2IntMap.h"
 #include "fsm/typedef.inc"

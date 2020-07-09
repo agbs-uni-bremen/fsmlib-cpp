@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <utility>
+#include <unordered_map>
 
 #include "interface/FsmPresentationLayer.h"
 #include "fsm/Dfsm.h"

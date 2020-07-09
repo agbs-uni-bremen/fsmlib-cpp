@@ -7,6 +7,7 @@
 #define FSM_TREES_OUTPUTTREE_H_
 
 #include <vector>
+#include <memory>
 
 #include "fsm/InputTrace.h"
 #include "fsm/IOTrace.h"

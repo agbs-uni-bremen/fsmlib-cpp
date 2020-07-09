@@ -6,8 +6,8 @@
 #ifndef FSM_FSM_OUTPUTTRACE_H_
 #define FSM_FSM_OUTPUTTRACE_H_
 
-#include <iostream>
 #include <vector>
+#include <memory>
 
 #include "fsm/Trace.h"
 #include "interface/FsmPresentationLayer.h"

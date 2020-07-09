@@ -3,7 +3,10 @@
  *
  * Licensed under the EUPL V.1.1
  */
+#include <iostream>
 #include <deque>
+#include <unordered_map>
+#include <algorithm>
 
 #include "fsm/FsmNode.h"
 #include "fsm/FsmTransition.h"

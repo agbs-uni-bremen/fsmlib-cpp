@@ -1,4 +1,5 @@
 #include <utility>
+#include <algorithm>
 
 #include "RDistinguishability.h"
 #include "trees/InputOutputTree.h"

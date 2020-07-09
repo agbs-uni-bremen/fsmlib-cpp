@@ -12,6 +12,7 @@
 #include <chrono>
 #include <memory>
 #include <random>
+#include <unordered_map>
 #include <stdlib.h>
 #include <interface/FsmPresentationLayer.h>
 #include <fsm/Dfsm.h>

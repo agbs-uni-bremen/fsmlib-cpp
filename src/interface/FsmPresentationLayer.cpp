@@ -5,6 +5,7 @@
  */
 #include "interface/FsmPresentationLayer.h"
 #include <algorithm>
+#include <fstream>
 
 FsmPresentationLayer::FsmPresentationLayer()
 {

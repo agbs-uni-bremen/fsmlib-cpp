@@ -7,6 +7,7 @@
 #include "trees/OutputTree.h"
 #include <functional>
 #include <cassert>
+#include <algorithm>
 
 //Base FSM type helper template
 //Does not provide any types, making template specialization for the FSM type necessary

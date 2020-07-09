@@ -6,16 +6,11 @@
 #ifndef FSM_FSM_FSM_H_
 #define FSM_FSM_FSM_H_
 
-#include <fstream>
-#include <iostream>
 #include <memory>
-#include <set>
-#include <sstream>
 #include <string>
 #include <unordered_set>
 #include <vector>
 #include <deque>
-#include <map>
 
 #include "fsm/FsmVisitor.h"
 #include "fsm/FsmLabel.h"

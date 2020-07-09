@@ -5,6 +5,8 @@
  */
 #include "trees/TestSuite.h"
 
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 

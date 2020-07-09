@@ -9,7 +9,6 @@
 #ifndef FsmPrintVisitor_hpp
 #define FsmPrintVisitor_hpp
 
-#include <stdio.h>
 #include "fsm/FsmVisitor.h"
 
 class FsmPrintVisitor : public FsmVisitor {

@@ -6,7 +6,6 @@
 #ifndef FSM_SETS_HITTINGSET_H_
 #define FSM_SETS_HITTINGSET_H_
 
-#include <iostream>
 #include <unordered_set>
 #include <vector>
 

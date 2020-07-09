@@ -6,6 +6,9 @@
 #include "fsm/FsmTransition.h"
 #include "fsm/FsmNode.h"
 
+#include <iostream>
+#include <sstream>
+
 using namespace std;
 
 FsmTransition::FsmTransition(const shared_ptr<FsmNode>& source,

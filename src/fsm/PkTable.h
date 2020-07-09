@@ -6,8 +6,6 @@
 #ifndef FSM_FSM_PKTABLE_H_
 #define FSM_FSM_PKTABLE_H_
 
-#include <algorithm>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>

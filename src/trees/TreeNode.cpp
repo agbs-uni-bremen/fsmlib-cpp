@@ -5,6 +5,7 @@
  */
 #include "trees/TreeNode.h"
 #include <deque>
+#include <algorithm>
 
 using namespace std;
 

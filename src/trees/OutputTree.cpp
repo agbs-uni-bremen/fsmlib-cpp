@@ -5,6 +5,9 @@
  */
 #include "trees/OutputTree.h"
 
+#include <algorithm>
+#include <fstream>
+
 using namespace std;
 
 void OutputTree::printChildrenOutput(ostream& out, const shared_ptr<TreeNode>& top, const shared_ptr<int>& idNode, const int idInput) const

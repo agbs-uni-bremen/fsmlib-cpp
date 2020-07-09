@@ -5,6 +5,8 @@
  */
 #include "sets/HsTreeNode.h"
 
+#include <sstream>
+
 std::unordered_set<int> HsTreeNode::hSmallest;
 
 int HsTreeNode::maxNodeNum = 0;

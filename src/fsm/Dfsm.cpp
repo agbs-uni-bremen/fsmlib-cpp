@@ -3,6 +3,11 @@
  *
  * Licensed under the EUPL V.1.1
  */
+
+#include <iostream>
+#include <set>
+#include <fstream>
+
 #include "fsm/Dfsm.h"
 #include "fsm/FsmNode.h"
 #include "fsm/FsmTransition.h"

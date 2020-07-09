@@ -11,6 +11,9 @@
 #include <regex>
 #include <math.h>
 #include <cassert>
+#include <unordered_map>
+#include <fstream>
+#include <iostream>
 
 #include "fsm/Dfsm.h"
 #include "fsm/Fsm.h"
