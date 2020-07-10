@@ -1,6 +1,10 @@
 #include "VPrimeLazy.h"
+#include "fsm/Fsm.h"
 #include "utils/Logger.hpp"
 #include "fsm/FsmNode.h"
+#include "fsm/OutputTrace.h"
+#include "fsm/IOTraceContainer.h"
+#include "fsm/IOTrace.h"
 
 VPrimeLazy::VPrimeLazy(const InputTraceSet& detStateCover, const Fsm& iut):
     allPossibleTraces(vector<vector<shared_ptr<const IOTrace>>>())

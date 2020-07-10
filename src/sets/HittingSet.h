@@ -9,8 +9,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "sets/HsTreeNode.h"
-
 class HittingSet
 {
 private:

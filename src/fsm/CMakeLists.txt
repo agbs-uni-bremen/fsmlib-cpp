@@ -26,6 +26,8 @@ set (FSM_FSM_SOURCES
 	Int2IntMap.h
 	IOTrace.cpp
 	IOTrace.h
+  IOTraceHash.cpp
+  IOTraceHash.h
         SegmentedTrace.cpp
 	SegmentedTrace.h
         IOTraceContainer.cpp

@@ -10,12 +10,20 @@
 
 #include "fsm/Dfsm.h"
 #include "fsm/FsmNode.h"
+#include "fsm/FsmLabel.h"
 #include "fsm/FsmTransition.h"
 #include "fsm/PkTable.h"
+#include "fsm/PkTableRow.h"
 #include "fsm/DFSMTableRow.h"
+#include "fsm/DFSMTable.h"
 #include "fsm/InputTrace.h"
 #include "fsm/IOTrace.h"
+#include "fsm/SegmentedTrace.h"
 #include "trees/Tree.h"
+#include "trees/IOListContainer.h"
+#include "trees/TreeNode.h"
+#include "trees/TreeEdge.h"
+#include "json/json.h"
 
 using namespace std;
 

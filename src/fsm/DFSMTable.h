@@ -10,10 +10,14 @@
 #include <vector>
 
 #include "fsm/typedef.inc"
+#include "fsm/DFSMTableRow.h"
+#include "fsm/PkTable.h"
+#include "interface/FsmPresentationLayer.h"
 
 class DFSMTableRow;
 class PkTable;
 class FsmPresentationLayer;
+
 /**
  Class representing DFSM tables
  */

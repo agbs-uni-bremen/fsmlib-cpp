@@ -2,11 +2,16 @@
 #define VPRIMELAZY_H
 
 #include <memory>
-#include "fsm/Fsm.h"
-#include "fsm/IOTrace.h"
-#include "fsm/IOTraceContainer.h"
+#include <vector>
+
+#include "fsm/InputTraceSet.h"
 
 using namespace std;
+
+class Fsm;
+class IOTrace;
+class IOTraceContainer;
+class InputTrace;
 
 /**
  * Adds lazy calculation of V' for adaptive state counting.

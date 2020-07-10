@@ -3,6 +3,9 @@
  * 
  * Licensed under the EUPL V.1.1
  */
+#include <ostream>
+
+#include "interface/FsmPresentationLayer.h"
 #include "fsm/InputTrace.h"
 #include "fsm/FsmLabel.h"
 

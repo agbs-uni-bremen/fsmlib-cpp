@@ -5,6 +5,8 @@
  */
 #include "fsm/FsmTransition.h"
 #include "fsm/FsmNode.h"
+#include "fsm/FsmLabel.h"
+#include "fsm/FsmVisitor.h"
 
 #include <iostream>
 #include <sstream>

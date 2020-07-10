@@ -11,32 +11,32 @@
 #include <unordered_set>
 #include <vector>
 #include <deque>
+#include <stdexcept>
 
-#include "fsm/FsmVisitor.h"
-#include "fsm/FsmLabel.h"
-#include "fsm/InputTrace.h"
+#include "fsm/InputTraceSet.h"
 
 
-class Dfsm;
+class FsmVisitor;
+class FsmLabel;
 class FsmNode;
+class FsmTransition;
+class IOTrace;
+class OFSMTable;
+class OutputTrace;
+class FsmPresentationLayer;
+class InputOutputTree;
 class Tree;
 class OutputTree;
-class InputTrace;
-class FsmPresentationLayer;
-class OFSMTable;
-class IOListContainer;
-class IOTreeContainer;
 class TestSuite;
-class OutputTrace;
-class InputOutputTree;
-class IOTrace;
+class IOTreeContainer;
+class IOListContainer;
+class InputTrace;
 class IOTraceContainer;
 
 enum Minimal
 {
     True, False, Maybe
 };
-
 
 class too_many_transition_faults : public std::runtime_error
 {

@@ -9,7 +9,7 @@
 #include <memory>
 #include <vector>
 
-#include "interface/FsmPresentationLayer.h"
+class FsmPresentationLayer;
 
 class Trace
 {

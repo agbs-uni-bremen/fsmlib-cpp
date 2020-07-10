@@ -10,12 +10,15 @@
 
 #include "fsm/FsmNode.h"
 #include "fsm/FsmTransition.h"
+#include "fsm/FsmLabel.h"
 #include "fsm/InputTrace.h"
 #include "fsm/OutputTrace.h"
 #include "fsm/OFSMTable.h"
 #include "fsm/DFSMTableRow.h"
 #include "fsm/PkTable.h"
 #include "fsm/RDistinguishability.h"
+#include "fsm/IOTrace.h"
+#include "fsm/SegmentedTrace.h"
 #include "trees/TreeEdge.h"
 #include "trees/TreeNode.h"
 #include "trees/OutputTree.h"
@@ -24,6 +27,7 @@
 #include "trees/IOListContainer.h"
 #include "interface/FsmPresentationLayer.h"
 #include "utils/Logger.hpp"
+#include "fsm/FsmVisitor.h"
 
 using namespace std;
 

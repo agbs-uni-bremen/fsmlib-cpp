@@ -12,9 +12,9 @@
 
 #include "fsm/typedef.inc"
 
-#include "fsm/PkTableRow.h"
-#include "interface/FsmPresentationLayer.h"
 class Dfsm;
+class PkTableRow;
+class FsmPresentationLayer;
 
 /**
  Class for representing Pk-Tables

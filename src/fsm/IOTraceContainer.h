@@ -2,16 +2,24 @@
 #define IOTRACECONTAINER_H
 
 #include <unordered_set>
-#include "fsm/IOTrace.h"
-#include "trees/OutputTree.h"
+#include <memory>
+#include <vector>
+
+#include "fsm/IOTraceHash.h"
 
 class IOTraceContainer;
+class OutputTree;
+class IOTrace;
+class InputTrace;
+class OutputTrace;
 
 struct IOTraceHash {
     size_t operator() (const std::shared_ptr<const IOTrace>& a) const {
         return std::hash<IOTrace>()(*a);
     }
 };
+
+bool operator==(IOTrace const&, IOTrace const&);
 
 struct IOTracePrep {
     bool operator() (const std::shared_ptr<const IOTrace>& a, const std::shared_ptr<const IOTrace>& b) const {

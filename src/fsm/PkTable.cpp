@@ -8,6 +8,8 @@
 #include "fsm/Dfsm.h"
 #include "fsm/FsmLabel.h"
 #include "fsm/FsmTransition.h"
+#include "fsm/PkTableRow.h"
+#include "interface/FsmPresentationLayer.h"
 
 using namespace std;
 

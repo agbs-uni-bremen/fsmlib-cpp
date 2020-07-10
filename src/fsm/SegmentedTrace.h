@@ -9,8 +9,9 @@
 #include <vector>
 #include <memory>
 #include <deque>
+#include <string>
 
-#include "fsm/FsmNode.h"
+class FsmNode;
 
 class TraceSegment {
     

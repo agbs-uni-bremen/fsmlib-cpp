@@ -10,9 +10,11 @@
 #include <memory>
 
 #include "fsm/InputTrace.h"
-#include "fsm/IOTrace.h"
-#include "interface/FsmPresentationLayer.h"
 #include "trees/Tree.h"
+
+class IOTrace;
+class OutputTrace;
+class FsmPresentationLayer;
 
 class OutputTree : public Tree
 {

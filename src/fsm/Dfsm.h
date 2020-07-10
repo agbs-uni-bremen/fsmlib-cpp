@@ -10,17 +10,17 @@
 #include <string>
 #include <vector>
 
-#include "fsm/DFSMTable.h"
 #include "fsm/Fsm.h"
-#include "fsm/SegmentedTrace.h"
-#include "json/json.h"
-#include "trees/TreeNode.h"
-
 
 class PkTable;
 class IOTrace;
-class SegmentedTrace;
 class TreeNode;
+class DFSMTable;
+class SegmentedTrace;
+
+namespace Json {
+    class Value;
+}
 
 class Dfsm : public Fsm
 {

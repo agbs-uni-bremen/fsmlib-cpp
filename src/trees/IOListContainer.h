@@ -9,8 +9,8 @@
 #include <memory>
 #include <vector>
 
-#include "fsm/Trace.h"
-#include "interface/FsmPresentationLayer.h"
+class Trace;
+class FsmPresentationLayer;
 
 class IOListContainer
 {

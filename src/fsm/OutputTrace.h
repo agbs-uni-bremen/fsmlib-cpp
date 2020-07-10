@@ -10,7 +10,8 @@
 #include <memory>
 
 #include "fsm/Trace.h"
-#include "interface/FsmPresentationLayer.h"
+
+class FsmPresentationLayer;
 
 class OutputTrace : public Trace
 {

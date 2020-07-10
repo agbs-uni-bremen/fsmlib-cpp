@@ -4,6 +4,11 @@
  * Licensed under the EUPL V.1.1
  */
 #include "trees/OutputTree.h"
+#include "fsm/IOTrace.h"
+#include "trees/TreeNode.h"
+#include "trees/TreeEdge.h"
+#include "trees/IOListContainer.h"
+#include "interface/FsmPresentationLayer.h"
 
 #include <algorithm>
 #include <fstream>

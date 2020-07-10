@@ -22,8 +22,11 @@
 #include "trees/IOListContainer.h"
 #include "trees/OutputTree.h"
 #include "trees/TestSuite.h"
+#include "trees/TreeNode.h"
 
 #include "fsm/generalized-h-method.hpp"
+
+#include "json/json.h"
 
 #define DBG 0
 using namespace std;

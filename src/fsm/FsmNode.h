@@ -13,21 +13,19 @@
 #include <vector>
 #include <deque>
 
-#include "fsm/FsmVisitor.h"
-#include "fsm/SegmentedTrace.h"
-#include "fsm/IOTrace.h"
-
 class FsmTransition;
 class FsmPresentationLayer;
 class OutputTree;
 class Tree;
 class OutputTrace;
 class InputTrace;
+class IOTrace;
 class OFSMTable;
 class PkTable;
 class DFSMTableRow;
 class TraceSegment;
 class RDistinguishability;
+class FsmVisitor;
 
 class FsmNode : public std::enable_shared_from_this<FsmNode>
 {

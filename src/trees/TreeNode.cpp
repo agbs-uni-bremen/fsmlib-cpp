@@ -4,6 +4,8 @@
  * Licensed under the EUPL V.1.1
  */
 #include "trees/TreeNode.h"
+#include "trees/TreeEdge.h"
+#include "trees/IOListContainer.h"
 #include <deque>
 #include <algorithm>
 

@@ -9,8 +9,7 @@
 #include <ostream>
 #include <vector>
 
-#include "trees/OutputTree.h"
-
+class OutputTree;
 
 class TestSuite : public std::vector<OutputTree>
 {

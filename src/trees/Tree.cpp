@@ -3,8 +3,16 @@
  * 
  * Licensed under the EUPL V.1.1
  */
+#include <ostream>
+
 #include "fsm/FsmLabel.h"
 #include "trees/Tree.h"
+#include "trees/TreeNode.h"
+#include "trees/TreeEdge.h"
+#include "trees/IOListContainer.h"
+#include "fsm/InputTrace.h"
+#include "fsm/SegmentedTrace.h"
+#include "interface/FsmPresentationLayer.h"
 
 using namespace std;
 

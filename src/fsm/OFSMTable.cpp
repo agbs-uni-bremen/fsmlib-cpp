@@ -7,7 +7,9 @@
 #include "fsm/OFSMTableRow.h"
 #include "fsm/Fsm.h"
 #include "fsm/FsmNode.h"
+#include "fsm/FsmLabel.h"
 #include "fsm/FsmTransition.h"
+#include "interface/FsmPresentationLayer.h"
 
 using namespace std;
 

@@ -9,9 +9,10 @@
 #include <memory>
 #include <vector>
 
-#include "trees/IOListContainer.h"
-#include "trees/TreeEdge.h"
 #include "cloneable/ICloneable.h"
+
+class IOListContainer;
+class TreeEdge;
 
 class TreeNode : public std::enable_shared_from_this<TreeNode>, public ICloneable
 {

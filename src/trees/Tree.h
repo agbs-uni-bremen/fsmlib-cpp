@@ -9,13 +9,14 @@
 #include <memory>
 #include <vector>
 
-#include "fsm/InputTrace.h"
-#include "interface/FsmPresentationLayer.h"
-#include "trees/IOListContainer.h"
-#include "trees/TreeEdge.h"
-#include "trees/TreeNode.h"
-#include "fsm/SegmentedTrace.h"
 #include "cloneable/ICloneable.h"
+
+class InputTrace;
+class FsmPresentationLayer;
+class IOListContainer;
+class TreeEdge;
+class TreeNode;
+class SegmentedTrace;
 
 class Tree: public ICloneable, public std::enable_shared_from_this<Tree>
 {

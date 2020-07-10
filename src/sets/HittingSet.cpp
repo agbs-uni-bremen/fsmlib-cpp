@@ -4,6 +4,7 @@
  * Licensed under the EUPL V.1.1
  */
 #include "sets/HittingSet.h"
+#include "sets/HsTreeNode.h"
 
 HittingSet::HittingSet(const std::vector<std::unordered_set<int>>& s)
 	: s(s)

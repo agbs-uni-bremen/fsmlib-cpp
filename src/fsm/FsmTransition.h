@@ -7,10 +7,11 @@
 #define FSM_FSM_FSMTRANSITION_H_
 
 #include <memory>
+#include <vector>
 
-#include "fsm/FsmLabel.h"
-#include "fsm/FsmVisitor.h"
 
+class FsmVisitor;
+class FsmLabel;
 class FsmNode;
 
 class FsmTransition
