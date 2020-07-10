@@ -81,7 +81,7 @@ public:
      *  Get list of requirements satisified by the transition
      */
     std::vector<std::string>& getSatisfied() { return satisfies; }
-    void addSatisfies(std::string req) { satisfies.push_back(req); }
+    void addSatisfies(std::string const &req) { satisfies.push_back(req); }
 
 	/**
 	Output the FsmTransition to a standard output stream
