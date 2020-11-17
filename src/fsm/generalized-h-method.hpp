@@ -209,7 +209,7 @@ template<typename Container1,
          typename TraceType = typename std::decay<decltype(concatenateTraces(std::declval<Container1>().begin()->begin(), std::declval<Container1>().begin()->end(),
                                                                 std::declval<Container2>().begin()->begin(), std::declval<Container2>().begin()->end()))>::type>
 std::vector<TraceType> getTraceProduct(Container1 container1, Container2 container2) {
-    static_assert(std::is_same<typename std::decay<decltype(*container1.begin())>::type, typename std::decay<decltype(*container2.begin())>::type>::value);
+    static_assert(std::is_same<typename std::decay<decltype(*container1.begin())>::type, typename std::decay<decltype(*container2.begin())>::type>::value, "");
     std::vector<TraceType> result;
     result.reserve(container1.size() * container2.size());
     for(auto &trace1 : container1) {
@@ -217,8 +217,8 @@ std::vector<TraceType> getTraceProduct(Container1 container1, Container2 contain
             result.push_back(concatenateTraces(trace1.begin(), trace1.end(), trace2.begin(), trace2.end()));
         }
     }
-    static_assert(std::is_same<typename std::decay<decltype(*result.begin())>::type, typename std::decay<decltype(*container1.begin())>::type>::value);
-    static_assert(std::is_same<typename std::decay<decltype(*result.begin())>::type, typename std::decay<decltype(*container2.begin())>::type>::value);
+    static_assert(std::is_same<typename std::decay<decltype(*result.begin())>::type, typename std::decay<decltype(*container1.begin())>::type>::value, "");
+    static_assert(std::is_same<typename std::decay<decltype(*result.begin())>::type, typename std::decay<decltype(*container2.begin())>::type>::value, "");
     return result;
 }
 
@@ -226,11 +226,11 @@ template<typename Container,
          typename TraceContainer = typename std::decay<decltype(getTraceProduct(std::declval<Container>(), std::declval<Container>()))>::type>
 TraceContainer getTracePower(Container container, unsigned int power) {
     TraceContainer result;
-    static_assert(std::is_same<typename std::decay<TraceContainer>::type, typename std::decay<Container>::type>::value);
+    static_assert(std::is_same<typename std::decay<TraceContainer>::type, typename std::decay<Container>::type>::value, "");
     result.emplace_back();
     for(unsigned int i = 0; i < power; ++i) {
         result = getTraceProduct(result, container);
-        static_assert(std::is_same<typename std::decay<decltype(result)>::type, typename std::decay<Container>::type>::value);
+        static_assert(std::is_same<typename std::decay<decltype(result)>::type, typename std::decay<Container>::type>::value, "");
     }
     return result;
 }
@@ -333,19 +333,19 @@ TestSuiteType generateHMethodTestSuite(FSM &&specification, unsigned int additio
     //TODO: Check that each trace in stateCover covers a different state
 
     std::vector<typename std::decay<decltype(getTracePower(inputAlphabet, 0))>::type> inputAlphabetPowers;
-    static_assert(std::is_same<typename std::decay<decltype(inputAlphabet)>::type, typename std::decay<typename decltype(inputAlphabetPowers)::value_type>::type>::value);
+    static_assert(std::is_same<typename std::decay<decltype(inputAlphabet)>::type, typename std::decay<typename decltype(inputAlphabetPowers)::value_type>::type>::value, "");
     for(unsigned int power = 0; power <= additionalStates+1; ++power) {
         inputAlphabetPowers.push_back(getTracePower(inputAlphabet, power));
     }
 
     static_assert(std::is_same<typename std::decay<typename decltype(stateCover)::value_type>::type,
                                typename std::decay<typename std::decay<decltype(inputAlphabetPowers.back())>::type::value_type>::type
-                              >::value);
+                  >::value, "");
     auto testSuiteComplete = getTraceProduct(stateCover, inputAlphabetPowers.back());
-    static_assert(std::is_same<typename std::decay<decltype(*stateCover.begin())>::type, typename std::decay<decltype(*testSuiteComplete.begin())>::type>::value);
-    static_assert(std::is_same<typename std::decay<decltype(testSuiteComplete)>::type, typename std::decay<decltype(stateCover)>::type>::value);
+    static_assert(std::is_same<typename std::decay<decltype(*stateCover.begin())>::type, typename std::decay<decltype(*testSuiteComplete.begin())>::type>::value, "");
+    static_assert(std::is_same<typename std::decay<decltype(testSuiteComplete)>::type, typename std::decay<decltype(stateCover)>::type>::value, "");
     decltype(testSuiteComplete) testSuiteDefined;
-    static_assert(std::is_same<typename std::decay<decltype(testSuiteDefined)>::type, typename std::decay<decltype(stateCover)>::type>::value);
+    static_assert(std::is_same<typename std::decay<decltype(testSuiteDefined)>::type, typename std::decay<decltype(stateCover)>::type>::value, "");
     std::copy_if(testSuiteComplete.begin(), testSuiteComplete.end(), std::back_inserter(testSuiteDefined),
                     [&specification](decltype(*testSuiteComplete.begin()) const &testCase) {
                         return inputTraceDefinedOnFSM(std::forward<FSM>(specification), testCase);
