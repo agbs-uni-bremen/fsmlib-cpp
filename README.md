@@ -8,9 +8,8 @@ A C++ library containing algorithms for processing finite state machines and der
  Licensed under the EUPL V.1.1
 
  Please send questions and suggestions to 
-        Jan Peleska (jp@informatik.uni-bremen.de) and/or 
-        Gaël Dottel (dottel.gael@gmail.com).
- 
+        Jan Peleska (jp@informatik.uni-bremen.de) 
+
  1. About this library
  This library provides algorithms for processing finite state machines (FSMs), such as, for example,
        - Minimising deterministic or nondeterministic state machines
@@ -114,43 +113,7 @@ Documentation can be found in folder doc/. File 'doc/doxyfile' can be used to cr
  
      For Windows platforms, the debug and release versions will be built at the same time. 
 	 	 
-	 Specify the source code directory and the binaries directory.
-	 
-	 Click Generate and verify if cmake is using the right compiler.
-	 
-	 Click Finish.
-	 
-	 will create all the files needed by MSVC. You can now open the project with the .sln file.
+     First, create a CMake project in Visual Studio Code and import the project files.
+     Visual Studio should find the CMake-File in the src folder automatically.
 
-     Several properties need to be specified for the MSVC compiler before the library can be built
-     without errors. These options can be set by selecting all sub-projects fsm-example, fsm-fsm,
-     fsm-generator,...,fsm-trees end entering the properties dialog via context menu (right click).
-     There, select C/C++, Command Line and insert in the Additional Options field the following
-     command line options for invoking the compiler
-   
-          /Za /Dstrdup=_strdup 
-
-     Option /Za enables the use of logical operators not, and, or instead of !, &&, ||,
-     but disables the use of function name strdup instead of _strdup. Since the unix worlds
-     use strdup, the define /Dstrdup=_strdup lets MSVC see _strdup as required.
-
-     If you do not like this work around, you need to insert the extra include directive
-
-            #include <ciso646>
-   
-     in all cpp-files. This defines the not, and, or operators. We do not like this solution,
-     so the compiler options are the preferred solution.
-
-     Furthermore, select C/C++, Preprocessor in the properties dialogue and add the 
-     preprocessor definitions _CRT_SECURE_NO_WARNINGS and _CRT_NONSTDC_NO_DEPRECATE.
-     This suppresses warnings about using fopen(), fgets(), and about using function names
-     that MSVC claims to be deprecated but which are syill used in the unix world.
-
- 
-
-
-
-
-
-	 
-	 
+     Then, build the FSM-Lib using "Build All".
