@@ -31,7 +31,11 @@
 #include "json/json.h"
 #include "utils/Logger.hpp"
 
+#ifndef _WIN32
 #include <unistd.h>
+#else
+#include <time.h>
+#endif
 #include <errno.h>
 #include <string.h>
 #include <math.h>
@@ -176,7 +180,7 @@ string initialize()
     std::time_t tNow = system_clock::to_time_t(now);
     char nowTextRaw[21];
     struct tm buf;
-    #ifdef WINDOWS
+    #ifdef _WIN32
         localtime_s(&buf, &tNow);
         strftime(nowTextRaw, 21, "%Y-%m-%d--%H-%M-%S", &buf);
     #else
