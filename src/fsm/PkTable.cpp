@@ -321,7 +321,24 @@ ostream & operator<<(ostream & out, const PkTable & pkTable)
         {
             continue;
         }
-        out << pkTable.s2c.at(i)  << " & " << i << " " << *pkTable.rows.at(i);
+        //out << pkTable.s2c.at(i)  << " & " << i << " " << *pkTable.rows.at(i);
+        
+        out << pkTable.s2c.at(i)  << " & " << i << " ";
+        for ( auto& x : pkTable.rows.at(i)->getIOMap() ) {
+            out << " & " << x.second;
+        }
+        for ( auto& x : pkTable.rows.at(i)->getI2PMap() ) {
+            
+            S2CMap::const_iterator ite = pkTable.s2c.find(x.second);
+            
+            if ( ite == pkTable.s2c.end() ) {
+                out << " & ";
+                continue;
+            }
+            
+            out << " & ${\\bf q}_" << ite->second << "$";
+        }
+        out << "\\\\\\hline" << endl;
     }
     
     // Create the table footer

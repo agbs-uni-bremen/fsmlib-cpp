@@ -1014,10 +1014,11 @@ void Dfsm::calcPkTables() {
         pktblLst.push_back(pk);
     }
     
-#if 0
-    cout << "MINIMISE" << endl;
+#if 1
+    cout << "DFSM-Table" << endl;
+    cout << *dfsmTable << endl;
+    cout << "PK-Tables" << endl;
     for (auto p : pktblLst) {
-        
         cout << *p << endl;
     }
 #endif
