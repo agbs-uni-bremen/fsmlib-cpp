@@ -333,10 +333,10 @@ ostream & operator<<(ostream & out, const PkTable & pkTable)
             
             if ( ite == pkTable.s2c.end() ) {
                 out << " & ";
-                continue;
             }
-            
-            out << " & ${\\bf q}_" << ite->second << "$";
+            else {
+                out << " & ${\\bf q}_{" << ite->second << "}$";
+            }
         }
         out << "\\\\\\hline" << endl;
     }

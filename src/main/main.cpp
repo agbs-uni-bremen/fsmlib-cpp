@@ -42,7 +42,7 @@
 #include <stdio.h>
 #include <deque>
 
-#define RESOURCES_DIR "../../resources/"
+#define RESOURCES_DIR "../../../resources/"
 
 using namespace std;
 using namespace Json;
@@ -2717,7 +2717,7 @@ int main(int argc, char** argv)
     LOG("INFO") << "This is a debug build!" << std::endl;
 #endif
     
-#if 1
+#if 0
     test1();
     test2();
     test3();
@@ -2741,6 +2741,17 @@ int main(int argc, char** argv)
 
 #endif
     
+    
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>(string(RESOURCES_DIR) + "gillIn.txt",
+                                                                            string(RESOURCES_DIR) + "gillOut.txt",
+                                                                            string(RESOURCES_DIR) + "gillState.txt");
+    Dfsm d(string(RESOURCES_DIR) + string("gill.fsm"),pl,"gill");
+    d.toDot("gill");
      
+    
+    d.calcPkTables();
+    
+    
+    
 }
 
