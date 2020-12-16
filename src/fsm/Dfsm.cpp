@@ -1018,8 +1018,11 @@ void Dfsm::calcPkTables() {
     cout << "DFSM-Table" << endl;
     cout << *dfsmTable << endl;
     cout << "PK-Tables" << endl;
+    PkTable::counter = 0;
     for (auto p : pktblLst) {
+        PkTable::counter++;
         cout << *p << endl;
+        
     }
 #endif
     

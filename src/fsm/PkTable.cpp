@@ -13,6 +13,8 @@
 
 using namespace std;
 
+int PkTable::counter;
+
 PkTable::PkTable(const int numStates, const int maxInput, const shared_ptr<FsmPresentationLayer>& presentationLayer)
 	: s2c(numStates), maxInput(maxInput), presentationLayer(presentationLayer)
 {
@@ -283,7 +285,7 @@ string PkTable::getMembers(const int c) const
 
 ostream & operator<<(ostream & out, const PkTable & pkTable)
 {
-    
+
     // Create the table header
     out << endl << "\\begin{center}" << endl << "\\begin{tabular}{|c|c||";
     for (int i = 0; i <= pkTable.maxInput; ++i)
@@ -291,18 +293,18 @@ ostream & operator<<(ostream & out, const PkTable & pkTable)
         out << "c|";
     }
     out << "|";
-    
+
     for (int i = 0; i <= pkTable.maxInput; ++i)
     {
         out << "c|";
     }
-    
+
     out << "}\\hline\\hline" << endl;
     out << " & & \\multicolumn{" << pkTable.maxInput + 1;
     out << "}{|c||}{\\bf I2O} & \\multicolumn{" << pkTable.maxInput + 1;
-    out << "}{|c|}{\\bf I2P}" << endl << "\\\\\\hline" << endl;
-    out << "{\\bf [q]} & {\\bf q} ";
-    
+    out << "}{|c|}{$\\bf I2[P]_{" << PkTable::counter << "}$}" << endl << "\\\\\\hline" << endl;
+    out << "{$\\bf [q]_{" << PkTable::counter << "}$} & {\\bf q} ";
+
     for (int i = 0; i <= pkTable.maxInput; ++i)
     {
         out << " & " << i;
@@ -312,8 +314,8 @@ ostream & operator<<(ostream & out, const PkTable & pkTable)
         out << " & " << i;
     }
     out << "\\\\\\hline\\hline" << endl;
-    
-    
+
+
     // Output each table row
     for (unsigned int i = 0; i < pkTable.rows.size(); ++i)
     {
@@ -322,21 +324,18 @@ ostream & operator<<(ostream & out, const PkTable & pkTable)
             continue;
         }
         //out << pkTable.s2c.at(i)  << " & " << i << " " << *pkTable.rows.at(i);
-        
-        out << pkTable.s2c.at(i)  << " & " << i << " ";
-        for ( auto& x : pkTable.rows.at(i)->getIOMap() ) {
-            out << " & " << x.second;
+        out << "\\bf{\\underline " << pkTable.s2c.at(i)  << "} & " << i << " ";
+        for (auto& map : (*pkTable.rows.at(i)).getIOMap()) {
+            out << " & " << map.second;
         }
-        for ( auto& x : pkTable.rows.at(i)->getI2PMap() ) {
-            
-            S2CMap::const_iterator ite = pkTable.s2c.find(x.second);
-            
-            if ( ite == pkTable.s2c.end() ) {
+
+        for (auto& map : (*pkTable.rows.at(i)).getI2PMap()) {
+            S2CMap::const_iterator iterator = pkTable.s2c.find(map.second);
+            if (iterator == pkTable.s2c.end()) {
                 out << " & ";
+                continue;
             }
-            else {
-                out << " & ${\\bf q}_{" << ite->second << "}$";
-            }
+            out << " & \\bf{\\underline " << (*iterator).second << "}";
         }
         out << "\\\\\\hline" << endl;
     }

@@ -42,6 +42,10 @@ private:
      */
     std::shared_ptr<FsmPresentationLayer> presentationLayer;
 public:
+    
+    /** Static counter for numbering Pk tables in LaTeX output */
+    static int counter;
+    
     /**
      * Create an empty Pktable, with each row set to nullptr
      * @param numStates The number of rows (1 row = 1 state)
