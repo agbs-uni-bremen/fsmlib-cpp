@@ -1014,7 +1014,7 @@ void Dfsm::calcPkTables() {
         pktblLst.push_back(pk);
     }
     
-#if 1
+#if 0
     cout << "DFSM-Table" << endl;
     cout << *dfsmTable << endl;
     cout << "PK-Tables" << endl;
