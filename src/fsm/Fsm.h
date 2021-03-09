@@ -931,5 +931,14 @@ public:
      * same set of inputs.
      */
     bool isHarmonized() const;
+
+
+    /**
+     * Calculates a vector of states and input sequences (q,xs) is contained
+     * in the result if and only if q is a state of this FSM and is deterministically
+     * reachable (for possibly partial FSMs) via xs.
+     * Assumes that "this" is observable.
+     */
+    std::vector<std::pair<std::shared_ptr<FsmNode>, std::vector<int>>> calcDeterministicallyReachingSequences() const;
 };
 #endif //FSM_FSM_FSM_H_

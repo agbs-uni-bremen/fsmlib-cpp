@@ -4982,3 +4982,84 @@ bool Fsm::isHarmonized() const {
 }
 
 
+std::vector<std::pair<std::shared_ptr<FsmNode>, std::vector<int>>> Fsm::calcDeterministicallyReachingSequences() const {
+    std::vector<std::pair<std::shared_ptr<FsmNode>, std::vector<int>>> result;
+
+    // copy this FSM to perform modifications
+    Fsm m(*this);
+
+    // add sink state 
+    shared_ptr<FsmNode> sink = make_shared<FsmNode>(maxState+1, "bot", presentationLayer);
+    m.nodes.push_back(sink);
+    m.maxState=maxState+1;
+
+    // add transitions to the sink state for undefined inputs
+    for ( int n = 0; n <= m.maxState; ++n) {
+        auto node = m.nodes[n];
+        for (int x = 0; x <= m.maxInput; ++x) {
+            if (!node->hasTransition(x)) {
+                shared_ptr<FsmLabel> label = make_shared<FsmLabel>(x, 0, presentationLayer);
+                node->addTransition(make_shared<FsmTransition>(node, sink, label));
+            }
+        }
+
+        // set all transition-outputs to 0
+        for (auto transition : node->getTransitions()) {
+            shared_ptr<FsmLabel> label = make_shared<FsmLabel>(transition->getLabel()->getInput(), 0, presentationLayer);
+            transition->setLabel(label);
+        }        
+    }
+    m.maxOutput=0;
+
+    // make m observable, which effectively determinises the automaton obtained by dropping the outputs, as all outputs are 0
+    Fsm mObs = m.transformToObservableFSM();
+
+    // labels of states of mObs corresponding to singletons of states in "this"
+    unordered_map<int, string> node2AutomatonLabel;
+    for ( int n = 0; n <= maxState; ++n) {
+        auto node = m.nodes[n];
+        unordered_set<shared_ptr<FsmNode>> expectedLabel;
+        expectedLabel.insert(node);
+        string nodeName = labelString(expectedLabel);
+        node2AutomatonLabel[n] = nodeName;
+    }
+
+    
+    // get deterministically reaching sequences via depth first search,
+    // where a sequence reaching {q} in mObs d-reaches q in "this"
+    std::vector<std::shared_ptr<FsmNode>> todo;
+    std::vector<std::vector<int>> dReachingSequences;
+    todo.push_back(mObs.getInitialState());
+    dReachingSequences.push_back(std::vector<int> ());
+    while (!todo.empty()) {
+        std::shared_ptr<FsmNode> curNode = todo.back();
+        todo.pop_back();
+        std::vector<int> dReachingSequence = dReachingSequences.back();
+        dReachingSequences.pop_back();
+
+        if (curNode->getColor() == curNode->black) {
+            continue;
+        }
+        curNode->setColor(curNode->black);
+
+        // check if current node is a singleton
+        for ( int n = 0; n <= maxState; ++n) {
+            if (curNode->getName().compare(node2AutomatonLabel[n]) == 0) {
+                result.push_back(std::pair<std::shared_ptr<FsmNode>, std::vector<int>>(nodes[n], dReachingSequence));
+                break;
+            } 
+        }
+
+        for (auto transition : curNode->getTransitions()) {
+            todo.push_back(transition->getTarget());
+            std::vector<int> nextSeq(dReachingSequence);
+            nextSeq.push_back(transition->getLabel()->getInput());
+            dReachingSequences.push_back(nextSeq);
+        }
+        
+    }
+
+    return result;
+}
+
+
