@@ -9,6 +9,8 @@ set (FSM_TREES_SOURCES
         IOTreeContainer.h
 	OutputTree.cpp
 	OutputTree.h
+	InputTree.cpp
+	InputTree.h
 	TestSuite.cpp
 	TestSuite.h
 	Tree.cpp

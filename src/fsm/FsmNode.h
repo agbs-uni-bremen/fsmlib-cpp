@@ -16,6 +16,7 @@
 class FsmTransition;
 class FsmPresentationLayer;
 class OutputTree;
+class InputTree;
 class Tree;
 class OutputTrace;
 class InputTrace;
@@ -210,6 +211,23 @@ public:
 	*/
     InputTrace calcDistinguishingTrace(const std::shared_ptr<FsmNode>& otherNode, const std::vector<std::shared_ptr<OFSMTable>>& ofsmTblLst, const int maxInput, const int maxOutput);
 	bool isObservable() const;
+
+
+    /**
+     * @return All inputs defined in this node.
+     */
+    std::unordered_set<int> getDefinedInputs() const;
+
+    /**
+     * Checks whether this node and another node are r-distinguished (for possibly partial FSMs)
+     * by some set of input sequences.
+     * Assumes that both nodes are contained in observable FSMs
+     * @param otherNode The other node.
+     * @param w The set of input sequences.
+     * @return True if w r-distinguishes the nodes.
+     *         Otherwise false.
+     */
+    bool idRDistinguishedBy(const std::shared_ptr<FsmNode>& otherNode, const std::shared_ptr<InputTree>& w) const;
 
 	/**
 	 * Check if outgoing transitions of this node are deterministic

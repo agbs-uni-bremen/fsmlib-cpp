@@ -22,6 +22,7 @@
 #include "trees/TreeEdge.h"
 #include "trees/TreeNode.h"
 #include "trees/OutputTree.h"
+#include "trees/InputTree.h"
 #include "trees/Tree.h"
 #include "trees/TreeNode.h"
 #include "trees/IOListContainer.h"
@@ -981,4 +982,105 @@ void FsmNode::accept(FsmVisitor& v,
         }
     }
     
+}
+
+
+
+std::unordered_set<int> FsmNode::getDefinedInputs() const
+{
+    std::unordered_set<int> result;
+    for (const shared_ptr<FsmTransition>& t : transitions)
+    {
+        result.insert(t->getLabel()->getInput());
+    }
+        
+    return result;
+}
+
+bool FsmNode::idRDistinguishedBy(const std::shared_ptr<FsmNode>& otherNode, const std::shared_ptr<InputTree>& w) const {
+
+    unordered_set<int> thisDefinedInputs = getDefinedInputs();
+
+    // nodes are r(0)-distinguishable if their sets of defined inputs differ
+    if (thisDefinedInputs != otherNode->getDefinedInputs()) {
+        return true;
+    }
+
+    // nodes are r(1)-distinguished by an input on which they share no output
+    for (int x : w->getInputsAtRoot()) {
+        if (thisDefinedInputs.find(x) == thisDefinedInputs.end()) {
+            continue; // encountered an input not defined in either node, which
+                      // hence trivially has no shared response but is also not
+                      // useful in distinguishing the nodes as it cannot be 
+                      // practically applied -> it is hence discarded
+        }
+        std::unordered_set<int> thisOutputs;
+        for (auto output : getPossibleOutputs(x)) {
+            thisOutputs.insert(output->get().front());
+        }
+        
+        bool noSharedOutputs = true;
+        for (auto output : otherNode->getPossibleOutputs(x)) {
+            int y = output->get().front();
+            if (thisOutputs.find(y) != thisOutputs.end()) {
+                noSharedOutputs = false;
+                break;
+            }
+        }
+
+        if (noSharedOutputs) {
+            return true;
+        }
+    }
+
+    // nodes are r(k+1)-distinguishable if they share an input x such that any shared response y
+    // to x reaches a pair of states that are r(k)-distinguishable.
+    for (int x : w->getInputsAtRoot()) {
+        if (thisDefinedInputs.find(x) == thisDefinedInputs.end()) {
+            continue; 
+        }
+        std::unordered_set<int> thisOutputs;
+        for (auto output : getPossibleOutputs(x)) {
+            thisOutputs.insert(output->get().front());
+        }
+        
+        std::unordered_set<int> sharedOutputs;
+        for (auto output : otherNode->getPossibleOutputs(x)) {
+            int y = output->get().front();
+            if (thisOutputs.find(y) != thisOutputs.end()) {
+                sharedOutputs.insert(y);
+            }
+        }
+
+        bool distinguishesAllSharedOutputs = true;
+        for (int y : sharedOutputs) {
+            // as x is defined in both nodes (as the are not r(0)-distinguishable)
+            // and y is a shared output, both nodes must exhibit a transition for x/y
+            std::shared_ptr<FsmNode> thisTarget;
+            for (shared_ptr<FsmTransition> trans : transitions) {
+                if (trans->getLabel()->getInput() == x && trans->getLabel()->getOutput() == y) {
+                    thisTarget = trans->getTarget();
+                }
+            }
+            std::shared_ptr<FsmNode> otherTarget;
+            for (shared_ptr<FsmTransition> trans : otherNode->transitions) {
+                if (trans->getLabel()->getInput() == x && trans->getLabel()->getOutput() == y) {
+                    otherTarget = trans->getTarget();
+                }
+            }
+
+            if (! (thisTarget->idRDistinguishedBy(otherTarget,w->getSubtreeForInput(x)))) {
+                // the inputs of w following input x are not sufficient to r-distinguish 
+                // the nodes reached via x/y and hence input x need not be considered further
+                distinguishesAllSharedOutputs = false;
+                break;
+            }
+        }
+
+        if (distinguishesAllSharedOutputs) {
+            return true;
+        }
+    }
+
+    return false;
 }
