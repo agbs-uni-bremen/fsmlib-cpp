@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 #include <vector>
 #include <deque>
 #include <stdexcept>
@@ -27,6 +28,7 @@ class FsmPresentationLayer;
 class InputOutputTree;
 class Tree;
 class OutputTree;
+class InputTree;
 class TestSuite;
 class IOTreeContainer;
 class IOListContainer;
@@ -181,6 +183,18 @@ protected:
     int getNumberOfTotalTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
 
     std::vector<std::shared_ptr<FsmTransition>> getNonDeterministicTransitions() const;
+
+
+    /**
+     * Calculates a mapping from pairs of states to inputs and target sets that 
+     * represents the graph such that any contained pair of states (s1,s2) that
+     * maps to (x, tgts) can be r-distinguished by applying x and after x recursively
+     * applying the inputs obtained by applying the mapping to the targets.
+     * 
+     * If x is -1, then the states are already r(0)-distinguishably (they differ in
+     * their defined inputs) and no inputs needs to be applied.
+     */ 
+    std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::pair<int,std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>>> getRDistinguishingGraph() const;
 
 public:
     
@@ -940,5 +954,29 @@ public:
      * Assumes that "this" is observable.
      */
     std::vector<std::pair<std::shared_ptr<FsmNode>, std::vector<int>>> calcDeterministicallyReachingSequences() const;
+
+
+    /**
+     * Creates a mapping that maps each pair of r-distinguishable states to a
+     * set of input sequences that r-distinguishes them.
+     */ 
+    std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::shared_ptr<InputTree>> getRDistinguishingSets() const;
+    
 };
+
+namespace std
+{
+	template <>
+	struct hash<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>
+	{
+	public:
+		size_t operator()(const std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>> & p) const noexcept
+		{
+            auto h1 = std::hash<std::shared_ptr<FsmNode>>{}(p.first);
+            auto h2 = std::hash<std::shared_ptr<FsmNode>>{}(p.second);
+			return ((51 + h1) * 51 + h2);
+		}
+	};
+}
+
 #endif //FSM_FSM_FSM_H_

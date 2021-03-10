@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <fstream>
 #include <iostream>
+#include <functional>
 
 #include "fsm/Fsm.h"
 #include "fsm/FsmTransition.h"
@@ -33,6 +34,7 @@
 #include "utils/generic-equivalence-class-calculation.hpp"
 #include "trees/TestSuite.h"
 #include "trees/InputOutputTree.h"
+#include "trees/InputTree.h"
 #include "trees/IOTreeContainer.h"
 #include "fsm/IOTraceContainer.h"
 #include "interface/FsmPresentationLayer.h"
@@ -5063,3 +5065,152 @@ std::vector<std::pair<std::shared_ptr<FsmNode>, std::vector<int>>> Fsm::calcDete
 }
 
 
+
+
+std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::pair<int,std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>>> Fsm::getRDistinguishingGraph() const {
+
+    std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::pair<int,std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>>> result;
+
+    std::vector<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>> todo;
+    for (int i = 0; i < maxState; ++i) {
+        auto ni = nodes[i];
+        auto definedInputsI = ni->getDefinedInputs();
+
+        for (int j = i+1; j <= maxState; ++j) {
+            auto nj = nodes[j];
+
+            auto pair = std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>(ni,nj);
+
+            if (definedInputsI != nj->getDefinedInputs()) {
+                // nodes are r(0)-distinguishable if their sets of defined inputs differ
+                // thus no input needs to be applied (marked as -1)
+                result[pair] = std::pair<int,std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>>(-1,std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>());
+
+                // also add reversed pair
+                auto pairR = std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>(nj,ni);
+                result[pairR] = std::pair<int,std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>>(-1,std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>());
+            } else {
+                todo.push_back(pair);
+            }
+        }
+    }
+
+    bool reachedFixpoint = false;
+
+    while (!reachedFixpoint) {
+        // to be set to false again if result is updated in this iteration
+        reachedFixpoint = true;
+
+        std::vector<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>> todoNext;
+
+        for (auto nodePair : todo) {            
+
+            if (result.count(nodePair) == 1) {
+                // skip pairs that have already been added
+                continue;
+            }
+
+            auto n1 = nodePair.first;
+            auto n2 = nodePair.second;
+            
+            for (int x : n1->getDefinedInputs()) {
+                std::unordered_set<int> outputs1;
+                for (auto output : n1->getPossibleOutputs(x)) {
+                    outputs1.insert(output->get().front());
+                }
+                
+                std::unordered_set<int> sharedOutputs;
+                for (auto output : n2->getPossibleOutputs(x)) {
+                    int y = output->get().front();
+                    if (outputs1.find(y) != outputs1.end()) {
+                        sharedOutputs.insert(y);
+                    }
+                }
+
+                std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>> targets;
+
+                bool distinguishesAllSharedOutputs = true;
+                for (int y : sharedOutputs) {
+
+                    // as x is defined in both nodes (as the are in todo and hence not r(0)-distinguishable)
+                    // and y is a shared output, both nodes must exhibit a transition for x/y
+                    std::shared_ptr<FsmNode> t1;
+                    for (shared_ptr<FsmTransition> trans : n1->getTransitions()) {
+                        if (trans->getLabel()->getInput() == x && trans->getLabel()->getOutput() == y) {
+                            t1 = trans->getTarget();
+                        }
+                    }
+                    std::shared_ptr<FsmNode> t2;
+                    for (shared_ptr<FsmTransition> trans : n2->getTransitions()) {
+                        if (trans->getLabel()->getInput() == x && trans->getLabel()->getOutput() == y) {
+                            t2 = trans->getTarget();
+                        }
+                    }
+
+                    auto targetPair = std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>(t1,t2); 
+                    targets.insert(targetPair);
+
+                    if (result.count(targetPair) == 0) {
+                        distinguishesAllSharedOutputs = false;
+                        break;
+                    }
+                }
+
+                if (distinguishesAllSharedOutputs) {
+                    // the pair can be distinguished by applying x as first input
+                    result[nodePair] = std::pair<int,std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>>(x, targets);
+                    // also add reversed pair
+                    auto pairR = std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>(n2,n1);
+                    result[pairR] = std::pair<int,std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>>(x, targets);
+
+                    // result has been updated
+                    reachedFixpoint = false;
+                    break;
+                } else {
+                    todoNext.push_back(nodePair);
+                }
+            }
+        }
+        todo = todoNext;
+    }
+    return result;
+}
+
+
+
+std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::shared_ptr<InputTree>> Fsm::getRDistinguishingSets() const {
+    std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::shared_ptr<InputTree>> result;
+    std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::pair<int,std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>>> graph = getRDistinguishingGraph();
+    
+    auto pl = make_shared<FsmPresentationLayer>(*presentationLayer);
+    std::function<std::shared_ptr<InputTree>(std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>)> helper = [pl,graph,&helper](std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>> pair)->std::shared_ptr<InputTree> {
+        auto res = make_shared<InputTree>(pl);
+        auto entry = graph.find(pair);
+        int x = entry->second.first;
+        auto targets = entry->second.second;
+
+        if (x == -1) {
+            return res;
+        }
+
+        if (targets.empty()) {
+            res->addToRoot(std::vector<int> {x});
+        }
+
+        for (auto targetPair : targets) {
+            auto targetTree = helper(targetPair);
+            for (auto trace : targetTree->getInputTraces()) {
+                trace.prepend(std::vector<int> {x});   
+                res->addToRoot(trace.get());
+            }
+        }
+
+        return res;
+    };
+
+    for (auto entry : graph) {
+        result[entry.first] = helper(entry.first);
+    }
+
+    return result;
+}
