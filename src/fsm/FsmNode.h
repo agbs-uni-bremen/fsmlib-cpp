@@ -263,4 +263,36 @@ public:
     
 	friend bool operator==(FsmNode const & node1, FsmNode const & node2);
 };
+
+
+namespace std
+{
+	template <>
+	struct hash<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>
+	{
+	public:
+		size_t operator()(const std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>> & p) const noexcept
+		{
+            auto h1 = std::hash<std::shared_ptr<FsmNode>>{}(p.first);
+            auto h2 = std::hash<std::shared_ptr<FsmNode>>{}(p.second);
+			return ((51 + h1) * 51 + h2);
+		}
+	};
+
+    template <>
+	struct hash<std::unordered_set<std::shared_ptr<FsmNode>>>
+	{
+	public:
+		size_t operator()(const std::unordered_set<std::shared_ptr<FsmNode>> & set) const noexcept
+		{
+            size_t hash = 0;
+            for (auto elem : set) {
+                hash+= std::hash<std::shared_ptr<FsmNode>>{}(elem);
+            }
+			return hash;
+		}
+	};
+}
+
+
 #endif //FSM_FSM_FSMNODE_H_

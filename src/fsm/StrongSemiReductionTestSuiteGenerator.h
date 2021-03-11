@@ -25,6 +25,7 @@ class OutputTrace;
 class FsmPresentationLayer;
 class Tree;
 class InputTree;
+class OutputTree;
 class IOTreeContainer;
 class IOListContainer;
 class InputTrace;
@@ -38,6 +39,7 @@ protected:
 
     std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::pair<int,std::shared_ptr<std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>>>> rDistGraph;
     std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::shared_ptr<InputTree>> rDistTrees;
+    // NOTE: as we only consider input sequences and all targets of a d-reaching sequences for state q are q, we do not explicitly store V'
     std::unordered_map<std::shared_ptr<FsmNode>, std::vector<int>> dReachingSequences;
     std::unordered_set<std::unordered_set<std::shared_ptr<FsmNode>>> maximalRDistSets;
 
@@ -64,7 +66,7 @@ protected:
 
     /**
      * Calculates a vector of states and input sequences (q,xs) is contained
-     * in the result if and only if q is a state of this FSM and is deterministically
+     * in the result only if q is a state of this FSM and is deterministically
      * reachable (for possibly partial FSMs) via xs.
      * Assumes that "this" is observable.
      */
@@ -89,15 +91,25 @@ protected:
     void calcAllMaximalRDistinguishableSets();
 
     
+
+    
 public:
     
-    StrongSemiReductionTestSuiteGenerator(const Fsm& other, bool calculateAllMaximalRDistinguishableSets = false);
+    StrongSemiReductionTestSuiteGenerator(const std::shared_ptr<Fsm> other, bool calculateAllMaximalRDistinguishableSets = false);
 
     std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::shared_ptr<InputTree>> getRDistinguishingTrees() const;
     std::unordered_map<std::shared_ptr<FsmNode>, std::vector<int>> getDeterministicallyReachingSequences() const;
     std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::pair<int,std::shared_ptr<std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>>>> getRDistGraph() const;
     std::unordered_set<std::unordered_set<std::shared_ptr<FsmNode>>> getMaximalRDistinguishableSets();
-     
+
+
+    /**
+     * Calculate all tuples (S,rep) where S is a maximal pairwise r-distinguishable set of states of fsm,
+     * and rep = m - dr + 1, where dr is the number of d-reachable states in S.
+     */
+    std::vector<std::pair<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>,int>> getTerminationTuples(int m);
+
+    std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> calcTraversalSet(std::shared_ptr<FsmNode> node, int m);
 };
 
 

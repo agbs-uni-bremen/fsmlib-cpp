@@ -6,7 +6,6 @@
 
 // TODO: remove superfluous includes
 #include <chrono>
-#include <deque>
 #include <algorithm>
 #include <numeric>
 #include <regex>
@@ -37,6 +36,7 @@
 #include "trees/TestSuite.h"
 #include "trees/InputOutputTree.h"
 #include "trees/InputTree.h"
+#include "trees/OutputTree.h"
 #include "trees/IOTreeContainer.h"
 #include "fsm/IOTraceContainer.h"
 #include "interface/FsmPresentationLayer.h"
@@ -371,7 +371,7 @@ void StrongSemiReductionTestSuiteGenerator::calcAllMaximalRDistinguishableSets()
 }
 
 
-StrongSemiReductionTestSuiteGenerator::StrongSemiReductionTestSuiteGenerator(const Fsm& fsm, bool calculateAllMaximalRDistinguishableSets) : fsm(make_shared<Fsm>(fsm))
+StrongSemiReductionTestSuiteGenerator::StrongSemiReductionTestSuiteGenerator(const std::shared_ptr<Fsm> fsm, bool calculateAllMaximalRDistinguishableSets) : fsm(fsm)
 {
     calcDeterministicallyReachingSequences();
     calcRDistinguishingTrees();
@@ -397,4 +397,74 @@ std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>,
 
 std::unordered_set<std::unordered_set<std::shared_ptr<FsmNode>>> StrongSemiReductionTestSuiteGenerator::getMaximalRDistinguishableSets() {
     return maximalRDistSets;
+}
+
+std::vector<std::pair<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>,int>> StrongSemiReductionTestSuiteGenerator::getTerminationTuples(int m) {
+    std::vector<std::pair<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>,int>> result;
+
+    for (auto rdSet : maximalRDistSets) {
+        int dr = 0;
+        for (auto node : rdSet) {
+            if (dReachingSequences.count(node) != 0) {
+                ++ dr;
+            }
+        }
+        result.push_back(std::make_pair(make_shared<std::unordered_set<std::shared_ptr<FsmNode>>>(rdSet),m-dr+1));
+    }
+
+    return result;
+}
+
+
+std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> StrongSemiReductionTestSuiteGenerator::calcTraversalSet(std::shared_ptr<FsmNode> node, int m) {
+    std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> result;
+
+    std::vector<std::pair<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>,int>> terminationTuples = getTerminationTuples(m);
+    std::vector<int> initialMissingVisits;
+    for (unsigned int i = 0; i < terminationTuples.size(); ++i) {
+        initialMissingVisits.push_back(terminationTuples[i].second);
+    }
+
+    std::function<std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>>(std::shared_ptr<FsmNode>, std::vector<int>)> helper = [this,terminationTuples,&helper](std::shared_ptr<FsmNode> node, std::vector<int> missingVisits)->std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> {
+
+        std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> result;
+        std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>> terminatingSets;
+        for (unsigned int i = 0; i < missingVisits.size(); ++i) {
+            if (missingVisits[i] == 0) {
+                terminatingSets.insert(terminationTuples[i].first);
+            }
+        }
+
+        // terminate if all required visits have been performed for some set
+        if (!terminatingSets.empty()) {
+            IOTrace emptyTrace = IOTrace(InputTrace(fsm->getPresentationLayer()), OutputTrace(fsm->getPresentationLayer()), node);
+            std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>> singleEntry = std::make_pair(emptyTrace,terminatingSets);
+            result.push_back(singleEntry);
+            return result;
+        }
+
+        for (auto transition : node->getTransitions()) {
+
+            // update visits based on current target
+            std::vector<int> nextMissingVisits;
+            for (unsigned int i = 0; i < missingVisits.size(); ++i) {
+                if (terminationTuples[i].first->count(transition->getTarget()) == 0) {
+                    nextMissingVisits.push_back(missingVisits[i]);
+                } else {
+                    nextMissingVisits.push_back(missingVisits[i]-1);
+                }
+            }
+            auto targetResult = helper(transition->getTarget(), nextMissingVisits);
+            for (auto entry : targetResult) {
+                // prepend results for the transition target by the transitions IO
+                IOTrace curTrace = IOTrace(entry.first);
+                IOTrace transitionTrace = IOTrace(transition->getLabel()->getInput(), transition->getLabel()->getOutput(), fsm->getPresentationLayer());
+                curTrace.prepend(transitionTrace);
+                result.push_back(std::make_pair(curTrace,entry.second));
+            }
+        }
+        return result;    
+    };
+
+    return helper(node,initialMissingVisits);
 }
