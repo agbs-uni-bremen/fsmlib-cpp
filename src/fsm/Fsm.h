@@ -127,8 +127,6 @@ protected:
      */
     void readFsmFromDot (const std::string & fname, const std::string name = "");
     
-    std::string labelString(std::unordered_set<std::shared_ptr<FsmNode>>& lbl) const;
-    
     /**
      *  Return a random seed to be used for random generation
      * of FSMs by public methods createRandomFsm() and
@@ -182,19 +180,7 @@ protected:
     int getNumberOfNonDeterministicTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
     int getNumberOfTotalTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
 
-    std::vector<std::shared_ptr<FsmTransition>> getNonDeterministicTransitions() const;
-
-
-    /**
-     * Calculates a mapping from pairs of states to inputs and target sets that 
-     * represents the graph such that any contained pair of states (s1,s2) that
-     * maps to (x, tgts) can be r-distinguished by applying x and after x recursively
-     * applying the inputs obtained by applying the mapping to the targets.
-     * 
-     * If x is -1, then the states are already r(0)-distinguishably (they differ in
-     * their defined inputs) and no inputs needs to be applied.
-     */ 
-    std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::pair<int,std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>>> getRDistinguishingGraph() const;
+    std::vector<std::shared_ptr<FsmTransition>> getNonDeterministicTransitions() const;    
 
 public:
     
@@ -375,6 +361,7 @@ public:
     virtual int getMaxNodes() const;
     int getMaxInput() const;
     int getMaxOutput() const;
+    int getMaxState() const;
     std::vector<std::shared_ptr<FsmNode>> getNodes() const;
     std::shared_ptr<FsmNode> getNode(int id) const;
     std::shared_ptr<FsmPresentationLayer> getPresentationLayer() const;
@@ -946,21 +933,18 @@ public:
      */
     bool isHarmonized() const;
 
-
     /**
-     * Calculates a vector of states and input sequences (q,xs) is contained
-     * in the result if and only if q is a state of this FSM and is deterministically
-     * reachable (for possibly partial FSMs) via xs.
-     * Assumes that "this" is observable.
+     * Creates the name of a state in a powerset construction.
+     * @param lbl The set of nodes to create a name for.
+     * @return The name of a state created from the names of the states it contains.
      */
-    std::vector<std::pair<std::shared_ptr<FsmNode>, std::vector<int>>> calcDeterministicallyReachingSequences() const;
-
+    static std::string labelString(std::unordered_set<std::shared_ptr<FsmNode>>& lbl);
 
     /**
-     * Creates a mapping that maps each pair of r-distinguishable states to a
-     * set of input sequences that r-distinguishes them.
-     */ 
-    std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::shared_ptr<InputTree>> getRDistinguishingSets() const;
+     * Add a new node to this FSM.
+     * @param name The name of the node to add.
+     */
+    std::shared_ptr<FsmNode> addNode(const std::string & name);
     
 };
 
@@ -975,6 +959,20 @@ namespace std
             auto h1 = std::hash<std::shared_ptr<FsmNode>>{}(p.first);
             auto h2 = std::hash<std::shared_ptr<FsmNode>>{}(p.second);
 			return ((51 + h1) * 51 + h2);
+		}
+	};
+
+    template <>
+	struct hash<std::unordered_set<std::shared_ptr<FsmNode>>>
+	{
+	public:
+		size_t operator()(const std::unordered_set<std::shared_ptr<FsmNode>> & set) const noexcept
+		{
+            size_t hash = 0;
+            for (auto elem : set) {
+                hash+= std::hash<std::shared_ptr<FsmNode>>{}(elem);
+            }
+			return hash;
 		}
 	};
 }
