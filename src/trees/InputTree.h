@@ -100,7 +100,10 @@ public:
 	 */
 	std::vector<int> getInputsAtRoot() const;
 
-
+	/**
+ 	 * Get all maximal sequences applied in this tree after both sequences.
+	 */ 
+	std::shared_ptr<InputTree> sharedExtensions(const InputTrace& t1, const InputTrace& t2);
     
     virtual InputTree* _clone() const;
     std::shared_ptr<InputTree> Clone() const;

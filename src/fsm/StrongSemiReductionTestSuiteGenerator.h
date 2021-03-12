@@ -109,7 +109,35 @@ public:
      */
     std::vector<std::pair<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>,int>> getTerminationTuples(int m);
 
+    /**
+     * Generate the traversal set T(s,m).
+     */
     std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> calcTraversalSet(std::shared_ptr<FsmNode> node, int m);
+
+    /**
+     * Create a set W of input sequences that r-distinguishes the given states.
+     * If the inputs currently applied after both states are already r-distinguishing, then the returned set is empty.
+     * 
+     * TODO: use heuristic to choose an augmenting set that is small, rather than just using the pre-calculated r-distinguishing set
+     */
+    std::shared_ptr<InputTree> augmentToRDistSet(std::shared_ptr<FsmNode> n1, std::shared_ptr<FsmNode> n2, std::shared_ptr<InputTree> currentlyAppliedSequences);
+
+    /**
+     * Compute the initial test suite by extending for each d-reachable state s of fsm its d-reaching sequence with all inputs in Tr(s,m).
+     */ 
+    InputTree initialTestSuite(int m);
+
+    /**
+     * Updates the test suite for a given terminated pair.
+     * 
+     * Assumes that the testSuite already contains the result of initialTestSuite(m).
+     */
+    void updateTestSuite(const std::shared_ptr<FsmNode> node, const std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>& nextElementOfD, InputTree& currentTestSuite);
+
+    /**
+     * Generate an m-complete test suite for fsm.
+     */ 
+    InputTree generateTestSuite(int m);
 };
 
 

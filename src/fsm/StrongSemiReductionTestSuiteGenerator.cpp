@@ -430,7 +430,7 @@ std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered
         std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> result;
         std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>> terminatingSets;
         for (unsigned int i = 0; i < missingVisits.size(); ++i) {
-            if (missingVisits[i] == 0) {
+            if (missingVisits[i] <= 0) {
                 terminatingSets.insert(terminationTuples[i].first);
             }
         }
@@ -443,8 +443,7 @@ std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered
             return result;
         }
 
-        for (auto transition : node->getTransitions()) {
-
+        for (auto transition : node->getTransitions()) {            
             // update visits based on current target
             std::vector<int> nextMissingVisits;
             for (unsigned int i = 0; i < missingVisits.size(); ++i) {
@@ -454,6 +453,7 @@ std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered
                     nextMissingVisits.push_back(missingVisits[i]-1);
                 }
             }
+
             auto targetResult = helper(transition->getTarget(), nextMissingVisits);
             for (auto entry : targetResult) {
                 // prepend results for the transition target by the transitions IO
@@ -467,4 +467,207 @@ std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered
     };
 
     return helper(node,initialMissingVisits);
+}
+
+
+std::shared_ptr<InputTree> StrongSemiReductionTestSuiteGenerator::augmentToRDistSet(std::shared_ptr<FsmNode> n1, std::shared_ptr<FsmNode> n2, std::shared_ptr<InputTree> currentlyAppliedSequences) {
+    std::shared_ptr<InputTree> result = make_shared<InputTree>(fsm->getPresentationLayer());
+
+    // do nothing if the currently applied sequences are already sufficient to r-distinguish n1 and n2
+    if (n1->idRDistinguishedBy(n2,currentlyAppliedSequences)) {
+        return result;
+    } 
+
+    // TODO: currently uses no heuristic, just applied the pre-calculated r-dist set for n1 and n2
+    return rDistTrees[std::make_pair(n1,n2)];
+}
+
+
+InputTree StrongSemiReductionTestSuiteGenerator::initialTestSuite(int m) {
+    InputTree result(fsm->getPresentationLayer());
+
+    LOG("VERBOSE_2") << "initialTestSuite" << endl;
+
+    for (auto drEntry : dReachingSequences) {
+        auto node = drEntry.first;
+        auto v = drEntry.second;
+        result.addToRoot(v);
+
+        auto vTrace = InputTrace(v,fsm->getPresentationLayer());
+        auto travSet = calcTraversalSet(node,m);
+
+        LOG("VERBOSE_2") << "\tnode " << node->getId() << " with d-r sequence " << vTrace << endl;
+
+
+        IOListContainer cont(fsm->getPresentationLayer());
+        for (auto trEntry : travSet) {
+            cont.add(trEntry.first.getInputTrace());
+            LOG("VERBOSE_2") << "\t\tadding " << trEntry.first << endl;
+        }
+        result.addAfter(vTrace,cont);
+
+        LOG("VERBOSE_2") << "\tintermediate result: " << endl << result << endl;        
+    }
+    
+    LOG("VERBOSE_2") << "finished initialising test suite" << endl;
+
+    return result;
+}
+
+void StrongSemiReductionTestSuiteGenerator::updateTestSuite(const std::shared_ptr<FsmNode> node, const std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>& nextElementOfD, InputTree& currentTestSuite) {
+    // TODO: add heuristic to choose an S, currently the first one is always chosen
+    auto trace = nextElementOfD.first;
+    auto rdSet = *nextElementOfD.second.cbegin();
+    
+    auto vTrace = InputTrace(dReachingSequences[node],fsm->getPresentationLayer());
+
+    LOG("VERBOSE_2") << "update for node " << node->getId() << " (d-reached by " << vTrace << "), traversal-trace " << trace << " and set { ";
+    for (auto n : *rdSet) { LOG("VERBOSE_2") << n->getId() << " "; }
+    LOG("VERBOSE_2") << "}" << endl;
+
+    // TODO: maybe pre-calculate
+    std::unordered_set<std::shared_ptr<FsmNode>> drrdNodes; // nodes in the rdSet that are also d-reachable
+    LOG("VERBOSE_2") << "\tdrrdNodes are { "; 
+    for (auto drEntry : dReachingSequences) {  
+        if (rdSet->count(drEntry.first) != 0) {
+            LOG("VERBOSE_2") << drEntry.first->getId() << " ";
+            drrdNodes.insert(drEntry.first);
+        }
+    }
+    LOG("VERBOSE_2") << "}" << endl;
+
+    // check all pairs of prefixes of trace and the statecover
+    // first consider all prefixes of trace against its proper prefixes and against the state cover
+    // note: prefixes of trace need to be applied AFTER the d-reaching sequence of node
+    auto prefixes = trace.getPrefixes();
+    prefixes.push_back(IOTrace(fsm->getPresentationLayer())); // add empty sequence to the prefix list
+    for (unsigned int i = 0; i < prefixes.size(); ++i) {
+        auto trace1 = prefixes[i];  
+        InputTrace preTrace1(trace1.getInputTrace());
+        preTrace1.prepend(vTrace);      
+
+        // TODO: pre-compute targets
+        auto target1 = *node->after(trace1).cbegin(); // assumes that the trace is in the language of node
+        LOG("VERBOSE_2") << "\tcheck trace1 " << trace1 << " reaching " << target1->getId() << " (pre-trace: " << preTrace1 << ")" << endl;
+        if (rdSet->count(target1) == 0) {
+            LOG("VERBOSE_2") << "\t\treaches non-rd target" << endl;   
+            continue; // skip transitions that reach states not in the rdSet 
+        }; 
+
+        for (unsigned int j = i+1; j < prefixes.size(); ++j) {
+            auto trace2 = prefixes[j];
+            auto target2 = *node->after(trace2).cbegin();
+            InputTrace preTrace2(trace2.getInputTrace());
+            preTrace2.prepend(vTrace);
+            LOG("VERBOSE_2") << "\tagainst trace2 " << trace2 << " reaching " << target2->getId() << " (pre-trace: " << preTrace2 << ")" << endl;
+            if (target1 == target2 || rdSet->count(target2) == 0) {
+                LOG("VERBOSE_2") << "\t\treaches same target as trace1 or a non-rd target" << endl;
+                continue;
+            }
+
+            auto sharedTraceExtensions = currentTestSuite.sharedExtensions(preTrace1, preTrace2);
+            LOG("VERBOSE_2") << "\t\tshared extensions in current test suite:" << endl;
+            LOG("VERBOSE_2") << *sharedTraceExtensions;
+
+            auto testSuiteExtension = augmentToRDistSet(target1, target2, sharedTraceExtensions);
+            LOG("VERBOSE_2") << "\t\textension to be applied after both traces:" << endl;
+            LOG("VERBOSE_2") << *testSuiteExtension;
+
+            IOListContainer cont(fsm->getPresentationLayer());
+            for (auto ext : testSuiteExtension->getInputTraces()) {
+                cont.add(ext);
+            }
+            currentTestSuite.addAfter(preTrace1,cont);
+            currentTestSuite.addAfter(preTrace2,cont);
+
+            LOG("VERBOSE_2") << "\tintermediate result: " << endl << currentTestSuite << endl;
+        }
+
+        for (auto drrdNode : drrdNodes) {
+            auto drTrace = InputTrace(dReachingSequences[drrdNode],fsm->getPresentationLayer());
+            LOG("VERBOSE_2") << "\tagainst d-r r-d node " << drrdNode->getId() << " with d-r sequence " << drTrace << endl;
+
+            if (target1 == drrdNode) {
+                LOG("VERBOSE_2") << "\t\tis target of trace1" << endl;
+                continue;
+            }            
+
+            auto sharedTraceExtensions = currentTestSuite.sharedExtensions(preTrace1, drTrace);
+            LOG("VERBOSE_2") << "\t\tshared extensions in current test suite:" << endl;
+            LOG("VERBOSE_2") << *sharedTraceExtensions;
+
+            auto testSuiteExtension = augmentToRDistSet(target1, drrdNode, sharedTraceExtensions);
+            LOG("VERBOSE_2") << "\t\textension to be applied after both traces:" << endl;
+            LOG("VERBOSE_2") << *testSuiteExtension;
+
+            IOListContainer cont(fsm->getPresentationLayer());
+            for (auto ext : testSuiteExtension->getInputTraces()) {
+                cont.add(ext);
+            }
+            currentTestSuite.addAfter(preTrace1,cont);
+            currentTestSuite.addAfter(drTrace,cont);
+
+            LOG("VERBOSE_2") << "\tintermediate result: " << endl << currentTestSuite << endl;
+        }
+    }
+
+    // second consider pairs of sequences in the state cover
+    // translating drrdNodes to a vector to avoid mirrored comparisons
+    std::vector<std::shared_ptr<FsmNode>> drrdNodesVector;
+    for (auto drrdNode : drrdNodes) {
+        drrdNodesVector.push_back(drrdNode);
+    }
+    for (unsigned int i = 0; i < drrdNodesVector.size()-1; ++i) {
+        auto drrdNode1 = drrdNodesVector[i];
+        auto drTrace1 = InputTrace(dReachingSequences[drrdNode1],fsm->getPresentationLayer());
+        LOG("VERBOSE_2") << "\tcheck d-r node " << drrdNode1->getId() << " with d-r sequence " << drTrace1 << endl;
+
+        for (unsigned int j = i+1; j < drrdNodesVector.size(); ++j) {
+            auto drrdNode2 = drrdNodesVector[j];
+            auto drTrace2 = InputTrace(dReachingSequences[drrdNode2],fsm->getPresentationLayer());
+            LOG("VERBOSE_2") << "\tagainst d-r node " << drrdNode2->getId() << " with d-r sequence " << drTrace2 << endl;
+
+            if (drrdNode1 == drrdNode2) {
+                LOG("VERBOSE_2") << "\t\tis same as drrdNode1" << endl;
+                continue;
+            }            
+
+            auto sharedTraceExtensions = currentTestSuite.sharedExtensions(drTrace1, drTrace2);
+            LOG("VERBOSE_2") << "\t\tshared extensions in current test suite:" << endl;
+            LOG("VERBOSE_2") << *sharedTraceExtensions;
+
+            auto testSuiteExtension = augmentToRDistSet(drrdNode1, drrdNode2, sharedTraceExtensions);
+            LOG("VERBOSE_2") << "\t\textension to be applied after both traces:" << endl;
+            LOG("VERBOSE_2") << *testSuiteExtension;
+
+            IOListContainer cont(fsm->getPresentationLayer());
+            for (auto ext : testSuiteExtension->getInputTraces()) {
+                cont.add(ext);
+            }
+            currentTestSuite.addAfter(drTrace1,cont);
+            currentTestSuite.addAfter(drTrace2,cont);
+
+            LOG("VERBOSE_2") << "\tintermediate result: " << endl << currentTestSuite << endl;
+        }
+    }
+}
+
+
+InputTree StrongSemiReductionTestSuiteGenerator::generateTestSuite(int m) {
+    InputTree ts = initialTestSuite(m);        
+
+    // for all d-reachable states s ...
+    for (auto drEntry : dReachingSequences) {
+        auto node = drEntry.first;
+        auto travSet = calcTraversalSet(node,m);
+
+        // ... and all (s,trace,rdSets) in Tr(s,m) ...
+        for (auto trEntry : travSet) {
+
+            // ... update the test suite via on-the-fly extension with r-distinguishing sets
+            updateTestSuite(node, trEntry, ts);
+        }
+    }
+    
+    return ts;
 }

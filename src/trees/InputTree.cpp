@@ -156,3 +156,11 @@ std::vector<int> InputTree::getInputsAtRoot() const{
     }
     return inputs;
 }
+
+std::shared_ptr<InputTree> InputTree::sharedExtensions(const InputTrace& t1, const InputTrace& t2) {
+    auto nodeAfterT1 = this->getSubTree(t1.get());
+    auto nodeAfterT2 = this->getSubTree(t2.get());
+    auto intersectionNode = nodeAfterT1->getIntersectionNode(nodeAfterT2);
+
+    return make_shared<InputTree>(intersectionNode,presentationLayer);
+}
