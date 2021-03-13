@@ -95,7 +95,17 @@ protected:
     
 public:
     
-    StrongSemiReductionTestSuiteGenerator(const std::shared_ptr<Fsm> other, bool calculateAllMaximalRDistinguishableSets = false);
+    /**
+     * Create a new generator for complete test suites for strong-semi-reduction against
+     * a given observable, possibly partial, possibly nondeterministic FSM.
+     * 
+     * @param fsm The FSM to generate test suites for.
+     * @param calculateAllMaximalRDistinguishableSets If 'true', then all maximal sets of pairwise 
+     *                                                r-distinguishable states of the FSM are computed.
+     *                                                Otherwise for each state of the FSM only a single
+     *                                                such set is computed.
+     */
+    StrongSemiReductionTestSuiteGenerator(const std::shared_ptr<Fsm> fsm, bool calculateAllMaximalRDistinguishableSets = false);
 
     std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::shared_ptr<InputTree>> getRDistinguishingTrees() const;
     std::unordered_map<std::shared_ptr<FsmNode>, std::vector<int>> getDeterministicallyReachingSequences() const;

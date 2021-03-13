@@ -15,6 +15,7 @@
 #include <fstream>
 #include <iostream>
 #include <functional>
+#include <queue>
 
 #include "fsm/StrongSemiReductionTestSuiteGenerator.h"
 #include "fsm/Fsm.h"
@@ -58,6 +59,7 @@ void StrongSemiReductionTestSuiteGenerator::calcDeterministicallyReachingSequenc
 
     // add transitions to the sink state for undefined inputs
     for ( auto node : m.getNodes()) {
+        node->setColor(node->white); // set color to white for later search
         for (int x = 0; x <= m.getMaxInput(); ++x) {
             if (!node->hasTransition(x)) {
                 shared_ptr<FsmLabel> label = make_shared<FsmLabel>(x, 0, fsm->getPresentationLayer());
@@ -86,17 +88,17 @@ void StrongSemiReductionTestSuiteGenerator::calcDeterministicallyReachingSequenc
         node2AutomatonLabel[n] = nodeName;
     }
         
-    // get deterministically reaching sequences via depth first search,
+    // get deterministically reaching sequences via breadth first search,
     // where a sequence reaching {q} in mObs d-reaches q in fsm
-    std::vector<std::shared_ptr<FsmNode>> todo;
-    std::vector<std::vector<int>> prevSequences;
-    todo.push_back(mObs.getInitialState());
-    prevSequences.push_back(std::vector<int> ());
+    std::queue<std::shared_ptr<FsmNode>> todo;
+    std::queue<std::vector<int>> prevSequences;
+    todo.push(mObs.getInitialState());
+    prevSequences.push(std::vector<int> ());
     while (!todo.empty()) {
-        std::shared_ptr<FsmNode> curNode = todo.back();
-        todo.pop_back();
-        std::vector<int> dReachingSequence = prevSequences.back();
-        prevSequences.pop_back();
+        std::shared_ptr<FsmNode> curNode = todo.front();
+        todo.pop();
+        std::vector<int> dReachingSequence = prevSequences.front();
+        prevSequences.pop();
 
         if (curNode->getColor() == curNode->black) {
             continue;
@@ -112,10 +114,10 @@ void StrongSemiReductionTestSuiteGenerator::calcDeterministicallyReachingSequenc
         }
 
         for (auto transition : curNode->getTransitions()) {
-            todo.push_back(transition->getTarget());
+            todo.push(transition->getTarget());
             std::vector<int> nextSeq(dReachingSequence);
             nextSeq.push_back(transition->getLabel()->getInput());
-            prevSequences.push_back(nextSeq);
+            prevSequences.push(nextSeq);
         }
         
     }
