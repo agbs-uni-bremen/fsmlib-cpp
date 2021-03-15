@@ -254,6 +254,9 @@ public:
      values are 0..maxInput
      @param maxOutput maximal value of (integer) output alphabet - admissible
      values are 0..maxOutput
+     @param lst The list of nodes to create the Fsm from.
+            If this list is empty, then a single state without transitions is
+            created as the initial state of the Fsm.
      */
     Fsm(const std::string & fsmName,
         const int maxInput,
@@ -314,6 +317,19 @@ public:
                     const bool& minimal,
                     const bool& observable,
                     const unsigned& seed = 0);
+
+
+    /**
+     * Generate an observable, possibly partial and possibly non-deterministic FSM.
+     */
+    static std::shared_ptr<Fsm>
+    createRandomOPFSM(const std::string & fsmName,
+                    const int maxInput,
+                    const int maxOutput,
+                    const int maxState,
+                    const std::shared_ptr<FsmPresentationLayer>& presentationLayer,
+                    const int transitionChancePercent,
+                    unsigned& seed);                    
 
     /**
      *  Create a mutant of the FSM, producing output faults
@@ -894,6 +910,16 @@ public:
      * @return true if FSM is deterministic
      */
     bool isDeterministic() const;
+
+
+    /**
+     * Generate all maximal length responses of this node to a given input trace,
+     * where a response is an IO trace in the language of this node whose input 
+     * portion is a prefix of the input trace.
+     */
+    std::vector<IOTrace> getResponses(const InputTrace& input) const;
+    std::vector<IOTrace> getResponses(std::deque<int>& input) const;
+
     
     
     void setPresentationLayer(const std::shared_ptr<FsmPresentationLayer>& ppresentationLayer);
@@ -945,6 +971,23 @@ public:
      * @param name The name of the node to add.
      */
     std::shared_ptr<FsmNode> addNode(const std::string & name);
+
+    /**
+     * Returns true if and only if this Fsm is a strong semi-reduction of the other Fsm.
+     */
+    bool isStrongSemiReductionOf(Fsm& other);
+
+    /**
+     * Returns true if the given trace is contained in the language of this Fsm.
+     * Assumes that this Fsm is observable.
+     */
+    bool exhibitsBehaviour(const IOTrace& trace) const;
+
+    /**
+     * Returns true if and only if this fsm passes a test suite for
+     * strong semi-reduction against a given specification.
+     */
+    bool passesStrongSemiReductionTestSuite(Fsm& spec, InputTree& testSuite);
     
 };
 

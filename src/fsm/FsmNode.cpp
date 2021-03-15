@@ -1084,3 +1084,35 @@ bool FsmNode::idRDistinguishedBy(const std::shared_ptr<FsmNode>& otherNode, cons
 
     return false;
 }
+
+bool FsmNode::exhibitsBehaviour(std::deque<int>& inputs, std::deque<int>& outputs) const {
+    if (inputs.empty()) return true;
+
+    int x = inputs.front();
+    inputs.pop_front();
+    int y = outputs.front();
+    outputs.pop_front();
+
+    for (auto transition : transitions) {
+        if (transition->getLabel()->getInput() == x 
+            && transition->getLabel()->getOutput() == y ) {
+            
+            return transition->getTarget()->exhibitsBehaviour(inputs,outputs);
+        }
+    }
+
+    return false;
+}
+
+bool FsmNode::exhibitsBehaviour(const IOTrace& trace) const {
+    std::deque<int> inputs;
+    std::deque<int> outputs;
+
+    for (auto x : trace.getInputTrace().get()) {
+        inputs.push_back(x);
+    }
+    for (auto y : trace.getOutputTrace().get()) {
+        outputs.push_back(y);
+    }
+    return exhibitsBehaviour(inputs,outputs);
+}

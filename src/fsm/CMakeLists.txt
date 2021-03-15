@@ -52,6 +52,8 @@ set (FSM_FSM_SOURCES
   generalized-h-method.hpp
   StrongSemiReductionTestSuiteGenerator.cpp
   StrongSemiReductionTestSuiteGenerator.h
+  FsmEnumerator.cpp
+  FsmEnumerator.h
 )
 
 add_library (fsm-fsm OBJECT ${FSM_FSM_SOURCES})

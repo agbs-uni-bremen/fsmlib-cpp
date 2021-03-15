@@ -608,9 +608,13 @@ characterisationSet(nullptr),
 minimal(Maybe),
 presentationLayer(presentationLayer)
 {
-    nodes.insert(nodes.end(), lst.begin(), lst.end());
-    // reset all nodes as 'white' and 'unvisited'
+    if (lst.size() > 0) {
+        nodes.insert(nodes.end(), lst.begin(), lst.end());
+    } else {
+        addNode("Init");
+    }
     
+    // reset all nodes as 'white' and 'unvisited'
     for ( auto n : nodes ) {
         n->setColor(FsmNode::white);
         n->setUnvisited();
@@ -4993,4 +4997,171 @@ std::shared_ptr<FsmNode> Fsm::addNode(const std::string & name) {
     nodes.push_back(newNode);
     ++maxState;
     return newNode;
+}
+
+
+std::vector<IOTrace> Fsm::getResponses(std::deque<int>& input) const {
+    
+    std::function<std::vector<IOTrace>(std::shared_ptr<FsmNode>,std::deque<int>)> helper = [this,&helper](std::shared_ptr<FsmNode>node, std::deque<int> inputs)->std::vector<IOTrace> {
+        std::vector<IOTrace> result;
+        // empty input sequence
+        if (inputs.empty()) {
+            IOTrace trace(presentationLayer);
+            trace.setTargetNode(node);
+            result.push_back(trace);
+            return result;
+        }
+
+        int x = inputs.front();
+        inputs.pop_front();
+
+        // undefined input
+        if (node->getDefinedInputs().count(x) == 0) {
+            IOTrace trace(presentationLayer);
+            trace.setTargetNode(node);
+            result.push_back(trace);
+            return result;
+        }
+
+        for (auto transition : node->getTransitions()) {
+            if (transition->getLabel()->getInput() != x) continue;
+
+            int y = transition->getLabel()->getOutput();
+            IOTrace xyTrace(x,y,presentationLayer);
+            std::vector<IOTrace> targetResponses = helper(transition->getTarget(), inputs);
+            for (auto response : targetResponses) {
+                response.prepend(xyTrace);
+                result.push_back(response);
+            }
+        }
+
+        return result;
+    };
+
+    return helper(getInitialState(), input);
+}
+
+std::vector<IOTrace> Fsm::getResponses(const InputTrace& input) const {
+    std::deque<int> deque;
+
+    for (auto x : input.get()) {
+        deque.push_back(x);
+    }
+    return getResponses(deque);
+}
+
+bool Fsm::exhibitsBehaviour(const IOTrace& trace) const {
+    return getInitialState()->exhibitsBehaviour(trace);
+}
+
+
+bool Fsm::isStrongSemiReductionOf(Fsm& other) {
+    // create intersection Fsm
+    auto inter = intersect(other);
+
+    // for each state of inter check that the defined inputs of both states
+    // coincide and that some transition exists for each shared defined input
+    for (auto node : inter.getNodes()) {
+        auto thisNode = node->getPair()->first;
+        auto otherNode = node->getPair()->second;
+        
+        auto thisInputs = thisNode->getDefinedInputs();
+        auto otherInputs = otherNode->getDefinedInputs();
+        auto interInputs = node->getDefinedInputs();
+        
+        if (thisInputs != otherInputs) return false;
+
+        if (thisInputs != interInputs) return false;
+
+        // transitions x/y are only allowed in other if they are possible in this
+        for (auto thisTransition : thisNode->getTransitions()) {
+            if (! otherNode->hasTransition(thisTransition->getLabel()->getInput(), thisTransition->getLabel()->getOutput()))
+                return false;
+        }
+    }
+
+    return true;
+}
+
+bool Fsm::passesStrongSemiReductionTestSuite(Fsm& spec, InputTree& testSuite) {
+
+    for (auto test : testSuite.getInputTraces()) {
+        auto responses = getResponses(test);
+
+        for (auto response : responses) {
+            // check if response is in L(spec)
+            if (! spec.exhibitsBehaviour(response)) {
+                return false;
+            }
+
+            // check that the targets of response in this and spec 
+            // have the same defined inputs
+            auto targets = spec.getInitialState()->after(response);
+            // as observability is assumed, we simply pick the first state in the
+            // set of targets as the target of the response in spec
+            auto specTarget = *targets.cbegin();
+            auto thisTarget = response.getTargetNode();
+
+            if (specTarget->getDefinedInputs() != thisTarget->getDefinedInputs()) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+
+std::shared_ptr<Fsm> Fsm:: createRandomOPFSM(const std::string & fsmName,
+                                             const int maxInput,
+                                             const int maxOutput,
+                                             const int maxState,
+                                             const std::shared_ptr<FsmPresentationLayer>& presentationLayer,
+                                             const int transitionChancePercent,
+                                             unsigned& seed) 
+{
+    if ( seed == 0 ) {
+        seed = getRandomSeed();
+    }
+    srand(seed);
+
+    std::vector<std::shared_ptr<FsmNode>> nodes;
+    for (int i = 0; i <= maxState; ++i) {
+        nodes.push_back(std::make_shared<FsmNode>(i,presentationLayer));
+    }
+
+    for (int i = 0; i <= maxState; ++i) {
+        for (int x = 0; x <= maxInput; ++x) {
+            for (int y = 0; y <= maxOutput; ++y) {
+                
+                if (rand() % 101 > transitionChancePercent) continue;
+                
+                int tgt = rand() % (maxState + 1);
+                auto label = std::make_shared<FsmLabel>(x,y,presentationLayer);
+                auto transition = std::make_shared<FsmTransition>(nodes[i], nodes[tgt], label);
+                nodes[i]->addTransition(transition);
+            }
+        }
+    }
+    auto fsm = make_shared<Fsm>(fsmName,maxInput,maxOutput,nodes,presentationLayer);
+
+    std::vector<std::shared_ptr<FsmNode>> unreachableNodes;
+    fsm->removeUnreachableNodes(unreachableNodes);
+    if (!unreachableNodes.empty()) {
+        // try again, but increase seed if it was fixed
+        ++seed;
+        return createRandomOPFSM(fsmName, maxInput, maxOutput, maxState, presentationLayer, transitionChancePercent, seed);
+    }
+
+    fsm->transformToObservableFSM();
+    size_t expectedSize = maxState+1;
+    if (fsm->getNodes().size() < expectedSize) {
+        // try again, but increase seed if it was fixed
+        ++seed;
+        return createRandomOPFSM(fsmName, maxInput, maxOutput, maxState, presentationLayer, transitionChancePercent, seed);
+    }
+
+
+    return fsm;
+    
 }
