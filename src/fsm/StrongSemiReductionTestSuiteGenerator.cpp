@@ -418,8 +418,8 @@ std::vector<std::pair<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode
 }
 
 
-std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> StrongSemiReductionTestSuiteGenerator::calcTraversalSet(std::shared_ptr<FsmNode> node, int m) {
-    std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> result;
+std::vector<std::pair<IOTrace, std::vector<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> StrongSemiReductionTestSuiteGenerator::calcTraversalSet(std::shared_ptr<FsmNode> node, int m) {
+    std::vector<std::pair<IOTrace, std::vector<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> result;
 
     std::vector<std::pair<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>,int>> terminationTuples = getTerminationTuples(m);
     std::vector<int> initialMissingVisits;
@@ -427,20 +427,20 @@ std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered
         initialMissingVisits.push_back(terminationTuples[i].second);
     }
 
-    std::function<std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>>(std::shared_ptr<FsmNode>, std::vector<int>)> helper = [this,terminationTuples,&helper](std::shared_ptr<FsmNode> node, std::vector<int> missingVisits)->std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> {
+    std::function<std::vector<std::pair<IOTrace, std::vector<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>>(std::shared_ptr<FsmNode>, std::vector<int>)> helper = [this,terminationTuples,&helper](std::shared_ptr<FsmNode> node, std::vector<int> missingVisits)->std::vector<std::pair<IOTrace, std::vector<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> {
 
-        std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> result;
-        std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>> terminatingSets;
+        std::vector<std::pair<IOTrace, std::vector<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> result;
+        std::vector<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>> terminatingSets;
         for (unsigned int i = 0; i < missingVisits.size(); ++i) {
             if (missingVisits[i] <= 0) {
-                terminatingSets.insert(terminationTuples[i].first);
+                terminatingSets.push_back(terminationTuples[i].first);
             }
         }
 
         // terminate if all required visits have been performed for some set
         if (!terminatingSets.empty()) {
             IOTrace emptyTrace = IOTrace(InputTrace(fsm->getPresentationLayer()), OutputTrace(fsm->getPresentationLayer()), node);
-            std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>> singleEntry = std::make_pair(emptyTrace,terminatingSets);
+            std::pair<IOTrace, std::vector<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>> singleEntry = std::make_pair(emptyTrace,terminatingSets);
             result.push_back(singleEntry);
             return result;
         }
@@ -516,7 +516,7 @@ InputTree StrongSemiReductionTestSuiteGenerator::initialTestSuite(int m) {
     return result;
 }
 
-void StrongSemiReductionTestSuiteGenerator::updateTestSuite(const std::shared_ptr<FsmNode> node, const std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>& nextElementOfD, InputTree& currentTestSuite) {
+void StrongSemiReductionTestSuiteGenerator::updateTestSuite(const std::shared_ptr<FsmNode> node, const std::pair<IOTrace, std::vector<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>& nextElementOfD, InputTree& currentTestSuite) {
     // TODO: add heuristic to choose an S, currently the first one is always chosen
     auto trace = nextElementOfD.first;
     auto rdSet = *nextElementOfD.second.cbegin();

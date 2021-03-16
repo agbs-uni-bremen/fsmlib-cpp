@@ -122,7 +122,7 @@ public:
     /**
      * Generate the traversal set T(s,m).
      */
-    std::vector<std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> calcTraversalSet(std::shared_ptr<FsmNode> node, int m);
+    std::vector<std::pair<IOTrace, std::vector<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> calcTraversalSet(std::shared_ptr<FsmNode> node, int m);
 
     /**
      * Create a set W of input sequences that r-distinguishes the given states.
@@ -142,7 +142,7 @@ public:
      * 
      * Assumes that the testSuite already contains the result of initialTestSuite(m).
      */
-    void updateTestSuite(const std::shared_ptr<FsmNode> node, const std::pair<IOTrace, std::unordered_set<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>& nextElementOfD, InputTree& currentTestSuite);
+    void updateTestSuite(const std::shared_ptr<FsmNode> node, const std::pair<IOTrace, std::vector<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>& nextElementOfD, InputTree& currentTestSuite);
 
     /**
      * Generate an m-complete test suite for fsm.

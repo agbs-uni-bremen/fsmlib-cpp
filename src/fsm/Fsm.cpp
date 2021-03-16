@@ -7,6 +7,7 @@
 #include <chrono>
 #include <deque>
 #include <algorithm>
+#include <random>
 #include <numeric>
 #include <regex>
 #include <math.h>
@@ -5165,3 +5166,59 @@ std::shared_ptr<Fsm> Fsm:: createRandomOPFSM(const std::string & fsmName,
     return fsm;
     
 }
+
+
+
+std::shared_ptr<Fsm> Fsm::createLessDefinedFsm(const std::string& fsmName,
+                                               unsigned numOfRemovedInputs,
+                                               const unsigned seed,
+                                               const std::shared_ptr<FsmPresentationLayer>& pLayer) const
+{
+    if ( seed == 0 ) {
+        unsigned int s = getRandomSeed();
+        srand(s);
+    }
+    else {
+        srand(seed);
+    }
+
+    auto fsm = make_shared<Fsm>(*this);
+    std::vector<std::shared_ptr<FsmNode>> nodesWithInputs;
+    for (auto node : fsm->getNodes()) {
+        if (node->getTransitions().size() > 0) 
+            nodesWithInputs.push_back(node);
+    }
+    std::mt19937 rng(rand());
+    std::shuffle(std::begin(nodesWithInputs), std::end(nodesWithInputs), rng);
+
+    
+    unsigned removedInputs = 0;
+    while (removedInputs < numOfRemovedInputs && !nodesWithInputs.empty()) {
+        ++removedInputs;
+        auto node = nodesWithInputs.back();
+        nodesWithInputs.pop_back();
+
+        auto nodeTransitions = node->getTransitions();
+        auto deletionIndex = rand() % nodeTransitions.size();
+        auto inputToDelete = nodeTransitions[deletionIndex]->getLabel()->getInput();
+        for (auto transition : nodeTransitions) {
+            if (transition->getLabel()->getInput() == inputToDelete)
+                node->removeTransition(transition);
+        }
+
+        // re-insert the node only if it still has defined inputs
+        if (node->getTransitions().empty()) 
+            continue;
+        if (nodesWithInputs.empty()) {
+            nodesWithInputs.push_back(node);
+            continue;
+        }
+        
+        auto swapIndex = rand() % nodesWithInputs.size();
+        auto tmp = nodesWithInputs[swapIndex];
+        nodesWithInputs[swapIndex] = node;
+        nodesWithInputs.push_back(tmp);
+    }
+
+    return fsm;
+}      

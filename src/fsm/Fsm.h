@@ -321,6 +321,23 @@ public:
 
     /**
      * Generate an observable, possibly partial and possibly non-deterministic FSM.
+     * 
+     * The generation proceeds by repeatedly generating random transition tables
+     * and checking whether the induced FSM is initially connected, returning
+     * the first initially connected FSM generated in this process.
+     * 
+     * @param fsmName The name of the FSM to create.
+     * @param maxInput Maximal input index to use.
+     * @param maxOutput Maximal output index to use.
+     * @param maxState Maximal state index to use.
+     *                 The resulting Fsm will have exactly (maxState+1) states.
+     * @param presentationLayer Presentation-layer to use.
+     * @param transitionChancePercent The chance in percent for any combination
+     *                                (q,x,y) of state, input and output to be
+     *                                used for a transition.
+     * @param seed Seed for the random number generator to employ.
+     *             If 0, then the random seed will be generated and stored in
+     *             this parameter. 
      */
     static std::shared_ptr<Fsm>
     createRandomOPFSM(const std::string & fsmName,
@@ -350,6 +367,16 @@ public:
                                          int& removedTransitions,
                                          const unsigned seed = 0,
                                          const std::shared_ptr<FsmPresentationLayer>& pLayer = nullptr) const;
+
+    /**
+     * Create a mutant from this fsm by randomly choosing states and
+     * inputs in these states and removing all transitions for this
+     * state-input pair.
+     */
+    std::shared_ptr<Fsm> createLessDefinedFsm(const std::string& fsmName,
+                                              unsigned numOfRemovedInputs,
+                                              const unsigned seed = 0,
+                                              const std::shared_ptr<FsmPresentationLayer>& pLayer = nullptr) const;                                         
     
     
     /**

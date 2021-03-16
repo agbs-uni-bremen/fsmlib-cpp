@@ -102,6 +102,7 @@ void InputTree::store(ofstream& file)
 
 			file << lst.at(i);
 		}
+        file << endl;
 	}
 }
 
