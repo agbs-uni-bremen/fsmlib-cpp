@@ -224,7 +224,14 @@ public:
     void traverse(std::vector<int>& v,
                   std::shared_ptr<std::vector<std::vector<int>>> ioll);
     
-    
+	/**
+	 * Construct the intersection of this tree with another tree.
+     * 
+     * The resulting tree contains a sequence xs if and only if both
+     * input trees contain sequences that xs is a prefix of, while this
+     * property holds for no extension of xs.
+	 */
+    std::shared_ptr<TreeNode> getIntersectionNode(const std::shared_ptr<TreeNode> &b);
 
 };
 #endif //FSM_TREES_TREENODE_H_

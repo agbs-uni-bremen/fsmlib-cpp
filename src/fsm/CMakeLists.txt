@@ -50,6 +50,10 @@ set (FSM_FSM_SOURCES
         VPrimeLazy.h
 	typedef.inc
   generalized-h-method.hpp
+  StrongReductionTestSuiteGenerator.cpp
+  StrongReductionTestSuiteGenerator.h
+  FsmEnumerator.cpp
+  FsmEnumerator.h
 )
 
 add_library (fsm-fsm OBJECT ${FSM_FSM_SOURCES})

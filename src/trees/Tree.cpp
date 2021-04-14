@@ -108,6 +108,11 @@ shared_ptr<TreeNode> Tree::getSubTree(shared_ptr< vector<int> > alpha) {
     return root->after(alpha->begin(),alpha->end());
 }
 
+shared_ptr<TreeNode> Tree::getSubTree(const vector<int> & alpha) {
+    
+    return root->after(alpha.begin(),alpha.end());
+}
+
 IOListContainer Tree::getIOLists() const
 {
 	shared_ptr<vector<vector<int>>> ioll = make_shared<vector<vector<int>>>();
@@ -326,4 +331,12 @@ string Tree::str()
         }
     }
     return str;
+}
+
+
+
+shared_ptr<Tree> Tree::getIntersectionTree(const shared_ptr<Tree> & b)
+{
+    auto intersectionRoot = root->getIntersectionNode(b->root);
+    return make_shared<Tree>(intersectionRoot,presentationLayer);
 }

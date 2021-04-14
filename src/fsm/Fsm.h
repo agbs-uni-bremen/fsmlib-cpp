@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 #include <vector>
 #include <deque>
 #include <stdexcept>
@@ -27,6 +28,7 @@ class FsmPresentationLayer;
 class InputOutputTree;
 class Tree;
 class OutputTree;
+class InputTree;
 class TestSuite;
 class IOTreeContainer;
 class IOListContainer;
@@ -125,8 +127,6 @@ protected:
      */
     void readFsmFromDot (const std::string & fname, const std::string name = "");
     
-    std::string labelString(std::unordered_set<std::shared_ptr<FsmNode>>& lbl) const;
-    
     /**
      *  Return a random seed to be used for random generation
      * of FSMs by public methods createRandomFsm() and
@@ -180,7 +180,7 @@ protected:
     int getNumberOfNonDeterministicTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
     int getNumberOfTotalTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
 
-    std::vector<std::shared_ptr<FsmTransition>> getNonDeterministicTransitions() const;
+    std::vector<std::shared_ptr<FsmTransition>> getNonDeterministicTransitions() const;    
 
 public:
     
@@ -254,6 +254,9 @@ public:
      values are 0..maxInput
      @param maxOutput maximal value of (integer) output alphabet - admissible
      values are 0..maxOutput
+     @param lst The list of nodes to create the Fsm from.
+            If this list is empty, then a single state without transitions is
+            created as the initial state of the Fsm.
      */
     Fsm(const std::string & fsmName,
         const int maxInput,
@@ -315,6 +318,36 @@ public:
                     const bool& observable,
                     const unsigned& seed = 0);
 
+
+    /**
+     * Generate an observable, possibly partial and possibly non-deterministic FSM.
+     * 
+     * The generation proceeds by repeatedly generating random transition tables
+     * and checking whether the induced FSM is initially connected, returning
+     * the first initially connected FSM generated in this process.
+     * 
+     * @param fsmName The name of the FSM to create.
+     * @param maxInput Maximal input index to use.
+     * @param maxOutput Maximal output index to use.
+     * @param maxState Maximal state index to use.
+     *                 The resulting Fsm will have exactly (maxState+1) states.
+     * @param presentationLayer Presentation-layer to use.
+     * @param transitionChancePercent The chance in percent for any combination
+     *                                (q,x,y) of state, input and output to be
+     *                                used for a transition.
+     * @param seed Seed for the random number generator to employ.
+     *             If 0, then the random seed will be generated and stored in
+     *             this parameter. 
+     */
+    static std::shared_ptr<Fsm>
+    createRandomOPFSM(const std::string & fsmName,
+                    const int maxInput,
+                    const int maxOutput,
+                    const int maxState,
+                    const std::shared_ptr<FsmPresentationLayer>& presentationLayer,
+                    const int transitionChancePercent,
+                    unsigned& seed);                    
+
     /**
      *  Create a mutant of the FSM, producing output faults
      *  and/or transition faults only.
@@ -334,6 +367,16 @@ public:
                                          int& removedTransitions,
                                          const unsigned seed = 0,
                                          const std::shared_ptr<FsmPresentationLayer>& pLayer = nullptr) const;
+
+    /**
+     * Create a mutant from this fsm by randomly choosing states and
+     * inputs in these states and removing all transitions for this
+     * state-input pair.
+     */
+    std::shared_ptr<Fsm> createLessDefinedFsm(const std::string& fsmName,
+                                              unsigned numOfRemovedInputs,
+                                              const unsigned seed = 0,
+                                              const std::shared_ptr<FsmPresentationLayer>& pLayer = nullptr) const;                                         
     
     
     /**
@@ -361,6 +404,7 @@ public:
     virtual int getMaxNodes() const;
     int getMaxInput() const;
     int getMaxOutput() const;
+    int getMaxState() const;
     std::vector<std::shared_ptr<FsmNode>> getNodes() const;
     std::shared_ptr<FsmNode> getNode(int id) const;
     std::shared_ptr<FsmPresentationLayer> getPresentationLayer() const;
@@ -893,6 +937,16 @@ public:
      * @return true if FSM is deterministic
      */
     bool isDeterministic() const;
+
+
+    /**
+     * Generate all maximal length responses of this node to a given input trace,
+     * where a response is an IO trace in the language of this node whose input 
+     * portion is a prefix of the input trace.
+     */
+    std::vector<IOTrace> getResponses(const InputTrace& input) const;
+    std::vector<IOTrace> getResponses(std::deque<int>& input) const;
+
     
     
     void setPresentationLayer(const std::shared_ptr<FsmPresentationLayer>& ppresentationLayer);
@@ -931,5 +985,38 @@ public:
      * same set of inputs.
      */
     bool isHarmonized() const;
+
+    /**
+     * Creates the name of a state in a powerset construction.
+     * @param lbl The set of nodes to create a name for.
+     * @return The name of a state created from the names of the states it contains.
+     */
+    static std::string labelString(std::unordered_set<std::shared_ptr<FsmNode>>& lbl);
+
+    /**
+     * Add a new node to this FSM.
+     * @param name The name of the node to add.
+     */
+    std::shared_ptr<FsmNode> addNode(const std::string & name);
+
+    /**
+     * Returns true if and only if this Fsm is a strong semi-reduction of the other Fsm.
+     */
+    bool isStrongSemiReductionOf(Fsm& other);
+
+    /**
+     * Returns true if the given trace is contained in the language of this Fsm.
+     * Assumes that this Fsm is observable.
+     */
+    bool exhibitsBehaviour(const IOTrace& trace) const;
+
+    /**
+     * Returns true if and only if this fsm passes a test suite for
+     * strong semi-reduction against a given specification.
+     */
+    bool passesStrongSemiReductionTestSuite(Fsm& spec, InputTree& testSuite);
+    
 };
+
+
 #endif //FSM_FSM_FSM_H_

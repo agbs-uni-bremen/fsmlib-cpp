@@ -197,9 +197,23 @@ public:
     std::shared_ptr<Tree> getSubTree(const std::shared_ptr<InputTrace>& alpha);
     
     /**
-     *  return te TreeNode where the subtree after input trace alpha starts
+     *  return the TreeNode where the subtree after input trace alpha starts
      */
     std::shared_ptr<TreeNode> getSubTree(std::shared_ptr< std::vector<int> > alpha);
+
+    /**
+     *  return the TreeNode where the subtree after input trace alpha starts
+     */
+    std::shared_ptr<TreeNode> getSubTree(const std::vector<int>& alpha);
+
+    /**
+     * Construct the intersection of this tree with another tree.
+     * 
+     * The resulting tree contains a sequence xs if and only if both
+     * input trees contain sequences that xs is a prefix of, while this
+     * property holds for no extension of xs.
+     */
+    std::shared_ptr<Tree> getIntersectionTree(const std::shared_ptr<Tree> &b);
     
     
     /**
