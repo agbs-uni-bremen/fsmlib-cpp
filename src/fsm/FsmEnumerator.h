@@ -1,14 +1,12 @@
 #ifndef FSM_ENUMERATOR_H_
 #define FSM_ENUMERATOR_H_
 
-// TODO: refine includes
 #include <memory>
 #include <string>
 #include <unordered_set>
 #include <unordered_map>
 #include <vector>
 #include <deque>
-#include <stdexcept>
 
 #include "fsm/Fsm.h"
 

@@ -6,7 +6,6 @@
 #ifndef FSM_FSM_StrongReductionTestSuiteGenerator_H_
 #define FSM_FSM_StrongReductionTestSuiteGenerator_H_
 
-// TODO: remove superfluous includes
 #include <memory>
 #include <string>
 #include <unordered_set>
@@ -127,8 +126,6 @@ public:
     /**
      * Create a set W of input sequences that r-distinguishes the given states.
      * If the inputs currently applied after both states are already r-distinguishing, then the returned set is empty.
-     * 
-     * TODO: use heuristic to choose an augmenting set that is small, rather than just using the pre-calculated r-distinguishing set
      */
     std::shared_ptr<InputTree> augmentToRDistSet(std::shared_ptr<FsmNode> n1, std::shared_ptr<FsmNode> n2, std::shared_ptr<InputTree> currentlyAppliedSequences);
 

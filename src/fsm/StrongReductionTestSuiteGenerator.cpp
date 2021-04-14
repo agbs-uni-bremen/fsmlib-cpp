@@ -4,7 +4,6 @@
  * Licensed under the EUPL V.1.1
  */
 
-// TODO: remove superfluous includes
 #include <chrono>
 #include <algorithm>
 #include <numeric>
@@ -348,7 +347,6 @@ void StrongReductionTestSuiteGenerator::calcAllMaximalRDistinguishableSets() {
 
     auto candidates = helper(nodes.size()-1);
 
-    // TODO: inefficient
     for (auto candidate : candidates) {
         bool isMaximal = true;
         for (auto otherCandidate : candidates) {
@@ -480,7 +478,7 @@ std::shared_ptr<InputTree> StrongReductionTestSuiteGenerator::augmentToRDistSet(
         return result;
     } 
 
-    // TODO: currently uses no heuristic, just applied the pre-calculated r-dist set for n1 and n2
+    // this implementation currently uses no heuristic, just applied the pre-calculated r-dist set for n1 and n2
     return rDistTrees[std::make_pair(n1,n2)];
 }
 
@@ -517,7 +515,7 @@ InputTree StrongReductionTestSuiteGenerator::initialTestSuite(int m) {
 }
 
 void StrongReductionTestSuiteGenerator::updateTestSuite(const std::shared_ptr<FsmNode> node, const std::pair<IOTrace, std::vector<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>& nextElementOfD, InputTree& currentTestSuite) {
-    // TODO: add heuristic to choose an S, currently the first one is always chosen
+    // this implementation performs no heuristic in choosing which elements to consider
     auto trace = nextElementOfD.first;
     auto rdSet = *nextElementOfD.second.cbegin();
     
@@ -527,7 +525,6 @@ void StrongReductionTestSuiteGenerator::updateTestSuite(const std::shared_ptr<Fs
     for (auto n : *rdSet) { LOG("VERBOSE_2") << n->getId() << " "; }
     LOG("VERBOSE_2") << "}" << endl;
 
-    // TODO: maybe pre-calculate
     std::unordered_set<std::shared_ptr<FsmNode>> drrdNodes; // nodes in the rdSet that are also d-reachable
     LOG("VERBOSE_2") << "\tdrrdNodes are { "; 
     for (auto drEntry : dReachingSequences) {  
@@ -548,7 +545,6 @@ void StrongReductionTestSuiteGenerator::updateTestSuite(const std::shared_ptr<Fs
         InputTrace preTrace1(trace1.getInputTrace());
         preTrace1.prepend(vTrace);      
 
-        // TODO: pre-compute targets
         auto target1 = *node->after(trace1).cbegin(); // assumes that the trace is in the language of node
         LOG("VERBOSE_2") << "\tcheck trace1 " << trace1 << " reaching " << target1->getId() << " (pre-trace: " << preTrace1 << ")" << endl;
         if (rdSet->count(target1) == 0) {
