@@ -8,18 +8,15 @@
 #include <chrono>
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <iomanip>
 #include <chrono>
 #include <memory>
-#include <math.h>
 #include <random>
 #include <unordered_map>
 #include <stdlib.h>
 #include <interface/FsmPresentationLayer.h>
 #include <fsm/Dfsm.h>
 #include <fsm/Fsm.h>
-#include <fsm/FsmEnumerator.h>
 #include <fsm/FsmNode.h>
 #include <fsm/FsmTransition.h>
 #include <fsm/IOTrace.h>
@@ -27,11 +24,9 @@
 #include <fsm/FsmPrintVisitor.h>
 #include <fsm/FsmSimVisitor.h>
 #include <fsm/FsmOraVisitor.h>
-#include <fsm/StrongReductionTestSuiteGenerator.h>
 #include <trees/IOListContainer.h>
 #include <trees/IOTreeContainer.h>
 #include <trees/OutputTree.h>
-#include <trees/InputTree.h>
 #include <trees/TestSuite.h>
 #include "json/json.h"
 #include "utils/Logger.hpp"
@@ -2712,149 +2707,6 @@ void setLoggingVerbosity() {
     LogCoordinator::getStandardLogger().createLogTargetAndBind("FATAL", std::cerr);
 }
 
-
-void testStrongReductionTestSuiteGenerator(const std::shared_ptr<Fsm> spec, const int additionalStates, const unsigned testsPerStep = 1000, bool storeTestSuite = false) {
-    cout << endl 
-         << "################################################################" << endl
-         << "Check test suite generation for SSR" << endl
-         << "################################################################" << endl
-         << endl;
-    
-    spec->toDot("spec");
-    StrongReductionTestSuiteGenerator gen(spec,true);
-    InputTree testSuite = gen.generateTestSuite(spec->getNodes().size() + additionalStates);
-
-    if (storeTestSuite) {
-        ofstream out(spec->getName() + ".test_suite");
-        testSuite.store(out);
-    }
-
-    // self check
-    if (!spec->passesStrongSemiReductionTestSuite(*spec,testSuite)) {
-        cout << "WARNING: specification does not pass test suite itself" << endl;
-    }
-
-    unsigned step = 1;
-
-    cout << endl 
-         << "--------------------------------" << endl
-         << "Step 1: random OPFSMs" << endl
-         << "--------------------------------" << endl
-         << endl;
-    for (unsigned i = 0; i < testsPerStep; ++i) {
-        unsigned seed = 0;
-        auto iut = Fsm::createRandomOPFSM(std::to_string(i), 1, 3, 3, spec->getPresentationLayer(), 20, seed);
-
-        bool isSSR = iut->isStrongSemiReductionOf(*spec);
-
-        bool passesTS = iut->passesStrongSemiReductionTestSuite(*spec,testSuite);
-        
-        if (isSSR != passesTS) {
-            cout << "ERROR! for seed " << seed  << endl;
-            iut->toDot(std::to_string(seed));
-        }
-    }
-    
-    cout << endl 
-         << "--------------------------------" << endl
-         << "Step 2: reductions" << endl
-         << "--------------------------------" << endl
-         << endl;
-    for (unsigned i = testsPerStep * (step++); i < testsPerStep * step; ++i) {
-        unsigned seed = i;
-        bool force = false;
-        int removedTransitions = 0;
-        auto iut = spec->createReduction(std::to_string(i),force,removedTransitions,seed,spec->getPresentationLayer());
-
-        bool isSSR = iut->isStrongSemiReductionOf(*spec);
-        if (!isSSR) {
-            cout << "IUT #" << i << " is NOT a reduction" << endl;
-        } 
-
-        bool passesTS = iut->passesStrongSemiReductionTestSuite(*spec,testSuite);
-
-        if (isSSR != passesTS) {
-            cout << "ERROR! for seed " << seed  << endl;
-            iut->toDot(std::to_string(seed));
-        }
-    }
-
-    cout << endl 
-         << "--------------------------------" << endl
-         << "Step 3: input faults" << endl
-         << "--------------------------------" << endl
-         << endl;
-    for (unsigned i = testsPerStep * (step++); i < testsPerStep * step; ++i) {
-        auto iut = spec->createMutant(std::to_string(i),1,0,true,0,spec->getPresentationLayer());
-
-        bool isSSR = iut->isStrongSemiReductionOf(*spec);
-
-        bool passesTS = iut->passesStrongSemiReductionTestSuite(*spec,testSuite);
-
-        if (isSSR != passesTS) {
-            cout << "ERROR! in iteration " << i << endl;
-            iut->toDot(std::to_string(i));
-        }
-    }
-
-    cout << endl 
-         << "--------------------------------" << endl
-         << "Step 4: transition faults" << endl
-         << "--------------------------------" << endl
-         << endl;
-    for (unsigned i = testsPerStep * (step++); i < testsPerStep * step; ++i) {
-        auto iut = spec->createMutant(std::to_string(i),0,1,true,0,spec->getPresentationLayer());
-
-        bool isSSR = iut->isStrongSemiReductionOf(*spec);
-
-        bool passesTS = iut->passesStrongSemiReductionTestSuite(*spec,testSuite);
-
-        if (isSSR != passesTS) {
-            cout << "ERROR! in iteration " << i << endl;
-            iut->toDot(std::to_string(i));
-        }
-    }
-
-    cout << endl 
-         << "--------------------------------" << endl
-         << "Step 5: input & transition faults" << endl
-         << "--------------------------------" << endl
-         << endl;
-    for (unsigned i = testsPerStep * (step++); i < testsPerStep * step; ++i) {
-        auto iut = spec->createMutant(std::to_string(i),1,1,true,0,spec->getPresentationLayer());
-
-        bool isSSR = iut->isStrongSemiReductionOf(*spec);
-
-        bool passesTS = iut->passesStrongSemiReductionTestSuite(*spec,testSuite);
-
-        if (isSSR != passesTS) {
-            cout << "ERROR! in iteration " << i << endl;
-            iut->toDot(std::to_string(i));
-        }
-    }
-
-    cout << endl 
-         << "--------------------------------" << endl
-         << "Step 6: less defined FSMs" << endl
-         << "--------------------------------" << endl
-         << endl;
-    for (unsigned i = testsPerStep * (step++); i < testsPerStep * step; ++i) {
-        auto iut = spec->createLessDefinedFsm(std::to_string(i),1,0,spec->getPresentationLayer());
-
-        bool isSSR = iut->isStrongSemiReductionOf(*spec);
-
-        bool passesTS = iut->passesStrongSemiReductionTestSuite(*spec,testSuite);
-
-        if (isSSR != passesTS) {
-            cout << "ERROR! in iteration " << i << endl;
-            iut->toDot(std::to_string(i));
-        }
-    }
-}
-
-
-
-
 int main(int argc, char** argv)
 {
     setLoggingVerbosity();
@@ -2884,36 +2736,22 @@ int main(int argc, char** argv)
 
     gdc_test1();
     
-    //Uncomment to run Adaptive State Counting tests
+    /** Uncomment to run Adaptive State Counting tests **/
     //runAdaptiveStateCountingTests();
 
 #endif
     
-#if 0    
+    
     shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>(string(RESOURCES_DIR) + "gillIn.txt",
                                                                             string(RESOURCES_DIR) + "gillOut.txt",
                                                                             string(RESOURCES_DIR) + "gillState.txt");
     Dfsm d(string(RESOURCES_DIR) + string("gill.fsm"),pl,"gill");
     d.toDot("gill");
-
+     
     
     d.calcPkTables();
     
-#endif      
     
-
-    LogCoordinator::getStandardLogger().bindAllToDevNull();
-
-    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>();
-
-    std::shared_ptr<Fsm> spec1 = make_shared<Fsm>(string(RESOURCES_DIR) + string("rDistExample001.fsm"),pl,"RD1");
-    std::shared_ptr<Fsm> spec2 = make_shared<Fsm>(string(RESOURCES_DIR) + string("rDistExample002.fsm"),pl,"RD2");
-    std::shared_ptr<Fsm> spec3 = make_shared<Fsm>(string(RESOURCES_DIR) + string("card_reader.fsm"),pl,"CR");
-
-    testStrongReductionTestSuiteGenerator(spec1,0,10000);
-    testStrongReductionTestSuiteGenerator(spec2,0,10000);
-    testStrongReductionTestSuiteGenerator(spec3,0,10000);
-
     
 }
 
