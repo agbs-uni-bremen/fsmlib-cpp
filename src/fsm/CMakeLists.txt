@@ -50,8 +50,8 @@ set (FSM_FSM_SOURCES
         VPrimeLazy.h
 	typedef.inc
   generalized-h-method.hpp
-  StrongSemiReductionTestSuiteGenerator.cpp
-  StrongSemiReductionTestSuiteGenerator.h
+  StrongReductionTestSuiteGenerator.cpp
+  StrongReductionTestSuiteGenerator.h
   FsmEnumerator.cpp
   FsmEnumerator.h
 )

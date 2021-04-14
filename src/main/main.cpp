@@ -27,7 +27,7 @@
 #include <fsm/FsmPrintVisitor.h>
 #include <fsm/FsmSimVisitor.h>
 #include <fsm/FsmOraVisitor.h>
-#include <fsm/StrongSemiReductionTestSuiteGenerator.h>
+#include <fsm/StrongReductionTestSuiteGenerator.h>
 #include <trees/IOListContainer.h>
 #include <trees/IOTreeContainer.h>
 #include <trees/OutputTree.h>
@@ -2713,7 +2713,7 @@ void setLoggingVerbosity() {
 }
 
 
-void testStrongSemiReductionTestSuiteGenerator(const std::shared_ptr<Fsm> spec, const int additionalStates, const unsigned testsPerStep = 1000, bool storeTestSuite = false) {
+void testStrongReductionTestSuiteGenerator(const std::shared_ptr<Fsm> spec, const int additionalStates, const unsigned testsPerStep = 1000, bool storeTestSuite = false) {
     cout << endl 
          << "################################################################" << endl
          << "Check test suite generation for SSR" << endl
@@ -2721,7 +2721,7 @@ void testStrongSemiReductionTestSuiteGenerator(const std::shared_ptr<Fsm> spec, 
          << endl;
     
     spec->toDot("spec");
-    StrongSemiReductionTestSuiteGenerator gen(spec,true);
+    StrongReductionTestSuiteGenerator gen(spec,true);
     InputTree testSuite = gen.generateTestSuite(spec->getNodes().size() + additionalStates);
 
     if (storeTestSuite) {
@@ -2910,9 +2910,9 @@ int main(int argc, char** argv)
     std::shared_ptr<Fsm> spec2 = make_shared<Fsm>(string(RESOURCES_DIR) + string("rDistExample002.fsm"),pl,"RD2");
     std::shared_ptr<Fsm> spec3 = make_shared<Fsm>(string(RESOURCES_DIR) + string("card_reader.fsm"),pl,"CR");
 
-    testStrongSemiReductionTestSuiteGenerator(spec1,0,10000);
-    testStrongSemiReductionTestSuiteGenerator(spec2,0,10000);
-    testStrongSemiReductionTestSuiteGenerator(spec3,0,10000);
+    testStrongReductionTestSuiteGenerator(spec1,0,10000);
+    testStrongReductionTestSuiteGenerator(spec2,0,10000);
+    testStrongReductionTestSuiteGenerator(spec3,0,10000);
 
     
 }

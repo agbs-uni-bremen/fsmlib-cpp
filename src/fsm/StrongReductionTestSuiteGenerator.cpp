@@ -17,7 +17,7 @@
 #include <functional>
 #include <queue>
 
-#include "fsm/StrongSemiReductionTestSuiteGenerator.h"
+#include "fsm/StrongReductionTestSuiteGenerator.h"
 #include "fsm/Fsm.h"
 #include "fsm/FsmTransition.h"
 #include "fsm/FsmLabel.h"
@@ -46,7 +46,7 @@
 
 
 
-void StrongSemiReductionTestSuiteGenerator::calcDeterministicallyReachingSequences() {
+void StrongReductionTestSuiteGenerator::calcDeterministicallyReachingSequences() {
     dReachingSequences = std::unordered_map<std::shared_ptr<FsmNode>, std::vector<int>>();
 
     // copy the fsm to perform modifications
@@ -126,7 +126,7 @@ void StrongSemiReductionTestSuiteGenerator::calcDeterministicallyReachingSequenc
 
 
 
-void StrongSemiReductionTestSuiteGenerator::calcRDistinguishingGraph() {
+void StrongReductionTestSuiteGenerator::calcRDistinguishingGraph() {
 
     rDistGraph = std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::pair<int,std::shared_ptr<std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>>>>();
 
@@ -241,7 +241,7 @@ void StrongSemiReductionTestSuiteGenerator::calcRDistinguishingGraph() {
 
 
 
-void StrongSemiReductionTestSuiteGenerator::calcRDistinguishingTrees() {
+void StrongReductionTestSuiteGenerator::calcRDistinguishingTrees() {
     calcRDistinguishingGraph();
     rDistTrees = std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::shared_ptr<InputTree>>();
     
@@ -275,7 +275,7 @@ void StrongSemiReductionTestSuiteGenerator::calcRDistinguishingTrees() {
     }
 }
 
-void StrongSemiReductionTestSuiteGenerator::calcMaximalRDistinguishableSets() {
+void StrongReductionTestSuiteGenerator::calcMaximalRDistinguishableSets() {
     maximalRDistSets = std::unordered_set<std::unordered_set<std::shared_ptr<FsmNode>>>();
 
     for (auto node : fsm->getNodes()) {
@@ -307,7 +307,7 @@ void StrongSemiReductionTestSuiteGenerator::calcMaximalRDistinguishableSets() {
     }
 }
 
-void StrongSemiReductionTestSuiteGenerator::calcAllMaximalRDistinguishableSets() {
+void StrongReductionTestSuiteGenerator::calcAllMaximalRDistinguishableSets() {
     maximalRDistSets = std::unordered_set<std::unordered_set<std::shared_ptr<FsmNode>>>();
 
     vector<shared_ptr<FsmNode>> nodes = fsm->getNodes();
@@ -373,7 +373,7 @@ void StrongSemiReductionTestSuiteGenerator::calcAllMaximalRDistinguishableSets()
 }
 
 
-StrongSemiReductionTestSuiteGenerator::StrongSemiReductionTestSuiteGenerator(const std::shared_ptr<Fsm> fsm, bool calculateAllMaximalRDistinguishableSets) : fsm(fsm)
+StrongReductionTestSuiteGenerator::StrongReductionTestSuiteGenerator(const std::shared_ptr<Fsm> fsm, bool calculateAllMaximalRDistinguishableSets) : fsm(fsm)
 {
     calcDeterministicallyReachingSequences();
     calcRDistinguishingTrees();
@@ -385,23 +385,23 @@ StrongSemiReductionTestSuiteGenerator::StrongSemiReductionTestSuiteGenerator(con
 }
 
 
-std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::shared_ptr<InputTree>> StrongSemiReductionTestSuiteGenerator::getRDistinguishingTrees() const {
+std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::shared_ptr<InputTree>> StrongReductionTestSuiteGenerator::getRDistinguishingTrees() const {
     return rDistTrees;
 }
 
-std::unordered_map<std::shared_ptr<FsmNode>, std::vector<int>> StrongSemiReductionTestSuiteGenerator::getDeterministicallyReachingSequences() const {
+std::unordered_map<std::shared_ptr<FsmNode>, std::vector<int>> StrongReductionTestSuiteGenerator::getDeterministicallyReachingSequences() const {
     return dReachingSequences;
 }
 
-std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::pair<int,std::shared_ptr<std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>>>> StrongSemiReductionTestSuiteGenerator::getRDistGraph() const {
+std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::pair<int,std::shared_ptr<std::unordered_set<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>>>>> StrongReductionTestSuiteGenerator::getRDistGraph() const {
     return rDistGraph;
 }
 
-std::unordered_set<std::unordered_set<std::shared_ptr<FsmNode>>> StrongSemiReductionTestSuiteGenerator::getMaximalRDistinguishableSets() {
+std::unordered_set<std::unordered_set<std::shared_ptr<FsmNode>>> StrongReductionTestSuiteGenerator::getMaximalRDistinguishableSets() {
     return maximalRDistSets;
 }
 
-std::vector<std::pair<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>,int>> StrongSemiReductionTestSuiteGenerator::getTerminationTuples(int m) {
+std::vector<std::pair<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>,int>> StrongReductionTestSuiteGenerator::getTerminationTuples(int m) {
     std::vector<std::pair<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>,int>> result;
 
     for (auto rdSet : maximalRDistSets) {
@@ -418,7 +418,7 @@ std::vector<std::pair<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode
 }
 
 
-std::vector<std::pair<IOTrace, std::vector<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> StrongSemiReductionTestSuiteGenerator::calcTraversalSet(std::shared_ptr<FsmNode> node, int m) {
+std::vector<std::pair<IOTrace, std::vector<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> StrongReductionTestSuiteGenerator::calcTraversalSet(std::shared_ptr<FsmNode> node, int m) {
     std::vector<std::pair<IOTrace, std::vector<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>> result;
 
     std::vector<std::pair<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>,int>> terminationTuples = getTerminationTuples(m);
@@ -472,7 +472,7 @@ std::vector<std::pair<IOTrace, std::vector<std::shared_ptr<std::unordered_set<st
 }
 
 
-std::shared_ptr<InputTree> StrongSemiReductionTestSuiteGenerator::augmentToRDistSet(std::shared_ptr<FsmNode> n1, std::shared_ptr<FsmNode> n2, std::shared_ptr<InputTree> currentlyAppliedSequences) {
+std::shared_ptr<InputTree> StrongReductionTestSuiteGenerator::augmentToRDistSet(std::shared_ptr<FsmNode> n1, std::shared_ptr<FsmNode> n2, std::shared_ptr<InputTree> currentlyAppliedSequences) {
     std::shared_ptr<InputTree> result = make_shared<InputTree>(fsm->getPresentationLayer());
 
     // do nothing if the currently applied sequences are already sufficient to r-distinguish n1 and n2
@@ -485,7 +485,7 @@ std::shared_ptr<InputTree> StrongSemiReductionTestSuiteGenerator::augmentToRDist
 }
 
 
-InputTree StrongSemiReductionTestSuiteGenerator::initialTestSuite(int m) {
+InputTree StrongReductionTestSuiteGenerator::initialTestSuite(int m) {
     InputTree result(fsm->getPresentationLayer());
 
     LOG("VERBOSE_2") << "initialTestSuite" << endl;
@@ -516,7 +516,7 @@ InputTree StrongSemiReductionTestSuiteGenerator::initialTestSuite(int m) {
     return result;
 }
 
-void StrongSemiReductionTestSuiteGenerator::updateTestSuite(const std::shared_ptr<FsmNode> node, const std::pair<IOTrace, std::vector<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>& nextElementOfD, InputTree& currentTestSuite) {
+void StrongReductionTestSuiteGenerator::updateTestSuite(const std::shared_ptr<FsmNode> node, const std::pair<IOTrace, std::vector<std::shared_ptr<std::unordered_set<std::shared_ptr<FsmNode>>>>>& nextElementOfD, InputTree& currentTestSuite) {
     // TODO: add heuristic to choose an S, currently the first one is always chosen
     auto trace = nextElementOfD.first;
     auto rdSet = *nextElementOfD.second.cbegin();
@@ -655,7 +655,7 @@ void StrongSemiReductionTestSuiteGenerator::updateTestSuite(const std::shared_pt
 }
 
 
-InputTree StrongSemiReductionTestSuiteGenerator::generateTestSuite(int m) {
+InputTree StrongReductionTestSuiteGenerator::generateTestSuite(int m) {
     InputTree ts = initialTestSuite(m);        
 
     // for all d-reachable states s ...

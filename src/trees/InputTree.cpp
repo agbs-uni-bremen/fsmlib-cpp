@@ -165,3 +165,16 @@ std::shared_ptr<InputTree> InputTree::sharedExtensions(const InputTrace& t1, con
 
     return make_shared<InputTree>(intersectionNode,presentationLayer);
 }
+
+
+unsigned int InputTree::getNumberOfSequences() {
+    return this->getLeaves().size();
+}
+
+unsigned int InputTree::getTotalLengthOfSequences() {
+    unsigned int result = 0;
+    for (auto leaf : this->getLeaves()) {
+        result += leaf->getPath().size();
+    }
+    return result;
+}

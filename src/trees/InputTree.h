@@ -104,6 +104,16 @@ public:
  	 * Get all maximal sequences applied in this tree after both sequences.
 	 */ 
 	std::shared_ptr<InputTree> sharedExtensions(const InputTrace& t1, const InputTrace& t2);
+
+	/**
+	 * Get the number of maximal sequences contained in this tree.
+	 */
+	unsigned int getNumberOfSequences();
+
+	/**
+	 * Get the combined length of all maximal sequences contained in this tree.
+	 */
+	unsigned int getTotalLengthOfSequences();
     
     virtual InputTree* _clone() const;
     std::shared_ptr<InputTree> Clone() const;

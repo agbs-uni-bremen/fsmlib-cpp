@@ -3,8 +3,8 @@
  * 
  * Licensed under the EUPL V.1.1
  */
-#ifndef FSM_FSM_STRONGSEMIREDUCTIONTESTSUITEGENERATOR_H_
-#define FSM_FSM_STRONGSEMIREDUCTIONTESTSUITEGENERATOR_H_
+#ifndef FSM_FSM_StrongReductionTestSuiteGenerator_H_
+#define FSM_FSM_StrongReductionTestSuiteGenerator_H_
 
 // TODO: remove superfluous includes
 #include <memory>
@@ -31,7 +31,7 @@ class IOListContainer;
 class InputTrace;
 class IOTraceContainer;
 
-class StrongSemiReductionTestSuiteGenerator
+class StrongReductionTestSuiteGenerator
 {
 protected:
     
@@ -105,7 +105,7 @@ public:
      *                                                Otherwise for each state of the FSM only a single
      *                                                such set is computed.
      */
-    StrongSemiReductionTestSuiteGenerator(const std::shared_ptr<Fsm> fsm, bool calculateAllMaximalRDistinguishableSets = false);
+    StrongReductionTestSuiteGenerator(const std::shared_ptr<Fsm> fsm, bool calculateAllMaximalRDistinguishableSets = false);
 
     std::unordered_map<std::pair<std::shared_ptr<FsmNode>,std::shared_ptr<FsmNode>>, std::shared_ptr<InputTree>> getRDistinguishingTrees() const;
     std::unordered_map<std::shared_ptr<FsmNode>, std::vector<int>> getDeterministicallyReachingSequences() const;

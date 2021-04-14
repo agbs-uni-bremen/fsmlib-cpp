@@ -1,0 +1,25 @@
+digraph g {
+
+node [shape = circle]
+
+
+node [shape = doublecircle]
+0[label="s0(0)"];
+
+node [shape = ellipse]
+1[label="s1(1)"];
+2[label="s2(2)"];
+3[label="s3(3)"];
+0 -> 1[label="a/0"];  //s0 -> s1
+0 -> 2[label="a/1"];  //s0 -> s2
+0 -> 2[label="b/1"];  //s0 -> s2
+0 -> 2[label="b/2"];  //s0 -> s2
+0 -> 1[label="b/3"];  //s0 -> s1
+1 -> 2[label="a/1"];  //s1 -> s2
+1 -> 2[label="b/1"];  //s1 -> s2
+2 -> 2[label="a/0"];  //s2 -> s2
+2 -> 3[label="a/1"];  //s2 -> s3
+2 -> 2[label="b/2"];  //s2 -> s2
+3 -> 2[label="a/0"];  //s3 -> s2
+
+}
