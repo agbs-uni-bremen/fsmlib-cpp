@@ -9,14 +9,17 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <stack>
 
 #include "fsm/Fsm.h"
+#include "fsm/ConvergenceGraph.h"
 
 class PkTable;
 class IOTrace;
 class TreeNode;
 class DFSMTable;
 class SegmentedTrace;
+
 
 namespace Json {
     class Value;
@@ -62,6 +65,13 @@ private:
     std::vector< std::shared_ptr< std::vector<int> > > calcDistTraces(std::shared_ptr< std::vector<int> > trc,
                                                                       int id1,
                                                                       int id2);
+
+
+
+    // TODO: doc
+    void spyhDistinguish(const std::vector<int>& trace, std::unordered_set<std::shared_ptr<InputTrace>> traces, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph);
+    std::pair<size_t,std::stack<int>> spyhGetPrefixOfSeparatingTrace(const std::vector<int>& trace1, const std::vector<int>& trace2, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph);
+    size_t spyhEstimateGrowthOfTestSuite(const std::shared_ptr<FsmNode> u, const std::shared_ptr<FsmNode> v, int input);
 
 public:
 	/**

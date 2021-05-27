@@ -3,7 +3,6 @@
 #include "fsm/FsmNode.h"
 #include "trees/Tree.h"
 #include "trees/TreeNode.h"
-#include "fsm/InputTrace.h"
 
 #include <memory>
 #include <vector>
@@ -15,26 +14,26 @@ ConvergenceGraph::ConvergenceGraph(const Dfsm& dfsm, const std::shared_ptr<Tree>
 
 }
 
-std::shared_ptr<ConvergenceNode> ConvergenceGraph::after(const InputTrace& trace) {
+std::shared_ptr<ConvergenceNode> ConvergenceGraph::after(const std::vector<int>& trace) {
     std::shared_ptr<ConvergenceNode> node = root;
-    for (int x : trace.get()) {
+    for (int x : trace) {
         node = node->nextForInput[x];
     }
     return node;
 }
 
-void ConvergenceGraph::replaceAfter(const InputTrace& trace, int input, std::shared_ptr<ConvergenceNode> newNode) {
+void ConvergenceGraph::replaceAfter(const std::vector<int>& trace, int input, std::shared_ptr<ConvergenceNode> newNode) {
     std::shared_ptr<ConvergenceNode> node = after(trace);
     node->nextForInput[input] = newNode;
 }
 
 
-void ConvergenceGraph::add(const InputTrace& trace) 
+void ConvergenceGraph::add(const std::vector<int>& trace) 
 {
     std::shared_ptr<ConvergenceNode> node = root;
     std::shared_ptr<FsmNode> state = dfsm.getInitialState();
     std::shared_ptr<TreeNode> treeNode = testSuite->getRoot();
-    for (int x : trace.get()) {
+    for (int x : trace) {
 
         // the dfsm is assumed to be complete and any trace
         // is assumed to contain only inputs accepted by the dfsm
@@ -68,7 +67,7 @@ void ConvergenceGraph::mergeInto(const std::shared_ptr<ConvergenceNode> node1, c
 }
 
 
-void ConvergenceGraph::merge(const InputTrace& trace1, int input, const InputTrace& trace2) 
+void ConvergenceGraph::merge(const std::vector<int>& trace1, int input, const std::vector<int>& trace2) 
 {
     std::shared_ptr<ConvergenceNode> node  = after(trace1);
     std::shared_ptr<ConvergenceNode> nodeL = node->nextForInput[input];
@@ -79,8 +78,16 @@ void ConvergenceGraph::merge(const InputTrace& trace1, int input, const InputTra
 }
 
 
-std::unordered_set<std::shared_ptr<TreeNode>> ConvergenceGraph::getConvergentTraces(const InputTrace& trace) 
+std::unordered_set<std::shared_ptr<TreeNode>> ConvergenceGraph::getConvergentTraces(const std::vector<int>& trace) 
 {
     return after(trace)->convergentNodes;
 }
 
+bool ConvergenceGraph::hasLeaf(const std::vector<int>& trace) 
+{
+    for (auto treeNode : getConvergentTraces(trace)) {
+        if (treeNode->isLeaf())
+            return true;
+    }
+    return false;
+}

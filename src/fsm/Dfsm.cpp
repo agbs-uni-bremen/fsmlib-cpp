@@ -8,6 +8,7 @@
 #include <set>
 #include <fstream>
 
+
 #include "fsm/Dfsm.h"
 #include "fsm/FsmNode.h"
 #include "fsm/FsmLabel.h"
@@ -23,6 +24,7 @@
 #include "trees/IOListContainer.h"
 #include "trees/TreeNode.h"
 #include "trees/TreeEdge.h"
+#include "trees/OutputTree.h"
 #include "json/json.h"
 
 using namespace std;
@@ -1759,9 +1761,232 @@ vector< shared_ptr< vector<int> > > Dfsm::getDistTraces(FsmNode& s1,
 
 
 
+size_t Dfsm::spyhEstimateGrowthOfTestSuite(const std::shared_ptr<FsmNode> u, const std::shared_ptr<FsmNode> v, int x) {
+    // return 1 if x already distinguishes u and v
+    InputTrace xTrace(x,presentationLayer);
+    if (u->apply(xTrace) != v->apply(xTrace))
+        return 1;
+    
+    std::shared_ptr<FsmNode> ux = *u->after(x).cbegin();
+    std::shared_ptr<FsmNode> vx = *v->after(x).cbegin();
+    
+    // if after application of x both states coincide or remain as before 
+    // the application or "switch", then a value larger then produced by 
+    // any shortest distinguishing trace is returned
+    if (ux == vx
+        || (ux == u && vx == v)
+        || (ux == v && vx == u))
+        return 2 * (getMaxNodes()+1);
+
+    // otherwise compute and use the shortest distinguishing trace of u and v
+    auto distTraces = getDistTraces(*u,*v);
+    size_t minEst = distTraces[0]->size();
+    for (auto trace : distTraces) {
+        if (trace->size() < minEst) {
+            minEst = trace->size();
+        }
+    }
+    return minEst * 2 + 1;
+
+    // TODO: avoid recomputation of minimal length dist-traces
+}
+
+
+std::pair<size_t,std::stack<int>> Dfsm::spyhGetPrefixOfSeparatingTrace(const std::vector<int>& trace1, const std::vector<int>& trace2, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph) {
+    // get shortest sequences in each class
+    std::vector<int> u = trace1;
+    for (auto trace : graph.getConvergentTraces(trace1)) {
+        if (trace->getPath().size() < u.size()) {
+            u = trace->getPath();
+        }
+    }
+    std::vector<int> v = trace2;
+    for (auto trace : graph.getConvergentTraces(trace2)) {
+        if (trace->getPath().size() < u.size()) {
+            u = trace->getPath();
+        }
+    }
+
+    std::shared_ptr<FsmNode> stateU = *getInitialState()->after(u).begin();
+    std::shared_ptr<FsmNode> stateV = *getInitialState()->after(v).begin();
+
+    // get shortest distinguishing trace and use double its size as minEst
+    auto distTraces = getDistTraces(*stateU,*stateV);
+    size_t minEst = distTraces[0]->size();
+    for (auto trace : distTraces) {
+        if (trace->size() < minEst) {
+            minEst = trace->size();
+        }
+    }
+    minEst = 2 * minEst;
+
+    // start with the empty prefix
+    std::stack<int> bestPrefix;
+
+    if (!graph.hasLeaf(u)) 
+        minEst = minEst + u.size();
+    if (!graph.hasLeaf(v)) 
+        minEst = minEst + v.size();
+
+    for (int x = 0; x <= getMaxInput(); ++x) {
+        bool foundExtensionForU = false;        
+
+        // check if there exist u' in [u] and trace w such that u'xw are contained in the test suite
+        for (auto convU : graph.getConvergentTraces(u)) {
+            
+            // u'xw is contained in the test suite if and only if x is defined in the testsuite after u'
+            if (!convU->isDefined(x))
+                continue;
+
+            foundExtensionForU = true;    
+            bool foundExtensionForV = false;  
+
+            // check if there exist v' in [v] and trace w' such that v'xw' are contained in the test suite
+            for (auto convV : graph.getConvergentTraces(v)) {
+
+                // u'xw is contained in the test suite if and only if x is defined in the testsuite after u'
+                if (!convV->isDefined(x))
+                    continue;
+
+                foundExtensionForV = true;   
+            
+                // if x produces different outputs to the states reached by u' and v', then the
+                // test suite already distinguishes u and v
+                InputTrace xTrace(x,presentationLayer);
+                if (stateU->apply(xTrace) != stateV->apply(xTrace))
+                    return std::make_pair<size_t,std::stack<int>>(0,{});
+
+                
+                // if the states reached by u'x and v'x coincide, and the same output is produced on x after both u' and v', then 
+                // x cannot distinguish the states reached by u' and v'
+                if (stateU->after(x) == stateV->after(x))
+                    continue;
+
+                std::vector<int> nextU(convU->getPath());
+                nextU.push_back(x);
+                std::vector<int> nextV(convV->getPath());
+                nextV.push_back(x);
+
+                // recursive call on u'x and v'x
+                auto targetPair = spyhGetPrefixOfSeparatingTrace(nextU, nextV, testSuite, graph);
+
+                // if u'x and v'x are already distinguished, then so are u' and v'
+                if (targetPair.first == 0)
+                    return std::make_pair<size_t,std::stack<int>>(0,{});
+
+                // if the target pair is better than the current best, then use the target pair
+                if (targetPair.first <= minEst) {
+                    minEst = targetPair.first;
+                    bestPrefix = targetPair.second;
+                    // input x must be added to the front of the best result for the target pair
+                    bestPrefix.push(x);
+                }                
+            }
+
+            // if no such v' has been found, estimate growth on u and v
+            if (!foundExtensionForV) {
+                size_t e = spyhEstimateGrowthOfTestSuite(stateU,stateV,x);   
+                if (e != 1) {
+                    if (graph.hasLeaf(u)) {
+                       e = e+1; 
+                    } else {
+                        std::vector<int> nextU(u);
+                        nextU.push_back(x);
+                        if (!graph.hasLeaf(nextU)) {
+                            e = e + 1 + u.size();
+                        }                        
+                    }                    
+                }
+                if (!graph.hasLeaf(v)) {
+                    e = e + v.size();
+                }                    
+                if (e < minEst) {
+                    minEst = e;
+                    bestPrefix = std::stack<int>();
+                    bestPrefix.push(x);
+                }    
+            }
+        }
+
+        // if no such u' has been found, check if some applicable v' exists and estimate growth on u and v
+        if (!foundExtensionForU) {
+            bool foundExtensionForV = false;  
+
+            // check if there exist v' in [v] and trace w' such that v'xw' are contained in the test suite
+            for (auto convV : graph.getConvergentTraces(v)) {
+
+                // u'xw is contained in the test suite if and only if x is defined in the testsuite after u'
+                if (!convV->isDefined(x))
+                    continue;
+
+                foundExtensionForV = true;
+                break;
+            }
+
+            if (foundExtensionForV) {
+                size_t e = spyhEstimateGrowthOfTestSuite(stateU,stateV,x);   
+                if (e != 1) {
+                    if (graph.hasLeaf(v)) {
+                       e = e+1; 
+                    } else {
+                        std::vector<int> nextV(v);
+                        nextV.push_back(x);
+                        if (!graph.hasLeaf(nextV)) {
+                            e = e + 1 + v.size();
+                        }                        
+                    }                    
+                }
+                if (!graph.hasLeaf(u)) {
+                    e = e + u.size();
+                }                    
+                if (e < minEst) {
+                    minEst = e;
+                    bestPrefix = std::stack<int>();
+                    bestPrefix.push(x);
+                }    
+            }  
+        }
+    }
+    return std::make_pair(minEst,bestPrefix); 
+}
 
 
 
+void Dfsm::spyhDistinguish(const std::vector<int>& trace, std::unordered_set<std::shared_ptr<InputTrace>> traces, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph) {
+    std::shared_ptr<FsmNode> u = *getInitialState()->after(trace).begin();
+    
+    for (auto other : traces) {
+        std::vector<int> otherTrace = other->get();
+        std::shared_ptr<FsmNode> v = *getInitialState()->after(otherTrace).begin();
+        
+        // trace needs to be distinguished only from traces reaching other states
+        if ( u == v) continue;
+
+        auto distPair = spyhGetPrefixOfSeparatingTrace(trace,otherTrace,testSuite,graph);
+        std::vector<int> w;
+        while (!distPair.second.empty()) {
+            int x = distPair.second.top();
+            distPair.second.pop();
+            w.push_back(x);
+        }
+
+        // the test suite needs to be extended only if it does not already r-dist 
+        if (distPair.first > 0) {
+            
+            std::vector<int> uw = trace;
+            uw.insert(uw.end(), w.begin(), w.end());
+            std::vector<int> vw = otherTrace;
+            uw.insert(vw.end(), w.begin(), w.end());
+            std::shared_ptr<FsmNode> uwState = *getInitialState()->after(uw).begin();
+            std::shared_ptr<FsmNode> vwState = *getInitialState()->after(vw).begin();
+
+            // always chooses the first shortest distinguishing trace
+            auto distTrace = getDistTraces(*uwState,*vwState)[0];            
+
+            // TODO: appendSeparatingSequence
+        }
+    }    
+}
 
 
 
@@ -1769,9 +1994,10 @@ IOListContainer Dfsm::spyhMethodOnMinimisedCompleteDfsm(const unsigned int numAd
     // Our initial state
     shared_ptr<FsmNode> s0 = getInitialState();
     
-    // We need a valid set of DFSM table and Pk-Tables for this method
+    // We need a valid set of DFSM table, Pk-Tables, and dist-traces for this method
     if ( dfsmTable == nullptr ) {
         calcPkTables();
+        calculateDistMatrix();
     }
     
     // Auxiliary state cover set needed for further computations
@@ -1784,8 +2010,8 @@ IOListContainer Dfsm::spyhMethodOnMinimisedCompleteDfsm(const unsigned int numAd
     // add distinguishing traces after pairs of traces in the state cover
     // that reach distinct targets
     
+    // TODO
 
-    
 
 
 
