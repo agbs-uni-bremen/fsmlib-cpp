@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <vector>
+#include <unordered_set>
 
 #include "cloneable/ICloneable.h"
 
@@ -234,4 +235,36 @@ public:
     std::shared_ptr<TreeNode> getIntersectionNode(const std::shared_ptr<TreeNode> &b);
 
 };
+
+
+namespace std
+{
+	template <>
+	struct hash<std::pair<std::shared_ptr<TreeNode>,std::shared_ptr<TreeNode>>>
+	{
+	public:
+		size_t operator()(const std::pair<std::shared_ptr<TreeNode>,std::shared_ptr<TreeNode>> & p) const noexcept
+		{
+            auto h1 = std::hash<std::shared_ptr<TreeNode>>{}(p.first);
+            auto h2 = std::hash<std::shared_ptr<TreeNode>>{}(p.second);
+			return ((51 + h1) * 51 + h2);
+		}
+	};
+
+    template <>
+	struct hash<std::unordered_set<std::shared_ptr<TreeNode>>>
+	{
+	public:
+		size_t operator()(const std::unordered_set<std::shared_ptr<TreeNode>> & set) const noexcept
+		{
+            size_t hash = 0;
+            for (auto elem : set) {
+                hash+= std::hash<std::shared_ptr<TreeNode>>{}(elem);
+            }
+			return hash;
+		}
+	};
+}
+
+
 #endif //FSM_TREES_TREENODE_H_

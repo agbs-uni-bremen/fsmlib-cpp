@@ -419,7 +419,7 @@ public:
     
     
     /**
-     *  Return true if and only if the two FSM states are distinhuishable
+     *  Return true if and only if the two FSM states are distinguishable
      */
     virtual bool distinguishable(const FsmNode& s1, const FsmNode& s2);
     
@@ -433,6 +433,22 @@ public:
      */
     std::vector< std::shared_ptr< std::vector<int> > > getDistTraces(FsmNode& s1,
                                                                      FsmNode& s2);
-    
+
+
+                                                                    
+    /**
+     *  Computes a test suite using the SPYH-method.
+     *
+     *  This implementation requires the DFSM to be already minimised and
+     *  completely specified.
+     * 
+     * @param numAddStates The number of additional states such that the
+     *                     generated test suite is complete for testing
+     *                     against SUTs containing up to 
+     *                     (numAddStates + size of this fsm) states.
+     * 
+     * @return A complete test suite.
+     */
+    IOListContainer spyhMethodOnMinimisedCompleteDfsm(const unsigned int numAddStates);
 };
 #endif //FSM_FSM_DFSM_H_

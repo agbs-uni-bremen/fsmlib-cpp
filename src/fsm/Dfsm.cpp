@@ -1765,6 +1765,228 @@ vector< shared_ptr< vector<int> > > Dfsm::getDistTraces(FsmNode& s1,
 
 
 
+IOListContainer Dfsm::spyhMethodOnMinimisedCompleteDfsm(const unsigned int numAddStates) {
+    // Our initial state
+    shared_ptr<FsmNode> s0 = getInitialState();
+    
+    // We need a valid set of DFSM table and Pk-Tables for this method
+    if ( dfsmTable == nullptr ) {
+        calcPkTables();
+    }
+    
+    // Auxiliary state cover set needed for further computations
+    shared_ptr<Tree> V = getStateCover();
+    
+    // Test suite is initialised with the state cover
+    shared_ptr<Tree> iTree = getStateCover();
+
+
+    // add distinguishing traces after pairs of traces in the state cover
+    // that reach distinct targets
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    IOListContainer inputEnum = IOListContainer(maxInput,
+                                                (int)numAddStates+1,
+                                                (int)numAddStates+1,
+                                                presentationLayer);
+    
+    // Initial test suite set is V.Sigma^{m-n+1}, m-n = numAddStates
+    iTree->add(inputEnum);
+    
+    // Step 1.
+    // Add all alpha.gamma, beta.gamma where alpha, beta in V
+    // and gamma distinguishes s0-after-alpha, s0-after-beta
+    // (if alpha.gamma or beta.gamma are already in iTree, addition
+    // will not lead to a new test case)
+    IOListContainer iolcV = V->getIOListsWithPrefixes();
+    shared_ptr<vector<vector<int>>> iolV = iolcV.getIOLists();
+    
+    for ( size_t i = 0; i < iolV->size(); i++ ) {
+        
+        shared_ptr<InputTrace> alpha =
+        make_shared<InputTrace>(iolV->at(i),presentationLayer);
+
+        for ( size_t j = i+1; j < iolV->size(); j++ ) {
+            
+            shared_ptr<InputTrace> beta =
+            make_shared<InputTrace>(iolV->at(j),presentationLayer);
+
+            shared_ptr<Tree> alphaTree = iTree->getSubTree(alpha);
+            shared_ptr<Tree> betaTree = iTree->getSubTree(beta);
+            shared_ptr<Tree> prefixRelationTree = alphaTree->getPrefixRelationTree(betaTree);
+
+            InputTrace gamma = calcDistinguishingTrace(alpha, beta, prefixRelationTree);
+
+            shared_ptr<InputTrace> iAlphaGamma = make_shared<InputTrace>(alpha->get(), presentationLayer);
+            iAlphaGamma->append(gamma.get());
+
+            shared_ptr<InputTrace> iBetaGamma = make_shared<InputTrace>(beta->get(), presentationLayer);
+            iBetaGamma->append(gamma.get());
+
+            iTree->addToRoot(iAlphaGamma->get());
+            iTree->addToRoot(iBetaGamma->get());
+        }
+        
+    }
+    
+    // Step 2.
+    // For each sequence α.β, α ∈ Q, |β| = m – n + 1, and each non-empty prefix
+    // β1 of β that takes the DFSM from s0 to state s,
+    // add sequences α.β1.γ and ω.γ, where ω ∈ V and s0-after-ω ≠ s,
+    // and γ is a distinguishing sequence of states s0-after-α.β1
+    // and s0-after-ω.
+    IOListContainer allBeta = IOListContainer(maxInput,
+                                              1,
+                                              (int)numAddStates+1,
+                                              presentationLayer);
+    
+    shared_ptr<vector<vector<int>>> iolAllBeta = allBeta.getIOLists();
+    
+    for (const auto &beta : *iolAllBeta ) {
+        
+        for (const auto &alpha : *iolV ) {
+            
+            shared_ptr<InputTrace> iAlphaBeta =
+                make_shared<InputTrace>(alpha,presentationLayer);
+            iAlphaBeta->append(beta);
+            unordered_set<shared_ptr<FsmNode>>
+                s_alpha_betaSet = s0->after(*iAlphaBeta);
+            shared_ptr<FsmNode> s_alpha_beta = *s_alpha_betaSet.begin();
+            
+            for ( auto omega : *iolV ) {
+                shared_ptr<InputTrace>
+                    iOmega = make_shared<InputTrace>(omega,presentationLayer);
+                unordered_set<shared_ptr<FsmNode>>
+                    s_omegaSet = s0->after(*iOmega);
+                shared_ptr<FsmNode> s_omega = *s_omegaSet.begin();
+
+                if ( s_alpha_beta == s_omega ) continue;
+
+                shared_ptr<Tree> alphaBetaTree = iTree->getSubTree(iAlphaBeta);
+                shared_ptr<Tree> trAfterOmega = iTree->getSubTree(iOmega);
+                shared_ptr<Tree> prefixRelationTree = alphaBetaTree->getPrefixRelationTree(trAfterOmega);
+
+                InputTrace gamma = calcDistinguishingTrace(iAlphaBeta, iOmega, prefixRelationTree);
+
+                shared_ptr<InputTrace> iAlphaBetaGamma = make_shared<InputTrace>(iAlphaBeta->get(), presentationLayer);
+                iAlphaBetaGamma->append(gamma.get());
+
+                shared_ptr<InputTrace> iOmegaGamma = make_shared<InputTrace>(iOmega->get(), presentationLayer);
+                iOmegaGamma->append(gamma.get());
+
+                iTree->addToRoot(iAlphaBetaGamma->get());
+                iTree->addToRoot(iOmegaGamma->get());
+            }
+            
+        }
+        
+    }
+    
+    // Step 3.
+    // For each sequence α.β,α∈Q,|β|=m–n+1, and each two
+    // non-empty prefixes β1 and β2 of β that take the
+    // DFSM from state s0-after-alpha
+    // to two different states add sequences α.β1.γ and α.β2.γ,
+    // where γ is a distinguishing sequence of states
+    // s0-after-alpha.beta1 and s0-after-alpha.beta2.
+    
+    for ( auto alpha : *iolV ) {
+        
+        shared_ptr<InputTrace> iAlpha =
+            make_shared<InputTrace>(alpha,presentationLayer);
+        
+        for ( auto beta : *inputEnum.getIOLists() ) {
+        
+            for ( size_t i = 0; i < beta.size() - 1; i++ ) {
+                
+                shared_ptr<InputTrace> iBeta_1 = make_shared<InputTrace>(presentationLayer);
+                for ( size_t k = 0; k <= i; k++ ) {
+                    iBeta_1->add(beta[k]);
+                }
+                
+                for ( size_t j = i+1; j < beta.size(); j++ ) {
+                    
+                    shared_ptr<InputTrace> iBeta_2 =
+                        make_shared<InputTrace>(presentationLayer);
+                    for ( size_t k = 0; k <= j; k++ ) {
+                        iBeta_2->add(beta[k]);
+                    }
+                    
+                    shared_ptr<InputTrace> iAlphaBeta_1 =
+                        make_shared<InputTrace>(alpha,presentationLayer);
+                    iAlphaBeta_1->append(iBeta_1->get());
+                    
+                    shared_ptr<InputTrace> iAlphaBeta_2 =
+                    make_shared<InputTrace>(alpha,presentationLayer);
+                    iAlphaBeta_2->append(iBeta_2->get());
+                    
+                    unordered_set<shared_ptr<FsmNode>> s1Set =
+                    s0->after(*iAlphaBeta_1);
+                    shared_ptr<FsmNode> s1 = *s1Set.begin();
+                    
+                    unordered_set<shared_ptr<FsmNode>> s2Set =
+                    s0->after(*iAlphaBeta_2);
+                    shared_ptr<FsmNode> s2 = *s2Set.begin();
+                    
+                    if ( s1 == s2 ) continue;
+
+                    shared_ptr<Tree> afterAlphaBeta1Tree = iTree->getSubTree(iAlphaBeta_1);
+                    shared_ptr<Tree> afterAlphaBeta2Tree = iTree->getSubTree(iAlphaBeta_2);
+                    shared_ptr<Tree> prefixRelationTree = afterAlphaBeta1Tree->getPrefixRelationTree(afterAlphaBeta2Tree);
+
+                    InputTrace gamma = calcDistinguishingTrace(iAlphaBeta_1, iAlphaBeta_2, prefixRelationTree);
+
+                    shared_ptr<InputTrace> iAlphaBeta_1Gamma = make_shared<InputTrace>(iAlphaBeta_1->get(), presentationLayer);
+                    iAlphaBeta_1Gamma->append(gamma.get());
+
+                    shared_ptr<InputTrace> iAlphaBeta_2Gamma = make_shared<InputTrace>(iAlphaBeta_2->get(), presentationLayer);
+                    iAlphaBeta_2Gamma->append(gamma.get());
+
+                    iTree->addToRoot(iAlphaBeta_1Gamma->get());
+                    iTree->addToRoot(iAlphaBeta_2Gamma->get());
+                }
+            }
+        
+        }
+    }
+
+    return iTree->getIOLists();
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

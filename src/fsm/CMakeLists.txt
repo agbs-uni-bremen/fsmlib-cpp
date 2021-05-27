@@ -54,6 +54,8 @@ set (FSM_FSM_SOURCES
   StrongReductionTestSuiteGenerator.h
   FsmEnumerator.cpp
   FsmEnumerator.h
+  ConvergenceGraph.cpp
+  ConvergenceGraph.h
 )
 
 add_library (fsm-fsm OBJECT ${FSM_FSM_SOURCES})
