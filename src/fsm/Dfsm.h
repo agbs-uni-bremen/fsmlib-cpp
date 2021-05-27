@@ -72,6 +72,7 @@ private:
     void spyhDistinguish(const std::vector<int>& trace, std::unordered_set<std::shared_ptr<InputTrace>> traces, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph);
     std::pair<size_t,std::stack<int>> spyhGetPrefixOfSeparatingTrace(const std::vector<int>& trace1, const std::vector<int>& trace2, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph);
     size_t spyhEstimateGrowthOfTestSuite(const std::shared_ptr<FsmNode> u, const std::shared_ptr<FsmNode> v, int input);
+    void spyhAppendSeparatingSequence(const std::vector<int>& traceToAppendTo, const std::vector<int>& traceToAppend, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph);
 
 public:
 	/**

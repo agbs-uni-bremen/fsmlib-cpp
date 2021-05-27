@@ -1951,6 +1951,43 @@ std::pair<size_t,std::stack<int>> Dfsm::spyhGetPrefixOfSeparatingTrace(const std
 }
 
 
+void Dfsm::spyhAppendSeparatingSequence(const std::vector<int>& traceToAppendTo, const std::vector<int>& traceToAppend, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph) 
+{
+    // get shortest u' in [traceToAppendTo]
+    std::vector<int> uBest = traceToAppendTo;
+    for (auto trace : graph.getConvergentTraces(traceToAppendTo)) {
+        if (trace->getPath().size() < uBest.size()) {
+            uBest = trace->getPath();
+        }
+    }
+
+    int maxLength = -1;
+    for (auto u : graph.getConvergentTraces(traceToAppendTo)) {
+        // get length of the longest prefix w of traceToAppend such that traceToAppendTo.w is in the test suite
+        int idx = 0;
+        std::shared_ptr<TreeNode> node = u;
+        for (; idx < traceToAppend.size(); ++idx) {
+            node = node->after(traceToAppend[idx]);
+            if (node == nullptr) break;
+        }
+
+        // if traceToAppend has already been fully applied, nothing further needs to be done
+        if (idx == traceToAppend.size())
+            return;
+
+        // update the best length only if the current length is better and requires no branching
+        if (idx > maxLength && (node == nullptr || node->isLeaf())) {
+            uBest = u->getPath();
+            maxLength = idx;
+        }
+    }    
+
+    // append traceToAppend after uBest and insert the trace into testsuite and graph
+    uBest.insert(uBest.end(), traceToAppend.begin(), traceToAppend.end());
+    testSuite->addToRoot(uBest);
+    graph.add(uBest);
+}
+
 
 void Dfsm::spyhDistinguish(const std::vector<int>& trace, std::unordered_set<std::shared_ptr<InputTrace>> traces, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph) {
     std::shared_ptr<FsmNode> u = *getInitialState()->after(trace).begin();
@@ -1981,9 +2018,14 @@ void Dfsm::spyhDistinguish(const std::vector<int>& trace, std::unordered_set<std
             std::shared_ptr<FsmNode> vwState = *getInitialState()->after(vw).begin();
 
             // always chooses the first shortest distinguishing trace
-            auto distTrace = getDistTraces(*uwState,*vwState)[0];            
+            auto distTrace = getDistTraces(*uwState,*vwState)[0];   
 
-            // TODO: appendSeparatingSequence
+            auto traceToAppend = w;
+            traceToAppend.insert(traceToAppend.end(), distTrace->begin(), distTrace->end());    
+
+            // append separating sequences to 
+            spyhAppendSeparatingSequence(trace,traceToAppend,testSuite,graph);
+            spyhAppendSeparatingSequence(otherTrace,traceToAppend,testSuite,graph);
         }
     }    
 }
