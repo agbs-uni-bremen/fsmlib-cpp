@@ -7,7 +7,7 @@
 #include <iostream>
 #include <set>
 #include <fstream>
-
+#include <algorithm>
 
 #include "fsm/Dfsm.h"
 #include "fsm/FsmNode.h"
@@ -26,6 +26,8 @@
 #include "trees/TreeEdge.h"
 #include "trees/OutputTree.h"
 #include "json/json.h"
+
+
 
 using namespace std;
 
@@ -2208,8 +2210,23 @@ IOListContainer Dfsm::spyhMethodOnMinimisedCompleteDfsm(const unsigned int numAd
         }
     }
 
+    // sort remaining transitions
+    std::vector<std::shared_ptr<FsmTransition>> sortedTransitions;
+    std::vector<std::pair<std::shared_ptr<FsmTransition>,size_t>> sortedTransitionsWithWeights;
+    for (auto t : transitions) {
+        size_t size = stateCoverAssignment[t->getSource()->getId()]->size() + stateCoverAssignment[t->getTarget()->getId()]->size();
+        sortedTransitionsWithWeights.push_back(std::make_pair(t,size));
+    }
+    std::sort(sortedTransitionsWithWeights.begin(), sortedTransitionsWithWeights.end(), [](const std::pair<std::shared_ptr<FsmTransition>,size_t>& t1, const std::pair<std::shared_ptr<FsmTransition>,size_t>& t2) {
+        return t1.second < t2.second;
+    });
+    for (auto ts : sortedTransitionsWithWeights) {
+        sortedTransitions.push_back(ts.first);
+    }
+
+
     // verify all remaining transitions
-    for (auto transition : transitions) {
+    for (auto transition : sortedTransitions) {
 
         cout << "spyhMethodOnMinimisedCompleteDfsm\t verify transition (" 
              << transition->getSource()->getId()
