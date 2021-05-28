@@ -7,14 +7,20 @@
 
 #include <memory>
 #include <vector>
+#include <iostream>
 
 
-ConvergenceGraph::ConvergenceGraph(const Dfsm& dfsm, const std::shared_ptr<Tree> testSuite)
- : dfsm(dfsm), testSuite(testSuite), root(std::make_shared<ConvergenceNode>(dfsm.getInitialState(), testSuite->getRoot(), dfsm.getMaxInput() +1)) 
+ConvergenceGraph::ConvergenceGraph(const Dfsm& dfsm, const std::shared_ptr<Tree> testSuit)
+ : dfsm(dfsm), testSuite(testSuit), root(std::make_shared<ConvergenceNode>(dfsm.getInitialState(), testSuite->getRoot(), dfsm.getMaxInput() +1)) 
 {
-    for (auto trace : *testSuite->getIOLists().getIOLists()) {
-        add(trace);
-    }
+    // add the current traces in the test suite (avoiding computation of intermediate containers)
+    for (std::shared_ptr<TreeNode const> n : testSuite->getLeaves())
+	{
+		add(n->getPath());
+	}
+    //for (auto trace : *testSuite->getIOLists().getIOLists()) {
+    //    add(trace);
+    //}
 }
 
 std::shared_ptr<ConvergenceNode> ConvergenceGraph::after(const std::vector<int>& trace) {
@@ -60,12 +66,29 @@ void ConvergenceGraph::add(const std::vector<int>& trace)
 
 
 void ConvergenceGraph::mergeInto(const std::shared_ptr<ConvergenceNode> node1, const std::shared_ptr<ConvergenceNode> node2) {
+    // if the nodes already coincide, no merge is necessary
+    if (node1 == node2) {
+        std::cout << "merging identical nodes!" << std::endl;
+        return;
+    }
+    
     for (auto conv : node1->convergentNodes) {
         node2->convergentNodes.insert(conv);
     }
     
     for (int x = 0; x <= dfsm.getMaxInput(); ++x) {
-        mergeInto(node1->nextForInput[x], node2->nextForInput[x]);
+        if (! node1->nextForInput[x]) {
+            // nothing to merge into right node here
+            continue;            
+        }
+        
+        if (! node2->nextForInput[x]) {
+            // "replace" empty content of right node with content of left node
+            node2->nextForInput[x] = node1->nextForInput[x];
+        } else {
+            // both sides are not empty -> perform recursive merge
+            mergeInto(node1->nextForInput[x], node2->nextForInput[x]);    
+        }        
     }
 }
 
@@ -76,6 +99,7 @@ void ConvergenceGraph::merge(const std::vector<int>& trace1, int input, const st
     std::shared_ptr<ConvergenceNode> nodeL = node->nextForInput[input];
     std::shared_ptr<ConvergenceNode> nodeR = after(trace2);
 
+    
     node->nextForInput[input] = nodeR;    
     mergeInto(nodeL,nodeR);
 }
