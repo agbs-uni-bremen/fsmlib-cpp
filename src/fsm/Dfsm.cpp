@@ -1961,10 +1961,14 @@ void Dfsm::spyhAppendSeparatingSequence(const std::vector<int>& traceToAppendTo,
         }
     }
 
-    int maxLength = -1;
+    // note: this is initialised as -1 in the original SPYH method;
+    //       below we compare idx and maxLength using >= instead of >,
+    //       resulting in the same effect but enabling the use of unsigned 
+    //       types for maxLength
+    unsigned int maxLength = 0;
     for (auto u : graph.getConvergentTraces(traceToAppendTo)) {
         // get length of the longest prefix w of traceToAppend such that traceToAppendTo.w is in the test suite
-        int idx = 0;
+        unsigned int idx = 0;
         std::shared_ptr<TreeNode> node = u;
         for (; idx < traceToAppend.size(); ++idx) {
             node = node->after(traceToAppend[idx]);
@@ -1976,7 +1980,7 @@ void Dfsm::spyhAppendSeparatingSequence(const std::vector<int>& traceToAppendTo,
             return;
 
         // update the best length only if the current length is better and requires no branching
-        if (idx > maxLength && (node == nullptr || node->isLeaf())) {
+        if (idx >= maxLength && (node == nullptr || node->isLeaf())) {
             uBest = u->getPath();
             maxLength = idx;
         }
@@ -1989,7 +1993,7 @@ void Dfsm::spyhAppendSeparatingSequence(const std::vector<int>& traceToAppendTo,
 }
 
 
-void Dfsm::spyhDistinguish(const std::vector<int>& trace, std::unordered_set<std::shared_ptr<InputTrace>> traces, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph) {
+void Dfsm::spyhDistinguish(const std::vector<int>& trace, const std::unordered_set<std::shared_ptr<InputTrace>> traces, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph) {
     std::shared_ptr<FsmNode> u = *getInitialState()->after(trace).begin();
     
     for (auto other : traces) {
@@ -2030,6 +2034,56 @@ void Dfsm::spyhDistinguish(const std::vector<int>& trace, std::unordered_set<std
     }    
 }
 
+void Dfsm::spyhDistinguishFromSet(const std::vector<int>& u, const std::vector<int>& v, const std::unordered_set<std::shared_ptr<InputTrace>> stateCover, std::unordered_set<std::shared_ptr<InputTrace>> tracesToDistFrom, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph, unsigned int depth) {
+    
+    // dist u 
+    spyhDistinguish(u,tracesToDistFrom,testSuite,graph);
+
+    // check whether [v] contains no traces from the state cover
+    bool notReferenced = true;
+    auto tracesConvergentToV = graph.getConvergentTraces(v);
+    for (auto coverTrace : stateCover) {
+        auto s = coverTrace->get();
+        for (auto traceConvergentToV : tracesConvergentToV) {
+            if (traceConvergentToV->getPath() == s) {
+                notReferenced = false;
+                break;
+            }
+        }
+        if (!notReferenced) 
+            break;
+    }
+
+    // if v has not been referenced already, distinguish it too
+    if (notReferenced) {
+        spyhDistinguish(v,tracesToDistFrom,testSuite,graph);
+    }
+
+    if (depth > 0) {
+        std::shared_ptr<InputTrace> uTrace = std::make_shared<InputTrace>(u,presentationLayer);
+        std::shared_ptr<InputTrace> vTrace = std::make_shared<InputTrace>(v,presentationLayer);
+        
+        tracesToDistFrom.insert(uTrace);
+        if (notReferenced) 
+            tracesToDistFrom.insert(vTrace);
+
+        for (int x = 0; x <= getMaxInput(); ++x) {
+            spyhAppendSeparatingSequence(u,{x},testSuite,graph);
+            spyhAppendSeparatingSequence(v,{x},testSuite,graph);
+            std::vector<int> ux = u;
+            ux.push_back(x);
+            std::vector<int> vx = v;
+            vx.push_back(x);
+            spyhDistinguishFromSet(ux,vx,stateCover,tracesToDistFrom,testSuite,graph,depth-1);
+        }
+
+
+        if (notReferenced) 
+            tracesToDistFrom.erase(vTrace);
+        tracesToDistFrom.erase(uTrace);
+    }
+}
+
 
 
 IOListContainer Dfsm::spyhMethodOnMinimisedCompleteDfsm(const unsigned int numAddStates) {
@@ -2042,206 +2096,88 @@ IOListContainer Dfsm::spyhMethodOnMinimisedCompleteDfsm(const unsigned int numAd
         calculateDistMatrix();
     }
     
-    // Auxiliary state cover set needed for further computations
+    // collect all transitions to be verified
+    std::unordered_set<std::shared_ptr<FsmTransition>> transitions;
+    for (auto node : nodes) {
+        for (auto t : node->getTransitions()) {
+            transitions.insert(t);
+        }
+    }
+
+    // State Cover
     shared_ptr<Tree> V = getStateCover();
-    
-    // Test suite is initialised with the state cover
-    shared_ptr<Tree> iTree = getStateCover();
-
-
-    // add distinguishing traces after pairs of traces in the state cover
-    // that reach distinct targets
-    
-    // TODO
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    IOListContainer inputEnum = IOListContainer(maxInput,
-                                                (int)numAddStates+1,
-                                                (int)numAddStates+1,
-                                                presentationLayer);
-    
-    // Initial test suite set is V.Sigma^{m-n+1}, m-n = numAddStates
-    iTree->add(inputEnum);
-    
-    // Step 1.
-    // Add all alpha.gamma, beta.gamma where alpha, beta in V
-    // and gamma distinguishes s0-after-alpha, s0-after-beta
-    // (if alpha.gamma or beta.gamma are already in iTree, addition
-    // will not lead to a new test case)
     IOListContainer iolcV = V->getIOListsWithPrefixes();
     shared_ptr<vector<vector<int>>> iolV = iolcV.getIOLists();
-    
+    std::unordered_set<std::shared_ptr<InputTrace>> stateCover;
+    std::vector<std::shared_ptr<InputTrace>> stateCoverAssignment;
+    stateCoverAssignment.reserve(getMaxNodes()+1);
     for ( size_t i = 0; i < iolV->size(); i++ ) {
-        
-        shared_ptr<InputTrace> alpha =
-        make_shared<InputTrace>(iolV->at(i),presentationLayer);
-
-        for ( size_t j = i+1; j < iolV->size(); j++ ) {
-            
-            shared_ptr<InputTrace> beta =
-            make_shared<InputTrace>(iolV->at(j),presentationLayer);
-
-            shared_ptr<Tree> alphaTree = iTree->getSubTree(alpha);
-            shared_ptr<Tree> betaTree = iTree->getSubTree(beta);
-            shared_ptr<Tree> prefixRelationTree = alphaTree->getPrefixRelationTree(betaTree);
-
-            InputTrace gamma = calcDistinguishingTrace(alpha, beta, prefixRelationTree);
-
-            shared_ptr<InputTrace> iAlphaGamma = make_shared<InputTrace>(alpha->get(), presentationLayer);
-            iAlphaGamma->append(gamma.get());
-
-            shared_ptr<InputTrace> iBetaGamma = make_shared<InputTrace>(beta->get(), presentationLayer);
-            iBetaGamma->append(gamma.get());
-
-            iTree->addToRoot(iAlphaGamma->get());
-            iTree->addToRoot(iBetaGamma->get());
-        }
-        
+        shared_ptr<InputTrace> alpha = make_shared<InputTrace>(iolV->at(i),presentationLayer);
+        stateCover.insert(alpha);
+        std::shared_ptr<FsmNode> reachedState = *getInitialState()->after(iolV->at(i)).begin();
+        stateCoverAssignment[reachedState->getId()] = alpha;
     }
     
-    // Step 2.
-    // For each sequence α.β, α ∈ Q, |β| = m – n + 1, and each non-empty prefix
-    // β1 of β that takes the DFSM from s0 to state s,
-    // add sequences α.β1.γ and ω.γ, where ω ∈ V and s0-after-ω ≠ s,
-    // and γ is a distinguishing sequence of states s0-after-α.β1
-    // and s0-after-ω.
-    IOListContainer allBeta = IOListContainer(maxInput,
-                                              1,
-                                              (int)numAddStates+1,
-                                              presentationLayer);
+    // Test suite is initialised with the state cover
+    shared_ptr<Tree> testSuite = getStateCover();
+    ConvergenceGraph graph(*this, testSuite);
     
-    shared_ptr<vector<vector<int>>> iolAllBeta = allBeta.getIOLists();
-    
-    for (const auto &beta : *iolAllBeta ) {
-        
-        for (const auto &alpha : *iolV ) {
-            
-            shared_ptr<InputTrace> iAlphaBeta =
-                make_shared<InputTrace>(alpha,presentationLayer);
-            iAlphaBeta->append(beta);
-            unordered_set<shared_ptr<FsmNode>>
-                s_alpha_betaSet = s0->after(*iAlphaBeta);
-            shared_ptr<FsmNode> s_alpha_beta = *s_alpha_betaSet.begin();
-            
-            for ( auto omega : *iolV ) {
-                shared_ptr<InputTrace>
-                    iOmega = make_shared<InputTrace>(omega,presentationLayer);
-                unordered_set<shared_ptr<FsmNode>>
-                    s_omegaSet = s0->after(*iOmega);
-                shared_ptr<FsmNode> s_omega = *s_omegaSet.begin();
 
-                if ( s_alpha_beta == s_omega ) continue;
-
-                shared_ptr<Tree> alphaBetaTree = iTree->getSubTree(iAlphaBeta);
-                shared_ptr<Tree> trAfterOmega = iTree->getSubTree(iOmega);
-                shared_ptr<Tree> prefixRelationTree = alphaBetaTree->getPrefixRelationTree(trAfterOmega);
-
-                InputTrace gamma = calcDistinguishingTrace(iAlphaBeta, iOmega, prefixRelationTree);
-
-                shared_ptr<InputTrace> iAlphaBetaGamma = make_shared<InputTrace>(iAlphaBeta->get(), presentationLayer);
-                iAlphaBetaGamma->append(gamma.get());
-
-                shared_ptr<InputTrace> iOmegaGamma = make_shared<InputTrace>(iOmega->get(), presentationLayer);
-                iOmegaGamma->append(gamma.get());
-
-                iTree->addToRoot(iAlphaBetaGamma->get());
-                iTree->addToRoot(iOmegaGamma->get());
-            }
-            
-        }
-        
+    // distinguish traces in state cover and note already verified nodes
+    for ( auto trace : stateCover ) {
+        spyhDistinguish(trace->get(),stateCover,testSuite,graph);
     }
-    
-    // Step 3.
-    // For each sequence α.β,α∈Q,|β|=m–n+1, and each two
-    // non-empty prefixes β1 and β2 of β that take the
-    // DFSM from state s0-after-alpha
-    // to two different states add sequences α.β1.γ and α.β2.γ,
-    // where γ is a distinguishing sequence of states
-    // s0-after-alpha.beta1 and s0-after-alpha.beta2.
-    
-    for ( auto alpha : *iolV ) {
-        
-        shared_ptr<InputTrace> iAlpha =
-            make_shared<InputTrace>(alpha,presentationLayer);
-        
-        for ( auto beta : *inputEnum.getIOLists() ) {
-        
-            for ( size_t i = 0; i < beta.size() - 1; i++ ) {
-                
-                shared_ptr<InputTrace> iBeta_1 = make_shared<InputTrace>(presentationLayer);
-                for ( size_t k = 0; k <= i; k++ ) {
-                    iBeta_1->add(beta[k]);
-                }
-                
-                for ( size_t j = i+1; j < beta.size(); j++ ) {
-                    
-                    shared_ptr<InputTrace> iBeta_2 =
-                        make_shared<InputTrace>(presentationLayer);
-                    for ( size_t k = 0; k <= j; k++ ) {
-                        iBeta_2->add(beta[k]);
-                    }
-                    
-                    shared_ptr<InputTrace> iAlphaBeta_1 =
-                        make_shared<InputTrace>(alpha,presentationLayer);
-                    iAlphaBeta_1->append(iBeta_1->get());
-                    
-                    shared_ptr<InputTrace> iAlphaBeta_2 =
-                    make_shared<InputTrace>(alpha,presentationLayer);
-                    iAlphaBeta_2->append(iBeta_2->get());
-                    
-                    unordered_set<shared_ptr<FsmNode>> s1Set =
-                    s0->after(*iAlphaBeta_1);
-                    shared_ptr<FsmNode> s1 = *s1Set.begin();
-                    
-                    unordered_set<shared_ptr<FsmNode>> s2Set =
-                    s0->after(*iAlphaBeta_2);
-                    shared_ptr<FsmNode> s2 = *s2Set.begin();
-                    
-                    if ( s1 == s2 ) continue;
 
-                    shared_ptr<Tree> afterAlphaBeta1Tree = iTree->getSubTree(iAlphaBeta_1);
-                    shared_ptr<Tree> afterAlphaBeta2Tree = iTree->getSubTree(iAlphaBeta_2);
-                    shared_ptr<Tree> prefixRelationTree = afterAlphaBeta1Tree->getPrefixRelationTree(afterAlphaBeta2Tree);
-
-                    InputTrace gamma = calcDistinguishingTrace(iAlphaBeta_1, iAlphaBeta_2, prefixRelationTree);
-
-                    shared_ptr<InputTrace> iAlphaBeta_1Gamma = make_shared<InputTrace>(iAlphaBeta_1->get(), presentationLayer);
-                    iAlphaBeta_1Gamma->append(gamma.get());
-
-                    shared_ptr<InputTrace> iAlphaBeta_2Gamma = make_shared<InputTrace>(iAlphaBeta_2->get(), presentationLayer);
-                    iAlphaBeta_2Gamma->append(gamma.get());
-
-                    iTree->addToRoot(iAlphaBeta_1Gamma->get());
-                    iTree->addToRoot(iAlphaBeta_2Gamma->get());
+    // filter all already verified transitions - i.e. all transitions
+    // (s,x,y,s') such that the state cover reaches s by some u and
+    // s' by u.x
+    // As the state cover generated by getStateCover() is minimal,
+    // this holds for all transitions along prefixes of traces in the
+    // state cover.
+    for (auto trace : stateCover) {
+        auto u = trace->get();
+        std::shared_ptr<FsmNode> state = getInitialState();
+        for (auto x : u) {
+            for (auto t : state->getTransitions()) {
+                if (t->getLabel()->getInput() == x) {
+                    transitions.erase(t);
+                    state = t->getTarget();
+                    break;
                 }
             }
-        
         }
     }
 
-    return iTree->getIOLists();
+    // verify all remaining transitions
+    for (auto transition : transitions) {
+        std::shared_ptr<FsmNode> source = transition->getSource();
+        std::shared_ptr<FsmNode> target = transition->getTarget();
+        int x = transition->getLabel()->getInput();
+
+
+        auto sourceTrace = stateCoverAssignment[source->getId()];
+        auto targetTrace = stateCoverAssignment[target->getId()];
+
+        auto ux = sourceTrace->get();
+        ux.push_back(x);
+        testSuite->addToRoot(ux);
+        graph.add(ux);
+
+        auto v = targetTrace->get();
+
+        // create a copy of the state cover 
+        std::unordered_set<std::shared_ptr<InputTrace>> stateCoverCopy;
+        for (auto elem : stateCover) {
+            stateCoverCopy.insert(elem);
+        }
+
+        spyhDistinguishFromSet(ux,v,stateCover,stateCoverCopy,testSuite,graph,numAddStates);
+
+        graph.merge(sourceTrace->get(),x,v);
+    }
+
+    
+    return testSuite->getIOLists();
 }
 
 

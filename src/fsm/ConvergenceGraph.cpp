@@ -3,15 +3,18 @@
 #include "fsm/FsmNode.h"
 #include "trees/Tree.h"
 #include "trees/TreeNode.h"
+#include "trees/IOListContainer.h"
 
 #include <memory>
 #include <vector>
 
 
-ConvergenceGraph::ConvergenceGraph(const Dfsm& dfsm, const std::shared_ptr<Tree> testSuite, const std::shared_ptr<ConvergenceNode> root)
- : dfsm(dfsm), testSuite(testSuite), root(root) 
+ConvergenceGraph::ConvergenceGraph(const Dfsm& dfsm, const std::shared_ptr<Tree> testSuite)
+ : dfsm(dfsm), testSuite(testSuite), root(std::make_shared<ConvergenceNode>(dfsm.getInitialState(), testSuite->getRoot(), dfsm.getMaxInput() +1)) 
 {
-
+    for (auto trace : *testSuite->getIOLists().getIOLists()) {
+        add(trace);
+    }
 }
 
 std::shared_ptr<ConvergenceNode> ConvergenceGraph::after(const std::vector<int>& trace) {

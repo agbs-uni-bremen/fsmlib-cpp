@@ -28,7 +28,8 @@ struct ConvergenceNode {
 
     bool isLeaf = true;
 
-    ConvergenceNode(const std::shared_ptr<FsmNode>& node,const std::shared_ptr<TreeNode> convergentNode, size_t numInputs) : state(node) {
+    ConvergenceNode(std::shared_ptr<FsmNode> node,std::shared_ptr<TreeNode> convergentNode, size_t numInputs) {
+        state = node;
         convergentNodes.insert(convergentNode);
         nextForInput.resize(numInputs);
     }
@@ -36,10 +37,10 @@ struct ConvergenceNode {
 
 class ConvergenceGraph
 {
-protected:
+private:
     const Dfsm& dfsm;
     const std::shared_ptr<Tree> testSuite;
-    std::shared_ptr<ConvergenceNode> root;
+    const std::shared_ptr<ConvergenceNode> root;
 
     // assumes that trace is aready defined in the graph
     std::shared_ptr<ConvergenceNode> after(const std::vector<int>& trace);
@@ -50,7 +51,7 @@ protected:
     void mergeInto(const std::shared_ptr<ConvergenceNode> node1, const std::shared_ptr<ConvergenceNode> node2);
 
 public:
-	ConvergenceGraph(const Dfsm& dfsm, const std::shared_ptr<Tree> testSuite, const std::shared_ptr<ConvergenceNode> root);
+	ConvergenceGraph(const Dfsm& dfsm, const std::shared_ptr<Tree> testSuite);
 
     void add(const std::vector<int>& trace);
 

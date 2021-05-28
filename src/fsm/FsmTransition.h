@@ -94,5 +94,6 @@ public:
 	friend std::ostream & operator<<(std::ostream & out, FsmTransition & transition);
 
     std::string str();
+	friend bool operator==(FsmTransition const & t1, FsmTransition const & t2);
 };
 #endif //FSM_FSM_FSMTRANSITION_H_
