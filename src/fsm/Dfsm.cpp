@@ -26,6 +26,7 @@
 #include "trees/TreeEdge.h"
 #include "trees/OutputTree.h"
 #include "json/json.h"
+#include "utils/Logger.hpp"
 
 
 
@@ -1778,12 +1779,12 @@ size_t Dfsm::spyhEstimateGrowthOfTestSuite(const std::shared_ptr<FsmNode> u, con
     if (ux == vx
         || (ux == u && vx == v)
         || (ux == v && vx == u))
-        return 2 * (getMaxNodes()+1);
+        return 2 * size();
 
     // otherwise compute and use the shortest distinguishing trace of u and v
     auto distTraces = getDistTraces(*u,*v);
     size_t minEst = distTraces[0]->size();
-    for (auto trace : distTraces) {
+    for (auto & trace : distTraces) {
         if (trace->size() < minEst) {
             minEst = trace->size();
         }
@@ -1796,18 +1797,15 @@ size_t Dfsm::spyhEstimateGrowthOfTestSuite(const std::shared_ptr<FsmNode> u, con
 
 std::pair<size_t,std::stack<int>> Dfsm::spyhGetPrefixOfSeparatingTrace(const std::vector<int>& trace1, const std::vector<int>& trace2, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph) {
     
-    std::cout << "--------------------------------" << std::endl;
-    std::cout << "spyhGetPrefixOfSeparatingTrace\t testsuite: " << *testSuite << std::endl;
-    
     // get shortest sequences in each class
     std::vector<int> u = trace1;
-    for (auto trace : graph.getConvergentTraces(trace1)) {
+    for (auto & trace : graph.getConvergentTraces(trace1)) {
         if (trace->getPath().size() < u.size()) {
             u = trace->getPath();
         }
     }
     std::vector<int> v = trace2;
-    for (auto trace : graph.getConvergentTraces(trace2)) {
+    for (auto & trace : graph.getConvergentTraces(trace2)) {
         if (trace->getPath().size() < u.size()) {
             v = trace->getPath();
         }
@@ -1818,16 +1816,10 @@ std::pair<size_t,std::stack<int>> Dfsm::spyhGetPrefixOfSeparatingTrace(const std
 
     // get shortest distinguishing trace and use double its size as minEst
     auto distTraces = getDistTraces(*stateU,*stateV);
-    cout << "spyhGetPrefixOfSeparatingTrace\t distinguishing " << stateU->getId() << " and " << stateV->getId() << endl;
-    for (auto trace : distTraces) {
-        cout << "\t[";
-        for (int x : *trace) cout << x;
-        cout << "]" << endl;
-    }
-    
 
+    
     size_t minEst = distTraces[0]->size();
-    for (auto trace : distTraces) {
+    for (auto & trace : distTraces) {
         if (trace->size() < minEst) {
             minEst = trace->size();
         }
@@ -1845,15 +1837,8 @@ std::pair<size_t,std::stack<int>> Dfsm::spyhGetPrefixOfSeparatingTrace(const std
     for (int x = 0; x <= getMaxInput(); ++x) {
         bool foundExtensionForU = false;        
 
-        std::cout << "spyhGetPrefixOfSeparatingTrace\t input: " << x << endl;
-
         // check if there exist u' in [u] and trace w such that u'xw are contained in the test suite
-        for (auto convU : graph.getConvergentTraces(u)) {
-
-            std::cout << "spyhGetPrefixOfSeparatingTrace\t convU: ";
-            for (auto x : convU->getPath()) std::cout << x;
-            std::cout << std::endl;
-            std::cout << "spyhGetPrefixOfSeparatingTrace\t input defined after convU?: " << convU->isDefined(x) << std::endl;
+        for (auto & convU : graph.getConvergentTraces(u)) {
 
             // u'xw is contained in the test suite if and only if x is defined in the testsuite after u'
             if (!convU->isDefined(x))
@@ -1863,12 +1848,7 @@ std::pair<size_t,std::stack<int>> Dfsm::spyhGetPrefixOfSeparatingTrace(const std
             bool foundExtensionForV = false;  
 
             // check if there exist v' in [v] and trace w' such that v'xw' are contained in the test suite
-            for (auto convV : graph.getConvergentTraces(v)) {
-
-                std::cout << "spyhGetPrefixOfSeparatingTrace\t convV: ";
-                for (auto x : convV->getPath()) std::cout << x;
-                std::cout << std::endl;
-                std::cout << "spyhGetPrefixOfSeparatingTrace\t input defined after convV?: " << convV->isDefined(x) << std::endl;
+            for (auto & convV : graph.getConvergentTraces(v)) {
 
                 // u'xw is contained in the test suite if and only if x is defined in the testsuite after u'
                 if (!convV->isDefined(x))
@@ -1880,19 +1860,12 @@ std::pair<size_t,std::stack<int>> Dfsm::spyhGetPrefixOfSeparatingTrace(const std
                 // test suite already distinguishes u and v
                 InputTrace xTrace(x,presentationLayer);
 
-                std::cout << "spyhGetPrefixOfSeparatingTrace\t outputtree for x after convU: " << stateU->apply(xTrace).getIOLists() << std::endl;
-                std::cout << "spyhGetPrefixOfSeparatingTrace\t outputtree for x after convV: " << stateV->apply(xTrace).getIOLists() << std::endl;
-
                 if (stateU->apply(xTrace) != stateV->apply(xTrace))
                     return std::make_pair<size_t,std::stack<int>>(0,{});
 
                 
                 // if the states reached by u'x and v'x coincide, and the same output is produced on x after both u' and v', then 
                 // x cannot distinguish the states reached by u' and v'
-
-                std::cout << "spyhGetPrefixOfSeparatingTrace\t state for x after convU: " << stateU->after(x)[0] << std::endl;
-                std::cout << "spyhGetPrefixOfSeparatingTrace\t state for x after convV: " << stateV->after(x)[0] << std::endl;
-
                 if (stateU->after(x) == stateV->after(x))
                     continue;
 
@@ -1947,7 +1920,7 @@ std::pair<size_t,std::stack<int>> Dfsm::spyhGetPrefixOfSeparatingTrace(const std
             bool foundExtensionForV = false;  
 
             // check if there exist v' in [v] and trace w' such that v'xw' are contained in the test suite
-            for (auto convV : graph.getConvergentTraces(v)) {
+            for (auto & convV : graph.getConvergentTraces(v)) {
 
                 // u'xw is contained in the test suite if and only if x is defined in the testsuite after u'
                 if (!convV->isDefined(x))
@@ -1987,30 +1960,20 @@ std::pair<size_t,std::stack<int>> Dfsm::spyhGetPrefixOfSeparatingTrace(const std
 
 void Dfsm::spyhAppendSeparatingSequence(const std::vector<int>& traceToAppendTo, const std::vector<int>& traceToAppend, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph) 
 {
-    cout << "spyhAppendSeparatingSequence\t ";
-    for (auto x : traceToAppend) cout << x;
-    cout << " to ";
-    for (auto x : traceToAppendTo) cout << x;     
-    cout << endl;
-
     // get shortest u' in [traceToAppendTo]
     std::vector<int> uBest = traceToAppendTo;
-    for (auto trace : graph.getConvergentTraces(traceToAppendTo)) {
+    for (auto & trace : graph.getConvergentTraces(traceToAppendTo)) {
         if (trace->getPath().size() < uBest.size()) {
             uBest = trace->getPath();
         }
     }
-
-    cout << "spyhAppendSeparatingSequence\t uBest: ";
-    for (auto x : uBest) cout << x;     
-    cout << endl;
 
     // note: this is initialised as -1 in the original SPYH method;
     //       below we compare idx and maxLength using >= instead of >,
     //       resulting in the same effect but enabling the use of unsigned 
     //       types for maxLength
     unsigned int maxLength = 0;
-    for (auto u : graph.getConvergentTraces(traceToAppendTo)) {
+    for (auto & u : graph.getConvergentTraces(traceToAppendTo)) {
         // get length of the longest prefix w of traceToAppend such that traceToAppendTo.w is in the test suite
         unsigned int idx = 0;
         std::shared_ptr<TreeNode> node = u;
@@ -2041,7 +2004,7 @@ void Dfsm::spyhAppendSeparatingSequence(const std::vector<int>& traceToAppendTo,
 void Dfsm::spyhDistinguish(const std::vector<int>& trace, const std::unordered_set<std::shared_ptr<InputTrace>> traces, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph) {
     std::shared_ptr<FsmNode> u = *getInitialState()->after(trace).begin();
     
-    for (auto other : traces) {
+    for (auto & other : traces) {
         std::vector<int> otherTrace = other->get();
         std::shared_ptr<FsmNode> v = *getInitialState()->after(otherTrace).begin();
         
@@ -2056,10 +2019,6 @@ void Dfsm::spyhDistinguish(const std::vector<int>& trace, const std::unordered_s
             w.push_back(x);
         }
 
-        cout << "spyhDistinguish\t distPair: (" << distPair.first << ", ";
-        for (auto x : w) cout << x;
-        cout << ")" << endl;
-
         // the test suite needs to be extended only if it does not already r-dist 
         if (distPair.first > 0) {
             
@@ -2067,19 +2026,6 @@ void Dfsm::spyhDistinguish(const std::vector<int>& trace, const std::unordered_s
             uw.insert(uw.end(), w.begin(), w.end());
             std::vector<int> vw = otherTrace;
             vw.insert(vw.end(), w.begin(), w.end());
-
-            cout << "spyhDistinguish\t u: ";
-            for (auto x : trace) cout << x;
-            cout << endl;
-            cout << "spyhDistinguish\t uw: ";
-            for (auto x : uw) cout << x;
-            cout << endl;
-            cout << "spyhDistinguish\t v: ";
-            for (auto x : otherTrace) cout << x;
-            cout << endl;
-            cout << "spyhDistinguish\t vw: ";
-            for (auto x : vw) cout << x;
-            cout << endl;
 
             std::shared_ptr<FsmNode> uwState = *getInitialState()->after(uw).begin();
             std::shared_ptr<FsmNode> vwState = *getInitialState()->after(vw).begin();
@@ -2099,44 +2045,24 @@ void Dfsm::spyhDistinguish(const std::vector<int>& trace, const std::unordered_s
                 traceToAppend.insert(traceToAppend.end(), distTrace->begin(), distTrace->end());     
             }
 
-            cout << "spyhDistinguish\t append ";
-            for (auto x : traceToAppend) cout << x;
-            cout << " after both ";
-            for (auto x : trace) cout << x;
-            cout << " and ";
-            for (auto x : otherTrace) cout << x;
-            cout << endl;
-
             // append separating sequences to 
             spyhAppendSeparatingSequence(trace,traceToAppend,testSuite,graph);
             spyhAppendSeparatingSequence(otherTrace,traceToAppend,testSuite,graph);
-
-            cout << "spyhDistinguish\t updated test suite: " << *testSuite << endl;
-            cout << "";
         }
     }    
 }
 
 void Dfsm::spyhDistinguishFromSet(const std::vector<int>& u, const std::vector<int>& v, const std::unordered_set<std::shared_ptr<InputTrace>> stateCover, std::unordered_set<std::shared_ptr<InputTrace>> tracesToDistFrom, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph, unsigned int depth) {
     
-
-    cout << "spyhDistinguishFromSet\t ";
-    for (auto x : u) cout << x;
-    cout << ",";
-    for (auto x : v) cout << x;
-    cout << ", depth: " << depth << endl;
-    cout << "spyhDistinguishFromSet\t testsuite: " << *testSuite << endl; 
-
-
     // dist u 
     spyhDistinguish(u,tracesToDistFrom,testSuite,graph);
 
     // check whether [v] contains no traces from the state cover
     bool notReferenced = true;
     auto tracesConvergentToV = graph.getConvergentTraces(v);
-    for (auto coverTrace : stateCover) {
+    for (auto & coverTrace : stateCover) {
         auto s = coverTrace->get();
-        for (auto traceConvergentToV : tracesConvergentToV) {
+        for (auto & traceConvergentToV : tracesConvergentToV) {
             if (traceConvergentToV->getPath() == s) {
                 notReferenced = false;
                 break;
@@ -2183,15 +2109,13 @@ IOListContainer Dfsm::spyhMethodOnMinimisedCompleteDfsm(const unsigned int numAd
     shared_ptr<FsmNode> s0 = getInitialState();
     
     // We need a valid set of DFSM table, Pk-Tables, and dist-traces for this method
-    if ( dfsmTable == nullptr ) {
-        calcPkTables();
-        calculateDistMatrix();
-    }
+    calcPkTables();
+    calculateDistMatrix();
     
     // collect all transitions to be verified
     std::unordered_set<std::shared_ptr<FsmTransition>> transitions;
-    for (auto node : nodes) {
-        for (auto t : node->getTransitions()) {
+    for (auto & node : nodes) {
+        for (auto & t : node->getTransitions()) {
             transitions.insert(t);
         }
     }
@@ -2201,30 +2125,26 @@ IOListContainer Dfsm::spyhMethodOnMinimisedCompleteDfsm(const unsigned int numAd
     IOListContainer iolcV = V->getIOListsWithPrefixes();
     shared_ptr<vector<vector<int>>> iolV = iolcV.getIOLists();
     std::unordered_set<std::shared_ptr<InputTrace>> stateCover;
-    std::vector<std::shared_ptr<InputTrace>> stateCoverAssignment;
-    stateCoverAssignment.reserve(getMaxNodes()+1);
+    std::vector<std::shared_ptr<InputTrace>> stateCoverAssignment(size());
+    //stateCoverAssignment.reserve(size());
+    //stateCoverAssignment.resize(size(),std::make_shared<InputTrace>(presentationLayer));
     for ( size_t i = 0; i < iolV->size(); i++ ) {
         shared_ptr<InputTrace> alpha = make_shared<InputTrace>(iolV->at(i),presentationLayer);
         stateCover.insert(alpha);
         std::shared_ptr<FsmNode> reachedState = *getInitialState()->after(iolV->at(i)).begin();
+
         stateCoverAssignment[reachedState->getId()] = alpha;
     }
     
     // Test suite is initialised with the state cover
     shared_ptr<Tree> testSuite = getStateCover();
 
-    cout << "initial test suite: " << *testSuite << endl;
-
     ConvergenceGraph graph(*this, testSuite);
     
 
     // distinguish traces in state cover and note already verified nodes
-    for ( auto trace : stateCover ) {
+    for ( auto & trace : stateCover ) {
         spyhDistinguish(trace->get(),stateCover,testSuite,graph);
-
-        cout << "test suite after distinguishing ";
-        for (auto x : trace->get()) cout << x;
-        cout << " : " << *testSuite << endl;
     }
 
     // filter all already verified transitions - i.e. all transitions
@@ -2233,11 +2153,11 @@ IOListContainer Dfsm::spyhMethodOnMinimisedCompleteDfsm(const unsigned int numAd
     // As the state cover generated by getStateCover() is minimal,
     // this holds for all transitions along prefixes of traces in the
     // state cover.
-    for (auto trace : stateCover) {
+    for (auto & trace : stateCover) {
         auto u = trace->get();
         std::shared_ptr<FsmNode> state = getInitialState();
         for (auto x : u) {
-            for (auto t : state->getTransitions()) {
+            for (auto & t : state->getTransitions()) {
                 if (t->getLabel()->getInput() == x) {
                     transitions.erase(t);
                     state = t->getTarget();
@@ -2250,50 +2170,21 @@ IOListContainer Dfsm::spyhMethodOnMinimisedCompleteDfsm(const unsigned int numAd
     // sort remaining transitions
     std::vector<std::shared_ptr<FsmTransition>> sortedTransitions;
     std::vector<std::pair<std::shared_ptr<FsmTransition>,size_t>> sortedTransitionsWithWeights;
-    for (auto t : transitions) {
+    for (auto & t : transitions) {
         size_t size = stateCoverAssignment[t->getSource()->getId()]->size() + stateCoverAssignment[t->getTarget()->getId()]->size();
         sortedTransitionsWithWeights.push_back(std::make_pair(t,size));
-
-        cout << "unverified transition :" 
-             << "(" << t->getSource()->getId() 
-             << "," << t->getLabel()->getInput()
-             << "," << t->getLabel()->getOutput()
-             << "," << t->getTarget()->getId()
-             << ") - size: " << size << endl;
 
     }
     std::sort(sortedTransitionsWithWeights.begin(), sortedTransitionsWithWeights.end(), [](const std::pair<std::shared_ptr<FsmTransition>,size_t>& t1, const std::pair<std::shared_ptr<FsmTransition>,size_t>& t2) {
         return t1.second < t2.second;
     });
-    for (auto ts : sortedTransitionsWithWeights) {
+    for (auto & ts : sortedTransitionsWithWeights) {
         sortedTransitions.push_back(ts.first);
-    }
-
-    cout << "sorted remaining transitions:" << endl;
-    for (auto t : sortedTransitions) {
-        cout << "\t" 
-             << "(" << t->getSource()->getId() 
-             << "," << t->getLabel()->getInput()
-             << "," << t->getLabel()->getOutput()
-             << "," << t->getTarget()->getId()
-             << ")" << endl;
     }
 
 
     // verify all remaining transitions
-    for (auto transition : sortedTransitions) {
-
-        cout << "################################################" << endl;
-        cout << "spyhMethodOnMinimisedCompleteDfsm\t verify transition (" 
-             << transition->getSource()->getId()
-             << "," << transition->getLabel()->getInput()
-             << "," << transition->getLabel()->getOutput()
-             << "," << transition->getTarget()->getId()
-             << ")" << endl;
-
-        cout << "test suite so far: " << *testSuite << endl;
-        cout << "********" << endl;
-                          
+    for (auto & transition : sortedTransitions) {                     
 
         std::shared_ptr<FsmNode> source = transition->getSource();
         std::shared_ptr<FsmNode> target = transition->getTarget();
@@ -2310,17 +2201,9 @@ IOListContainer Dfsm::spyhMethodOnMinimisedCompleteDfsm(const unsigned int numAd
 
         auto v = targetTrace->get();
 
-        cout << "spyhMethodOnMinimisedCompleteDfsm\t converge " << endl;
-        cout << "\t";
-        for (auto x : sourceTrace->get()) cout << x;
-        cout << "." << x << endl;
-        cout << "\t";
-        for (auto x : v) cout << x;
-        cout << endl;
-
         // create a copy of the state cover 
         std::unordered_set<std::shared_ptr<InputTrace>> stateCoverCopy;
-        for (auto elem : stateCover) {
+        for (auto & elem : stateCover) {
             stateCoverCopy.insert(elem);
         }
 

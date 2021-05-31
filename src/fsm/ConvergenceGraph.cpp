@@ -14,7 +14,7 @@ ConvergenceGraph::ConvergenceGraph(const Dfsm& dfsm, const std::shared_ptr<Tree>
  : dfsm(dfsm), testSuite(testSuit), root(std::make_shared<ConvergenceNode>(dfsm.getInitialState(), testSuite->getRoot(), dfsm.getMaxInput() +1)) 
 {
     // add the current traces in the test suite (avoiding computation of intermediate containers)
-    for (std::shared_ptr<TreeNode const> n : testSuite->getLeaves())
+    for (auto& n : testSuite->getLeaves())
 	{
 		add(n->getPath());
 	}
@@ -72,7 +72,7 @@ void ConvergenceGraph::mergeInto(const std::shared_ptr<ConvergenceNode> node1, c
         return;
     }
     
-    for (auto conv : node1->convergentNodes) {
+    for (auto & conv : node1->convergentNodes) {
         node2->convergentNodes.insert(conv);
     }
     
@@ -112,7 +112,7 @@ std::unordered_set<std::shared_ptr<TreeNode>> ConvergenceGraph::getConvergentTra
 
 bool ConvergenceGraph::hasLeaf(const std::vector<int>& trace) 
 {
-    for (auto treeNode : getConvergentTraces(trace)) {
+    for (auto & treeNode : getConvergentTraces(trace)) {
         if (treeNode->isLeaf())
             return true;
     }
