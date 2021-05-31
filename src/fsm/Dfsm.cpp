@@ -1776,9 +1776,9 @@ size_t Dfsm::spyhEstimateGrowthOfTestSuite(const std::shared_ptr<FsmNode> u, con
     // if after application of x both states coincide or remain as before 
     // the application or "switch", then a value larger then produced by 
     // any shortest distinguishing trace is returned
-    if (ux == vx
-        || (ux == u && vx == v)
-        || (ux == v && vx == u))
+    if (*ux == *vx
+        || (*ux == *u && *vx == *v)
+        || (*ux == *v && *vx == *u))
         return 2 * size();
 
     // otherwise compute and use the shortest distinguishing trace of u and v

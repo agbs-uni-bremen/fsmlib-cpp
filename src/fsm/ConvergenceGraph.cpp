@@ -18,9 +18,6 @@ ConvergenceGraph::ConvergenceGraph(const Dfsm& dfsm, const std::shared_ptr<Tree>
 	{
 		add(n->getPath());
 	}
-    //for (auto trace : *testSuite->getIOLists().getIOLists()) {
-    //    add(trace);
-    //}
 }
 
 std::shared_ptr<ConvergenceNode> ConvergenceGraph::after(const std::vector<int>& trace) {

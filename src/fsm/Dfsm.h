@@ -68,11 +68,15 @@ private:
 
 
 
-    // TODO: doc
+    // corresponds to method Distinguish of the original description of the SPYH method
     void spyhDistinguish(const std::vector<int>& trace, const std::unordered_set<std::shared_ptr<InputTrace>> traces, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph);
+    // corresponds to method GetPrefixOfSepSeq of the original description of the SPYH method
     std::pair<size_t,std::stack<int>> spyhGetPrefixOfSeparatingTrace(const std::vector<int>& trace1, const std::vector<int>& trace2, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph);
+    // corresponds to method EstimateGrowthOfT of the original description of the SPYH method
     size_t spyhEstimateGrowthOfTestSuite(const std::shared_ptr<FsmNode> u, const std::shared_ptr<FsmNode> v, int input);
+    // corresponds to method AppendSeparatingSequence of the original description of the SPYH method
     void spyhAppendSeparatingSequence(const std::vector<int>& traceToAppendTo, const std::vector<int>& traceToAppend, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph);
+    // corresponds to method DistinguishFromSet of the original description of the SPYH method
     void spyhDistinguishFromSet(const std::vector<int>& trace1, const std::vector<int>& trace2, const std::unordered_set<std::shared_ptr<InputTrace>> stateCover, std::unordered_set<std::shared_ptr<InputTrace>> tracesToDistFrom, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph, unsigned int depth);
 public:
 	/**
@@ -450,7 +454,7 @@ public:
     /**
      *  Computes a test suite using the SPYH-method.
      *
-     *  This implementation requires the DFSM to be already minimised and
+     *  This implementation requires the DFSM to be minimised and
      *  completely specified.
      * 
      * @param numAddStates The number of additional states such that the
