@@ -26,6 +26,7 @@
 #include <fsm/FsmOraVisitor.h>
 #include <trees/IOListContainer.h>
 #include <trees/IOTreeContainer.h>
+#include <trees/InputTree.h>
 #include <trees/OutputTree.h>
 #include <trees/TestSuite.h>
 #include "json/json.h"
@@ -2707,6 +2708,64 @@ void setLoggingVerbosity() {
     LogCoordinator::getStandardLogger().createLogTargetAndBind("FATAL", std::cerr);
 }
 
+void testSPYHMethod(int numStates, int numInputs, int numOutputs, int numAddStates, int numRepetitions) 
+{
+    srand(getRandomSeed());
+
+    // create spec
+    std::shared_ptr<FsmPresentationLayer> pl = std::make_shared<FsmPresentationLayer>();
+    Dfsm spec("SPEC",numStates,numInputs,numOutputs,pl);
+    spec = spec.minimise();
+
+    cout << "SPEC min size: " << spec.size() <<  endl;
+
+    auto testSuite = spec.spyhMethodOnMinimisedCompleteDfsm(numAddStates);
+
+    cout << "\t test suite size: " << testSuite.size() <<  endl;
+    unsigned int testSuiteLength = 0;
+    for (auto & tc : *testSuite.getIOLists()) {
+        testSuiteLength += tc.size();        
+    }
+    cout << "\t test suite length: " << testSuiteLength <<  endl;
+
+    InputTree inputTree(pl);
+    inputTree.add(testSuite);
+
+    if (! spec.passesStrongSemiReductionTestSuite(spec,inputTree)) {
+        cout << "ERROR: SUT fails testsuite generated for itself" << endl;
+        spec.toDot("SPYH_FAILURE_SPEC");
+        cout << testSuite << endl;
+        exit(1);
+    }
+
+    // test against random other fsms with a number of states in [numStates, numStates+numAddStates]
+    for (int i = 0; i < numRepetitions; ++i) {
+
+        int numSUTStates = spec.size() + (numAddStates > 0 ? rand() % numAddStates : 0);
+        Dfsm sut("SUT",numSUTStates,numInputs,numOutputs,pl);
+        sut = sut.minimise();
+
+        // on complete minimal deterministic fsms strong-reduction and equivalence coincide
+        bool isEq = sut.isStrongSemiReductionOf(spec);
+        
+        bool passesTestSuite = sut.passesStrongSemiReductionTestSuite(spec,inputTree);
+
+        if (isEq != passesTestSuite) {
+            cout << "ERROR: SUT is " 
+                 << (isEq ? "" : "not ") 
+                 << "equivalent to the SPEC but does " 
+                 << (passesTestSuite ? "" : "not ") 
+                 << "pass the test suite:" 
+                 << endl;
+            spec.toDot("SPYH_FAILURE_SPEC");
+            sut.toDot("SPYH_FAILURE_SUT");
+            cout << testSuite << endl;
+            exit(1);
+        }
+    }
+    
+}
+
 int main(int argc, char** argv)
 {
     setLoggingVerbosity();
@@ -2741,17 +2800,26 @@ int main(int argc, char** argv)
 
 #endif
     
+    // compute test suite for the SPYH method example fsm
+    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>(string(RESOURCES_DIR) + "spyh-example/m_ex.in",
+                                                                            string(RESOURCES_DIR) + "spyh-example/m_ex.out",
+                                                                            string(RESOURCES_DIR) + "spyh-example/m_ex.state");
+    Dfsm d(string(RESOURCES_DIR) + string("spyh-example/m_ex.fsm"),pl,"m_ex");
     
-    shared_ptr<FsmPresentationLayer> pl = make_shared<FsmPresentationLayer>(string(RESOURCES_DIR) + "gillIn.txt",
-                                                                            string(RESOURCES_DIR) + "gillOut.txt",
-                                                                            string(RESOURCES_DIR) + "gillState.txt");
-    Dfsm d(string(RESOURCES_DIR) + string("gill.fsm"),pl,"gill");
-    d.toDot("gill");
-     
-    
-    d.calcPkTables();
-    
-    
+    auto testSuite = d.spyhMethodOnMinimisedCompleteDfsm(1);
+    cout << "SPYH test suite:" << endl;
+    cout << testSuite << endl << endl;
+
+    // test the implementation of the SPYH method
+    int numRepsPerSpec = 100;
+    int maxNumSpecs = 10;
+    int maxAddStates = 3;
+
+    for (int numAddStates = 0; numAddStates < maxAddStates; ++numAddStates) {
+        for (int spec = 0; spec < maxNumSpecs; ++spec) {
+            testSPYHMethod(5,2,2,numAddStates,numRepsPerSpec);
+        }
+    }
     
 }
 
