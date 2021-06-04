@@ -26,6 +26,8 @@ set (FSM_FSM_SOURCES
 	Int2IntMap.h
 	IOTrace.cpp
 	IOTrace.h
+  IOTraceHash.cpp
+  IOTraceHash.h
         SegmentedTrace.cpp
 	SegmentedTrace.h
         IOTraceContainer.cpp
@@ -47,6 +49,11 @@ set (FSM_FSM_SOURCES
         VPrimeLazy.cpp
         VPrimeLazy.h
 	typedef.inc
+  generalized-h-method.hpp
+  StrongReductionTestSuiteGenerator.cpp
+  StrongReductionTestSuiteGenerator.h
+  FsmEnumerator.cpp
+  FsmEnumerator.h
 )
 
 add_library (fsm-fsm OBJECT ${FSM_FSM_SOURCES})

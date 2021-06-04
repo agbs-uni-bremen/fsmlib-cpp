@@ -1,4 +1,5 @@
 #include "AdaptiveTreeNode.h"
+#include "trees/TreeEdge.h"
 
 using namespace std;
 

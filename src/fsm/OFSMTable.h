@@ -6,6 +6,7 @@
 #ifndef FSM_FSM_OFSMTABLE_H_
 #define FSM_FSM_OFSMTABLE_H_
 
+#include <string>
 #include <memory>
 #include <vector>
 

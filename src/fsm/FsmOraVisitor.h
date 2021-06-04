@@ -9,7 +9,6 @@
 #ifndef FsmOraVisitor_hpp
 #define FsmOraVisitor_hpp
 
-#include <stdio.h>
 #include "fsm/FsmVisitor.h"
 
 class FsmOraVisitor : public FsmVisitor {

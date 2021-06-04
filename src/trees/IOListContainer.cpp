@@ -3,7 +3,11 @@
  * 
  * Licensed under the EUPL V.1.1
  */
+#include <ostream>
+
 #include "trees/IOListContainer.h"
+#include "fsm/Trace.h"
+#include "interface/FsmPresentationLayer.h"
 
 bool IOListContainer::isLastLst(const int maxInput, const std::vector<int>& lst) const
 {

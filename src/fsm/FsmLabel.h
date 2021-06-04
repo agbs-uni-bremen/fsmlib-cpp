@@ -8,9 +8,9 @@
 
 #include <memory>
 
-#include "fsm/FsmVisitor.h"
-#include "fsm/IOTrace.h"
-#include "interface/FsmPresentationLayer.h"
+class IOTrace;
+class FsmPresentationLayer;
+class FsmVisitor;
 
 class FsmLabel
 {

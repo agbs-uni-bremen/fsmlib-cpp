@@ -6,13 +6,13 @@
 #ifndef FSM_TREES_TREENODE_H_
 #define FSM_TREES_TREENODE_H_
 
-#include <algorithm>
 #include <memory>
 #include <vector>
 
-#include "trees/IOListContainer.h"
-#include "trees/TreeEdge.h"
 #include "cloneable/ICloneable.h"
+
+class IOListContainer;
+class TreeEdge;
 
 class TreeNode : public std::enable_shared_from_this<TreeNode>, public ICloneable
 {
@@ -224,7 +224,14 @@ public:
     void traverse(std::vector<int>& v,
                   std::shared_ptr<std::vector<std::vector<int>>> ioll);
     
-    
+	/**
+	 * Construct the intersection of this tree with another tree.
+     * 
+     * The resulting tree contains a sequence xs if and only if both
+     * input trees contain sequences that xs is a prefix of, while this
+     * property holds for no extension of xs.
+	 */
+    std::shared_ptr<TreeNode> getIntersectionNode(const std::shared_ptr<TreeNode> &b);
 
 };
 #endif //FSM_TREES_TREENODE_H_

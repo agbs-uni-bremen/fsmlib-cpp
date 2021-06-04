@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <utility>
+#include <unordered_map>
 
 #include "interface/FsmPresentationLayer.h"
 #include "fsm/Dfsm.h"
@@ -17,10 +18,17 @@
 #include "fsm/FsmNode.h"
 #include "fsm/IOTrace.h"
 #include "fsm/SegmentedTrace.h"
+#include "fsm/StrongReductionTestSuiteGenerator.h"
 
 #include "trees/IOListContainer.h"
+#include "trees/InputTree.h"
 #include "trees/OutputTree.h"
 #include "trees/TestSuite.h"
+#include "trees/TreeNode.h"
+
+#include "fsm/generalized-h-method.hpp"
+
+#include "json/json.h"
 
 #define DBG 0
 using namespace std;
@@ -43,7 +51,8 @@ typedef enum {
     SAFE_WPMETHOD,
     SAFE_HMETHOD,
     HMETHOD,
-    HSIMETHOD
+    HSIMETHOD,
+    STRONG_REDUCTION_METHOD
 } generation_method_t;
 
 
@@ -79,7 +88,7 @@ static bool rttMbtStyle = false;
  */
 static void printUsage(char* name) {
     cerr << "usage: " << name
-    << " [-w|-wp|-h|-hsi] [-s] [-n fsmname] [-p infile outfile statefile] "
+    << " [-w|-wp|-h|-hsi|-sr] [-s] [-n fsmname] [-p infile outfile statefile] "
     << "[-a additionalstates] [-t testsuitename] [-rtt <prefix>] modelfile "
     << "[model abstraction file]" << endl;
 }
@@ -170,6 +179,9 @@ static void parseParameters(int argc, char* argv[]) {
         }
         else if ( strcmp(argv[p],"-hsi") == 0 ) {
             genMethod = HSIMETHOD;
+        }
+        else if ( strcmp(argv[p],"-sr") == 0 ) {
+            genMethod = STRONG_REDUCTION_METHOD;
         }
         else if ( strcmp(argv[p],"-s") == 0 ) {
             switch (genMethod) {
@@ -1267,9 +1279,36 @@ static void safeWMethod(const shared_ptr<TestSuite> &testSuite) {
 }
 
 
+static void generateStrongReductionTestSuite() {
+
+    StrongReductionTestSuiteGenerator gen(fsm,true);
+    InputTree testSuite = gen.generateTestSuite(fsm->getNodes().size() + numAddStates);
+
+    ofstream out(testSuiteFileName);
+    out << testSuite;
+    out.close();
+    
+    if ( rttMbtStyle ) {
+        cout << "RTT-MBT style is not supported for strong reduction testing " << endl;        
+    }    
+    
+    cout << "Number of test cases (input sequences): " << testSuite.getNumberOfSequences() << endl;
+    cout << "Total length (inputs)                 : " << testSuite.getTotalLengthOfSequences() << endl;
+}
+
+
 
 static void generateTestSuite() {
-    
+
+    // test suites for strong reduction are not represented using type
+    // TestSuite but instead are only represented as lists of input
+    // sequences
+    if ( genMethod == STRONG_REDUCTION_METHOD ) {
+        generateStrongReductionTestSuite();
+        return;
+    }
+
+
     shared_ptr<TestSuite> testSuite =
     make_shared<TestSuite>();
     
@@ -1317,6 +1356,27 @@ static void generateTestSuite() {
                     shared_ptr<InputTrace> itrc = make_shared<InputTrace>(inVec,pl);
                     testSuite->push_back(dfsm->apply(*itrc));
                 }
+                //if(isApplicable(dfsmMin)) {
+                //    auto hMethodTestSuite = generateHMethodTestSuite(dfsmMin, numAddStates);
+                //    for ( auto inVec : hMethodTestSuite ) {
+                //        shared_ptr<InputTrace> itrc = make_shared<InputTrace>(inVec,pl);
+                //        testSuite->push_back(dfsm->apply(*itrc));
+                //    }
+                //} else {
+                //    exit(-1);
+                //    std::cout << "Invalid Dfsm for H-Method." << std::endl;
+                //}
+            } else {
+                Fsm fsmMin = fsm->minimise();
+                if(isApplicable(fsmMin)) {
+                    auto hMethodTestSuite = generateHMethodTestSuite(fsmMin, numAddStates);
+                    for ( auto inVec : hMethodTestSuite ) {
+                        shared_ptr<InputTrace> itrc = make_shared<InputTrace>(inVec,pl);
+                        testSuite->push_back(fsm->apply(*itrc));
+                    }
+                } else {
+                    std::cout << "Invalid Fsm for H-Method." << std::endl;
+                }
             }
             break;
             
@@ -1347,6 +1407,10 @@ static void generateTestSuite() {
         case SAFE_WMETHOD:
             safeWMethod(testSuite);
             break;
+
+        default: 
+            cout << "unsupported test method" << endl;
+            return;
     }
     
     testSuite->save(testSuiteFileName);

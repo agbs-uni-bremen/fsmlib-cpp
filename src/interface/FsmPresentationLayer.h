@@ -7,12 +7,10 @@
 #ifndef FSM_INTERFACE_FSMPRESENTATIONLAYER_H_
 #define FSM_INTERFACE_FSMPRESENTATIONLAYER_H_
 
-#include <fstream>
-#include <iostream>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <vector>
+#include <ostream>
 
 class FsmPresentationLayer
 {

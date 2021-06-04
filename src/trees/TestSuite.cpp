@@ -4,7 +4,10 @@
  * Licensed under the EUPL V.1.1
  */
 #include "trees/TestSuite.h"
+#include "trees/OutputTree.h"
 
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 

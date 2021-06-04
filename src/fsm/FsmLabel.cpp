@@ -4,6 +4,9 @@
  * Licensed under the EUPL V.1.1
  */
 #include "fsm/FsmLabel.h"
+#include "fsm/FsmVisitor.h"
+#include "fsm/IOTrace.h"
+#include "interface/FsmPresentationLayer.h"
 
 const int FsmLabel::EPSILON = -1;
 

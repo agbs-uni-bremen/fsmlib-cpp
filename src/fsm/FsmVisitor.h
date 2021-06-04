@@ -32,10 +32,10 @@ public:
      *        already be used to mark reachable nodes
      *        (this is done by the accept() methods).
      */
-    virtual void visit(Fsm& f) { }
-    virtual void visit(FsmNode& n) { }
-    virtual void visit(FsmTransition& t) { }
-    virtual void visit(FsmLabel& t) { }
+    virtual void visit(Fsm& /*f*/) { }
+    virtual void visit(FsmNode& /*n*/) { }
+    virtual void visit(FsmTransition& /*t*/) { }
+    virtual void visit(FsmLabel& /*t*/) { }
     
     
     void setNew(bool b) { isNew = b; }

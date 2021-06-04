@@ -1,5 +1,9 @@
+#include <string>
+
 #include "InputOutputTree.h"
 #include "AdaptiveTreeNode.h"
+#include "interface/FsmPresentationLayer.h"
+#include "trees/IOListContainer.h"
 
 using namespace std;
 

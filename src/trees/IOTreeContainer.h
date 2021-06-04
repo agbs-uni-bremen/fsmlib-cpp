@@ -4,8 +4,9 @@
 #include <memory>
 #include <vector>
 
-#include "interface/FsmPresentationLayer.h"
-#include "trees/InputOutputTree.h"
+class FsmPresentationLayer;
+class InputOutputTree;
+class IOListContainer;
 
 /**
  * This class is a container for InputOutputTrees.

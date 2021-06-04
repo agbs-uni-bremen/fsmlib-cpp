@@ -5,6 +5,8 @@
  */
 #include "fsm/SegmentedTrace.h"
 
+#include <iostream>
+
 using namespace std;
 
 TraceSegment::TraceSegment() {

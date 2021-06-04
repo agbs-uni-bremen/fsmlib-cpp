@@ -8,9 +8,8 @@ A C++ library containing algorithms for processing finite state machines and der
  Licensed under the EUPL V.1.1
 
  Please send questions and suggestions to 
-        Jan Peleska (jp@informatik.uni-bremen.de) and/or 
-        Gaël Dottel (dottel.gael@gmail.com).
- 
+        Jan Peleska (jp@informatik.uni-bremen.de) 
+
  1. About this library
  This library provides algorithms for processing finite state machines (FSMs), such as, for example,
        - Minimising deterministic or nondeterministic state machines
@@ -31,14 +30,14 @@ A C++ library containing algorithms for processing finite state machines and der
     - several classes programmed in C++, with the main classes contained in folder [fsm](src/fsm);
       there the main classes are [Dfsm](src/fsm/Dfsm.h) and [Fsm](src/fsm/Fsm.h)
 	- utility libraries in [trees](src/trees) and [sets](src/sets) as well as an example program in [main](src/main);
-    - a Qt-based gui application in windows/;
  Some of the algorithms can be executed directly from the main program (if you build this, it is called fsm-main), in order to exemplify what the library functions can do. The library, however, contains also methods that are not exercised by fsm-main program. Therefore it is useful to browse all classes for other functionality that might also be useful for your applications.
 
 Documentation can be found in folder doc/. File 'doc/doxyfile' can be used to create a class documentation using the doxygen tool. This will be quite useful to explore the contents of the library. If you do not wish to create the documentation yourself, you can unpack the zip-archive doc/fsmlib-cpp-doc.zip and open file html/index.html in your browser.
  
  3. How to build the code for different platforms
  
- We have prepared the code to be compiled and linked using the Cmake toolkit. For creating and using the main program fsm-main, a Qt-installation of Qt 5.7 is required. The compiler needs to support C++11. We have tested the code with these compilers: 
+ We have prepared the code to be compiled and linked using the Cmake toolkit. 
+ The compiler needs to support C++11. We have tested the code with these compilers: 
    gcc 5.4.0 under linux (ubuntu) - 64 bit
    gcc 4.8.3 under Linux (centos 7) - 64 bit
    MSVC 2015 under windows 10 - 64 and 32 bit
@@ -72,11 +71,11 @@ Documentation can be found in folder doc/. File 'doc/doxyfile' can be used to cr
 	 
 	 For building the graphical user interface as well, the above mentioned commands have to be changed to:
 		
-		cmake -Dgui=ON <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Debug
+		cmake -Dgui=ON <relative path from debug build directory to the src-directory>  -DCMAKE_BUILD_TYPE=Debug
 		
 	for debug mode, respectively
 		
-		cmake -Dgui=ON <relative path from release build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/gcc_64/ -DCMAKE_BUILD_TYPE=Release
+		cmake -Dgui=ON <relative path from release build directory to the src-directory>  -DCMAKE_BUILD_TYPE=Release
 		
 	for release mode. 
 		
@@ -102,74 +101,19 @@ Documentation can be found in folder doc/. File 'doc/doxyfile' can be used to cr
 	 
 	 For building the graphical user interface use the following commands instead:
 	 
-	    cmake -Dgui=ON <relative path from debug build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Debug
+	    cmake -Dgui=ON <relative path from debug build directory to the src-directory> -DCMAKE_BUILD_TYPE=Debug
 	 
 	 for debug mode, respectively
 	 
-		cmake -Dgui=ON <relative path from release build directory to the src-directory> -DCMAKE_PREFIX_PATH=<absolute path to Qt>/Qt/5.7/clang_64/ -DCMAKE_BUILD_TYPE=Release
+		cmake -Dgui=ON <relative path from release build directory to the src-directory> -DCMAKE_BUILD_TYPE=Release
 	 
 	 for release mode.
      
  3.3 Building the library for Windows
  
-     For Windows platforms, the debug and release versions will be built at the same time. Please note that you will have to add Qt's dll to your PATH in order to build the gui.
-	 
-	 Launch Cmake GUI.
-	 
-	 Specify the source code directory and the binaries directory.
-	 
-	 For building the graphical user interface the following steps are necessary:
-	 
-	 Enable the option `gui`
-	 
-	 Click Add Entry.
-	 
-	 Write this line for the Name. Command
-	 
-		CMAKE_PREFIX_PATH
-		
-	 Select PATH for the Type. For the value, put the absolute path to. Command
-	 
-		Qt/5.7/msvc2015_64
-	 
-	 Click Generate and verify if cmake is using the right compiler.
-	 
-	 Click Finish.
-	 
-	 will create all the files needed by MSVC. You can now open the project with the .sln file.
+     For Windows platforms, the debug and release versions will be built at the same time. 
+	 	 
+     First, create a CMake project in Visual Studio Code and import the project files.
+     Visual Studio should find the CMake-File in the src folder automatically.
 
-     Several properties need to be specified for the MSVC compiler before the library can be built
-     without errors. These options can be set by selecting all sub-projects fsm-example, fsm-fsm,
-     fsm-generator,...,fsm-trees end entering the properties dialog via context menu (right click).
-     There, select C/C++, Command Line and insert in the Additional Options field the following
-     command line options for invoking the compiler
-   
-          /Za /Dstrdup=_strdup 
-
-     Option /Za enables the use of logical operators not, and, or instead of !, &&, ||,
-     but disables the use of function name strdup instead of _strdup. Since the unix worlds
-     use strdup, the define /Dstrdup=_strdup lets MSVC see _strdup as required.
-
-     If you do not like this work around, you need to insert the extra include directive
-
-            #include <ciso646>
-   
-     in all cpp-files. This defines the not, and, or operators. We do not like this solution,
-     so the compiler options are the preferred solution.
-
-     Furthermore, select C/C++, Preprocessor in the properties dialogue and add the 
-     preprocessor definitions _CRT_SECURE_NO_WARNINGS and _CRT_NONSTDC_NO_DEPRECATE.
-     This suppresses warnings about using fopen(), fgets(), and about using function names
-     that MSVC claims to be deprecated but which are syill used in the unix world.
-
-4. Warning: Qt GUI version is broken
-
-   Currently, the Qt GUI cannot be used, due to important extensions in the library.
-   We plan to fix this by the end of 2017.
-
-
-
-
-
-	 
-	 
+     Then, build the FSM-Lib using "Build All".

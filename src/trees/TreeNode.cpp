@@ -4,7 +4,10 @@
  * Licensed under the EUPL V.1.1
  */
 #include "trees/TreeNode.h"
+#include "trees/TreeEdge.h"
+#include "trees/IOListContainer.h"
 #include <deque>
+#include <algorithm>
 
 using namespace std;
 
@@ -435,7 +438,6 @@ shared_ptr<TreeNode> TreeNode::after(vector<int>::const_iterator lstIte, const v
                 return e->getTarget()->after(lstIte, end);
             }
         }
-        
         /*Could not find an edge labelled by x*/
         return nullptr;
     }
@@ -521,9 +523,22 @@ void TreeNode::traverse(vector<int>& v,
 
 
 
+std::shared_ptr<TreeNode> TreeNode::getIntersectionNode(const std::shared_ptr<TreeNode> &otherNode) {
+    std::shared_ptr<TreeNode> root = std::make_shared<TreeNode>();
 
+    for (auto thisEdge : *children) {
 
-
+        int thisIO = thisEdge->getIO();
+        for (auto otherEdge : *otherNode->children) {
+            if (thisIO == otherEdge->getIO()) {
+                std::shared_ptr<TreeNode> target = thisEdge->getTarget()->getIntersectionNode(otherEdge->getTarget());
+                std::shared_ptr<TreeEdge> edge = std::make_shared<TreeEdge>(thisIO,target);
+                root->add(edge);
+            }
+        }
+    }
+    return root;
+}
 
 
 

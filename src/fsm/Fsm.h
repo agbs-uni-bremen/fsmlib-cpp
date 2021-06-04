@@ -6,42 +6,39 @@
 #ifndef FSM_FSM_FSM_H_
 #define FSM_FSM_FSM_H_
 
-#include <fstream>
-#include <iostream>
 #include <memory>
-#include <set>
-#include <sstream>
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 #include <vector>
 #include <deque>
-#include <map>
+#include <stdexcept>
 
-#include "fsm/FsmVisitor.h"
-#include "fsm/FsmLabel.h"
-#include "fsm/InputTrace.h"
+#include "fsm/InputTraceSet.h"
 
 
-class Dfsm;
+class FsmVisitor;
+class FsmLabel;
 class FsmNode;
+class FsmTransition;
+class IOTrace;
+class OFSMTable;
+class OutputTrace;
+class FsmPresentationLayer;
+class InputOutputTree;
 class Tree;
 class OutputTree;
-class InputTrace;
-class FsmPresentationLayer;
-class OFSMTable;
-class IOListContainer;
-class IOTreeContainer;
+class InputTree;
 class TestSuite;
-class OutputTrace;
-class InputOutputTree;
-class IOTrace;
+class IOTreeContainer;
+class IOListContainer;
+class InputTrace;
 class IOTraceContainer;
 
 enum Minimal
 {
     True, False, Maybe
 };
-
 
 class too_many_transition_faults : public std::runtime_error
 {
@@ -100,7 +97,6 @@ protected:
     std::shared_ptr<Tree> characterisationSet;
     std::vector<std::shared_ptr<FsmNode>> dReachableStates;
     Minimal minimal;
-    bool complete;
 
     std::vector<std::shared_ptr<OFSMTable>> ofsmTableLst;
     std::vector<std::shared_ptr<Tree>> stateIdentificationSets;
@@ -116,6 +112,13 @@ protected:
     void parseLine(const std::string & line);
     void readFsm(const std::string & fname);
     
+    /**
+     *  Parse a line from from a *.fsm file supposed to be in raw format
+     *  <source-state-number> <input-number> <output-number> <target-state-number>
+     *  The line is checked w.r.t. consisting of exactly 4 numbers. If the line has another format,
+     *  false is returned.
+     */
+    bool checkRawFormat(const std::string& line);
     void parseLineInitial (const std::string & line);
     void readFsmInitial (const std::string & fname);
     /**
@@ -123,8 +126,6 @@ protected:
      * @param fname The path to the dot file.
      */
     void readFsmFromDot (const std::string & fname, const std::string name = "");
-    
-    std::string labelString(std::unordered_set<std::shared_ptr<FsmNode>>& lbl) const;
     
     /**
      *  Return a random seed to be used for random generation
@@ -179,7 +180,7 @@ protected:
     int getNumberOfNonDeterministicTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
     int getNumberOfTotalTransitions(std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
 
-    std::vector<std::shared_ptr<FsmTransition>> getNonDeterministicTransitions() const;
+    std::vector<std::shared_ptr<FsmTransition>> getNonDeterministicTransitions() const;    
 
 public:
     
@@ -253,6 +254,9 @@ public:
      values are 0..maxInput
      @param maxOutput maximal value of (integer) output alphabet - admissible
      values are 0..maxOutput
+     @param lst The list of nodes to create the Fsm from.
+            If this list is empty, then a single state without transitions is
+            created as the initial state of the Fsm.
      */
     Fsm(const std::string & fsmName,
         const int maxInput,
@@ -314,6 +318,36 @@ public:
                     const bool& observable,
                     const unsigned& seed = 0);
 
+
+    /**
+     * Generate an observable, possibly partial and possibly non-deterministic FSM.
+     * 
+     * The generation proceeds by repeatedly generating random transition tables
+     * and checking whether the induced FSM is initially connected, returning
+     * the first initially connected FSM generated in this process.
+     * 
+     * @param fsmName The name of the FSM to create.
+     * @param maxInput Maximal input index to use.
+     * @param maxOutput Maximal output index to use.
+     * @param maxState Maximal state index to use.
+     *                 The resulting Fsm will have exactly (maxState+1) states.
+     * @param presentationLayer Presentation-layer to use.
+     * @param transitionChancePercent The chance in percent for any combination
+     *                                (q,x,y) of state, input and output to be
+     *                                used for a transition.
+     * @param seed Seed for the random number generator to employ.
+     *             If 0, then the random seed will be generated and stored in
+     *             this parameter. 
+     */
+    static std::shared_ptr<Fsm>
+    createRandomOPFSM(const std::string & fsmName,
+                    const int maxInput,
+                    const int maxOutput,
+                    const int maxState,
+                    const std::shared_ptr<FsmPresentationLayer>& presentationLayer,
+                    const int transitionChancePercent,
+                    unsigned& seed);                    
+
     /**
      *  Create a mutant of the FSM, producing output faults
      *  and/or transition faults only.
@@ -333,6 +367,16 @@ public:
                                          int& removedTransitions,
                                          const unsigned seed = 0,
                                          const std::shared_ptr<FsmPresentationLayer>& pLayer = nullptr) const;
+
+    /**
+     * Create a mutant from this fsm by randomly choosing states and
+     * inputs in these states and removing all transitions for this
+     * state-input pair.
+     */
+    std::shared_ptr<Fsm> createLessDefinedFsm(const std::string& fsmName,
+                                              unsigned numOfRemovedInputs,
+                                              const unsigned seed = 0,
+                                              const std::shared_ptr<FsmPresentationLayer>& pLayer = nullptr) const;                                         
     
     
     /**
@@ -360,12 +404,27 @@ public:
     virtual int getMaxNodes() const;
     int getMaxInput() const;
     int getMaxOutput() const;
+    int getMaxState() const;
     std::vector<std::shared_ptr<FsmNode>> getNodes() const;
     std::shared_ptr<FsmNode> getNode(int id) const;
     std::shared_ptr<FsmPresentationLayer> getPresentationLayer() const;
     int getInitStateIdx() const;
     void resetColor();
+    
+    /**
+     * Create a dot (GraphViz)-File from this FSM and store it in the
+     *  working directory with file name fname.
+     */
     void toDot(const std::string & fname);
+    
+    /**
+     * Store the FSM in internal file format consisting of 4-tuples
+     *          <source state> <input> <output> <target state>
+     * All states, inputs, outputs ar encoded as integers in range 0,1,2,...
+     * @param fname Basename  of the file to be created. Extension
+     * .fsm will be added if not already used as extension in fname.
+     */
+    void toInternalFsmFormat(const std::string & fname);
     
     float getDegreeOfCompleteness(const int& minus = 0, std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
     float getDegreeOfNonDeterminism(const int& diff = 0, std::vector<std::shared_ptr<FsmNode>> nodePool = std::vector<std::shared_ptr<FsmNode>>()) const;
@@ -425,7 +484,6 @@ public:
      */
     bool isObservable() const;
     Minimal isMinimal() const;
-    bool isComplete() const;
     
     /**
      *   Check for unreachable states and remove them from the 
@@ -889,6 +947,16 @@ public:
      * @return true if FSM is deterministic
      */
     bool isDeterministic() const;
+
+
+    /**
+     * Generate all maximal length responses of this node to a given input trace,
+     * where a response is an IO trace in the language of this node whose input 
+     * portion is a prefix of the input trace.
+     */
+    std::vector<IOTrace> getResponses(const InputTrace& input) const;
+    std::vector<IOTrace> getResponses(std::deque<int>& input) const;
+
     
     
     void setPresentationLayer(const std::shared_ptr<FsmPresentationLayer>& ppresentationLayer);
@@ -915,5 +983,50 @@ public:
      */
     virtual bool distinguishable(const FsmNode& s1, const FsmNode& s2);
 
+    /**
+     * Calculates and returns the OFSM tables.
+     */
+    InputTrace calculateDistinguishingTrace(std::shared_ptr<FsmNode> const &s1, std::shared_ptr<FsmNode> const &s2) const;
+
+    /**
+     * Calculates whether the FSM is harmonized, i.e. whether for every state
+     * s_1 and every pair of states s_2, s_2' nondeterministically reachable
+     * from s_1 with the same input trace x the states s_2 and s_2' accept the
+     * same set of inputs.
+     */
+    bool isHarmonized() const;
+
+    /**
+     * Creates the name of a state in a powerset construction.
+     * @param lbl The set of nodes to create a name for.
+     * @return The name of a state created from the names of the states it contains.
+     */
+    static std::string labelString(std::unordered_set<std::shared_ptr<FsmNode>>& lbl);
+
+    /**
+     * Add a new node to this FSM.
+     * @param name The name of the node to add.
+     */
+    std::shared_ptr<FsmNode> addNode(const std::string & name);
+
+    /**
+     * Returns true if and only if this Fsm is a strong semi-reduction of the other Fsm.
+     */
+    bool isStrongSemiReductionOf(Fsm& other);
+
+    /**
+     * Returns true if the given trace is contained in the language of this Fsm.
+     * Assumes that this Fsm is observable.
+     */
+    bool exhibitsBehaviour(const IOTrace& trace) const;
+
+    /**
+     * Returns true if and only if this fsm passes a test suite for
+     * strong semi-reduction against a given specification.
+     */
+    bool passesStrongSemiReductionTestSuite(Fsm& spec, InputTree& testSuite);
+    
 };
+
+
 #endif //FSM_FSM_FSM_H_

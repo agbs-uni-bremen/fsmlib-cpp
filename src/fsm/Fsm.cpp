@@ -7,29 +7,38 @@
 #include <chrono>
 #include <deque>
 #include <algorithm>
+#include <random>
+#include <numeric>
 #include <regex>
 #include <math.h>
+#include <cassert>
+#include <unordered_map>
+#include <fstream>
+#include <iostream>
+#include <functional>
 
-#include "fsm/Dfsm.h"
 #include "fsm/Fsm.h"
-#include "fsm/FsmNode.h"
 #include "fsm/FsmTransition.h"
-#include "fsm/InputTrace.h"
-#include "fsm/IOTrace.h"
-#include "fsm/IOTraceContainer.h"
+#include "fsm/FsmLabel.h"
+#include "fsm/FsmNode.h"
 #include "fsm/OFSMTable.h"
+#include "fsm/FsmVisitor.h"
 #include "fsm/RDistinguishability.h"
 #include "fsm/VPrimeLazy.h"
+#include "fsm/IOTrace.h"
 #include "sets/HittingSet.h"
+#include "trees/AdaptiveTreeNode.h"
 #include "trees/TreeNode.h"
-#include "trees/OutputTree.h"
-#include "trees/Tree.h"
+#include "trees/TreeEdge.h"
 #include "trees/IOListContainer.h"
-#include "trees/IOTreeContainer.h"
+#include "utils/Logger.hpp"
+#include "utils/generic-equivalence-class-calculation.hpp"
 #include "trees/TestSuite.h"
 #include "trees/InputOutputTree.h"
-#include "trees/AdaptiveTreeNode.h"
-#include "utils/Logger.hpp"
+#include "trees/InputTree.h"
+#include "trees/IOTreeContainer.h"
+#include "fsm/IOTraceContainer.h"
+#include "interface/FsmPresentationLayer.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -104,6 +113,12 @@ shared_ptr<FsmNode> Fsm::findp(const vector<shared_ptr<FsmNode>>& lst,
 
 void Fsm::parseLine(const string & line)
 {
+    
+    if ( not checkRawFormat(line) ) {
+        cerr << "Illegal line in fsm-raw format: `" << line << "'" << endl;
+        return;
+    }
+    
     stringstream ss(line);
     
     int source;
@@ -165,8 +180,20 @@ void Fsm::parseLine(const string & line)
                                                                 theLabel));
 }
 
+
+bool Fsm::checkRawFormat(const string& line) {
+    return regex_match(line,regex("[ \t]*[0-9]+[ \t]+[0-9]+[ \t]+[0-9]+[ \t]+[0-9]+[ \t]*"));
+}
+
 void Fsm::parseLineInitial (const string & line)
 {
+    
+    if ( not checkRawFormat(line) ) {
+        cerr << "Illegal line in fsm-raw format: `" << line << "'" << endl;
+        return;
+    }
+    
+    
     stringstream ss(line);
     
     int source;
@@ -428,7 +455,7 @@ throw ss.str();
 }
 
 
-string Fsm::labelString(unordered_set<shared_ptr<FsmNode>>& lbl) const
+string Fsm::labelString(unordered_set<shared_ptr<FsmNode>>& lbl)
 {
     string s = "{ ";
     
@@ -449,7 +476,17 @@ string Fsm::labelString(unordered_set<shared_ptr<FsmNode>>& lbl) const
 
 Fsm::~Fsm() { }
 
-Fsm::Fsm() { }
+Fsm::Fsm() :
+name(""),
+currentParsedNode(nullptr),
+maxInput(-1),
+maxOutput(-1),
+maxState(-1),
+initStateIdx(-1),
+characterisationSet(nullptr),
+minimal(Maybe),
+presentationLayer(nullptr)
+{  }
 
 Fsm::Fsm(const Fsm& other): Fsm(other, other.name, other.presentationLayer)
 {
@@ -572,9 +609,13 @@ characterisationSet(nullptr),
 minimal(Maybe),
 presentationLayer(presentationLayer)
 {
-    nodes.insert(nodes.end(), lst.begin(), lst.end());
-    // reset all nodes as 'white' and 'unvisited'
+    if (lst.size() > 0) {
+        nodes.insert(nodes.end(), lst.begin(), lst.end());
+    } else {
+        addNode("Init");
+    }
     
+    // reset all nodes as 'white' and 'unvisited'
     for ( auto n : nodes ) {
         n->setColor(FsmNode::white);
         n->setUnvisited();
@@ -784,6 +825,11 @@ int Fsm::getMaxOutput() const
     return maxOutput;
 }
 
+int Fsm::getMaxState() const
+{
+    return maxState;
+}
+
 vector<shared_ptr<FsmNode>> Fsm::getNodes() const
 {
     return nodes;
@@ -812,6 +858,40 @@ void Fsm::toDot(const string & fname)
     ofstream out(fname + ".dot");
     out << *this;
     out.close();
+}
+
+void Fsm::toInternalFsmFormat(const string& fname) {
+    
+    string fileName(fname);
+    if ( fileName.size() < 4 or
+         fileName.find(".fsm") != fileName.size() - 4 ) {
+        fileName += ".fsm";
+    }
+    
+    ofstream out(fileName);
+    
+    for ( unsigned int n = initStateIdx; n < size(); n++ ) {
+        shared_ptr<FsmNode> theNode = nodes[n];
+        
+        for ( auto tr : theNode->getTransitions() ) {
+            out << n << " " << tr->getLabel()->getInput()
+            << " " << tr->getLabel()->getOutput()
+            << " " << tr->getTarget()->getId() << endl;
+        }
+    }
+    
+    for ( int n = 0; n < initStateIdx; n++ ) {
+        shared_ptr<FsmNode> theNode = nodes[n];
+        
+        for ( auto tr : theNode->getTransitions() ) {
+            out << n << " " << tr->getLabel()->getInput()
+            << " " << tr->getLabel()->getOutput()
+            << " " << tr->getTarget()->getId() << endl;
+        }
+    }
+    
+    out.close();
+    
 }
 
 
@@ -1362,10 +1442,7 @@ Minimal Fsm::isMinimal() const
     return minimal;
 }
 
-bool Fsm::isComplete() const
-{
-    return complete;
-}
+
 
 void Fsm::calcOFSMTables() {
     
@@ -5014,5 +5091,275 @@ bool Fsm::distinguishable(const FsmNode& s1, const FsmNode& s2) {
 }
 
 
+InputTrace Fsm::calculateDistinguishingTrace(std::shared_ptr<FsmNode> const &s1, std::shared_ptr<FsmNode> const &s2) const {
+    return s1->calcDistinguishingTrace(s2, this->ofsmTableLst, maxInput, maxOutput);
+}
+
+bool Fsm::isHarmonized() const {
+    auto equivalencePartitioning = createInitialPartitioning(this->nodes, [this](std::decay<decltype(*this->nodes.begin())>::type const &node) {
+        std::vector<bool> isInputDefined(this->maxInput+1);
+
+        //Calculate initial predicate for state
+        for(auto const &transitionPtr : node->getTransitions()) {
+            auto const &label = *transitionPtr->getLabel();
+            auto input = label.getInput();
+            isInputDefined.at(input) = true;
+        }
+
+        return isInputDefined;
+    });
+
+    std::vector<int> symbolSet(this->maxInput+1);
+    std::iota(symbolSet.begin(), symbolSet.end(), 0);
+    auto transitionFunction = [](std::decay<decltype(*this->nodes.begin())>::type const &state, int symbol) {
+        return state->after(symbol);
+    };
+    auto refinedPartitioning = fixpoint([&symbolSet,&transitionFunction](decltype(equivalencePartitioning) const &partitioning) {
+        return refineStatePartitioning(partitioning, symbolSet, transitionFunction);
+    }, equivalencePartitioning);
+
+    return std::all_of(refinedPartitioning.begin(), refinedPartitioning.end(), [&symbolSet,&transitionFunction,&refinedPartitioning](std::decay<decltype(*refinedPartitioning.begin())>::type const &partition) {
+        auto const &firstState = *partition.begin();
+        return std::all_of(symbolSet.begin(), symbolSet.end(), [&firstState,&transitionFunction,&refinedPartitioning](int symbol) {
+            auto reachedStates = transitionFunction(firstState, symbol);
+            std::set<decltype(mapStateToEquivalenceClass(refinedPartitioning, firstState))> reachedClasses;
+            std::transform(reachedStates.begin(), reachedStates.end(), std::inserter(reachedClasses, reachedClasses.end()), [&refinedPartitioning](decltype(*reachedStates.begin()) state) {
+                return mapStateToEquivalenceClass(refinedPartitioning, state);
+            });
+            if(reachedClasses.size() > 1) {
+                std::cout << "Counterexample: State " << firstState->getName() << " reaches several classes on input " << symbol << std::endl;
+            }
+            return reachedClasses.size() <= 1;
+        });
+    });
+}
+
+std::shared_ptr<FsmNode> Fsm::addNode(const std::string & name) {
+    shared_ptr<FsmNode> newNode = make_shared<FsmNode>(maxState+1, name, presentationLayer);
+    nodes.push_back(newNode);
+    ++maxState;
+    return newNode;
+}
 
 
+std::vector<IOTrace> Fsm::getResponses(std::deque<int>& input) const {
+    
+    std::function<std::vector<IOTrace>(std::shared_ptr<FsmNode>,std::deque<int>)> helper = [this,&helper](std::shared_ptr<FsmNode>node, std::deque<int> inputs)->std::vector<IOTrace> {
+        std::vector<IOTrace> result;
+        // empty input sequence
+        if (inputs.empty()) {
+            IOTrace trace(presentationLayer);
+            trace.setTargetNode(node);
+            result.push_back(trace);
+            return result;
+        }
+
+        int x = inputs.front();
+        inputs.pop_front();
+
+        // undefined input
+        if (node->getDefinedInputs().count(x) == 0) {
+            IOTrace trace(presentationLayer);
+            trace.setTargetNode(node);
+            result.push_back(trace);
+            return result;
+        }
+
+        for (auto transition : node->getTransitions()) {
+            if (transition->getLabel()->getInput() != x) continue;
+
+            int y = transition->getLabel()->getOutput();
+            IOTrace xyTrace(x,y,presentationLayer);
+            std::vector<IOTrace> targetResponses = helper(transition->getTarget(), inputs);
+            for (auto response : targetResponses) {
+                response.prepend(xyTrace);
+                result.push_back(response);
+            }
+        }
+
+        return result;
+    };
+
+    return helper(getInitialState(), input);
+}
+
+std::vector<IOTrace> Fsm::getResponses(const InputTrace& input) const {
+    std::deque<int> deque;
+
+    for (auto x : input.get()) {
+        deque.push_back(x);
+    }
+    return getResponses(deque);
+}
+
+bool Fsm::exhibitsBehaviour(const IOTrace& trace) const {
+    return getInitialState()->exhibitsBehaviour(trace);
+}
+
+
+bool Fsm::isStrongSemiReductionOf(Fsm& other) {
+    // create intersection Fsm
+    auto inter = intersect(other);
+
+    // for each state of inter check that the defined inputs of both states
+    // coincide and that some transition exists for each shared defined input
+    for (auto node : inter.getNodes()) {
+        auto thisNode = node->getPair()->first;
+        auto otherNode = node->getPair()->second;
+        
+        auto thisInputs = thisNode->getDefinedInputs();
+        auto otherInputs = otherNode->getDefinedInputs();
+        auto interInputs = node->getDefinedInputs();
+        
+        if (thisInputs != otherInputs) return false;
+
+        if (thisInputs != interInputs) return false;
+
+        // transitions x/y are only allowed in other if they are possible in this
+        for (auto thisTransition : thisNode->getTransitions()) {
+            if (! otherNode->hasTransition(thisTransition->getLabel()->getInput(), thisTransition->getLabel()->getOutput()))
+                return false;
+        }
+    }
+
+    return true;
+}
+
+bool Fsm::passesStrongSemiReductionTestSuite(Fsm& spec, InputTree& testSuite) {
+
+    for (auto test : testSuite.getInputTraces()) {
+        auto responses = getResponses(test);
+
+        for (auto response : responses) {
+            // check if response is in L(spec)
+            if (! spec.exhibitsBehaviour(response)) {
+                return false;
+            }
+
+            // check that the targets of response in this and spec 
+            // have the same defined inputs
+            auto targets = spec.getInitialState()->after(response);
+            // as observability is assumed, we simply pick the first state in the
+            // set of targets as the target of the response in spec
+            auto specTarget = *targets.cbegin();
+            auto thisTarget = response.getTargetNode();
+
+            if (specTarget->getDefinedInputs() != thisTarget->getDefinedInputs()) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+
+std::shared_ptr<Fsm> Fsm:: createRandomOPFSM(const std::string & fsmName,
+                                             const int maxInput,
+                                             const int maxOutput,
+                                             const int maxState,
+                                             const std::shared_ptr<FsmPresentationLayer>& presentationLayer,
+                                             const int transitionChancePercent,
+                                             unsigned& seed) 
+{
+    if ( seed == 0 ) {
+        seed = getRandomSeed();
+    }
+    srand(seed);
+
+    std::vector<std::shared_ptr<FsmNode>> nodes;
+    for (int i = 0; i <= maxState; ++i) {
+        nodes.push_back(std::make_shared<FsmNode>(i,presentationLayer));
+    }
+
+    for (int i = 0; i <= maxState; ++i) {
+        for (int x = 0; x <= maxInput; ++x) {
+            for (int y = 0; y <= maxOutput; ++y) {
+                
+                if (rand() % 101 > transitionChancePercent) continue;
+                
+                int tgt = rand() % (maxState + 1);
+                auto label = std::make_shared<FsmLabel>(x,y,presentationLayer);
+                auto transition = std::make_shared<FsmTransition>(nodes[i], nodes[tgt], label);
+                nodes[i]->addTransition(transition);
+            }
+        }
+    }
+    auto fsm = make_shared<Fsm>(fsmName,maxInput,maxOutput,nodes,presentationLayer);
+
+    std::vector<std::shared_ptr<FsmNode>> unreachableNodes;
+    fsm->removeUnreachableNodes(unreachableNodes);
+    if (!unreachableNodes.empty()) {
+        // try again, but increase seed if it was fixed
+        ++seed;
+        return createRandomOPFSM(fsmName, maxInput, maxOutput, maxState, presentationLayer, transitionChancePercent, seed);
+    }
+
+    fsm->transformToObservableFSM();
+    size_t expectedSize = maxState+1;
+    if (fsm->getNodes().size() < expectedSize) {
+        // try again, but increase seed if it was fixed
+        ++seed;
+        return createRandomOPFSM(fsmName, maxInput, maxOutput, maxState, presentationLayer, transitionChancePercent, seed);
+    }
+
+
+    return fsm;
+    
+}
+
+
+
+std::shared_ptr<Fsm> Fsm::createLessDefinedFsm(const std::string& fsmName,
+                                               unsigned numOfRemovedInputs,
+                                               const unsigned seed,
+                                               const std::shared_ptr<FsmPresentationLayer>& pLayer) const
+{
+    if ( seed == 0 ) {
+        unsigned int s = getRandomSeed();
+        srand(s);
+    }
+    else {
+        srand(seed);
+    }
+
+    auto fsm = make_shared<Fsm>(*this);
+    std::vector<std::shared_ptr<FsmNode>> nodesWithInputs;
+    for (auto node : fsm->getNodes()) {
+        if (node->getTransitions().size() > 0) 
+            nodesWithInputs.push_back(node);
+    }
+    std::mt19937 rng(rand());
+    std::shuffle(std::begin(nodesWithInputs), std::end(nodesWithInputs), rng);
+
+    
+    unsigned removedInputs = 0;
+    while (removedInputs < numOfRemovedInputs && !nodesWithInputs.empty()) {
+        ++removedInputs;
+        auto node = nodesWithInputs.back();
+        nodesWithInputs.pop_back();
+
+        auto nodeTransitions = node->getTransitions();
+        auto deletionIndex = rand() % nodeTransitions.size();
+        auto inputToDelete = nodeTransitions[deletionIndex]->getLabel()->getInput();
+        for (auto transition : nodeTransitions) {
+            if (transition->getLabel()->getInput() == inputToDelete)
+                node->removeTransition(transition);
+        }
+
+        // re-insert the node only if it still has defined inputs
+        if (node->getTransitions().empty()) 
+            continue;
+        if (nodesWithInputs.empty()) {
+            nodesWithInputs.push_back(node);
+            continue;
+        }
+        
+        auto swapIndex = rand() % nodesWithInputs.size();
+        auto tmp = nodesWithInputs[swapIndex];
+        nodesWithInputs[swapIndex] = node;
+        nodesWithInputs.push_back(tmp);
+    }
+
+    return fsm;
+}      

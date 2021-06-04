@@ -3,14 +3,27 @@
  *
  * Licensed under the EUPL V.1.1
  */
+
+#include <iostream>
+#include <set>
+#include <fstream>
+
 #include "fsm/Dfsm.h"
 #include "fsm/FsmNode.h"
+#include "fsm/FsmLabel.h"
 #include "fsm/FsmTransition.h"
 #include "fsm/PkTable.h"
+#include "fsm/PkTableRow.h"
 #include "fsm/DFSMTableRow.h"
+#include "fsm/DFSMTable.h"
 #include "fsm/InputTrace.h"
 #include "fsm/IOTrace.h"
+#include "fsm/SegmentedTrace.h"
 #include "trees/Tree.h"
+#include "trees/IOListContainer.h"
+#include "trees/TreeNode.h"
+#include "trees/TreeEdge.h"
+#include "json/json.h"
 
 using namespace std;
 
@@ -386,11 +399,11 @@ void Dfsm::initDistTraces() {
     
     distTraces.clear();
     
-    for ( int n = 0; n < size(); n++ ) {
+    for ( size_t n = 0; n < size(); n++ ) {
         // Create empty vector of for row n, to be extended in
         // the inner loop
         vector< vector< shared_ptr< vector<int> > > > thisRow;
-        for ( int m = 0; m < size(); m++ ) {
+        for ( size_t m = 0; m < size(); m++ ) {
             // Create empty vector of pointers to traces
             vector< shared_ptr< vector<int> > > v;
             thisRow.push_back(v);
@@ -1002,10 +1015,14 @@ void Dfsm::calcPkTables() {
     }
     
 #if 0
-    cout << "MINIMISE" << endl;
+    cout << "DFSM-Table" << endl;
+    cout << *dfsmTable << endl;
+    cout << "PK-Tables" << endl;
+    PkTable::counter = 0;
     for (auto p : pktblLst) {
-        
+        PkTable::counter++;
         cout << *p << endl;
+        
     }
 #endif
     
@@ -1647,8 +1664,8 @@ void Dfsm::calculateDistMatrix() {
     initDistTraces();
     calcPkTables();
     
-    for ( int n = 0; n < size(); n++ ) {
-        for ( int m = n+1; m < size(); m++ ) {
+    for ( size_t n = 0; n < size(); n++ ) {
+        for ( size_t m = n+1; m < size(); m++ ) {
             // Skip indistinguishable nodes
             if ( not distinguishable(*nodes[n], *nodes[m]) ) continue;
             

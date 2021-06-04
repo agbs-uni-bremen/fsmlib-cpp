@@ -6,11 +6,12 @@
 #ifndef FSM_FSM_SEGMENTEDTRACE_H_
 #define FSM_FSM_SEGMENTEDTRACE_H_
 
-#include <iostream>
 #include <vector>
+#include <memory>
 #include <deque>
+#include <string>
 
-#include "fsm/FsmNode.h"
+class FsmNode;
 
 class TraceSegment {
     

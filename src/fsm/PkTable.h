@@ -6,17 +6,15 @@
 #ifndef FSM_FSM_PKTABLE_H_
 #define FSM_FSM_PKTABLE_H_
 
-#include <algorithm>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "fsm/typedef.inc"
 
-#include "fsm/PkTableRow.h"
-#include "interface/FsmPresentationLayer.h"
 class Dfsm;
+class PkTableRow;
+class FsmPresentationLayer;
 
 /**
  Class for representing Pk-Tables
@@ -44,6 +42,10 @@ private:
      */
     std::shared_ptr<FsmPresentationLayer> presentationLayer;
 public:
+    
+    /** Static counter for numbering Pk tables in LaTeX output */
+    static int counter;
+    
     /**
      * Create an empty Pktable, with each row set to nullptr
      * @param numStates The number of rows (1 row = 1 state)

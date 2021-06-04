@@ -6,6 +6,10 @@
 #include "fsm/IOTrace.h"
 #include "fsm/FsmNode.h"
 #include "fsm/FsmLabel.h"
+#include "interface/FsmPresentationLayer.h"
+
+#include <iostream>
+#include <sstream>
 
 using namespace std;
 

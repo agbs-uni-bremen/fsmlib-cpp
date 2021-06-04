@@ -3,6 +3,9 @@
  * 
  * Licensed under the EUPL V.1.1
  */
+#include <ostream>
+
+#include "interface/FsmPresentationLayer.h"
 #include "fsm/OutputTrace.h"
 
 OutputTrace::OutputTrace(const std::shared_ptr<FsmPresentationLayer>& presentationLayer)

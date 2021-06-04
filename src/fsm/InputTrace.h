@@ -6,16 +6,14 @@
 #ifndef FSM_FSM_INPUTTRACE_H_
 #define FSM_FSM_INPUTTRACE_H_
 
-#include <iostream>
 #include <vector>
+#include <memory>
 #include <unordered_set>
 
 #include "fsm/Trace.h"
-#include "interface/FsmPresentationLayer.h"
+#include "fsm/InputTraceSet.h"
 
-class InputTrace;
-
-typedef std::unordered_set<std::shared_ptr<InputTrace>, std::hash<InputTrace>, std::equal_to<InputTrace>> InputTraceSet;
+class FsmPresentationLayer;
 
 class InputTrace : public Trace
 {

@@ -1,4 +1,8 @@
+#include <ostream>
+
 #include "IOTraceContainer.h"
+#include "trees/OutputTree.h"
+#include "fsm/IOTrace.h"
 
 using namespace std;
 

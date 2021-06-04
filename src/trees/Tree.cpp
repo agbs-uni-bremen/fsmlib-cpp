@@ -3,8 +3,16 @@
  * 
  * Licensed under the EUPL V.1.1
  */
+#include <ostream>
+
 #include "fsm/FsmLabel.h"
 #include "trees/Tree.h"
+#include "trees/TreeNode.h"
+#include "trees/TreeEdge.h"
+#include "trees/IOListContainer.h"
+#include "fsm/InputTrace.h"
+#include "fsm/SegmentedTrace.h"
+#include "interface/FsmPresentationLayer.h"
 
 using namespace std;
 
@@ -98,6 +106,11 @@ shared_ptr<Tree> Tree::getSubTree(const shared_ptr<InputTrace>& alpha)
 shared_ptr<TreeNode> Tree::getSubTree(shared_ptr< vector<int> > alpha) {
     
     return root->after(alpha->begin(),alpha->end());
+}
+
+shared_ptr<TreeNode> Tree::getSubTree(const vector<int> & alpha) {
+    
+    return root->after(alpha.begin(),alpha.end());
 }
 
 IOListContainer Tree::getIOLists() const
@@ -318,4 +331,12 @@ string Tree::str()
         }
     }
     return str;
+}
+
+
+
+shared_ptr<Tree> Tree::getIntersectionTree(const shared_ptr<Tree> & b)
+{
+    auto intersectionRoot = root->getIntersectionNode(b->root);
+    return make_shared<Tree>(intersectionRoot,presentationLayer);
 }

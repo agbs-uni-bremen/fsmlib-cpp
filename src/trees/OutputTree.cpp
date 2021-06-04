@@ -4,6 +4,14 @@
  * Licensed under the EUPL V.1.1
  */
 #include "trees/OutputTree.h"
+#include "fsm/IOTrace.h"
+#include "trees/TreeNode.h"
+#include "trees/TreeEdge.h"
+#include "trees/IOListContainer.h"
+#include "interface/FsmPresentationLayer.h"
+
+#include <algorithm>
+#include <fstream>
 
 using namespace std;
 
@@ -183,7 +191,7 @@ ostream& operator<<(ostream& out, OutputTree& ot)
 	return out;
 }
 
-bool operator==(OutputTree& outputTree1, OutputTree& outputTree2)
+bool operator==(OutputTree const &outputTree1, OutputTree const &outputTree2)
 {
     
     return ( outputTree1.contains(outputTree2) and outputTree2.contains(outputTree1) );
@@ -213,7 +221,7 @@ bool operator==(OutputTree& outputTree1, OutputTree& outputTree2)
 #endif
 }
 
-bool operator!=(OutputTree& outputTree1, OutputTree& outputTree2)
+bool operator!=(OutputTree const &outputTree1, OutputTree const &outputTree2)
 {
     return not (outputTree1 == outputTree2);
 }

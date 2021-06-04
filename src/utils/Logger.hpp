@@ -28,7 +28,6 @@ public:
 protected:
     LogCoordinator();
     LogCoordinator(LogCoordinator&&);
-    LogCoordinator(LogCoordinator&) = default;
     
     std::map<std::string, std::reference_wrapper<std::ostream>> streams;
     std::ostringstream devNull;
