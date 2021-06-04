@@ -10,8 +10,6 @@ using namespace std;
 
 /**
  * Enumerator for calculating all V'' from V' used in adaptive state counting.
- *
- *  Concept: http://phrogz.net/lazy-cartesian-product
  */
 class VPrimeEnumerator
 {
@@ -23,7 +21,7 @@ private:
 
 public:
     /**
-     * Constructor for lazy calculation of V'.
+     * Constructor for enumeration of V'.
      * @param detStateCover The deterministic state cover for the specification fsm.
      * @param iut The implementation under test.
      */
