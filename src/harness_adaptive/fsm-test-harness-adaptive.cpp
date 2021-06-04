@@ -1,5 +1,19 @@
-//#include "sut_wrapper_adaptive.h"
-#include "sut_wrapper_adaptive_test.h"
+/**
+ * This is the main class for performing the online adaptive state counting desribed in
+ *      R. M. Hierons, "Testing from a nondeterministic finite state machine using adaptive state counting," 
+ *      in IEEE Transactions on Computers, vol. 53, no. 10, pp. 1330-1342, Oct. 2004, doi: 10.1109/TC.2004.85.
+ * 
+ * The specification is read from an FSM supplied in the arguments to main.
+ * The SUT is to be accessed via a wrapper - see sut_wrapper_adaptive.h.
+ * 
+ * Example usage from the resources/harness_adative_example directory
+ *  <path to fsm-harness-adaptive> -a 1 -k 100 -p example.in example.out example.state example.fsm 
+ */
+
+#include "sut_wrapper_adaptive.h"
+// replace the include for sut_wrapper_adaptive.h with the following include for testing purposes.
+//#include "sut_wrapper_adaptive_test.h"
+
 #include "vPrimeEnumerator.h"
 
 #include <iostream>
@@ -10,6 +24,7 @@
 #include <utility>
 #include <unordered_map>
 #include <unordered_set>
+#include <algorithm>
 
 
 #include "interface/FsmPresentationLayer.h"
@@ -25,9 +40,13 @@
 #include "trees/IOListContainer.h"
 #include "trees/IOTreeContainer.h"
 #include "trees/OutputTree.h"
+#include "trees/InputOutputTree.h"
 #include "trees/TestSuite.h"
+#include "trees/TreeEdge.h"
 
 #include "utils/Logger.hpp"
+
+#include "json/json.h"
 
 #define DBG 0
 using namespace std;
@@ -80,9 +99,9 @@ static shared_ptr<FsmPresentationLayer> pl = nullptr;
 static shared_ptr<Fsm> fsm = nullptr;
 
 
-static int k; // number of times to repeat application of test
-static int m; // upper bound on the number of states of the FSM-representation of the SUT
-static int numAddStates; // m - (size of reference model)
+static size_t k; // number of times to repeat application of test
+static size_t m; // upper bound on the number of states of the FSM-representation of the SUT
+static size_t numAddStates; // m - (size of reference model)
 
 
 
@@ -389,7 +408,7 @@ size_t lowerBound(const IOTrace& base,
     auto nonObservedResponseSets = responseSets.size() - observedResponseSetsAlongSuffix.size();
     LOG("VERBOSE_1") << "ResponseSets#           : " << responseSets.size()  << std::endl;
     if (responseSets.size() > m) {
-        cerr << "WARNING: observed more response sets (" << responseSets.size() << ") than the IUT is assumed to have states (" << m << ")" << std::endl;
+        LOG("ERROR") << "WARNING: observed more response sets (" << responseSets.size() << ") than the IUT is assumed to have states (" << m << ")" << std::endl;
     }
     LOG("VERBOSE_1") << "ObservedResponseSets#   : " << observedResponseSetsAlongSuffix.size() << std::endl;
     LOG("VERBOSE_1") << "nonObservedResponseSets#: " << nonObservedResponseSets << std::endl;
@@ -538,19 +557,18 @@ bool getSingleResponseToInputTrace(const InputTrace& inputTrace, IOTrace& trace)
         
         if (output == -1) {
             
-            cerr << "Failure detected: Observed invalid output \"" << outputStr << "\" in trace "; 
+            LOG("ERROR") << "Failure detected: Observed invalid output \"" << outputStr << "\" in trace "; 
 
             if (outputs.size() == 0) {
-                cerr << "(" << pl->getInId(inputTrace.get().at(0)) << "/" << outputStr << ")";
+                LOG("ERROR") << "(" << pl->getInId(inputTrace.get().at(0)) << "/" << outputStr << ")";
             } else {
-                cerr << "(" << pl->getInId(inputTrace.get().at(0)) << "/" << pl->getOutId(outputs.at(0)) << ")";
+                LOG("ERROR") << "(" << pl->getInId(inputTrace.get().at(0)) << "/" << pl->getOutId(outputs.at(0)) << ")";
                 for (unsigned int i = 1; i < outputs.size(); ++i) { 
-                    cerr << ".(" << pl->getInId(inputTrace.get().at(i)) << "/" << pl->getOutId(outputs.at(i)) << ")";
+                    LOG("ERROR") << ".(" << pl->getInId(inputTrace.get().at(i)) << "/" << pl->getOutId(outputs.at(i)) << ")";
                 }
-                cerr << ".(" << pl->getInId(inputTrace.get().at(0)) << "/" << outputStr << ")";
+                LOG("ERROR") << ".(" << pl->getInId(inputTrace.get().at(0)) << "/" << outputStr << ")";
             }
-
-            cerr << std::endl;
+            LOG("ERROR") << std::endl;
 
             return false;
         }
@@ -626,19 +644,19 @@ bool applyAdaptiveTestCaseAfterInputTrace(const InputOutputTree& adaptiveTestCas
         
         if (output == -1) {
             // TODO: terminate execution
-            cerr << "Failure detected: Observed invalid output \"" << outputStr << "\" in trace "; 
+            LOG("ERROR") << "Failure detected: Observed invalid output \"" << outputStr << "\" in trace "; 
 
             if (outputs.size() == 0) {
-                cerr << "(" << pl->getInId(inputTrace.get().at(0)) << "/" << outputStr << ")";
+                LOG("ERROR") << "(" << pl->getInId(inputTrace.get().at(0)) << "/" << outputStr << ")";
             } else {
-                cerr << "(" << pl->getInId(inputTrace.get().at(0)) << "/" << pl->getOutId(outputs.at(0)) << ")";
+                LOG("ERROR") << "(" << pl->getInId(inputTrace.get().at(0)) << "/" << pl->getOutId(outputs.at(0)) << ")";
                 for (unsigned int i = 1; i < outputs.size(); ++i) { 
-                    cerr << ".(" << pl->getInId(inputTrace.get().at(i)) << "/" << pl->getOutId(outputs.at(i)) << ")";
+                    LOG("ERROR") << ".(" << pl->getInId(inputTrace.get().at(i)) << "/" << pl->getOutId(outputs.at(i)) << ")";
                 }
-                cerr << ".(" << pl->getInId(inputTrace.get().at(0)) << "/" << outputStr << ")";
+                LOG("ERROR") << ".(" << pl->getInId(inputTrace.get().at(0)) << "/" << outputStr << ")";
             }
 
-            cerr << std::endl;
+            LOG("ERROR") << std::endl;
             return false;
             
         }
@@ -670,28 +688,28 @@ bool applyAdaptiveTestCaseAfterInputTrace(const InputOutputTree& adaptiveTestCas
         
         if (output == -1) {
             
-            cerr << "Failure detected: Observed invalid output \"" << outputStr << "\" in trace "; 
+            LOG("ERROR") << "Failure detected: Observed invalid output \"" << outputStr << "\" in trace "; 
 
             if (outputs.size() > 0) {
-                cerr << "(" << pl->getInId(inputTrace.get().at(0)) << "/" << pl->getOutId(outputs.at(0)) << ")";
+                LOG("ERROR") << "(" << pl->getInId(inputTrace.get().at(0)) << "/" << pl->getOutId(outputs.at(0)) << ")";
                 for (unsigned int i = 1; i < outputs.size(); ++i) { 
-                    cerr << ".(" << pl->getInId(inputTrace.get().at(i)) << "/" << pl->getOutId(outputs.at(i)) << ")";
+                    LOG("ERROR") << ".(" << pl->getInId(inputTrace.get().at(i)) << "/" << pl->getOutId(outputs.at(i)) << ")";
                 }
-                cerr << ".(" << pl->getInId(inputTrace.get().at(0)) << "/" << outputStr << ")";
-                cerr << ".";
+                LOG("ERROR") << ".(" << pl->getInId(inputTrace.get().at(0)) << "/" << outputStr << ")";
+                LOG("ERROR") << ".";
             }
 
             if (responseOutputs.size() == 0) {
-                cerr << "(" << pl->getInId(input) << "/" << outputStr << ")";
+                LOG("ERROR") << "(" << pl->getInId(input) << "/" << outputStr << ")";
             } else {
-                cerr << "(" << pl->getInId(responseInputs.at(0)) << "/" << pl->getOutId(responseOutputs.at(0)) << ")";
+                LOG("ERROR") << "(" << pl->getInId(responseInputs.at(0)) << "/" << pl->getOutId(responseOutputs.at(0)) << ")";
                 for (unsigned int i = 1; i < responseOutputs.size(); ++i) { 
-                    cerr << ".(" << pl->getInId(responseInputs.at(i)) << "/" << pl->getOutId(responseOutputs.at(i)) << ")";
+                    LOG("ERROR") << ".(" << pl->getInId(responseInputs.at(i)) << "/" << pl->getOutId(responseOutputs.at(i)) << ")";
                 }
-                cerr << ".(" << pl->getInId(input) << "/" << outputStr << ")";
+                LOG("ERROR") << ".(" << pl->getInId(input) << "/" << outputStr << ")";
             }
 
-            cerr << std::endl;
+            LOG("ERROR") << std::endl;
             return false;
             
         }
@@ -831,24 +849,24 @@ void printATC(AdaptiveTreeNode& node, unsigned int depth) {
 int main(int argc, char* argv[])
 {
 
-    // TODO: direct to correct outputs
+    // set logging levels
     LogCoordinator::getStandardLogger().bindAllToDevNull();
-    LogCoordinator::getStandardLogger().createLogTargetAndBind("INFO", std::cout);
-    LogCoordinator::getStandardLogger().createLogTargetAndBind("WARNING", std::cout);
+    
     LogCoordinator::getStandardLogger().createLogTargetAndBind("ERROR", std::cout);
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("WARNING", std::cout);    
     LogCoordinator::getStandardLogger().createLogTargetAndBind("FATAL", std::cout);
+    
+    /*
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("INFO", std::cout);
 
     LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SPEC", std::cout);
     LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_FAILURE_CHECK", std::cout);
     LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SUT_APPLICATIONS_1", std::cout);
-    //LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SUT_APPLICATIONS_2", std::cout);
-
-    //LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SUT_INTERNAL", std::cout);
-
-
-
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SUT_APPLICATIONS_2", std::cout);
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_SUT_INTERNAL", std::cout);
     LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_1", std::cout);
-    //LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_2", std::cout);
+    LogCoordinator::getStandardLogger().createLogTargetAndBind("VERBOSE_2", std::cout);
+    */
 
     shared_ptr<IOTrace> failTrace;
 
@@ -856,15 +874,10 @@ int main(int argc, char* argv[])
 
     parseParameters(argc,argv);
     readModel(modelType,modelFile,fsm);
-    fsm->minimise();
 
-    int maxInput = fsm->getMaxInput();
-    int maxOutput = fsm->getMaxOutput();
-
-
-    //sut_init();
-    //sut_init(fsm,true);
-    sut_init(fsm,false);
+    sut_init();    
+    // replace the call to sut_init with the following call if sut_wrapper_adaptive_test.h is used
+    //sut_init(fsm,false);
 
 
     /** calculation of basic structures */
@@ -993,20 +1006,15 @@ int main(int argc, char* argv[])
             responseMap.insert(kv);
         }
 
-
-        unsigned int i = 0;
         for (const auto& kv : responseMap)
         {
-            
-            
             auto findResult = observedOutputsTCElements.find(kv.first.getInputTrace());
             if (findResult == observedOutputsTCElements.end()) {
                 observedOutputsTCElements.emplace(kv.first.getInputTrace(), vector<shared_ptr<OutputTrace>>());
             }
             observedOutputsTCElements.at(kv.first.getInputTrace()).push_back(make_shared<OutputTrace>(kv.first.getOutputTrace()));
-            
-            
         }
+
         LOG("VERBOSE_SUT_APPLICATIONS_1") << "Observed responses to tC" << std::endl;
         for (const auto& kv : observedOutputsTCElements) {
             LOG("VERBOSE_SUT_APPLICATIONS_1") << "\tObserved responses to " << kv.first << std::endl;
@@ -1132,12 +1140,11 @@ int main(int argc, char* argv[])
                                         LOG("INFO") << "\t\t" << *t << std::endl;
                                     }
 
-
-                                    LOG("INFO") << "  Specification does not contain " << trace << std::endl;
                                     failTrace = make_shared<IOTrace>(*inputTrace, *outIut);
+                                    LOG("ERROR") << "  Specification does not contain " << trace << " after trace " << *failTrace << std::endl;
                                     IOTrace traceCopy = IOTrace(trace);
                                     failTrace->append(traceCopy);
-                                    LOG("INFO") << "failTrace: " << *failTrace << std::endl;
+                                    LOG("ERROR") << "  failTrace: " << *failTrace << std::endl;
                                     failure = true;
                                     break;
                                 }
@@ -1166,13 +1173,12 @@ int main(int argc, char* argv[])
                             if (failure)
                             {
                                 // IUT produced an output that can not be produced by the specification.
-                                LOG("INFO") << "  Failure observed:" << std::endl;
-                                LOG("INFO") << "    Input Trace: " << *inputTrace << std::endl;
-                                
+                                LOG("ERROR") << "  Failure observed after input trace: " << *inputTrace << std::endl;
+                                LOG("ERROR") << "  Observed responses of the SUT on " << *inputTrace << " and extensions: " << std::endl;
                                 for (const auto& t : observedAdaptiveTracesIut) {
-                                    LOG("INFO") << "\t\t" << t << std::endl;
+                                    LOG("ERROR") << "\t" << t << std::endl;
                                 }
-                                LOG("VERBOSE_1") << "IUT is not a reduction of the specification." << std::endl;
+                                LOG("ERROR") << "IUT is not a reduction of the specification." << std::endl;
                                 return false;
                             }
                         }
@@ -1184,8 +1190,8 @@ int main(int argc, char* argv[])
                 if (!allowed)
                 {
                     // IUT produced an output that can not be produced by the specification.
-                    LOG("INFO") << "  Failure observed:" << std::endl;
-                    LOG("INFO") << "    Input Trace: " << *inputTrace << std::endl;
+                    LOG("ERROR") << "  Failure observed:" << std::endl;
+                    LOG("ERROR") << "    Input Trace: " << *inputTrace << std::endl;
                     ss << "    Produced Outputs Iut: ";
                     for (size_t i = 0; i < producedOutputsIut.size(); ++i)
                     {
@@ -1195,12 +1201,12 @@ int main(int argc, char* argv[])
                             ss << ", ";
                         }
                     }
-                    LOG("INFO") << ss.str() << std::endl;
+                    LOG("ERROR") << ss.str() << std::endl;
                     ss.str(std::string());
-                    LOG("VERBOSE_1") << "Specification does not produce output " << *outIut << "." << std::endl;
-                    LOG("VERBOSE_1") << "IUT is not a reduction of the specification." << std::endl;
+                    LOG("ERROR") << "Specification does not produce output " << *outIut << " in response to " << *inputTrace << std::endl;
+                    LOG("ERROR") << "IUT is not a reduction of the specification." << std::endl;
                     failTrace = make_shared<IOTrace>(*inputTrace, *outIut);
-                    LOG("INFO") << "failTrace: " << *failTrace << std::endl;
+                    LOG("ERROR") << "failTrace: " << *failTrace << std::endl;
                     return false;
                 }
             }
@@ -1247,7 +1253,7 @@ int main(int argc, char* argv[])
             {
                 stringstream ss;
                 ss << "No prefix for input trace " << *inputTrace << " found in V. This should not happen.";
-                std::cerr << ss.str();
+                LOG("ERROR") << ss.str();
                 throw ss.str();
             }
             LOG("VERBOSE_1") << "maxInputPrefixInV: " << *maxInputPrefixInV << std::endl;
@@ -1406,8 +1412,8 @@ int main(int argc, char* argv[])
     }
     LOG("VERBOSE_1") << "IUT is a reduction of the specification." << std::endl;
 
-    cerr << "IUT is a reduction of the specification." << std::endl;
-    cerr << "finished" << endl;
+    cout << "IUT is a reduction of the specification." << std::endl;
+    cout << "finished" << endl;
     
     exit(0);
     

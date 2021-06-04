@@ -1,9 +1,9 @@
 set (FSM_HARNESS_SOURCES
     fsm-test-harness-adaptive.cpp
-    #sut_wrapper_adaptive.h
-    #sut_wrapper_adaptive.cpp
-    sut_wrapper_adaptive_test.h
-    sut_wrapper_adaptive_test.cpp
+    sut_wrapper_adaptive.h
+    sut_wrapper_adaptive_example.cpp
+    #sut_wrapper_adaptive_test.h
+    #sut_wrapper_adaptive_test.cpp
     vPrimeEnumerator.cpp
     vPrimeEnumerator.h
 )

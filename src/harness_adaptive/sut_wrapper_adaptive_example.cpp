@@ -1,3 +1,9 @@
+/**
+ * This is an example implementation of a wrapper.
+ * 
+ * This wrapper simulates a nondeterministic FSM.
+ */
+
 #include "sut_wrapper_adaptive.h"
 #include <string>
 
@@ -40,9 +46,6 @@ void sut_reset() {
 
 // variables to store the last response to inputs to state that cause nondeterministic behaviour,
 // used to cycle through all possible responses
-//SUT_Output S1Ia_last_response = O1;
-//SUT_Output S3Ib_last_response = O1;
-
 unsigned int s1ia_transitions = 0;
 unsigned int s3ib_transitions = 0;
 
