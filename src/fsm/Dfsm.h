@@ -9,14 +9,17 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <stack>
 
 #include "fsm/Fsm.h"
+#include "fsm/ConvergenceGraph.h"
 
 class PkTable;
 class IOTrace;
 class TreeNode;
 class DFSMTable;
 class SegmentedTrace;
+
 
 namespace Json {
     class Value;
@@ -63,6 +66,18 @@ private:
                                                                       int id1,
                                                                       int id2);
 
+
+
+    // corresponds to method Distinguish of the original description of the SPYH method
+    void spyhDistinguish(const std::vector<int>& trace, const std::unordered_set<std::shared_ptr<InputTrace>> traces, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph);
+    // corresponds to method GetPrefixOfSepSeq of the original description of the SPYH method
+    std::pair<size_t,std::stack<int>> spyhGetPrefixOfSeparatingTrace(const std::vector<int>& trace1, const std::vector<int>& trace2, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph);
+    // corresponds to method EstimateGrowthOfT of the original description of the SPYH method
+    size_t spyhEstimateGrowthOfTestSuite(const std::shared_ptr<FsmNode> u, const std::shared_ptr<FsmNode> v, int input);
+    // corresponds to method AppendSeparatingSequence of the original description of the SPYH method
+    void spyhAppendSeparatingSequence(const std::vector<int>& traceToAppendTo, const std::vector<int>& traceToAppend, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph);
+    // corresponds to method DistinguishFromSet of the original description of the SPYH method
+    void spyhDistinguishFromSet(const std::vector<int>& trace1, const std::vector<int>& trace2, const std::unordered_set<std::shared_ptr<InputTrace>> stateCover, std::unordered_set<std::shared_ptr<InputTrace>> tracesToDistFrom, std::shared_ptr<Tree> testSuite, ConvergenceGraph& graph, unsigned int depth);
 public:
 	/**
 	Create a DFSM from a file description
@@ -419,7 +434,7 @@ public:
     
     
     /**
-     *  Return true if and only if the two FSM states are distinhuishable
+     *  Return true if and only if the two FSM states are distinguishable
      */
     virtual bool distinguishable(const FsmNode& s1, const FsmNode& s2);
     
@@ -433,6 +448,22 @@ public:
      */
     std::vector< std::shared_ptr< std::vector<int> > > getDistTraces(FsmNode& s1,
                                                                      FsmNode& s2);
-    
+
+
+                                                                    
+    /**
+     *  Computes a test suite using the SPYH-method.
+     *
+     *  This implementation requires the DFSM to be minimised and
+     *  completely specified.
+     * 
+     * @param numAddStates The number of additional states such that the
+     *                     generated test suite is complete for testing
+     *                     against SUTs containing up to 
+     *                     (numAddStates + size of this fsm) states.
+     * 
+     * @return A complete test suite.
+     */
+    IOListContainer spyhMethodOnMinimisedCompleteDfsm(const unsigned int numAddStates);
 };
 #endif //FSM_FSM_DFSM_H_

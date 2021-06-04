@@ -104,3 +104,20 @@ void FsmTransition::accept(FsmVisitor &v) {
     
     
 }
+
+
+bool operator==(FsmTransition const & t1, FsmTransition const & t2)
+{
+    if ((t1.source.expired() && t2.source.expired())
+        || (!t1.source.expired() && !t2.source.expired() && *t1.source.lock() == *t2.source.lock())) {
+        return false;
+    }
+
+    if ((t1.target.expired() && t2.target.expired())
+        || (!t1.target.expired() && !t2.target.expired() && *t1.target.lock() == *t2.target.lock())) {
+        return false;
+    }
+
+    return (t1.label->getInput() == t2.label->getInput()
+            && t1.label->getOutput() == t2.label->getOutput());
+}

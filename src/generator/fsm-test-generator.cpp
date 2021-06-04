@@ -52,7 +52,8 @@ typedef enum {
     SAFE_HMETHOD,
     HMETHOD,
     HSIMETHOD,
-    STRONG_REDUCTION_METHOD
+    STRONG_REDUCTION_METHOD,
+    SPYH_METHOD
 } generation_method_t;
 
 
@@ -88,7 +89,7 @@ static bool rttMbtStyle = false;
  */
 static void printUsage(char* name) {
     cerr << "usage: " << name
-    << " [-w|-wp|-h|-hsi|-sr] [-s] [-n fsmname] [-p infile outfile statefile] "
+    << " [-w|-wp|-h|-hsi|-sr|-spyh] [-s] [-n fsmname] [-p infile outfile statefile] "
     << "[-a additionalstates] [-t testsuitename] [-rtt <prefix>] modelfile "
     << "[model abstraction file]" << endl;
 }
@@ -182,6 +183,9 @@ static void parseParameters(int argc, char* argv[]) {
         }
         else if ( strcmp(argv[p],"-sr") == 0 ) {
             genMethod = STRONG_REDUCTION_METHOD;
+        }
+        else if ( strcmp(argv[p],"-spyh") == 0 ) {
+            genMethod = SPYH_METHOD;
         }
         else if ( strcmp(argv[p],"-s") == 0 ) {
             switch (genMethod) {
@@ -1408,6 +1412,20 @@ static void generateTestSuite() {
             safeWMethod(testSuite);
             break;
 
+        case SPYH_METHOD:
+            if ( dfsm == nullptr || !dfsm->isCompletelyDefined()) {
+                cerr << "SPYH METHOD only operates on complete deterministic FSMs - exit."
+                     << endl;
+                exit(1);
+            } else {
+                IOListContainer iolc = dfsm->spyhMethodOnMinimisedCompleteDfsm(numAddStates);
+                for ( auto inVec : *iolc.getIOLists() ) {
+                    shared_ptr<InputTrace> itrc = make_shared<InputTrace>(inVec,pl);
+                    testSuite->push_back(dfsm->apply(*itrc));
+                }
+            }
+            break;
+
         default: 
             cout << "unsupported test method" << endl;
             return;
@@ -1443,7 +1461,6 @@ static void generateTestSuite() {
 
 int main(int argc, char* argv[])
 {
-    
     parseParameters(argc,argv);
     readModel(modelType,modelFile,fsmName,fsm,dfsm);
     

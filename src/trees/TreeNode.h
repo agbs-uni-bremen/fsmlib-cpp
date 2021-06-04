@@ -234,4 +234,6 @@ public:
     std::shared_ptr<TreeNode> getIntersectionNode(const std::shared_ptr<TreeNode> &b);
 
 };
+
+
 #endif //FSM_TREES_TREENODE_H_
