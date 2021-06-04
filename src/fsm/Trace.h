@@ -218,6 +218,11 @@ namespace std {
     };
     template <> struct equal_to<Trace>
     {
+        bool operator() (const Trace& a, const Trace& b) const 
+        {
+            return a == b;
+        }
+
         bool operator() (const shared_ptr<const Trace>& a, const shared_ptr<const Trace>& b) const
         {
             if (a == b)

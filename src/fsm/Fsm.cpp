@@ -2099,6 +2099,129 @@ throw ss.str();
     LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "--- result: " << iOTraceContainer << std::endl;
 }
 
+
+
+void Fsm::addPossibleIOTraces(shared_ptr<FsmNode> node,
+                              shared_ptr<InputOutputTree> tree,
+                              unordered_set<IOTrace>& iOTraceContainer,
+                              const bool cleanTrailingEmptyTraces) const
+{
+    LOG("VERBOSE_2") << "(" << node->getName() << ") " << "getPossibleIOTraces()" << std::endl;
+    LOG("VERBOSE_2") << "(" << node->getName() << ") " << "  node: " << node->getName() << std::endl;
+    LOG("VERBOSE_2") << "(" << node->getName() << ") " << "  tree: " << tree->str()  << std::endl;
+    if (tree->isEmpty())
+    {
+        LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "  tree is empty. returning." << std::endl;
+        std::shared_ptr<IOTrace> emptyTrace = IOTrace::getEmptyTrace(presentationLayer);
+        emptyTrace->setTargetNode(node);
+        return;
+    }
+
+    for (int y = 0; y <= maxOutput; ++y)
+    {
+        shared_ptr<AdaptiveTreeNode> treeRoot = static_pointer_cast<AdaptiveTreeNode>(tree->getRoot());
+        int x = treeRoot->getInput();
+        bool isPossibleOutput = node->isPossibleOutput(x, y);
+        LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "  x: " << presentationLayer->getInId(x) << std::endl;
+        LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "  y: " << presentationLayer->getOutId(y) << std::endl;
+        LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "  isPossibleOutput: " << isPossibleOutput << std::endl;
+
+        if (isPossibleOutput)
+        {
+            unordered_set<shared_ptr<FsmNode>> nextNodes = node->afterAsSet(x, y);
+            if (nextNodes.size() != 1)
+            {
+                stringstream ss;
+ss << "The FSM does not seem to be observable.";
+std::cerr << ss.str();
+throw ss.str();
+            }
+            shared_ptr<FsmNode> nextNode = *nextNodes.begin();
+
+            if (!tree->isDefined(y))
+            {
+                const IOTrace& trace = IOTrace(x, y, nextNode, presentationLayer);
+                LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "  tree is NOT defined. Adding " << trace << std::endl;
+                iOTraceContainer.insert(trace);
+            }
+            else if (tree->isDefined(y))
+            {
+                LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "  tree is defined." << std::endl;
+                LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    nextNode: " << nextNode->getName() << std::endl;
+                shared_ptr<AdaptiveTreeNode> nextTreeNode = static_pointer_cast<AdaptiveTreeNode>(treeRoot->after(y));
+                shared_ptr<InputOutputTree> nextTree = make_shared<InputOutputTree>(nextTreeNode, presentationLayer);
+                LOG("VERBOSE_2") << "(" << node->getName() << ") " << "    nextTree: " << nextTree->str() << std::endl;
+                LOG("VERBOSE_2") << "++ ENTERING RECURSION." << std::endl;
+                unordered_set<IOTrace> iONext;
+                addPossibleIOTraces(nextNode, nextTree, iONext);
+                LOG("VERBOSE_2") << "-- LEAVING RECURSION." << std::endl;
+                //LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    iONext: " << iONext << std::endl;
+                LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    iONext: " << std::endl;
+                for (const auto& t : iONext) {
+                    LOG("VERBOSE_2")  << "\t" << t << std::endl;
+                }
+                const IOTrace& trace = IOTrace(x, y, nextNode, presentationLayer);
+                LOG("VERBOSE_2") << "trace: " << trace << std::endl;
+                if (iONext.empty())
+                {
+                    iONext.insert(trace);
+                }
+                else
+                {
+                    //iONext.concatenateToFront(trace);
+                    unordered_set<IOTrace> newSet;
+                    for (const auto& oldTrace : iONext)
+                    {
+                        const IOTrace newTrace = IOTrace(oldTrace, trace, true);
+                        newSet.insert(newTrace);
+                    }
+                    iONext = newSet;
+                }
+                //LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    iONext: " << iONext << std::endl;
+                LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    iONext: " << std::endl;
+                for (const auto& t : iONext) {
+                    LOG("VERBOSE_2")  << "\t" << t << std::endl;
+                }
+                LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    cleanTrailingEmptyTraces: " << cleanTrailingEmptyTraces << std::endl;
+                if (cleanTrailingEmptyTraces)
+                {
+                    shared_ptr<IOTrace> emptyTrace = IOTrace::getEmptyTrace(presentationLayer);
+                    //for (IOTrace& t : *iONext.getList())
+                    for (auto traceIt = iONext.begin(); traceIt != iONext.end(); ++traceIt)
+                    {
+                        IOTrace t = *traceIt;
+                        LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    t.size(): " << t.size() << std::endl;
+                        LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    isSuffix: " << t.isSuffix(*emptyTrace) << std::endl;
+                        if (t.size() > 1 && t.isSuffix(*emptyTrace))
+                        {
+                            LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    REMOVING EMPTY SUFFIX from " << t << std::endl;
+                            t = IOTrace(t, -1, t.getTargetNode());
+                        }
+                    }
+                    //LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "    iONext: " << iONext << std::endl;
+                    LOG("VERBOSE_2")  << "(" << node->getName() << ") " << std::endl;
+                }
+                //LOG("VERBOSE_2")  << "Adding " << iONext << " to result." << std::endl;
+                LOG("VERBOSE_2")  << "Adding to result." << std::endl;
+                for (const auto& t : iONext) {
+                    LOG("VERBOSE_2")  << "\t" << t << std::endl;
+                }
+                
+                //iOTraceContainer.add(iONext);
+                for (const auto& t : iONext) {
+                    iOTraceContainer.insert(t);
+                }
+            }
+        }
+        LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "#####################################" << std::endl;
+    }
+    //LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "--- result: " << iOTraceContainer << std::endl;
+    LOG("VERBOSE_2")  << "(" << node->getName() << ") " << "--- result: " << std::endl;
+    for (const auto& t : iOTraceContainer) {
+        LOG("VERBOSE_2")  << "\t" << t << std::endl;
+    }
+}
+
 void Fsm::addPossibleIOTraces(std::shared_ptr<FsmNode> node,
                          const IOTreeContainer& treeContainer,
                          IOTraceContainer& iOTraceContainer,
@@ -2109,6 +2232,19 @@ void Fsm::addPossibleIOTraces(std::shared_ptr<FsmNode> node,
         addPossibleIOTraces(node, tree, iOTraceContainer, cleanTrailingEmptyTraces);
     }
 }
+
+
+void Fsm::addPossibleIOTraces(std::shared_ptr<FsmNode> node,
+                         const IOTreeContainer& treeContainer,
+                         unordered_set<IOTrace>& iOTraceContainer,
+                         const bool cleanTrailingEmptyTraces) const
+{
+    for (shared_ptr<InputOutputTree> tree : *treeContainer.getList())
+    {
+        addPossibleIOTraces(node, tree, iOTraceContainer, cleanTrailingEmptyTraces);
+    }
+}
+
 
 bool Fsm::hasFailure() const
 {
@@ -2148,6 +2284,11 @@ throw ss.str();
     }
     return false;
 }
+
+
+
+
+
 
 IOTraceContainer Fsm::bOmega(const IOTreeContainer& adaptiveTestCases, const IOTrace& trace) const
 {
