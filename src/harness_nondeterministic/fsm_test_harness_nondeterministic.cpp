@@ -1,3 +1,39 @@
+/**
+ * A test harness for testing nondeterministic SUTs.
+ * 
+ * Application of this harness follows the regular harness but is extended by two parameters:
+ * -k <n> 
+ *      specifies the number of times each test case should be applied to the SUT
+ *      defaults to 100
+ * -equivalence|-reduction 
+ *      specifies the conformance relation to be tested for
+ *          - if equivalence is chosen, then the SUT must exhibit all test cases in order to pass
+ *          - if reduction is chosen, then the SUT must exhibit a subset of the test cases in order to pass
+ *      defaults to equivalence
+ * 
+ * The test suite is expected to consist of a file where each line constitutes a test case in the
+ * usual format of a dot-separated list if input-output pairs (<input>/<output>), e.g.
+ *      (a/7).(a/2).(b/0)         
+ * 
+ * A test case is (x1/y1).(x2/y2)... then applied by resetting the SUT and iteratively applying
+ * xi and observing the produced response y'.
+ *  - If y' = yi, then the next pair in the test case is applied and it is marked that the test
+ *    case has been applied up to index i.
+ *  - If y' != yi, then the current application of the test case is terminated and it is checked
+ *    whether y' is a response expected by the test suite.
+ *    That is, it is checked whether the test suite contains some test case that is identical to
+ *    the current test case on all indices smaller than i and whose i-th pair is (xi/y').
+ *    If such a test case exists, then it is marked that this test case has been applied up to
+ *    index i.
+ *    If no such test case exists, then a failure has been observed.
+ * 
+ * If after applying all test cases no failure has been observed and equivalence has been chosen
+ * as the conformance relation to check for, then it is finally checked whether all test cases
+ * have been applied up to their full length.
+ * If this is not the case, then a failure has been observed, as the SUT did not exhibit all
+ * expected behaviours.
+ */ 
+
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -8,7 +44,6 @@
 #include <memory>
 #include <vector>
 #include <stack>
-
 
 
 typedef enum {
@@ -49,8 +84,6 @@ static void printUsage(char* name) {
               << name
               << "[-k input application repetitions] [-equivalence|-reduction] test-suite-file " << std::endl;
 }
-
-
 
 
 static void parseParameters(int argc, char* argv[]) {

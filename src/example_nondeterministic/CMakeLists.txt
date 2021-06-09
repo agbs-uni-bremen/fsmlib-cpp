@@ -1,4 +1,6 @@
 set (FSM_EXAMPLE_NONDETERMINISTIC_SOURCES
+	example.h
+	example.cpp
 	sut_wrapper.cpp
 )
 

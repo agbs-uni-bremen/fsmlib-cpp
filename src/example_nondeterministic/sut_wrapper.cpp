@@ -1,45 +1,22 @@
 /**
- * This "wrapper" simulates the behaviour of an FSM with a 
- * randomly executed transition fault.
+ * This wrapper connects the test harness with an example SUT.
  */
+
+#include <example_nondeterministic/example.h>
 
 #include <string>
 
-
-enum SUT_State {
-    S1,
-    S2,
-    S3,
-    S4
-};
-
-static const std::string sut_state_strings[] = {"S1", "S2", "S3", "S4"};
-
-enum SUT_Input {
-    Ia,
-    Ib
-};
-
-enum SUT_Output {
-    O0,
-    O1
-};
-
-SUT_State currentState;
-unsigned int input_length;
-
+// use the reset() operation of the SUT
 void sut_reset() { 
-    currentState = S1;
-    input_length = 0;
+    reset();
 }
 
+// use the init() operation of the SUT
 void sut_init() { 
-    srand((unsigned)time(0)); 
-    sut_reset();
+    init();
 }
 
-
-
+// translate an input ("a"->Ia; "b"->Ib), apply it to the SUT and translate the output (O0->"0"; O1->"1")
 const std::string sut(const std::string input) {
     
     SUT_Input sut_input;
@@ -52,83 +29,11 @@ const std::string sut(const std::string input) {
         return "ERROR: invalid input string: " + input;
     }
 
-    SUT_Output output;
+    SUT_Output sut_output = apply(sut_input);
 
-    ++input_length;
-
-    switch (currentState) {
-        case S1 : 
-            switch (sut_input) {
-                case Ia: 
-                    if (rand() % 2 == 0) {
-                        currentState = S4;
-                        output = O1;
-                    } else {
-                        currentState = S2;
-                        output = O0;
-                    }
-
-                    //randomly injected transition error
-                    //if (rand() % 100 == 0) {
-                    //    currentState = S2;
-                    //    output = O1;
-                    //}
-
-                    break;
-                case Ib:
-                    currentState = S4;
-                    output = O1;
-                    break;
-            };
-            break;
-        case S2 : 
-            switch (sut_input) {
-                case Ia: 
-                    currentState = S2;
-                    output = O0;
-                    break;
-                case Ib:
-                    currentState = S4;
-                    output = O1;
-                    break;
-            };
-            break;
-        case S3 : 
-            switch (sut_input) {
-                case Ia: 
-                    currentState = S4;
-                    output = O1;
-                    break;
-                case Ib: 
-                    if (rand() % 2 == 0) {    
-                        currentState = S1;
-                        output = O0;
-                    } else {
-                        currentState = S3;
-                        output = O1;
-                    }
-
-                    break;
-            };
-            break;
-        case S4 : 
-            switch (sut_input) {
-                case Ia: 
-                    currentState = S3;
-                    output = O0;
-                    break;
-                case Ib:
-                    currentState = S1;
-                    output = O0;
-                    break;
-            };
-            break;
-        default : return "ERROR: invalid state";
-    }
-
-    switch (output) {
+    switch (sut_output) {
         case O0: return "0";
         case O1: return "1";
-        default : return "ERROR: invalid output";
+        default: return "ERROR: invalid output observed";
     }
 }
