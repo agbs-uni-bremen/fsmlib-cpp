@@ -32,13 +32,22 @@ vector<shared_ptr<TreeNode const>> Tree::calcLeaves() const
 void Tree::remove(const shared_ptr<TreeNode>& thisNode, const shared_ptr<TreeNode>& otherNode)
 {
 	thisNode->deleteNode();
-
-	for (shared_ptr<TreeEdge> e : *thisNode->getChildren())
-	{
+	int edgeCounter = 0; // number of edges already checked (don't have to be checked again, if getChildren() changes)
+	for (std::vector<shared_ptr<TreeEdge>>::const_iterator it = thisNode->getChildren()->cbegin(); it != thisNode->getChildren()->cend();) {
+		size_t oldSize = thisNode->getChildren()->size();
+		shared_ptr<TreeEdge> e = *it;
 		shared_ptr<TreeEdge> eOther = otherNode->hasEdge(e);
 		if (eOther != nullptr)
 		{
             remove(e->getTarget(), eOther->getTarget());
+		}
+		// size of getChildren() can change if children are deleted and removed. In this case we need a new iterator pointing to the same address.
+		if (oldSize != thisNode->getChildren()->size()) {
+			it = thisNode->getChildren()->cbegin() + edgeCounter;
+		}
+		else {
+			++edgeCounter;
+			++it;
 		}
 	}
 }
